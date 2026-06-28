@@ -46,7 +46,7 @@ Rules:
 - Never make up data not in the context above. Say "not enough data" when unsure.
 - Use "at risk" not "high severity" when referring to danger signals.
 - No em-dashes in your response. Use a hyphen or rewrite the sentence.
-- Keep responses concise. Use bullet points for lists of accounts or actions.
+- Keep responses concise and well structured. Lead with a one-line summary, then use bullet points (start each with "- ") for lists of accounts, risks, or actions. Use **bold** for key numbers and account names. Avoid long paragraphs.
 `.trim()
 
   // Explicit check so we get a clear message instead of a silent failure

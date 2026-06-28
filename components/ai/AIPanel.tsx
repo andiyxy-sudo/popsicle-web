@@ -11,6 +11,46 @@ interface AIPanelProps {
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
+// Format AI markdown into clean HTML: bold, bullet lists, paragraphs
+function formatAI(text: string): string {
+  const esc = (s: string) => s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+
+  const lines = text.split('\n')
+  let html = ''
+  let inList = false
+
+  const inline = (s: string) =>
+    esc(s)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code style="background:rgba(13,10,7,.06);padding:1px 5px;border-radius:5px;font-family:DM Mono,monospace;font-size:12px">$1</code>')
+
+  for (let raw of lines) {
+    const line = raw.trim()
+    if (!line) { if (inList) { html += '</ul>'; inList = false } continue }
+
+    // bullet list item: -, *, or "- " variants
+    const bullet = line.match(/^[-*•]\s+(.*)$/)
+    const numbered = line.match(/^(\d+)[.)]\s+(.*)$/)
+
+    if (bullet) {
+      if (!inList) { html += '<ul style="margin:6px 0 6px 2px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px">'; inList = true }
+      html += `<li style="display:flex;gap:8px;align-items:flex-start"><span style="color:var(--o);font-weight:900;line-height:1.5;flex-shrink:0">·</span><span style="flex:1">${inline(bullet[1])}</span></li>`
+    } else if (numbered) {
+      if (!inList) { html += '<ul style="margin:6px 0 6px 2px;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px">'; inList = true }
+      html += `<li style="display:flex;gap:8px;align-items:flex-start"><span style="color:var(--o);font-weight:800;font-family:DM Mono,monospace;font-size:12px;flex-shrink:0;min-width:14px">${numbered[1]}.</span><span style="flex:1">${inline(numbered[2])}</span></li>`
+    } else {
+      if (inList) { html += '</ul>'; inList = false }
+      html += `<p style="margin:0 0 8px">${inline(line)}</p>`
+    }
+  }
+  if (inList) html += '</ul>'
+  return html
+}
+
 const SUGGESTION_GROUPS = [
   {
     cat: 'Risk & Alerts', color: 'var(--danger)',
@@ -146,7 +186,9 @@ export function AIPanel({ open, onClose, isDemo, greetingName }: AIPanelProps) {
             <>
               {messages.map((m, i) => (
                 <div key={i} className={`ai-msg ${m.role === 'user' ? 'user' : 'bot'}`}>
-                  {m.role === 'user' ? m.content : <div className="msg-text">{m.content}</div>}
+                  {m.role === 'user'
+                    ? m.content
+                    : <div className="msg-text" dangerouslySetInnerHTML={{ __html: formatAI(m.content) }} />}
                 </div>
               ))}
               {loading && (
