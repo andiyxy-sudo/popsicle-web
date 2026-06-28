@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { buildA360 } from '@/lib/demo-accounts'
-import { A360Modal, ModalBtn, ModalConfig } from '@/components/account/A360Modal'
+import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody, ConfirmKind } from '@/components/account/A360Modal'
 import { SIGNALS, ASSET_BODIES, Signal } from './SignalsData'
 
 const FILTERS: [string, string][] = [['all', 'All (7)'], ['High Risk', 'High (3)'], ['Watch', 'Watch (3)'], ['Positive', 'Positive (1)']]
@@ -27,15 +27,10 @@ export function SignalsShowcase() {
     if (payload) window.dispatchEvent(new CustomEvent('open-a360', { detail: payload }))
   }
 
-  function successModal(title: string, desc: string) {
+  function actionConfirm(kind: ConfirmKind, title: string, desc: string) {
     setModal({
-      title,
-      body: <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{desc}</div>
-      </div>,
+      title: kind === 'escalate' ? 'Escalated' : 'Confirmed',
+      body: <ActionConfirmBody kind={kind} title={title} desc={desc} />,
       footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
     })
   }
@@ -71,7 +66,7 @@ export function SignalsShowcase() {
         <div style={{ fontSize: 13, color: 'var(--t2)', marginBottom: 14 }}>Snooze &quot;{s.title}&quot; and get reminded later.</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {opts.map(o => (
-            <div key={o} onClick={() => successModal('Snoozed', `Signal snoozed for ${o}. You will be reminded.`)} style={{ padding: '12px 14px', background: 'var(--inset)', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--t1)', border: '1px solid transparent' }}>{o}</div>
+            <div key={o} onClick={() => actionConfirm('snooze', 'Snoozed', `Signal snoozed for ${o}. You will be reminded.`)} style={{ padding: '12px 14px', background: 'var(--inset)', borderRadius: 10, cursor: 'pointer', fontSize: 13, fontWeight: 600, color: 'var(--t1)', border: '1px solid transparent' }}>{o}</div>
           ))}
         </div>
       </div>,
@@ -89,13 +84,13 @@ export function SignalsShowcase() {
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Close</ModalBtn>
-        <ModalBtn primary onClick={() => successModal('Sent', `${label} has been sent with tracking enabled.`)}>Send Now</ModalBtn>
+        <ModalBtn primary onClick={() => actionConfirm('email', 'Sent', `${label} has been sent with tracking enabled.`)}>Send Now</ModalBtn>
       </>,
     })
   }
 
   function deploy(s: Signal) {
-    successModal('Response Deployed', `All ${s.assets.length} AI-prepared assets for "${s.title}" have been deployed. Tracking enabled across all channels.`)
+    actionConfirm("deploy", "Response Deployed", `All ${s.assets.length} AI-prepared assets for "${s.title}" have been deployed. Tracking enabled across all channels.`)
   }
 
   return (

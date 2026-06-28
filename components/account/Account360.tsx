@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { A360Modal, ModalBtn, ModalConfig } from './A360Modal'
+import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody, ConfirmKind } from './A360Modal'
 
 export interface SigItem { sev: 'danger' | 'warn' | 'ok'; msg: string; time: string; via: string }
 export interface CommItem { from: string; role: string; msg: string; time: string; via: string; dir: 'in' | 'out'; signal?: string; signalColor?: string }
@@ -127,15 +127,10 @@ export function Account360() {
   const mono = data.monogram || data.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
   // ---------- modal builders ----------
-  function successModal(title: string, desc: string) {
+  function successModal(title: string, desc: string, kind: ConfirmKind = 'success') {
     setModal({
-      title,
-      body: <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
-        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{desc}</div>
-      </div>,
+      title: kind === 'escalate' ? 'Escalated' : 'Confirmed',
+      body: <ActionConfirmBody kind={kind} title={title} desc={desc} />,
       footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
     })
   }
@@ -149,7 +144,7 @@ export function Account360() {
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
         <ModalBtn onClick={() => { if (noteText.trim()) shareNoteModal(noteType, noteText) }}>Share</ModalBtn>
-        <ModalBtn primary onClick={() => { if (noteText.trim()) successModal('Note Saved ✓', `${noteType} added to ${data!.name} account history.`) }}>Save Note</ModalBtn>
+        <ModalBtn primary onClick={() => { if (noteText.trim()) successModal('Note Saved', `${noteType} added to ${data!.name} account history.`) }}>Save Note</ModalBtn>
       </>,
     })
   }
@@ -157,7 +152,7 @@ export function Account360() {
   function shareNoteModal(noteType: string, noteText: string) {
     setModal({
       title: `Share Note — ${data!.name}`,
-      body: <ShareNoteBody accountName={data!.name} noteType={noteType} noteText={noteText} onShared={(who) => successModal('Note Shared ✓', `${noteType} for ${data!.name} shared with ${who}. They will get a notification.`)} />,
+      body: <ShareNoteBody accountName={data!.name} noteType={noteType} noteText={noteText} onShared={(who) => successModal('Note Shared', `${noteType} for ${data!.name} shared with ${who}. They will get a notification.`)} />,
       footer: null,
     })
   }
@@ -195,7 +190,7 @@ export function Account360() {
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Dismiss</ModalBtn>
-        <ModalBtn primary onClick={() => successModal('Playbook Activated ✓', 'Popsicle AI will sequence each play automatically. First action queued now.')}>Activate Playbook</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Playbook Activated', 'Popsicle AI will sequence each play automatically. First action queued now.')}>Activate Playbook</ModalBtn>
       </>,
     })
   }
@@ -270,7 +265,7 @@ export function Account360() {
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
-        <ModalBtn primary onClick={() => successModal('Battle Card Sent ✓', `Battle card delivered to ${data!.name}. CRO notified. Click tracking enabled.`)}>Send to Contact</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Battle Card Sent', `Battle card delivered to ${data!.name}. CRO notified. Click tracking enabled.`, 'email')}>Send to Contact</ModalBtn>
       </>,
     })
   }
@@ -281,7 +276,7 @@ export function Account360() {
       body: <PricingDeckBody />,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
-        <ModalBtn primary onClick={() => successModal('Proposal Sent ✓', `3-option pricing deck sent to ${data!.name}. Click tracking enabled, you will be notified when viewed.`)}>Send Proposal</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Proposal Sent', `3-option pricing deck sent to ${data!.name}. Click tracking enabled, you will be notified when viewed.`, 'email')}>Send Proposal</ModalBtn>
       </>,
     })
   }
@@ -306,7 +301,7 @@ export function Account360() {
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
-        <ModalBtn primary onClick={() => successModal('Redline Sent ✓', `Simplified redline sent to ${data!.name} legal. Est. review: 3-5 days vs 14-21 standard.`)}>Send to Legal</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Redline Sent', `Simplified redline sent to ${data!.name} legal. Est. review: 3-5 days vs 14-21 standard.`, 'email')}>Send to Legal</ModalBtn>
       </>,
     })
   }
@@ -337,7 +332,7 @@ export function Account360() {
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
-        <ModalBtn danger onClick={() => successModal('Escalated to CRO ✓', `${data!.name} risk brief sent. Exec-to-exec recommended within 24h. AI monitoring escalated.`)}>Escalate Now</ModalBtn>
+        <ModalBtn danger onClick={() => successModal('Escalated to CRO', `${data!.name} risk brief sent. Exec-to-exec recommended within 24h. AI monitoring escalated.`, 'escalate')}>Escalate Now</ModalBtn>
       </>,
     })
   }
