@@ -41,7 +41,7 @@ export function PortfolioShowcase() {
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr fade-in">
+      <div className="page-hdr">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h1>Portfolio</h1>
@@ -61,7 +61,7 @@ export function PortfolioShowcase() {
         </div>
       </div>
 
-      <div className="dcard fade-in" style={{ padding: 0, overflow: 'hidden', maxHeight: 'none' }}>
+      <div className="dcard" style={{ padding: 0, overflow: 'hidden', maxHeight: 'none' }}>
         <table className="dtable">
           <thead>
             <tr>

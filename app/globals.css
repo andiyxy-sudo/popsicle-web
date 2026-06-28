@@ -866,7 +866,7 @@ button { font-family:'Outfit',sans-serif; }
 @keyframes typBounce { 0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)} }
 
 /* ════ SCREEN ENTRY ANIMATION ════ */
-@keyframes screenFadeIn { from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)} }
+@keyframes screenFadeIn { from{opacity:0;transform:translate3d(0,14px,0)}to{opacity:1;transform:translate3d(0,0,0)} }
 @keyframes statusPulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(34,197,94,.4)}50%{opacity:.6;box-shadow:0 0 0 3px rgba(34,197,94,0)} }
 
 .tl-expand { display:none; margin-top:8px; padding:10px 12px; background:var(--bg);
@@ -880,7 +880,7 @@ button { font-family:'Outfit',sans-serif; }
 
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
-.fade-in { animation:screenFadeIn .45s var(--ease-out) both; }
+.fade-in { animation:screenFadeIn .42s var(--ease-out) both; }
 .fade-in-1{animation-delay:.06s;} .fade-in-2{animation-delay:.12s;}
 .fade-in-3{animation-delay:.18s;} .fade-in-4{animation-delay:.24s;} .fade-in-5{animation-delay:.30s;}
 

@@ -5,17 +5,21 @@ import { PortfolioReal } from './PortfolioReal'
 
 export default async function PortfolioPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  // Fast local JWT read (no network round-trip). Layout already did the authoritative getUser() + redirect.
+  const { data } = await supabase.auth.getClaims()
+  if (!data) return null
+  const claims = data.claims
+  const email = claims.email as string | undefined
+  const userId = claims.sub as string
 
-  if (user.email === DEMO_EMAIL) {
+  if (email === DEMO_EMAIL) {
     return <PortfolioShowcase />
   }
 
   const { data: accounts } = await supabase
     .from('accounts')
     .select('*')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .order('health_score', { ascending: true })
 
   return <PortfolioReal accounts={accounts ?? []} />
