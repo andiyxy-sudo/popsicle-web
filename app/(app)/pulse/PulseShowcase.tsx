@@ -47,6 +47,23 @@ export function PulseShowcase() {
       window.dispatchEvent(new CustomEvent('open-a360', { detail: payload }))
     }
   }
+  // Map each row's action label to the modal it should open directly.
+  function rowActionModal(action: string): string {
+    switch (action) {
+      case 'Schedule Call': return 'schedule'
+      case 'Send Redline': return 'redline'
+      case 'Pricing Deck': return 'pricing'
+      case 'Draft Email':
+      case 'Follow Up': return 'draft'
+      default: return 'draft'
+    }
+  }
+  function openRowAction(r: typeof accountsRows[number]) {
+    const payload = buildA360(r.id)
+    if (payload) {
+      window.dispatchEvent(new CustomEvent('open-a360-modal', { detail: { account: payload, modal: rowActionModal(r.action) } }))
+    }
+  }
   return (
     <div className="dsk-screen on" id="d-pulse">
       {/* Header */}
@@ -237,7 +254,7 @@ export function PulseShowcase() {
                   <button
                     className={r.actionPrimary ? 'sig-card-btn primary' : 'sig-card-btn'}
                     style={!r.actionPrimary ? { color: 'var(--ok)', borderColor: 'rgba(42,157,92,.2)' } : undefined}
-                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt: `Help me with this action for ${r.name}: ${r.action}` } })) }}
+                    onClick={(e) => { e.stopPropagation(); openRowAction(r) }}
                   >
                     {r.action}
                   </button>

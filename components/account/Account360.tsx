@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { A360Modal, ModalBtn, ModalConfig } from './A360Modal'
 
 export interface SigItem { sev: 'danger' | 'warn' | 'ok'; msg: string; time: string; via: string }
@@ -56,14 +56,27 @@ export function Account360() {
   const [modal, setModal] = useState<ModalConfig | null>(null)
   const [expandedComm, setExpandedComm] = useState<number | null>(null)
   const [ringOffset, setRingOffset] = useState(163.4) // start empty
+  const [pendingModal, setPendingModal] = useState<string | null>(null)
 
   useEffect(() => {
     function onOpen(e: Event) {
       const detail = (e as CustomEvent).detail as A360Data
       if (detail) { setData(detail); setTab('overview'); setOpen(true); setExpandedComm(null) }
     }
+    // Open a specific modal directly without showing the full panel
+    function onOpenModal(e: Event) {
+      const detail = (e as CustomEvent).detail as { account: A360Data; modal: string }
+      if (detail && detail.account) {
+        setData(detail.account)
+        setPendingModal(detail.modal)
+      }
+    }
     window.addEventListener('open-a360', onOpen as EventListener)
-    return () => window.removeEventListener('open-a360', onOpen as EventListener)
+    window.addEventListener('open-a360-modal', onOpenModal as EventListener)
+    return () => {
+      window.removeEventListener('open-a360', onOpen as EventListener)
+      window.removeEventListener('open-a360-modal', onOpenModal as EventListener)
+    }
   }, [])
 
   useEffect(() => {
@@ -93,6 +106,18 @@ export function Account360() {
     setOpen(false)
     setTimeout(() => window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt } })), 120)
   }
+
+  // Holds the latest modal-builder map so the pending-modal effect can call them.
+  const buildersRef = useRef<Record<string, () => void>>({})
+
+  // When a direct-open modal is requested, fire it once data is ready.
+  useEffect(() => {
+    if (pendingModal && data) {
+      const fn = buildersRef.current[pendingModal]
+      if (fn) fn()
+      setPendingModal(null)
+    }
+  }, [pendingModal, data])
 
   if (!data) return null
 
@@ -261,6 +286,31 @@ export function Account360() {
     })
   }
 
+  function sendRedlineModal() {
+    setModal({
+      title: `Send Redline — ${data!.name}`,
+      body: <div>
+        <div style={{ marginBottom: 14, fontSize: 13, color: 'var(--t2)' }}>Pre-approved contract with simplified terms for fast legal review.</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+          {[['Enterprise_License_Redline_v3.pdf', 'Pre-approved · 12 pages · Updated today'], ['Legal_Summary_OneSheet.pdf', 'Executive summary of key terms']].map(([name, sub], i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: 14, background: 'var(--inset)', borderRadius: 12 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{name}</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>{sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.6 }}><strong>Note:</strong> These simplified terms typically clear legal review in 3 business days vs the standard 2-week process.</div>
+      </div>,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Redline Sent ✓', `Simplified redline sent to ${data!.name} legal. Est. review: 3-5 days vs 14-21 standard.`)}>Send to Legal</ModalBtn>
+      </>,
+    })
+  }
+
   function escalateModal() {
     const contact = data!.contact.split(' · ')[0]
     const steps = ['Notify your CRO with AI-generated risk brief', `Send executive summary to ${contact} via email`, 'Flag account in Salesforce as At Risk', 'Block renewal auto-renewal pending resolution', 'Schedule emergency account review call']
@@ -304,6 +354,18 @@ export function Account360() {
   ]
 
   const SEC = (t: string) => <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>{t}</div>
+
+  // Expose builders so direct-open events (from the Pulse table) can trigger a single modal.
+  buildersRef.current = {
+    schedule: scheduleCallModal,
+    redline: sendRedlineModal,
+    pricing: pricingDeckModal,
+    battlecard: battleCardModal,
+    escalate: escalateModal,
+    lognote: logNoteModal,
+    playbook: playbookModal,
+    draft: () => askAI(`Draft a follow-up email to ${data!.contact} at ${data!.name}`),
+  }
 
   return (
     <>
@@ -733,7 +795,13 @@ function ShareNoteBody({ accountName, noteType, noteText, onShared }: { accountN
         })}
       </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-        <button disabled={picked.length === 0} onClick={() => onShared(picked.length === 1 ? picked[0] : `${picked.length} colleagues`)} style={{ padding: '9px 18px', borderRadius: 10, background: 'var(--o)', color: '#fff', border: '1px solid var(--od)', fontSize: 13, fontWeight: 700, cursor: picked.length ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", opacity: picked.length ? 1 : .4 }}>Share Note</button>
+        <button
+          onClick={() => {
+            if (picked.length === 0) return
+            onShared(picked.length === 1 ? picked[0] : `${picked.length} colleagues`)
+          }}
+          style={{ padding: '9px 18px', borderRadius: 10, background: 'var(--o)', color: '#fff', border: '1px solid var(--od)', fontSize: 13, fontWeight: 700, cursor: picked.length ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", opacity: picked.length ? 1 : .4 }}
+        >Share Note</button>
       </div>
     </div>
   )
