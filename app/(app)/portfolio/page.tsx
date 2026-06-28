@@ -1,13 +1,22 @@
-export default function PortfolioPage() {
-  return (
-    <div className="dsk-screen on">
-      <div className="page-hdr fade-in">
-        <h1 style={{ marginBottom: 0, textTransform: 'capitalize' }}>portfolio</h1>
-        <p>Coming next - we are building screens one at a time.</p>
-      </div>
-      <div className="dcard fade-in" style={{ textAlign: 'center', padding: '56px 24px' }}>
-        <div style={{ fontSize: 14, color: 'var(--t3)' }}>This screen is next in the build queue.</div>
-      </div>
-    </div>
-  )
+import { createClient } from '@/lib/supabase/server'
+import { DEMO_EMAIL } from '@/lib/data'
+import { PortfolioShowcase } from './PortfolioShowcase'
+import { PortfolioReal } from './PortfolioReal'
+
+export default async function PortfolioPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  if (user.email === DEMO_EMAIL) {
+    return <PortfolioShowcase />
+  }
+
+  const { data: accounts } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('health_score', { ascending: true })
+
+  return <PortfolioReal accounts={accounts ?? []} />
 }
