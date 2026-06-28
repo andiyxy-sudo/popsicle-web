@@ -129,6 +129,7 @@ export default function LoginPage() {
 
         .login-demo-btn {
           width: 100%; padding: 14px 18px;
+          font-family: 'Outfit', sans-serif;
           background: linear-gradient(145deg,#FF7028,#E8520A,#D44208);
           border: 1px solid rgba(255,255,255,.15);
           border-radius: 13px;
@@ -191,9 +192,9 @@ export default function LoginPage() {
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
             </div>
-            <div style={{ textAlign: 'left' }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Try demo account</div>
-              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', marginTop: 1 }}>Full access · No signup · Instant</div>
+            <div style={{ textAlign: 'left', fontFamily: "'Outfit', sans-serif" }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: "'Outfit', sans-serif" }}>Try demo account</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', marginTop: 1, fontFamily: "'Outfit', sans-serif", fontWeight: 400 }}>Full access · No signup · Instant</div>
             </div>
             <div style={{ marginLeft: 'auto', fontSize: 18, color: 'rgba(255,255,255,.7)' }}>→</div>
           </div>
