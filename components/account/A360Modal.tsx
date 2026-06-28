@@ -88,9 +88,6 @@ export function A360Modal({ config, onClose }: { config: ModalConfig | null; onC
       <div style={{ background: 'var(--surface)', borderRadius: 16, width: 480, maxWidth: '92vw', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden', boxShadow: '0 24px 80px rgba(13,10,7,.22),0 0 0 1px rgba(0,0,0,.08)', animation: 'modalIn .25s cubic-bezier(.32,0,.17,1)' }}>
         <div style={{ padding: '20px 24px 16px', backgroundColor: '#FF8040', backgroundImage: 'radial-gradient(rgba(255,255,255,.15) 1px,transparent 1px),linear-gradient(140deg,#FFB347,#FF6B35)', backgroundSize: '18px 18px,100% 100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <h3 style={{ fontSize: 15, fontWeight: 800, color: '#fff', margin: 0 }}>{config.title}</h3>
-          <div onClick={onClose} style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,255,255,.2)', border: '1px solid rgba(255,255,255,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-          </div>
         </div>
         <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1 }}>{config.body}</div>
         {config.footer && (

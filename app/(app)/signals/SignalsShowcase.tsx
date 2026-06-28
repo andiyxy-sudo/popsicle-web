@@ -78,14 +78,8 @@ export function SignalsShowcase() {
     const body = ASSET_BODIES[label] || `AI-GENERATED: ${label}\n\nPrepared for: ${sub}\n\nThis asset has been customized based on account signals, communication history, and deal stage. All content is ready to send or edit before deploying.`
     setModal({
       title: `Asset Preview - ${label}`,
-      body: <div>
-        <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--t2)' }}><strong>{label}</strong><span style={{ color: 'var(--t3)' }}> · {sub}</span></div>
-        <div style={{ padding: 14, background: 'var(--inset)', borderRadius: 12, fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: "'Outfit',sans-serif" }}>{body}</div>
-      </div>,
-      footer: <>
-        <ModalBtn onClick={() => setModal(null)}>Close</ModalBtn>
-        <ModalBtn primary onClick={() => actionConfirm('email', 'Sent', `${label} has been sent with tracking enabled.`)}>Send Now</ModalBtn>
-      </>,
+      body: <AssetPreviewBody label={label} sub={sub} text={body} onSend={() => actionConfirm('email', 'Sent', `${label} has been sent with tracking enabled.`)} />,
+      footer: null,
     })
   }
 
@@ -204,6 +198,38 @@ export function SignalsShowcase() {
       </div>
 
       <A360Modal config={modal} onClose={() => setModal(null)} />
+    </div>
+  )
+}
+
+function AssetPreviewBody({ label, sub, text, onSend }: { label: string; sub: string; text: string; onSend: () => void }) {
+  const [editing, setEditing] = useState(false)
+  const [content, setContent] = useState(text)
+  const [copied, setCopied] = useState(false)
+
+  function copy() {
+    if (navigator.clipboard) navigator.clipboard.writeText(content)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  return (
+    <div>
+      <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--t2)' }}><strong>{label}</strong><span style={{ color: 'var(--t3)' }}> · {sub}</span></div>
+      {editing ? (
+        <textarea
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          style={{ width: '100%', minHeight: 180, fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.7, fontFamily: "'Outfit',sans-serif", border: '1.5px solid var(--o)', borderRadius: 12, padding: 14, background: 'var(--surface)', resize: 'vertical', outline: 'none', boxSizing: 'border-box' }}
+        />
+      ) : (
+        <div style={{ padding: 14, background: 'var(--inset)', borderRadius: 12, fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.7, whiteSpace: 'pre-wrap', fontFamily: "'Outfit',sans-serif" }}>{content}</div>
+      )}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button onClick={onSend} style={{ flex: 1, padding: 10, borderRadius: 10, background: 'var(--o)', color: '#fff', border: 'none', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Send Now</button>
+        <button onClick={() => setEditing(e => !e)} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--t1)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>{editing ? 'Done' : 'Edit'}</button>
+        <button onClick={copy} style={{ padding: '10px 18px', borderRadius: 10, background: 'var(--inset)', border: '1px solid var(--border)', color: 'var(--t1)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>{copied ? 'Copied' : 'Copy'}</button>
+      </div>
     </div>
   )
 }
