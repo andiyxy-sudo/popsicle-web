@@ -19,7 +19,7 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push('/dashboard')
+      router.push('/pulse')
       router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -37,7 +37,7 @@ export default function LoginPage() {
         password: 'demo1234',
       })
       if (error) throw error
-      router.push('/dashboard')
+      router.push('/pulse')
       router.refresh()
     } catch {
       setError('Demo account unavailable right now.')
