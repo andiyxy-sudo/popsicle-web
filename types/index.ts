@@ -60,10 +60,14 @@ export interface AccountBaseline {
   id: string
   account_id: string
   user_id: string
-  avg_reply_time_hours: number | null
-  contact_cadence_days: number | null
-  confidence: 'none' | 'low' | 'medium' | 'high'
-  updated_at: string
+  account_name: string
+  their_avg_reply_hours: number | null
+  our_avg_reply_hours: number | null
+  emails_per_week: number | null
+  avg_interval_hours: number | null
+  total_messages: number | null
+  confidence: 'none' | 'low' | 'medium' | 'high' | null
+  computed_at: string
 }
 
 export interface ZoomTranscript {

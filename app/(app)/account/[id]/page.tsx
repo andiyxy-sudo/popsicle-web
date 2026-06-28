@@ -20,16 +20,17 @@ export default async function AccountDetailPage({ params }: Props) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const [accountRes, signalsRes, transcriptsRes, baselineRes] = await Promise.all([
-    supabase.from('accounts').select('*').eq('id', id).eq('user_id', user.id).single(),
-    supabase.from('signals').select('*').eq('account_id', id).eq('user_id', user.id).eq('is_dismissed', false).order('created_at', { ascending: false }).limit(20),
+  // Fetch the account first so we can match signals by account_name
+  const accountRes = await supabase.from('accounts').select('*').eq('id', id).eq('user_id', user.id).single()
+  if (!accountRes.data) notFound()
+  const account = accountRes.data
+
+  const [signalsRes, transcriptsRes, baselineRes] = await Promise.all([
+    supabase.from('signals').select('*').eq('account_name', account.name).eq('user_id', user.id).eq('is_dismissed', false).order('created_at', { ascending: false }).limit(20),
     supabase.from('zoom_transcripts').select('*').eq('account_id', id).eq('user_id', user.id).order('created_at', { ascending: false }).limit(5),
-    supabase.from('account_baselines').select('*').eq('account_id', id).eq('user_id', user.id).single(),
+    supabase.from('account_baselines').select('*').eq('account_id', id).eq('user_id', user.id).maybeSingle(),
   ])
 
-  if (!accountRes.data) notFound()
-
-  const account = accountRes.data
   const signals = signalsRes.data ?? []
   const transcripts = transcriptsRes.data ?? []
   const baseline = baselineRes.data
@@ -283,21 +284,21 @@ export default async function AccountDetailPage({ params }: Props) {
                   Communication Baseline
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {baseline.avg_reply_time_hours != null && (
+                  {baseline.their_avg_reply_hours != null && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--t3)' }}>Avg reply time</span>
+                      <span style={{ fontSize: 12, color: 'var(--t3)' }}>Their avg reply</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', fontFamily: "'DM Mono', monospace" }}>
-                        {baseline.avg_reply_time_hours < 1
-                          ? `${Math.round(baseline.avg_reply_time_hours * 60)}m`
-                          : `${Math.round(baseline.avg_reply_time_hours)}h`}
+                        {baseline.their_avg_reply_hours < 1
+                          ? `${Math.round(baseline.their_avg_reply_hours * 60)}m`
+                          : `${Math.round(baseline.their_avg_reply_hours)}h`}
                       </span>
                     </div>
                   )}
-                  {baseline.contact_cadence_days != null && (
+                  {baseline.emails_per_week != null && (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: 'var(--t3)' }}>Contact cadence</span>
+                      <span style={{ fontSize: 12, color: 'var(--t3)' }}>Emails per week</span>
                       <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)', fontFamily: "'DM Mono', monospace" }}>
-                        every {baseline.contact_cadence_days}d
+                        {Number(baseline.emails_per_week).toFixed(1)}
                       </span>
                     </div>
                   )}
