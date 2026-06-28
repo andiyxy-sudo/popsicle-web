@@ -72,7 +72,8 @@ export function AIPanel({ open, onClose, isDemo, greetingName }: AIPanelProps) {
         body: JSON.stringify({ messages: next }),
       })
       const data = await res.json()
-      setMessages([...next, { role: 'assistant', content: data.content || 'Sorry, I could not generate a response.' }])
+      const reply = data.content || data.error || 'Sorry, I could not generate a response.'
+      setMessages([...next, { role: 'assistant', content: reply }])
     } catch {
       setMessages([...next, { role: 'assistant', content: 'Something went wrong reaching the AI service. Please try again.' }])
     } finally {
@@ -98,12 +99,12 @@ export function AIPanel({ open, onClose, isDemo, greetingName }: AIPanelProps) {
                 <defs><linearGradient id="pgai" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#FFB060"/><stop offset="100%" stopColor="#FF6B35"/></linearGradient></defs>
                 <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="url(#pgai)"/>
                 <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#C4510A"/>
-                <path d="M27 16L19 35h7l-4 15 13-19h-8l5-15z" fill="white" fillOpacity=".95"/>
+                <path d="M25 16L17 35h7l-4 15 13-19h-8l5-15z" fill="white" fillOpacity=".95"/>
               </svg>
             </div>
             <div>
               <div className="ai-hdr-title">Ask Popsicle</div>
-              <div className="ai-hdr-sub">revenue co-pilot · live</div>
+              <div className="ai-hdr-sub">revenue intelligence OS · live</div>
             </div>
             <div className="ai-hdr-close" onClick={onClose}>
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

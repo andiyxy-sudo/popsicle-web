@@ -49,16 +49,21 @@ Rules:
 - Keep responses concise. Use bullet points for lists of accounts or actions.
 `.trim()
 
+  // Explicit check so we get a clear message instead of a silent failure
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: 'AI is not configured. Add ANTHROPIC_API_KEY in Vercel environment variables.' }, { status: 500 })
+  }
+
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY!,
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: 'claude-sonnet-4-5',
         max_tokens: 1024,
         system: contextBlock,
         messages: messages.map((m: { role: string; content: string }) => ({
@@ -71,15 +76,16 @@ Rules:
     const data = await res.json()
 
     if (!res.ok) {
-      return NextResponse.json({ error: data.error?.message ?? 'API error' }, { status: 500 })
+      const msg = data?.error?.message ?? `API error (${res.status})`
+      return NextResponse.json({ error: msg }, { status: 200 })
     }
 
     const content = data.content?.[0]?.text ?? ''
-    // Strip any em-dashes that sneak through
     const cleaned = content.replace(/[—–]/g, ' - ')
 
     return NextResponse.json({ content: cleaned })
-  } catch {
-    return NextResponse.json({ error: 'Failed to reach AI service' }, { status: 500 })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Failed to reach AI service'
+    return NextResponse.json({ error: msg }, { status: 200 })
   }
 }
