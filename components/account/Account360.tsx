@@ -120,11 +120,20 @@ export function Account360() {
     let noteType = 'Call Summary'
     setModal({
       title: `Log Note — ${data!.name}`,
-      body: <LogNoteBody onChange={(t, ty) => { noteText = t; noteType = ty }} />,
+      body: <LogNoteBody accountName={data!.name} onChange={(t, ty) => { noteText = t; noteType = ty }} />,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn onClick={() => { if (noteText.trim()) shareNoteModal(noteType, noteText) }}>Share</ModalBtn>
         <ModalBtn primary onClick={() => { if (noteText.trim()) successModal('Note Saved ✓', `${noteType} added to ${data!.name} account history.`) }}>Save Note</ModalBtn>
       </>,
+    })
+  }
+
+  function shareNoteModal(noteType: string, noteText: string) {
+    setModal({
+      title: `Share Note — ${data!.name}`,
+      body: <ShareNoteBody accountName={data!.name} noteType={noteType} noteText={noteText} onShared={(who) => successModal('Note Shared ✓', `${noteType} for ${data!.name} shared with ${who}. They will get a notification.`)} />,
+      footer: null,
     })
   }
 
@@ -166,11 +175,115 @@ export function Account360() {
     })
   }
 
+  function scheduleCallModal() {
+    setModal({
+      title: 'Schedule Call',
+      body: <ScheduleCallBody contact={data!.contact.split(' · ')[0]} acct={data!.name} onConfirm={(dt, tm) => {
+        setModal({
+          title: 'Confirmed',
+          body: <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.1)', border: '2px solid rgba(22,163,74,.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--t1)', letterSpacing: '-.3px', marginBottom: 6 }}>Call scheduled</div>
+            <div style={{ fontSize: 13, color: 'var(--t2)', marginBottom: 4 }}>with <strong>{data!.contact.split(' · ')[0]}</strong></div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ok)', marginBottom: 20 }}>{dt} at {tm}</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, background: 'rgba(22,163,74,.05)', border: '1px solid rgba(22,163,74,.15)', borderRadius: 10, padding: '14px 16px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--t2)' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Calendar invite sent to <strong>{data!.contact.split(' · ')[0]}</strong></div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--t2)' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/></svg>Your calendar has been updated</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12, color: 'var(--t2)' }}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/></svg>Reminder set 30 minutes before</div>
+            </div>
+          </div>,
+          footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
+        })
+      }} />,
+      footer: null,
+    })
+  }
+
+  function battleCardModal() {
+    const rows = [
+      ['Real-time signals', '✓ Live', 'Batch only', '✗'],
+      ['Channels covered', '7 sources', 'Calls only', 'CRM only'],
+      ['AI response kits', '✓ Auto-generated', '✗', '✗'],
+      ['WhatsApp monitoring', '✓', '✗', '✗'],
+      ['Revenue Loop', '✓ Unique', '✗', '✗'],
+      ['Churn prediction', '94% accuracy', '72%', '68%'],
+    ]
+    setModal({
+      title: `Battle Card — ${data!.name}`,
+      body: <div>
+        <div style={{ marginBottom: 10, fontSize: 12, color: 'var(--t3)' }}>Sending to <strong style={{ color: 'var(--t1)' }}>{data!.contact.split(' · ')[0]}</strong> · competitive intelligence briefing</div>
+        <div style={{ background: 'linear-gradient(135deg,rgba(255,107,53,.04),rgba(255,107,53,.02))', border: '1.5px solid rgba(255,107,53,.15)', borderRadius: 14, overflow: 'hidden', marginBottom: 12 }}>
+          <div style={{ background: 'linear-gradient(135deg,rgba(255,107,53,.12),rgba(255,107,53,.06))', padding: '12px 16px', borderBottom: '1px solid rgba(255,107,53,.1)' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--o)', letterSpacing: '1.2px', textTransform: 'uppercase', fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>Competitive Intelligence</div>
+            <div style={{ fontSize: 15, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-.3px' }}>Popsicle vs Gong vs Clari</div>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+            <thead><tr style={{ background: 'rgba(255,107,53,.06)' }}>
+              <th style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 800, color: 'var(--t2)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.6px', borderBottom: '1px solid rgba(255,107,53,.1)' }}>Capability</th>
+              <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 800, color: 'var(--o)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.6px', borderBottom: '1px solid rgba(255,107,53,.1)' }}>Popsicle</th>
+              <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 700, color: 'var(--t3)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.6px', borderBottom: '1px solid rgba(255,107,53,.1)' }}>Gong</th>
+              <th style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 700, color: 'var(--t3)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.6px', borderBottom: '1px solid rgba(255,107,53,.1)' }}>Clari</th>
+            </tr></thead>
+            <tbody>
+              {rows.map((row, i) => (
+                <tr key={i} style={{ background: i % 2 === 0 ? '' : 'rgba(255,107,53,.02)', borderBottom: '1px solid rgba(0,0,0,.04)' }}>
+                  <td style={{ padding: '9px 14px', fontWeight: 600, color: 'var(--t1)' }}>{row[0]}</td>
+                  <td style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 800, color: row[1].startsWith('✓') ? 'var(--ok)' : 'var(--o)' }}>{row[1]}</td>
+                  <td style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 600, color: row[2] === '✗' ? 'var(--danger)' : 'var(--t3)' }}>{row[2]}</td>
+                  <td style={{ padding: '9px 12px', textAlign: 'center', fontWeight: 600, color: row[3] === '✗' ? 'var(--danger)' : 'var(--t3)' }}>{row[3]}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div style={{ padding: '12px 16px', background: 'rgba(22,163,74,.04)', borderTop: '1px solid rgba(22,163,74,.1)' }}>
+            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 4 }}>Key Win Argument</div>
+            <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.6 }}>Popsicle catches signals <strong>3x faster</strong> than Gong and monitors <strong>7 channels</strong> Clari cannot access. This month alone we detected {data!.signals} {data!.name} signals that Gong would have missed.</div>
+          </div>
+        </div>
+      </div>,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Battle Card Sent ✓', `Battle card delivered to ${data!.name}. CRO notified. Click tracking enabled.`)}>Send to Contact</ModalBtn>
+      </>,
+    })
+  }
+
+  function pricingDeckModal() {
+    setModal({
+      title: `Pricing Deck — ${data!.name}`,
+      body: <PricingDeckBody />,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Proposal Sent ✓', `3-option pricing deck sent to ${data!.name}. Click tracking enabled, you will be notified when viewed.`)}>Send Proposal</ModalBtn>
+      </>,
+    })
+  }
+
   function escalateModal() {
+    const contact = data!.contact.split(' · ')[0]
+    const steps = ['Notify your CRO with AI-generated risk brief', `Send executive summary to ${contact} via email`, 'Flag account in Salesforce as At Risk', 'Block renewal auto-renewal pending resolution', 'Schedule emergency account review call']
     setModal({
       title: `Escalate Risk — ${data!.name}`,
-      body: <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>
-        Send an executive risk brief to your CRO for <strong>{data!.name}</strong>. This flags the account for exec-to-exec engagement and escalates AI monitoring.
+      body: <div>
+        <div style={{ background: 'rgba(220,38,38,.04)', border: '1px solid rgba(220,38,38,.15)', borderRadius: 12, padding: '14px 16px', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--danger)' }}>Risk escalation: {data!.name}</div>
+            <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 2 }}>This will notify your CRO and flag the account for executive intervention.</div>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--t4)', fontFamily: "'DM Mono',monospace", letterSpacing: '1px', textTransform: 'uppercase', marginBottom: 8 }}>Escalation path</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 14 }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', background: 'var(--inset)', borderRadius: 9 }}>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(220,38,38,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: 'var(--danger)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{i + 1}</div>
+              <span style={{ fontSize: 12.5, color: 'var(--t1)' }}>{step}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--t3)', fontStyle: 'italic' }}>Escalations are logged and shared with your team automatically.</div>
       </div>,
       footer: <>
         <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
@@ -179,23 +292,12 @@ export function Account360() {
     })
   }
 
-  function simpleConfirmModal(title: string, desc: string, btn: string, success: [string, string]) {
-    setModal({
-      title,
-      body: <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: desc }} />,
-      footer: <>
-        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
-        <ModalBtn primary onClick={() => successModal(success[0], success[1])}>{btn}</ModalBtn>
-      </>,
-    })
-  }
-
   const actions = [
     { label: 'Draft Follow-up', primary: true, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></svg>, onClick: () => askAI(`Draft a follow-up email to ${data!.contact} at ${data!.name}`) },
-    { label: 'Schedule Call', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, onClick: () => simpleConfirmModal(`Schedule Call — ${data!.name}`, `Set up a call with <strong>${data!.contact.split(' · ')[0]}</strong>. Popsicle will draft an agenda and suggest the best time based on signal activity.`, 'Send Invite', ['Call Scheduled ✓', `Calendar invite drafted for ${data!.contact.split(' · ')[0]}. Agenda attached.`]) },
-    { label: 'Battle Card', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, onClick: () => simpleConfirmModal(`Battle Card — ${data!.name}`, `Generate a competitive battle card for <strong>${data!.name}</strong> with positioning, objection handling, and differentiation points.`, 'Generate', ['Battle Card Ready ✓', `Competitive battle card for ${data!.name} generated and saved to the account.`]) },
+    { label: 'Schedule Call', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, onClick: scheduleCallModal },
+    { label: 'Battle Card', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, onClick: battleCardModal },
     { label: 'Escalate Risk', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, onClick: escalateModal },
-    { label: 'Pricing Deck', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>, onClick: () => simpleConfirmModal(`Pricing Deck — ${data!.name}`, `Build a tailored pricing proposal for <strong>${data!.name}</strong> with phased options to reduce perceived risk.`, 'Build Deck', ['Pricing Deck Ready ✓', `Tailored pricing proposal for ${data!.name} generated.`]) },
+    { label: 'Pricing Deck', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>, onClick: pricingDeckModal },
     { label: 'Log Note', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, onClick: logNoteModal },
     { label: 'Run Playbook', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>, onClick: playbookModal },
     { label: 'Ask AI', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, onClick: () => askAI(`Analyse ${data!.name} and recommend next steps`) },
@@ -493,13 +595,14 @@ function Empty({ label }: { label: string }) {
   return <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--t3)', fontSize: 13 }}>{label}</div>
 }
 
-function LogNoteBody({ onChange }: { onChange: (text: string, type: string) => void }) {
+function LogNoteBody({ accountName, onChange }: { accountName: string; onChange: (text: string, type: string) => void }) {
   const [text, setText] = useState('')
   const [type, setType] = useState('Call Summary')
   const types = ['Call Summary', 'Meeting Note', 'Internal Update', 'Follow-up', 'Risk Flag', 'Other']
   useEffect(() => { onChange(text, type) }, [text, type, onChange])
   return (
     <div>
+      <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--t2)' }}>Add a note to <strong>{accountName}</strong> account history.</div>
       <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 7 }}>Note</div>
       <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Type your note..." style={{ width: '100%', minHeight: 110, fontSize: 13, color: 'var(--t1)', lineHeight: 1.6, fontFamily: "'Outfit',sans-serif", border: '1.5px solid var(--border)', borderRadius: 12, padding: 12, background: 'var(--inset)', resize: 'vertical', outline: 'none', boxSizing: 'border-box', display: 'block', marginBottom: 14 }} />
       <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 7 }}>Type</div>
@@ -508,6 +611,129 @@ function LogNoteBody({ onChange }: { onChange: (text: string, type: string) => v
           const active = t === type
           return <div key={t} onClick={() => setType(t)} style={{ padding: '5px 12px', borderRadius: 20, border: `1.5px solid ${active ? 'var(--o)' : 'var(--border)'}`, background: active ? 'rgba(255,107,53,.08)' : 'var(--inset)', fontSize: 11, fontWeight: 600, color: active ? 'var(--o)' : 'var(--t2)', cursor: 'pointer' }}>{t}</div>
         })}
+      </div>
+    </div>
+  )
+}
+
+function ScheduleCallBody({ contact, acct, onConfirm }: { contact: string; acct: string; onConfirm: (dt: string, tm: string) => void }) {
+  const [calDate, setCalDate] = useState(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d })
+  const [selected, setSelected] = useState<Date | null>(null)
+  const [time, setTime] = useState<string | null>(null)
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  const dshort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const times = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM']
+
+  const y = calDate.getFullYear(), m = calDate.getMonth()
+  const first = new Date(y, m, 1).getDay()
+  const total = new Date(y, m + 1, 0).getDate()
+  const now = new Date(); now.setHours(0, 0, 0, 0)
+
+  const ready = !!(selected && time)
+
+  return (
+    <div>
+      <div style={{ fontSize: 13, color: 'var(--t2)', marginBottom: 20 }}>Scheduling with <strong style={{ color: 'var(--t1)' }}>{contact}</strong> at <strong style={{ color: 'var(--t1)' }}>{acct}</strong></div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 7 }}>Date</div>
+      <div style={{ background: 'var(--inset)', border: '1.5px solid var(--border)', borderRadius: 10, padding: 10, marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div onClick={() => setCalDate(new Date(y, m - 1, 1))} style={{ width: 26, height: 26, borderRadius: 7, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, color: 'var(--t2)' }}>‹</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t1)' }}>{months[m]} {y}</div>
+          <div onClick={() => setCalDate(new Date(y, m + 1, 1))} style={{ width: 26, height: 26, borderRadius: 7, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 15, color: 'var(--t2)' }}>›</div>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 2, textAlign: 'center', marginBottom: 5 }}>
+          {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d} style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', padding: '2px 0', fontFamily: "'DM Mono',monospace" }}>{d}</div>)}
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7,1fr)', gap: 3, textAlign: 'center' }}>
+          {Array.from({ length: first }).map((_, i) => <div key={`e${i}`}></div>)}
+          {Array.from({ length: total }).map((_, i) => {
+            const d = i + 1
+            const dt = new Date(y, m, d); dt.setHours(0, 0, 0, 0)
+            const past = dt < now
+            const sel = selected && dt.toDateString() === selected.toDateString()
+            const isToday = dt.toDateString() === now.toDateString()
+            return (
+              <div key={d} onClick={() => { if (!past) setSelected(dt) }} style={{ padding: '5px 2px', borderRadius: 7, fontSize: 11, fontWeight: sel ? 700 : 400, background: sel ? 'var(--o)' : isToday ? 'rgba(255,107,53,.12)' : 'transparent', color: sel ? '#fff' : past ? 'var(--t4)' : 'var(--t1)', border: `1px solid ${sel ? 'var(--o)' : isToday ? 'rgba(255,107,53,.3)' : 'transparent'}`, cursor: past ? 'default' : 'pointer', opacity: past ? .3 : 1 }}>{d}</div>
+            )
+          })}
+        </div>
+        {selected && <div style={{ marginTop: 10, padding: '6px 12px', background: 'rgba(255,107,53,.06)', border: '1px solid rgba(255,107,53,.18)', borderRadius: 8, fontSize: 12, fontWeight: 600, color: 'var(--o)', textAlign: 'center' }}>{dshort[selected.getDay()]}, {months[selected.getMonth()]} {selected.getDate()}</div>}
+      </div>
+      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t4)', marginBottom: 7 }}>Time</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+        {times.map(t => {
+          const on = time === t
+          return <div key={t} onClick={() => setTime(t)} style={{ padding: '6px 14px', borderRadius: 20, background: on ? 'var(--o)' : 'var(--inset)', color: on ? '#fff' : 'var(--t2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', border: `1px solid ${on ? 'var(--o)' : 'transparent'}` }}>{t}</div>
+        })}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button disabled={!ready} onClick={() => { if (ready && selected && time) onConfirm(`${dshort[selected.getDay()]}, ${months[selected.getMonth()]} ${selected.getDate()}`, time) }} style={{ padding: '9px 18px', borderRadius: 10, background: 'var(--o)', color: '#fff', border: '1px solid var(--od)', fontSize: 13, fontWeight: 700, cursor: ready ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", opacity: ready ? 1 : .4 }}>Confirm →</button>
+      </div>
+    </div>
+  )
+}
+
+function PricingDeckBody() {
+  const [sel, setSel] = useState(0)
+  const opts = [
+    { c: 'var(--ok)', bg: 'rgba(42,157,92,.04)', bd: 'rgba(42,157,92,.2)', title: 'Option A: Phased Start', tag: '62% close rate', desc: '60% commitment now, expand after ROI proven. Lowest barrier to entry.' },
+    { c: 'var(--o)', bg: 'rgba(255,107,53,.04)', bd: 'rgba(255,107,53,.2)', title: 'Option B: Annual Discount', tag: 'Best value', desc: '12% discount on annual commitment. Full platform access.' },
+    { c: 'var(--blue)', bg: 'rgba(59,111,222,.04)', bd: 'rgba(59,111,222,.2)', title: 'Option C: Pilot Program', tag: '78% conversion', desc: '3-month pilot at 40% of full price. Low risk entry.' },
+  ]
+  return (
+    <div>
+      <div style={{ marginBottom: 14, fontSize: 13, color: 'var(--t2)' }}>AI-prepared phased pricing options based on deal context.</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {opts.map((o, i) => {
+          const on = sel === i
+          return (
+            <div key={i} onClick={() => setSel(i)} style={{ padding: 14, background: on ? o.bg : 'var(--inset)', border: `2px solid ${on ? o.c : 'var(--border)'}`, borderRadius: 12, cursor: 'pointer', transition: 'all .15s' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: o.c }}>{o.title}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: o.c, background: `${o.bg}`, padding: '2px 8px', borderRadius: 20 }}>{o.tag}</span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.5 }}>{o.desc}</div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function ShareNoteBody({ accountName, noteType, noteText, onShared }: { accountName: string; noteType: string; noteText: string; onShared: (who: string) => void }) {
+  const colleagues = [
+    { name: 'Mike Ross', role: 'Account Executive', initials: 'MR' },
+    { name: 'Jamie Torres', role: 'Sales Engineer', initials: 'JT' },
+    { name: 'Lini July', role: 'Sales Manager', initials: 'LJ' },
+    { name: 'Gabby Intan', role: 'Revenue Ops', initials: 'GI' },
+  ]
+  const [picked, setPicked] = useState<string[]>([])
+  const toggle = (n: string) => setPicked(p => p.includes(n) ? p.filter(x => x !== n) : [...p, n])
+  return (
+    <div>
+      <div style={{ marginBottom: 14, fontSize: 13, color: 'var(--t2)' }}>Share this <strong>{noteType}</strong> on <strong>{accountName}</strong> with your team.</div>
+      <div style={{ padding: '10px 12px', background: 'var(--inset)', borderRadius: 10, fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, marginBottom: 16, border: '1px solid var(--border-soft)', maxHeight: 80, overflow: 'auto' }}>{noteText}</div>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 8 }}>Share with</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 16 }}>
+        {colleagues.map(c => {
+          const on = picked.includes(c.name)
+          return (
+            <div key={c.name} onClick={() => toggle(c.name)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '9px 12px', background: on ? 'rgba(255,107,53,.06)' : 'var(--inset)', border: `1.5px solid ${on ? 'var(--o)' : 'var(--border)'}`, borderRadius: 10, cursor: 'pointer', transition: 'all .15s' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: 'var(--t2)', flexShrink: 0 }}>{c.initials}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{c.name}</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>{c.role}</div>
+              </div>
+              <div style={{ width: 20, height: 20, borderRadius: '50%', border: `2px solid ${on ? 'var(--o)' : 'var(--border)'}`, background: on ? 'var(--o)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {on && <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <button disabled={picked.length === 0} onClick={() => onShared(picked.length === 1 ? picked[0] : `${picked.length} colleagues`)} style={{ padding: '9px 18px', borderRadius: 10, background: 'var(--o)', color: '#fff', border: '1px solid var(--od)', fontSize: 13, fontWeight: 700, cursor: picked.length ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", opacity: picked.length ? 1 : .4 }}>Share Note</button>
       </div>
     </div>
   )
