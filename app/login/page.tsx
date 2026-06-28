@@ -10,7 +10,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -49,292 +48,236 @@ export default function LoginPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: '#F5F0EB',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '24px',
+      position: 'fixed', inset: 0, zIndex: 10050,
+      background: '#F8F5F0',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontFamily: "'Outfit', sans-serif",
     }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        input::placeholder { color: #B8AFA8; }
-        input:focus { outline: none; }
-        .input-field {
-          width: 100%;
-          padding: 14px 16px;
-          background: #EDEAE5;
-          border: 1.5px solid transparent;
-          border-radius: 12px;
-          font-size: 14px;
-          color: #3D2F25;
+        @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        @keyframes loginIn {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .login-card {
+          width: 420px;
+          background: #FFFFFF;
+          border: 1px solid #F0EDE8;
+          border-radius: 18px;
+          padding: 40px;
+          box-shadow: 0 16px 48px rgba(15,12,9,.12), 0 6px 16px rgba(15,12,9,.08);
+          animation: loginIn .5s cubic-bezier(0,.6,.4,1);
+        }
+
+        .login-input {
+          width: 100%; padding: 11px 14px;
+          background: #F0EDE7;
+          border: 1px solid #E4DDD3;
+          border-radius: 9px;
           font-family: 'Outfit', sans-serif;
-          transition: all .18s;
+          font-size: 14px; color: #4A3C32;
+          outline: none; margin-bottom: 10px; display: block;
+          box-shadow: inset 0 1px 3px rgba(15,12,9,.05);
+          transition: all .15s;
         }
-        .input-field:focus {
+        .login-input:focus {
           border-color: #FF6B35;
-          background: #fff;
-          box-shadow: 0 0 0 4px rgba(255,107,53,.1);
+          box-shadow: inset 0 1px 3px rgba(15,12,9,.05), 0 0 0 3px rgba(255,107,53,.06);
+          background: #FFFFFF;
         }
-        .divider {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          margin: 20px 0;
+        .login-input::placeholder { color: #B0A89C; }
+
+        .login-btn {
+          width: 100%; padding: 12px;
+          background-color: #FF8040;
+          background-image: radial-gradient(rgba(255,255,255,.15) 1px, transparent 1px), linear-gradient(140deg,#FFB347 0%,#FF8C42 40%,#FF6B35 100%);
+          background-size: 18px 18px, 100% 100%;
+          color: #fff; border: none; border-radius: 9px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px;
+          box-shadow: 0 3px 14px rgba(255,107,53,.22);
+          transition: all .15s;
         }
-        .divider::before, .divider::after {
-          content: '';
-          flex: 1;
-          height: 1px;
-          background: #E0D9D2;
+        .login-btn:hover { background: #E55A22; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,107,53,.22); }
+        .login-btn:active { transform: translateY(0); }
+        .login-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+        .login-divider {
+          text-align: center; font-size: 11px; color: #B0A89C;
+          margin: 18px 0 12px; position: relative;
         }
-        .divider span {
-          font-size: 12px;
-          color: #A09086;
-          white-space: nowrap;
+        .login-divider::before, .login-divider::after {
+          content: ''; position: absolute; top: 50%; width: 38%; height: 1px; background: #E4DDD3;
         }
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 4px 24px rgba(255,107,53,.35); }
-          50% { box-shadow: 0 4px 36px rgba(255,107,53,.55); }
+        .login-divider::before { left: 0; }
+        .login-divider::after  { right: 0; }
+
+        .login-social { display: flex; gap: 8px; }
+        .login-social button {
+          flex: 1; padding: 9px;
+          background: #F0EDE7; border: 1px solid #E4DDD3; border-radius: 9px;
+          font-family: 'Outfit', sans-serif;
+          font-size: 12px; font-weight: 600; color: #6B5C50;
+          cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 7px;
+          box-shadow: 0 1px 3px rgba(15,12,9,.06), 0 1px 2px rgba(15,12,9,.04);
+          transition: all .15s;
         }
+        .login-social button:hover { border-color: #FF6B35; color: #FF6B35; transform: translateY(-1px); }
+
+        .login-demo-btn {
+          width: 100%; padding: 14px 18px;
+          background: linear-gradient(145deg,#FF7028,#E8520A,#D44208);
+          border: 1px solid rgba(255,255,255,.15);
+          border-radius: 13px;
+          cursor: pointer;
+          margin-bottom: 6px;
+          box-shadow: 0 4px 20px rgba(232,88,10,.45), 0 1px 3px rgba(232,88,10,.25), inset 0 1px 0 rgba(255,255,255,.12);
+          transition: all .18s;
+          position: relative; overflow: hidden;
+        }
+        .login-demo-btn::before {
+          content: ''; position: absolute; top: 0; right: 0; width: 120px; height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,.06));
+          pointer-events: none;
+        }
+        .login-demo-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 28px rgba(232,88,10,.55), 0 2px 6px rgba(232,88,10,.3), inset 0 1px 0 rgba(255,255,255,.12);
+        }
+        .login-demo-btn:active { transform: translateY(0); }
+        .login-demo-btn:disabled { opacity: 0.7; cursor: not-allowed; }
       `}</style>
 
-      <div style={{ width: '100%', maxWidth: 400 }}>
+      <div className="login-card">
 
-        {/* Logo */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          {/* Ice cream popsicle SVG icon */}
-          <div style={{ marginBottom: 10 }}>
-            <svg width="72" height="80" viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Stick */}
-              <rect x="31" y="54" width="10" height="22" rx="5" fill="#D4845A"/>
-              {/* Body */}
-              <rect x="8" y="8" width="56" height="52" rx="28" fill="url(#popgrad)"/>
-              {/* Lightning bolt */}
-              <path d="M42 18L28 38H36L30 54L46 30H38L42 18Z" fill="white" fillOpacity="0.9"/>
-              <defs>
-                <linearGradient id="popgrad" x1="8" y1="8" x2="64" y2="60" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#FFB347"/>
-                  <stop offset="100%" stopColor="#FF6B35"/>
-                </linearGradient>
-              </defs>
-            </svg>
-          </div>
-          <div style={{ fontSize: 32, fontWeight: 900, color: '#2D1F14', letterSpacing: '-1px', lineHeight: 1 }}>
-            popsicle
-          </div>
-          <div style={{ fontSize: 11, fontWeight: 800, color: '#FF6B35', letterSpacing: '0.35em', marginTop: 3 }}>
-            LABS
+        {/* Logo — vertical: icon centered, wordmark below */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginBottom: 28 }}>
+          <svg width="44" height="80" viewBox="4 0 40 80" fill="none">
+            <defs>
+              <linearGradient id="lg-lo" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FF6B35"/>
+                <stop offset="100%" stopColor="#FFD166"/>
+              </linearGradient>
+            </defs>
+            <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="url(#lg-lo)"/>
+            <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#E85A25"/>
+            <path d="M25 16L17 34h6l-4 14 12-18h-6l4-14z" fill="white" fillOpacity=".95"/>
+          </svg>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: 28, fontWeight: 900, letterSpacing: '-.8px', color: '#4A3C32', lineHeight: 1 }}>popsicle</div>
+            <div style={{ fontSize: 8, fontWeight: 700, color: '#FF6B35', textTransform: 'uppercase', letterSpacing: '.4em', fontFamily: "'DM Mono', monospace", marginTop: 4 }}>labs</div>
           </div>
         </div>
 
-        {/* Card */}
-        <div style={{
-          background: '#fff',
-          borderRadius: 24,
-          padding: '28px 28px 24px',
-          boxShadow: '0 8px 40px rgba(45,31,20,.1), 0 2px 8px rgba(45,31,20,.06)',
-        }}>
+        {/* Error */}
+        {error && (
+          <div style={{
+            background: 'rgba(220,38,38,.07)', border: '1px solid rgba(220,38,38,.18)',
+            borderRadius: 9, padding: '10px 14px', marginBottom: 12,
+            fontSize: 13, color: '#DC2626',
+          }}>
+            {error}
+          </div>
+        )}
 
-          {/* Demo banner */}
-          <button
-            onClick={handleDemo}
-            disabled={loading}
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 14,
-              padding: '14px 18px',
-              background: 'linear-gradient(135deg, #FF8C42 0%, #FF6B35 60%, #E85520 100%)',
-              borderRadius: 14,
-              border: 'none',
-              cursor: 'pointer',
-              marginBottom: 20,
-              animation: 'pulse-glow 2.5s ease-in-out infinite',
-              transition: 'transform .15s',
-              position: 'relative',
-              overflow: 'hidden',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
-            onMouseLeave={e => (e.currentTarget.style.transform = 'translateY(0)')}
-          >
-            {/* shimmer */}
-            <div style={{
-              position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent)',
-              animation: 'shimmer 2s ease-in-out infinite',
-            }}/>
-            <style>{`@keyframes shimmer { 0%{left:-100%} 100%{left:200%} }`}</style>
-
-            <div style={{
-              width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-              background: 'rgba(255,255,255,.2)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
-                <polygon points="5,3 19,12 5,21"/>
+        {/* Demo button */}
+        <button className="login-demo-btn" onClick={handleDemo} disabled={loading}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 34, height: 34, borderRadius: 9, background: 'rgba(255,255,255,.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
             </div>
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontSize: 15, fontWeight: 800, color: '#fff', lineHeight: 1.2 }}>
-                Try demo account
-              </div>
-              <div style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', marginTop: 2 }}>
-                Full access · No signup · Instant
-              </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>Try demo account</div>
+              <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', marginTop: 1 }}>Full access · No signup · Instant</div>
             </div>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.8)" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-            </svg>
+            <div style={{ marginLeft: 'auto', fontSize: 18, color: 'rgba(255,255,255,.7)' }}>→</div>
+          </div>
+        </button>
+
+        {/* Divider */}
+        <div className="login-divider">or sign in with email</div>
+
+        {/* Email + Password */}
+        <form onSubmit={handleSubmit}>
+          <input
+            className="login-input"
+            type="email"
+            placeholder="Email address"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+          <input
+            className="login-input"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+            required
+          />
+          <button className="login-btn" type="submit" disabled={loading}>
+            {loading ? 'Signing in...' : 'Sign In →'}
           </button>
+        </form>
 
-          {/* Divider */}
-          <div className="divider"><span>or sign in with email</span></div>
+        {/* Social */}
+        <div className="login-divider" style={{ marginTop: 16 }}>or continue with</div>
+        <div className="login-social">
+          <button type="button" title="Coming soon" disabled>
+            <svg width="15" height="15" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.58-13.46-8.91l-7.98 6.19C6.51 42.67 14.62 48 24 48z"/>
+            </svg>
+            Google
+          </button>
+          <button type="button" title="Coming soon" disabled>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <polyline points="22 7 12 13 2 7"/>
+            </svg>
+            SSO
+          </button>
+        </div>
 
-          {/* Error */}
-          {error && (
-            <div style={{
-              background: 'rgba(220,38,38,.07)', border: '1px solid rgba(220,38,38,.18)',
-              borderRadius: 10, padding: '10px 14px', marginBottom: 14,
-              fontSize: 13, color: '#DC2626',
-            }}>
-              {error}
-            </div>
-          )}
+        {/* Revenue loop pipeline */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7, padding: '22px 0 0', borderTop: '1px solid #F0EDE8', marginTop: 8 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#4A3C32', letterSpacing: '-.1px' }}>Signals</span>
+          <span style={{ color: '#B0A89C', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>›</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-4 0v2"/></svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#4A3C32', letterSpacing: '-.1px' }}>Cases</span>
+          <span style={{ color: '#B0A89C', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>›</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#4A3C32', letterSpacing: '-.1px' }}>Actions</span>
+          <span style={{ color: '#B0A89C', fontSize: 13, lineHeight: 1, padding: '0 2px' }}>›</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></svg>
+          <span style={{ fontSize: 11, fontWeight: 600, color: '#4A3C32', letterSpacing: '-.1px' }}>Impact</span>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit}>
-            <div style={{ marginBottom: 10 }}>
-              <input
-                className="input-field"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="andy@popsicle-labs.app"
-                required
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <input
-                className="input-field"
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: '100%', padding: '14px',
-                background: loading ? '#F0A882' : 'linear-gradient(135deg, #FF8C42, #FF6B35)',
-                color: '#fff', border: 'none', borderRadius: 12,
-                fontSize: 15, fontWeight: 800, cursor: loading ? 'not-allowed' : 'pointer',
-                fontFamily: "'Outfit', sans-serif",
-                boxShadow: loading ? 'none' : '0 4px 16px rgba(255,107,53,.35)',
-                transition: 'all .15s',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              }}
-              onMouseEnter={e => { if (!loading) e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              {loading ? 'Signing in...' : (
-                <>
-                  Sign In
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                  </svg>
-                </>
-              )}
-            </button>
-          </form>
-
-          {/* Divider */}
-          <div className="divider" style={{ margin: '18px 0' }}><span>or continue with</span></div>
-
-          {/* Social buttons */}
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              style={{
-                flex: 1, padding: '11px', borderRadius: 12,
-                background: '#F5F1ED', border: '1.5px solid #E8E2DA',
-                cursor: 'not-allowed', opacity: 0.6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                fontSize: 13, fontWeight: 600, color: '#5C4A3A',
-                fontFamily: "'Outfit', sans-serif",
-              }}
-              title="Coming soon"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-              </svg>
-              Google
-            </button>
-            <button
-              style={{
-                flex: 1, padding: '11px', borderRadius: 12,
-                background: '#F5F1ED', border: '1.5px solid #E8E2DA',
-                cursor: 'not-allowed', opacity: 0.6,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                fontSize: 13, fontWeight: 600, color: '#5C4A3A',
-                fontFamily: "'Outfit', sans-serif",
-              }}
-              title="Coming soon"
-            >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-              SSO
-            </button>
+        {/* Footer */}
+        <div style={{ marginTop: 16, textAlign: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, fontSize: 11, color: '#B0A89C' }}>
+            {['Security', 'Privacy', 'Terms'].map((t, i) => (
+              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <span style={{ cursor: 'pointer', transition: 'color .15s' }}
+                  onMouseOver={e => (e.currentTarget.style.color = '#6B5C50')}
+                  onMouseOut={e => (e.currentTarget.style.color = '#B0A89C')}
+                >
+                  {t}
+                </span>
+                {i < 2 && <span style={{ opacity: .4 }}>·</span>}
+              </span>
+            ))}
           </div>
         </div>
 
-        {/* Footer nav */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 6, marginTop: 24, flexWrap: 'wrap',
-        }}>
-          {[
-            { icon: '↗', label: 'Signals' },
-            { icon: '⊡', label: 'Cases' },
-            { icon: '⚡', label: 'Actions' },
-            { icon: '↗', label: 'Impact' },
-          ].map((item, i) => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                fontSize: 12, fontWeight: 600, color: '#FF6B35',
-              }}>
-                <span style={{ fontSize: 11 }}>{item.icon}</span>
-                {item.label}
-              </span>
-              {i < 3 && (
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#C4BAB2" strokeWidth="2.5">
-                  <polyline points="9 18 15 12 9 6"/>
-                </svg>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginTop: 16 }}>
-          {['Security', 'Privacy', 'Terms'].map((t, i) => (
-            <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-              <span style={{ fontSize: 11, color: '#A09086', cursor: 'pointer' }}>{t}</span>
-              {i < 2 && <span style={{ color: '#D4CCC6', fontSize: 11 }}>·</span>}
-            </span>
-          ))}
-        </div>
       </div>
     </div>
   )
