@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
@@ -79,18 +80,20 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               const active = pathname === item.href
               const badgeVal = item.badgeKey ? badges[item.badgeKey] : undefined
               return (
-                <div
+                <Link
                   key={item.id}
+                  href={item.href}
+                  prefetch
                   className={`sb-item${active ? ' on' : ''}`}
-                  onClick={() => router.push(item.href)}
                   id={`nav-${item.id}`}
+                  style={{ textDecoration: 'none' }}
                 >
                   {item.icon}
                   <span>{item.label}</span>
                   {badgeVal != null && badgeVal > 0 && (
                     <div className={`badge${'badgeOk' in item && item.badgeOk ? ' badge-ok' : ''}`}>{badgeVal}</div>
                   )}
-                </div>
+                </Link>
               )
             })}
           </div>
