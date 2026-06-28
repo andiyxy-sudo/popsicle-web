@@ -4,11 +4,11 @@
 // Shown only for demo@popsicle-labs.app.
 
 const accountsRows = [
-  { id: 'acme', cls: 'row-hi', health: 31, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Acme Corp', contact: 'Sarah Chen · CFO', arr: '$480K', risk: 'HIGH', rcls: 'rhi', stage: 'Negotiation', sig: 'Exec dark 8 days', sigc: 'var(--danger)', tags: [['Exec Dark','red'],['Competitor','amber']], delta: '-14%', dc: 'var(--danger)', last: '2d ago' },
-  { id: 'meridian', cls: 'row-hi', health: 28, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Meridian Labs', contact: 'Alex Park · CEO', arr: '$850K', risk: 'HIGH', rcls: 'rhi', stage: 'Renewal', sig: 'Timeline slipping Q2', sigc: 'var(--danger)', tags: [['Silent Stall','red'],['Churn Risk','red']], delta: '-11%', dc: 'var(--danger)', last: '5d ago' },
-  { id: 'axion', cls: 'row-md', health: 52, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'Axion Partners', contact: 'Marcus Webb · VP Eng', arr: '$95K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Legal Review', sig: 'Contract stall day 3', sigc: 'var(--amber)', tags: [['Legal Hold','amber']], delta: '-4%', dc: 'var(--amber)', last: '1d ago' },
-  { id: 'techflow', cls: 'row-md', health: 55, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'TechFlow Inc', contact: 'Lena Ford · COO', arr: '$210K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Discovery', sig: 'Budget stall detected', sigc: 'var(--amber)', tags: [['Budget Stall','amber'],['Multi-thread','blue']], delta: '-6%', dc: 'var(--amber)', last: '3d ago' },
-  { id: 'nexus', cls: 'row-ok', health: 88, hbg: 'var(--ok-bg)', hc: 'var(--ok)', name: 'Nexus AI', contact: 'Priya Sharma · CTO', arr: '$320K', risk: 'LOW', rcls: 'rlo', stage: 'Closing', sig: 'PO expected this week', sigc: 'var(--ok)', tags: [['Buyer Active','green'],['Legal Clear','green']], delta: '+12%', dc: 'var(--ok)', last: 'Today' },
+  { id: 'acme', cls: 'row-hi', health: 31, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Acme Corp', contact: 'Sarah Chen · CFO', arr: '$480K', risk: 'HIGH', rcls: 'rhi', stage: 'Negotiation', sig: 'Exec dark 8 days', sigc: 'var(--danger)', tags: [['Exec Dark','red'],['Competitor','amber']], delta: '-14%', dc: 'var(--danger)', last: '2d ago', action: 'Draft Email', actionPrimary: true },
+  { id: 'meridian', cls: 'row-hi', health: 28, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Meridian Labs', contact: 'Alex Park · CEO', arr: '$850K', risk: 'HIGH', rcls: 'rhi', stage: 'Renewal', sig: 'Timeline slipping Q2', sigc: 'var(--danger)', tags: [['Silent Stall','red'],['Churn Risk','red']], delta: '-11%', dc: 'var(--danger)', last: '5d ago', action: 'Schedule Call', actionPrimary: true },
+  { id: 'axion', cls: 'row-md', health: 52, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'Axion Partners', contact: 'Marcus Webb · VP Eng', arr: '$95K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Legal Review', sig: 'Contract stall day 3', sigc: 'var(--amber)', tags: [['Legal Hold','amber']], delta: '-4%', dc: 'var(--amber)', last: '1d ago', action: 'Send Redline', actionPrimary: true },
+  { id: 'techflow', cls: 'row-md', health: 55, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'TechFlow Inc', contact: 'Lena Ford · COO', arr: '$210K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Discovery', sig: 'Budget stall detected', sigc: 'var(--amber)', tags: [['Budget Stall','amber'],['Multi-thread','blue']], delta: '-6%', dc: 'var(--amber)', last: '3d ago', action: 'Pricing Deck', actionPrimary: true },
+  { id: 'nexus', cls: 'row-ok', health: 88, hbg: 'var(--ok-bg)', hc: 'var(--ok)', name: 'Nexus AI', contact: 'Priya Sharma · CTO', arr: '$320K', risk: 'LOW', rcls: 'rlo', stage: 'Closing', sig: 'PO expected this week', sigc: 'var(--ok)', tags: [['Buyer Active','green'],['Legal Clear','green']], delta: '+12%', dc: 'var(--ok)', last: 'Today', action: 'Follow Up', actionPrimary: false },
 ]
 
 const gmailIcon = (
@@ -126,6 +126,10 @@ export function PulseShowcase() {
             <div className="ai-brief-item" style={{ background: 'rgba(42,157,92,.04)', border: '1px solid rgba(42,157,92,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--ok)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>Win rate <strong>up 12% this quarter</strong> — Nexus &amp; Cobalt driving momentum</div></div>
             <div className="ai-brief-item" style={{ background: 'rgba(232,133,10,.04)', border: '1px solid rgba(232,133,10,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--amber)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>Axion legal enters <strong>day 4 tomorrow</strong> — auto-escalation triggers at day 5</div></div>
             <div className="ai-brief-item" style={{ background: 'rgba(59,111,222,.04)', border: '1px solid rgba(59,111,222,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--blue)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>TechVault CFO <strong>opened pricing PDF 4×</strong> — high intent signal, recommend follow-up call today</div></div>
+            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(59,111,222,.04)', border: '1px solid rgba(59,111,222,.1)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <span style={{ color: 'var(--blue)' }}>Ask AI to expand on any insight →</span>
+            </div>
           </div>
         </div>
 
@@ -180,7 +184,7 @@ export function PulseShowcase() {
           <span className="see-all">View all 9 accounts →</span>
         </div>
         <table className="dtable">
-          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 110 }}>Action</th></tr></thead>
+          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ width: 70 }}></th><th>Last Touch</th><th style={{ width: 110 }}>Action</th></tr></thead>
           <tbody>
             {accountsRows.map(r => (
               <tr key={r.id} className={r.cls}>
@@ -191,8 +195,21 @@ export function PulseShowcase() {
                 <td style={{ fontSize: 12, color: 'var(--t2)' }}>{r.stage}</td>
                 <td style={{ fontSize: 12, color: r.sigc }}>{r.sig}</td>
                 <td><div className="port-tags">{r.tags.map((t, i) => <span key={i} className={`port-tag port-tag-${t[1]}`}>{t[0]}</span>)}</div></td>
+                <td style={{ textAlign: 'center' }}>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace", display: 'inline-flex', alignItems: 'center' }}>
+                    {r.delta}
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ marginLeft: 3, opacity: .5 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  </span>
+                </td>
                 <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{r.last}</td>
-                <td style={{ textAlign: 'center' }}><span style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace" }}>{r.delta}</span></td>
+                <td>
+                  <button
+                    className={r.actionPrimary ? 'sig-card-btn primary' : 'sig-card-btn'}
+                    style={!r.actionPrimary ? { color: 'var(--ok)', borderColor: 'rgba(42,157,92,.2)' } : undefined}
+                  >
+                    {r.action}
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
