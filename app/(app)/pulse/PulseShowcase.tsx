@@ -61,7 +61,7 @@ export function PulseShowcase() {
         <div className="kpi-hero">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div className="kpi-hero-lbl" style={{ marginBottom: 0 }}>Pipeline Health Score</div>
-            <button style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
+            <button onClick={() => window.dispatchEvent(new CustomEvent('open-ai'))} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               Ask
             </button>
@@ -134,7 +134,7 @@ export function PulseShowcase() {
             <div className="ai-brief-item" style={{ background: 'rgba(42,157,92,.04)', border: '1px solid rgba(42,157,92,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--ok)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>Win rate <strong>up 12% this quarter</strong> — Nexus &amp; Cobalt driving momentum</div></div>
             <div className="ai-brief-item" style={{ background: 'rgba(232,133,10,.04)', border: '1px solid rgba(232,133,10,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--amber)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>Axion legal enters <strong>day 4 tomorrow</strong> — auto-escalation triggers at day 5</div></div>
             <div className="ai-brief-item" style={{ background: 'rgba(59,111,222,.04)', border: '1px solid rgba(59,111,222,.1)', borderRadius: 10 }}><div className="ai-brief-dot" style={{ background: 'var(--blue)' }}></div><div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>TechVault CFO <strong>opened pricing PDF 4×</strong> — high intent signal, recommend follow-up call today</div></div>
-            <div style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(59,111,222,.04)', border: '1px solid rgba(59,111,222,.1)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+            <div onClick={() => window.dispatchEvent(new CustomEvent('open-ai'))} style={{ marginTop: 10, padding: '8px 12px', background: 'rgba(59,111,222,.04)', border: '1px solid rgba(59,111,222,.1)', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <span style={{ color: 'var(--blue)' }}>Ask AI to expand on any insight →</span>
             </div>

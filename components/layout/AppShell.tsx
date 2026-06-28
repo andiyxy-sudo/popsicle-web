@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { AIPanel } from '@/components/ai/AIPanel'
 import { getInitials } from '@/lib/utils'
 
 interface AppShellProps {
@@ -16,20 +17,28 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const [aiOpen, setAiOpen] = useState(false)
 
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
+  const greetingName = isDemo ? 'Andy' : (user.name || user.email.split('@')[0])
+
+  // Allow any child to open the AI panel via a global event:
+  // window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt } }))
+  const handleOpenAI = useCallback(() => setAiOpen(true), [])
+
+  useEffect(() => {
+    function onOpen() { setAiOpen(true) }
+    window.addEventListener('open-ai', onOpen as EventListener)
+    return () => window.removeEventListener('open-ai', onOpen as EventListener)
+  }, [])
 
   return (
     <>
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <div className="main">
-        <Topbar signalCount={badges.signals ?? 0} onAskClick={() => setAiOpen(true)} initials={initials} />
+        <Topbar signalCount={badges.signals ?? 0} onAskClick={handleOpenAI} initials={initials} />
         <div className="content">
           {children}
         </div>
       </div>
-      {/* AI panel mounts here later */}
-      {aiOpen && (
-        <div onClick={() => setAiOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
-      )}
+      <AIPanel open={aiOpen} onClose={() => setAiOpen(false)} isDemo={isDemo} greetingName={greetingName} />
     </>
   )
 }
