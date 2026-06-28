@@ -55,6 +55,7 @@ export function Account360() {
   const [tab, setTab] = useState('overview')
   const [modal, setModal] = useState<ModalConfig | null>(null)
   const [expandedComm, setExpandedComm] = useState<number | null>(null)
+  const [ringOffset, setRingOffset] = useState(163.4) // start empty
 
   useEffect(() => {
     function onOpen(e: Event) {
@@ -71,6 +72,23 @@ export function Account360() {
     return () => window.removeEventListener('keydown', onKey)
   }, [open, modal])
 
+  // Animate the health ring sweep when the panel opens with data
+  useEffect(() => {
+    if (open && data) {
+      const circ = 2 * Math.PI * 26
+      const target = circ - (circ * data.health) / 100
+      // start empty
+      setRingOffset(circ)
+      // sweep to target on the next paint
+      const id = requestAnimationFrame(() => {
+        requestAnimationFrame(() => setRingOffset(target))
+      })
+      return () => cancelAnimationFrame(id)
+    } else {
+      setRingOffset(2 * Math.PI * 26) // reset empty when closed
+    }
+  }, [open, data])
+
   function askAI(prompt: string) {
     setOpen(false)
     setTimeout(() => window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt } })), 120)
@@ -81,7 +99,6 @@ export function Account360() {
   const hc = healthColor(data.health)
   const hstroke = healthStroke(data.health)
   const circ = 2 * Math.PI * 26
-  const offset = circ - (circ * data.health) / 100
   const mono = data.monogram || data.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
   // ---------- modal builders ----------
@@ -214,7 +231,7 @@ export function Account360() {
               <div className="a360-hring">
                 <svg width="64" height="64" viewBox="0 0 64 64">
                   <circle cx="32" cy="32" r="26" fill="none" stroke="var(--border)" strokeWidth="5"/>
-                  <circle cx="32" cy="32" r="26" fill="none" stroke={hstroke} strokeWidth="5.5" strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" transform="rotate(-90 32 32)" />
+                  <circle cx="32" cy="32" r="26" fill="none" stroke={hstroke} strokeWidth="5.5" strokeDasharray={circ} strokeDashoffset={ringOffset} strokeLinecap="round" transform="rotate(-90 32 32)" style={{ transition: 'stroke-dashoffset .85s cubic-bezier(.22,1,.36,1)', filter: `drop-shadow(0 0 4px ${hstroke}66)` }} />
                 </svg>
                 <div className="a360-hring-val">
                   <span className="a360-hring-num" style={{ color: hc }}>{data.health}</span>
