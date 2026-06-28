@@ -1,5 +1,4 @@
 import { createClient } from '@/lib/supabase/server'
-import { Topbar } from '@/components/layout/Topbar'
 import { IntegrationsClient } from './IntegrationsClient'
 
 export default async function IntegrationsPage() {
@@ -14,8 +13,7 @@ export default async function IntegrationsPage() {
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-      <Topbar eyebrow="Setup" title="Integrations" />
-      <div style={{ flex: 1, overflowY: 'auto', padding: '32px 36px 56px' }}>
+            <div style={{ flex: 1, overflowY: 'auto', padding: '32px 36px 56px' }}>
         <div style={{ marginBottom: 32 }}>
           <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-0.8px', marginBottom: 6 }}>
             Connect your tools
