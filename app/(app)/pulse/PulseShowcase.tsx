@@ -184,7 +184,7 @@ export function PulseShowcase() {
           <span className="see-all">View all 9 accounts →</span>
         </div>
         <table className="dtable">
-          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ width: 80, textAlign: 'center' }}>Health %</th><th>Last Touch</th><th style={{ width: 110 }}>Action</th></tr></thead>
+          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th style={{ width: 70 }}>ARR</th><th style={{ width: 80 }}>Risk</th><th style={{ width: 90 }}>Stage</th><th>Top Signal</th><th style={{ width: 150 }}>Tags</th><th style={{ width: 78, textAlign: 'center', whiteSpace: 'nowrap' }}>Health %</th><th style={{ width: 80, whiteSpace: 'nowrap' }}>Last Touch</th><th style={{ width: 110 }}>Action</th></tr></thead>
           <tbody>
             {accountsRows.map(r => (
               <tr key={r.id} className={r.cls}>
