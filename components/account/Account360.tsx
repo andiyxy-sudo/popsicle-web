@@ -17,6 +17,9 @@ export interface A360Data {
   monogram?: string
   topSignal?: string
   tags?: [string, string][]
+  brief?: string[]
+  briefTypes?: ('danger' | 'warn' | 'ok')[]
+  healthBars?: { label: string; val: number; color: string }[]
 }
 
 function riskClass(risk: string) {
@@ -86,7 +89,7 @@ export function Account360() {
           <div className="a360-hero-inner">
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, marginBottom: 14 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
-                <div className="a360-monogram" style={{ background: 'linear-gradient(135deg,#FF9050,#FF6B35)' }}>{mono}</div>
+                <div className="a360-monogram" style={{ background: 'linear-gradient(135deg,#4A90D9,#7C3AED)' }}>{mono}</div>
                 <div>
                   <div style={{ fontSize: 20, fontWeight: 900, letterSpacing: '-.5px', color: 'var(--t1)', marginBottom: 3 }}>{data.name}</div>
                   <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
@@ -96,7 +99,7 @@ export function Account360() {
                 </div>
               </div>
               <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-1px', color: 'var(--t1)', lineHeight: 1 }}>{data.arr}</div>
+                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: '-1px', color: hc, lineHeight: 1 }}>{data.arr}</div>
                 <div style={{ fontSize: 10, letterSpacing: '.1px', color: 'var(--t4)', marginTop: 3 }}>ARR</div>
               </div>
             </div>
@@ -149,29 +152,60 @@ export function Account360() {
           <div className="a360-main-col">
             {tab === 'overview' && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.5px', color: 'var(--t4)', marginBottom: 12, fontFamily: "'DM Mono',monospace" }}>Account Summary</div>
-                {data.topSignal && (
-                  <div style={{ padding: 14, borderRadius: 12, background: 'var(--danger-bg)', border: '1px solid var(--danger-bd)', marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--danger)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 6 }}>Top Signal</div>
-                    <div style={{ fontSize: 13, color: 'var(--t1)', lineHeight: 1.5 }}>{data.topSignal}</div>
+                {/* AI Risk Signals */}
+                {data.brief && data.brief.length > 0 && (
+                  <div style={{ marginBottom: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>AI Risk Signals</div>
+                    {data.brief.map((b, i) => {
+                      const type = data.briefTypes?.[i] || 'danger'
+                      const rgb = type === 'danger' ? '224,62,62' : type === 'warn' ? '232,133,10' : '42,157,92'
+                      const dot = type === 'danger' ? 'var(--danger)' : type === 'warn' ? 'var(--warn)' : 'var(--ok)'
+                      return (
+                        <div key={i} style={{ display: 'flex', gap: 10, padding: '10px 12px', background: `rgba(${rgb},.04)`, border: `1px solid rgba(${rgb},.1)`, borderRadius: 10, marginBottom: 6, alignItems: 'flex-start' }}>
+                          <div style={{ width: 7, height: 7, borderRadius: '50%', background: dot, flexShrink: 0, marginTop: 5 }}></div>
+                          <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>{b}</div>
+                        </div>
+                      )
+                    })}
                   </div>
                 )}
-                {data.tags && data.tags.length > 0 && (
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 8 }}>Tags</div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                      {data.tags.map((t, i) => <span key={i} className={`port-tag port-tag-${t[1]}`}>{t[0]}</span>)}
+
+                {/* Health Breakdown */}
+                {data.healthBars && data.healthBars.length > 0 && (
+                  <div style={{ marginBottom: 18 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Health Breakdown</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                      {data.healthBars.map((hb, i) => (
+                        <div key={i} style={{ padding: '10px 12px', background: 'var(--inset)', borderRadius: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                            <span style={{ fontSize: 12, fontWeight: 700 }}>{hb.label}</span>
+                            <span style={{ fontSize: 12, fontWeight: 800, color: hb.color }}>{hb.val}%</span>
+                          </div>
+                          <div className="pbar" style={{ height: 5 }}><div className="pbar-fill" style={{ width: `${hb.val}%`, background: hb.color }}></div></div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                  {[['ARR', data.arr], ['Stage', data.stage], ['Health Score', `${data.health}/100`], ['Risk Level', data.risk], ['Active Signals', String(data.signals)], ['Owner', data.rep]].map(([k, v], i) => (
-                    <div key={i} style={{ padding: 12, borderRadius: 10, background: 'var(--inset)', border: '1px solid var(--border-soft)' }}>
-                      <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>{k}</div>
-                      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--t1)' }}>{v}</div>
-                    </div>
-                  ))}
+
+                {/* Deal Progress */}
+                <div style={{ marginBottom: 6 }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Deal Progress</div>
+                  <div className="pbar" style={{ height: 6 }}><div className="pbar-fill" style={{ width: `${data.health}%`, background: hc }}></div></div>
+                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 8 }}>{data.stage} · health {data.health}/100</div>
                 </div>
+
+                {/* Fallback summary if no rich data */}
+                {(!data.brief || data.brief.length === 0) && (
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    {[['ARR', data.arr], ['Stage', data.stage], ['Health Score', `${data.health}/100`], ['Risk Level', data.risk], ['Active Signals', String(data.signals)], ['Owner', data.rep]].map(([k, v], i) => (
+                      <div key={i} style={{ padding: 12, borderRadius: 10, background: 'var(--inset)', border: '1px solid var(--border-soft)' }}>
+                        <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>{k}</div>
+                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--t1)' }}>{v}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
             {tab !== 'overview' && (
