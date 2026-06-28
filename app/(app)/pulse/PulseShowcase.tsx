@@ -184,7 +184,7 @@ export function PulseShowcase() {
           <span className="see-all">View all 9 accounts →</span>
         </div>
         <table className="dtable">
-          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th style={{ width: 70 }}>ARR</th><th style={{ width: 80 }}>Risk</th><th style={{ width: 90 }}>Stage</th><th>Top Signal</th><th style={{ width: 150 }}>Tags</th><th style={{ width: 78, textAlign: 'center', whiteSpace: 'nowrap' }}>Health %</th><th style={{ width: 80, whiteSpace: 'nowrap' }}>Last Touch</th><th style={{ width: 110 }}>Action</th></tr></thead>
+          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ whiteSpace: 'nowrap' }}>Health %</th><th style={{ whiteSpace: 'nowrap' }}>Last Touch</th><th>Action</th></tr></thead>
           <tbody>
             {accountsRows.map(r => (
               <tr key={r.id} className={r.cls}>
@@ -195,8 +195,8 @@ export function PulseShowcase() {
                 <td style={{ fontSize: 12, color: 'var(--t2)' }}>{r.stage}</td>
                 <td style={{ fontSize: 12, color: r.sigc }}>{r.sig}</td>
                 <td><div className="port-tags">{r.tags.map((t, i) => <span key={i} className={`port-tag port-tag-${t[1]}`}>{t[0]}</span>)}</div></td>
-                <td style={{ textAlign: 'center' }}>
-                  <span style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace", display: 'inline-flex', alignItems: 'center' }}>
+                <td>
+                  <span style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace", display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
                     {r.delta}
                     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ marginLeft: 3, opacity: .5 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   </span>
