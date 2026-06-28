@@ -15,6 +15,14 @@ const gmailIcon = (
   <svg width="22" height="17" viewBox="0 0 24 18"><rect width="24" height="18" rx="2" fill="#fff"/><rect x=".5" y=".5" width="23" height="17" rx="1.5" fill="none" stroke="#ddd" strokeWidth=".5"/><path d="M2 2l10 7.5L22 2" stroke="#EA4335" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 2v14h20V2" stroke="#EA4335" strokeWidth="1.2" fill="none" strokeLinejoin="round" opacity=".25"/></svg>
 )
 
+const slackIcon = (
+  <svg width="20" height="20" viewBox="0 0 128 128"><path d="M27.2 80.7c0 7.3-6 13.3-13.3 13.3S.6 88 .6 80.7s6-13.3 13.3-13.3h13.3v13.3z" fill="#E01E5A"/><path d="M33.8 80.7c0-7.3 6-13.3 13.3-13.3s13.3 6 13.3 13.3v33.3c0 7.3-6 13.3-13.3 13.3s-13.3-6-13.3-13.3V80.7z" fill="#E01E5A"/><path d="M47.2 27.2c-7.3 0-13.3-6-13.3-13.3S39.9.6 47.2.6s13.3 6 13.3 13.3v13.3H47.2z" fill="#36C5F0"/><path d="M47.2 33.8c7.3 0 13.3 6 13.3 13.3s-6 13.3-13.3 13.3H13.8C6.6 60.4.6 54.4.6 47.1s6-13.3 13.3-13.3h33.3z" fill="#36C5F0"/><path d="M100.7 47.1c0-7.3 6-13.3 13.3-13.3s13.3 6 13.3 13.3-6 13.3-13.3 13.3h-13.3V47.1z" fill="#2EB67D"/><path d="M94.2 47.1c0 7.3-6 13.3-13.3 13.3s-13.3-6-13.3-13.3V13.9c0-7.3 6-13.3 13.3-13.3s13.3 6 13.3 13.3v33.3z" fill="#2EB67D"/><path d="M80.8 100.7c7.3 0 13.3 6 13.3 13.3s-6 13.3-13.3 13.3-13.3-6-13.3-13.3v-13.3h13.3z" fill="#ECB22E"/><path d="M80.8 94.2c-7.3 0-13.3-6-13.3-13.3s6-13.3 13.3-13.3h33.3c7.3 0 13.3 6 13.3 13.3s-6 13.3-13.3 13.3H80.8z" fill="#ECB22E"/></svg>
+)
+
+const zoomIcon = (
+  <svg width="22" height="22" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#2D8CFF"/><path d="M14 18h12c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H14c-1.1 0-2-.9-2-2v-8c0-1.1.9-2 2-2zm18 2l6-4v16l-6-4V20z" fill="#fff"/></svg>
+)
+
 export function PulseShowcase() {
   return (
     <div className="dsk-screen on" id="d-pulse">
@@ -158,14 +166,14 @@ export function PulseShowcase() {
           </div>
           <div style={{ padding: '10px 20px' }}>
             {[
-              { who: 'Acme Corp', what: 'CRO opened email but didn\'t reply (3rd time)', time: '12m' },
-              { who: 'Nexus AI', what: 'Priya forwarded proposal to legal — "fast-track"', time: '34m' },
-              { who: 'Axion', what: 'Contract redline stall entering day 4', time: '1h' },
-              { who: 'Cobalt', what: '$150K deal closed-won ✓', time: '2h' },
-              { who: 'TechFlow', what: 'CFO mentioned "check with finance" on call', time: '3h' },
+              { who: 'Acme Corp', what: 'CRO opened email but didn\'t reply (3rd time)', time: '12m', icon: gmailIcon },
+              { who: 'Nexus AI', what: 'Priya forwarded proposal to legal — "fast-track"', time: '34m', icon: gmailIcon },
+              { who: 'Axion', what: 'Contract redline stall entering day 4', time: '1h', icon: slackIcon },
+              { who: 'Cobalt', what: '$150K deal closed-won ✓', time: '2h', icon: gmailIcon },
+              { who: 'TechFlow', what: 'CFO mentioned "check with finance" on call', time: '3h', icon: zoomIcon },
             ].map((a, i) => (
               <div key={i} className="activity-item">
-                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{gmailIcon}</div>
+                <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{a.icon}</div>
                 <div className="activity-body"><strong>{a.who}</strong> — {a.what}</div>
                 <div className="activity-time">{a.time}</div>
               </div>
@@ -184,7 +192,7 @@ export function PulseShowcase() {
           <span className="see-all">View all 9 accounts →</span>
         </div>
         <table className="dtable">
-          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ whiteSpace: 'nowrap' }}>Health %</th><th style={{ whiteSpace: 'nowrap' }}>Last Touch</th><th>Action</th></tr></thead>
+          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ whiteSpace: 'nowrap' }}>Trend %</th><th style={{ whiteSpace: 'nowrap' }}>Last Touch</th><th>Action</th></tr></thead>
           <tbody>
             {accountsRows.map(r => (
               <tr key={r.id} className={r.cls}>
