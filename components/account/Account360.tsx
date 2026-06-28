@@ -1,6 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { A360Modal, ModalBtn, ModalConfig } from './A360Modal'
+
+export interface SigItem { sev: 'danger' | 'warn' | 'ok'; msg: string; time: string; via: string }
+export interface CommItem { from: string; role: string; msg: string; time: string; via: string; dir: 'in' | 'out'; signal?: string; signalColor?: string }
+export interface PersonItem { name: string; role: string; badge?: string; badgeColor?: string; status: string; statusColor: string; last: string; eng: number; desc?: string }
+export interface TimelineItem { title: string; time: string; desc: string; color: string }
+export interface ContractItem { name: string; type: string; status: string; statusColor: string; value: string; po: string; start: string; end: string; invoice: string }
 
 export interface A360Data {
   id: string
@@ -15,11 +22,15 @@ export interface A360Data {
   rep: string
   lastTouch: string
   monogram?: string
-  topSignal?: string
   tags?: [string, string][]
   brief?: string[]
   briefTypes?: ('danger' | 'warn' | 'ok')[]
   healthBars?: { label: string; val: number; color: string }[]
+  sigItems?: SigItem[]
+  comms?: CommItem[]
+  people?: PersonItem[]
+  timeline?: TimelineItem[]
+  contracts?: ContractItem[]
 }
 
 function riskClass(risk: string) {
@@ -28,36 +39,37 @@ function riskClass(risk: string) {
   if (r === 'MEDIUM' || r === 'MED') return 'rmd'
   return 'rlo'
 }
-function healthColor(h: number) {
-  if (h < 40) return 'var(--danger)'
-  if (h < 65) return 'var(--amber)'
-  return 'var(--ok)'
-}
-function healthStroke(h: number) {
-  if (h < 40) return '#F87171'
-  if (h < 65) return '#FBBF24'
-  return '#4ADE80'
+function healthColor(h: number) { return h < 40 ? 'var(--danger)' : h < 65 ? 'var(--amber)' : 'var(--ok)' }
+function healthStroke(h: number) { return h < 40 ? '#F87171' : h < 65 ? '#FBBF24' : '#4ADE80' }
+
+const viaIcon = (via: string) => {
+  if (via === 'Slack') return <svg width="16" height="16" viewBox="0 0 128 128"><path d="M27.2 80.7c0 7.3-6 13.3-13.3 13.3S.6 88 .6 80.7s6-13.3 13.3-13.3h13.3v13.3z" fill="#E01E5A"/><path d="M47.2 27.2c-7.3 0-13.3-6-13.3-13.3S39.9.6 47.2.6s13.3 6 13.3 13.3v13.3H47.2z" fill="#36C5F0"/><path d="M100.7 47.2c0-7.3 6-13.3 13.3-13.3s13.3 6 13.3 13.3-6 13.3-13.3 13.3h-13.3V47.2z" fill="#2EB67D"/><path d="M80.7 100.7c7.3 0 13.3 6 13.3 13.3s-6 13.3-13.3 13.3-13.3-6-13.3-13.3v-13.3h13.3z" fill="#ECB22E"/></svg>
+  if (via === 'WhatsApp') return <svg width="16" height="16" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#25D366"/><path d="M34.5 29.3c-.5-.2-2.8-1.4-3.3-1.5-.4-.2-.8-.2-1.1.2-.3.5-1.2 1.5-1.5 1.8-.3.3-.5.4-1 .1-.5-.2-2-.7-3.8-2.3-1.4-1.2-2.3-2.8-2.6-3.2-.3-.5 0-.7.2-1 .2-.2.5-.5.7-.8.2-.3.3-.5.4-.8.1-.3 0-.6-.1-.8-.1-.2-1.1-2.7-1.5-3.7-.4-.9-.8-.8-1.1-.8h-.9c-.3 0-.8.1-1.2.6-.4.4-1.6 1.6-1.6 3.8s1.6 4.4 1.8 4.7c.2.3 3.2 4.9 7.8 6.9 4.5 1.9 4.5 1.3 5.3 1.2.8-.1 2.8-1.1 3.2-2.2.4-1.1.4-2 .3-2.2z" fill="#fff"/></svg>
+  if (via === 'Zoom') return <svg width="16" height="16" viewBox="0 0 48 48"><circle cx="24" cy="24" r="22" fill="#2D8CFF"/><path d="M14 18h12c1.1 0 2 .9 2 2v8c0 1.1-.9 2-2 2H14c-1.1 0-2-.9-2-2v-8c0-1.1.9-2 2-2zm18 2l6-4v16l-6-4V20z" fill="#fff"/></svg>
+  return <svg width="16" height="13" viewBox="0 0 24 18"><rect width="24" height="18" rx="2.5" fill="#fff"/><rect x=".5" y=".5" width="23" height="17" rx="2" fill="none" stroke="#ddd" strokeWidth=".5"/><path d="M2 2l10 7.5L22 2" stroke="#EA4335" strokeWidth="2.2" fill="none" strokeLinecap="round"/></svg>
 }
 
 export function Account360() {
   const [data, setData] = useState<A360Data | null>(null)
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState('overview')
+  const [modal, setModal] = useState<ModalConfig | null>(null)
+  const [expandedComm, setExpandedComm] = useState<number | null>(null)
 
   useEffect(() => {
     function onOpen(e: Event) {
       const detail = (e as CustomEvent).detail as A360Data
-      if (detail) { setData(detail); setTab('overview'); setOpen(true) }
+      if (detail) { setData(detail); setTab('overview'); setOpen(true); setExpandedComm(null) }
     }
     window.addEventListener('open-a360', onOpen as EventListener)
     return () => window.removeEventListener('open-a360', onOpen as EventListener)
   }, [])
 
   useEffect(() => {
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape' && !modal) setOpen(false) }
     if (open) window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open])
+  }, [open, modal])
 
   function askAI(prompt: string) {
     setOpen(false)
@@ -72,19 +84,113 @@ export function Account360() {
   const offset = circ - (circ * data.health) / 100
   const mono = data.monogram || data.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
 
+  // ---------- modal builders ----------
+  function successModal(title: string, desc: string) {
+    setModal({
+      title,
+      body: <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', padding: '8px 0' }}>
+        <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(22,163,74,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>{desc}</div>
+      </div>,
+      footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
+    })
+  }
+
+  function logNoteModal() {
+    let noteText = ''
+    let noteType = 'Call Summary'
+    setModal({
+      title: `Log Note — ${data!.name}`,
+      body: <LogNoteBody onChange={(t, ty) => { noteText = t; noteType = ty }} />,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn primary onClick={() => { if (noteText.trim()) successModal('Note Saved ✓', `${noteType} added to ${data!.name} account history.`) }}>Save Note</ModalBtn>
+      </>,
+    })
+  }
+
+  function playbookModal() {
+    const risk = data!.risk.toUpperCase()
+    let plays: { n: string; t: string; d: string; c: string; bg: string }[]
+    if (risk === 'HIGH') {
+      plays = [
+        { n: '1', t: 'Exec Sponsor Call', d: 'Schedule VP/CRO-level call within 48h. Frame as "strategic alignment" not "save the deal".', c: 'var(--danger)', bg: '224,62,62' },
+        { n: '2', t: 'Value Reinforcement', d: 'Send ROI summary + case study within 24h. Quantify cost of switching.', c: 'var(--amber)', bg: '232,133,10' },
+        { n: '3', t: 'Multi-thread Engagement', d: 'Engage 2+ stakeholders. Use champion to influence decision maker internally.', c: 'var(--ok)', bg: '42,157,92' },
+      ]
+    } else if (risk === 'MEDIUM' || risk === 'MED') {
+      plays = [
+        { n: '1', t: 'Unblock the Bottleneck', d: 'Identify specific stall point (legal, budget, timeline) and address directly.', c: 'var(--amber)', bg: '232,133,10' },
+        { n: '2', t: 'Phased Approach', d: 'Offer smaller initial commitment to reduce perceived risk.', c: 'var(--ok)', bg: '42,157,92' },
+      ]
+    } else {
+      plays = [
+        { n: '1', t: 'Maintain Momentum', d: 'Keep engagement cadence. Respond within 2h to all communications.', c: 'var(--ok)', bg: '42,157,92' },
+        { n: '2', t: 'Expand the Deal', d: 'Identify upsell opportunities based on product usage patterns.', c: 'var(--ok)', bg: '42,157,92' },
+      ]
+    }
+    setModal({
+      title: `Playbook — ${data!.name} (${risk} Risk)`,
+      body: <div>
+        <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--t2)' }}>AI-recommended plays based on {data!.signals} signals and {data!.stage} stage.</div>
+        {plays.map((p, i) => (
+          <div key={i} style={{ padding: 12, background: `rgba(${p.bg},.04)`, border: `1px solid rgba(${p.bg},.1)`, borderRadius: 12, marginBottom: 8 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: p.c, marginBottom: 4 }}>{p.n}. {p.t}</div>
+            <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.5 }}>{p.d}</div>
+          </div>
+        ))}
+      </div>,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Dismiss</ModalBtn>
+        <ModalBtn primary onClick={() => successModal('Playbook Activated ✓', 'Popsicle AI will sequence each play automatically. First action queued now.')}>Activate Playbook</ModalBtn>
+      </>,
+    })
+  }
+
+  function escalateModal() {
+    setModal({
+      title: `Escalate Risk — ${data!.name}`,
+      body: <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }}>
+        Send an executive risk brief to your CRO for <strong>{data!.name}</strong>. This flags the account for exec-to-exec engagement and escalates AI monitoring.
+      </div>,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn danger onClick={() => successModal('Escalated to CRO ✓', `${data!.name} risk brief sent. Exec-to-exec recommended within 24h. AI monitoring escalated.`)}>Escalate Now</ModalBtn>
+      </>,
+    })
+  }
+
+  function simpleConfirmModal(title: string, desc: string, btn: string, success: [string, string]) {
+    setModal({
+      title,
+      body: <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: desc }} />,
+      footer: <>
+        <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+        <ModalBtn primary onClick={() => successModal(success[0], success[1])}>{btn}</ModalBtn>
+      </>,
+    })
+  }
+
   const actions = [
-    { label: 'Draft Follow-up', primary: true, prompt: `Draft a follow-up email to ${data.contact} at ${data.name}`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></svg> },
-    { label: 'Schedule Call', prompt: `Help me schedule a call with ${data.contact} at ${data.name}`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
-    { label: 'Battle Card', prompt: `Write a competitive battle card for ${data.name}`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
-    { label: 'Escalate Risk', prompt: `Draft an internal escalation for ${data.name} (${data.contact})`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> },
-    { label: 'Pricing Deck', prompt: `Create a pricing proposal outline for ${data.name}`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg> },
-    { label: 'Ask AI', prompt: `Analyse ${data.name} and recommend next steps`, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> },
+    { label: 'Draft Follow-up', primary: true, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></svg>, onClick: () => askAI(`Draft a follow-up email to ${data!.contact} at ${data!.name}`) },
+    { label: 'Schedule Call', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>, onClick: () => simpleConfirmModal(`Schedule Call — ${data!.name}`, `Set up a call with <strong>${data!.contact.split(' · ')[0]}</strong>. Popsicle will draft an agenda and suggest the best time based on signal activity.`, 'Send Invite', ['Call Scheduled ✓', `Calendar invite drafted for ${data!.contact.split(' · ')[0]}. Agenda attached.`]) },
+    { label: 'Battle Card', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>, onClick: () => simpleConfirmModal(`Battle Card — ${data!.name}`, `Generate a competitive battle card for <strong>${data!.name}</strong> with positioning, objection handling, and differentiation points.`, 'Generate', ['Battle Card Ready ✓', `Competitive battle card for ${data!.name} generated and saved to the account.`]) },
+    { label: 'Escalate Risk', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>, onClick: escalateModal },
+    { label: 'Pricing Deck', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>, onClick: () => simpleConfirmModal(`Pricing Deck — ${data!.name}`, `Build a tailored pricing proposal for <strong>${data!.name}</strong> with phased options to reduce perceived risk.`, 'Build Deck', ['Pricing Deck Ready ✓', `Tailored pricing proposal for ${data!.name} generated.`]) },
+    { label: 'Log Note', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>, onClick: logNoteModal },
+    { label: 'Run Playbook', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="9"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="13" y2="17"/></svg>, onClick: playbookModal },
+    { label: 'Ask AI', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, onClick: () => askAI(`Analyse ${data!.name} and recommend next steps`) },
   ]
+
+  const SEC = (t: string) => <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>{t}</div>
 
   return (
     <>
       <div className={`a360-backdrop${open ? ' on' : ''}`} onClick={() => setOpen(false)}></div>
       <div className={`a360-panel${open ? ' open' : ''}`}>
+        {/* Hero */}
         <div className="a360-hero-bg">
           <div className="a360-hero-inner">
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 0, marginBottom: 14 }}>
@@ -121,7 +227,7 @@ export function Account360() {
                   <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>signals</div>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', borderLeft: '1px solid var(--border-soft)', padding: '0 10px' }}>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: typeof data.daysDark === 'number' && data.daysDark > 5 ? 'var(--danger)' : 'var(--t1)' }}>{data.daysDark}</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: typeof data.daysDark === 'number' && data.daysDark > 3 ? 'var(--danger)' : 'var(--t1)' }}>{data.daysDark}</div>
                   <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 2 }}>days dark</div>
                 </div>
                 <div style={{ flex: 1, textAlign: 'center', borderLeft: '1px solid var(--border-soft)', padding: '0 10px' }}>
@@ -142,20 +248,21 @@ export function Account360() {
           </div>
         </div>
 
+        {/* Tabs */}
         <div className="a360-tabs">
-          {['overview', 'signals', 'people', 'timeline'].map(t => (
+          {['overview', 'signals', 'comms', 'people', 'timeline', 'contracts'].map(t => (
             <div key={t} className={`a360-tab${tab === t ? ' on' : ''}`} onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>{t}</div>
           ))}
         </div>
 
+        {/* Body + actions */}
         <div className="a360-two-col" style={{ height: 'calc(100vh - 280px)' }}>
           <div className="a360-main-col">
+            {/* OVERVIEW */}
             {tab === 'overview' && (
               <div>
-                {/* AI Risk Signals */}
                 {data.brief && data.brief.length > 0 && (
-                  <div style={{ marginBottom: 18 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>AI Risk Signals</div>
+                  <div style={{ marginBottom: 18 }}>{SEC('AI Risk Signals')}
                     {data.brief.map((b, i) => {
                       const type = data.briefTypes?.[i] || 'danger'
                       const rgb = type === 'danger' ? '224,62,62' : type === 'warn' ? '232,133,10' : '42,157,92'
@@ -169,11 +276,8 @@ export function Account360() {
                     })}
                   </div>
                 )}
-
-                {/* Health Breakdown */}
                 {data.healthBars && data.healthBars.length > 0 && (
-                  <div style={{ marginBottom: 18 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Health Breakdown</div>
+                  <div style={{ marginBottom: 18 }}>{SEC('Health Breakdown')}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {data.healthBars.map((hb, i) => (
                         <div key={i} style={{ padding: '10px 12px', background: 'var(--inset)', borderRadius: 10 }}>
@@ -187,46 +291,207 @@ export function Account360() {
                     </div>
                   </div>
                 )}
-
-                {/* Deal Progress */}
-                <div style={{ marginBottom: 6 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', marginBottom: 10, fontFamily: "'DM Mono',monospace" }}>Deal Progress</div>
-                  <div className="pbar" style={{ height: 6 }}><div className="pbar-fill" style={{ width: `${data.health}%`, background: hc }}></div></div>
-                  <div style={{ fontSize: 11, color: 'var(--t3)', marginTop: 8 }}>{data.stage} · health {data.health}/100</div>
-                </div>
-
-                {/* Fallback summary if no rich data */}
-                {(!data.brief || data.brief.length === 0) && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    {[['ARR', data.arr], ['Stage', data.stage], ['Health Score', `${data.health}/100`], ['Risk Level', data.risk], ['Active Signals', String(data.signals)], ['Owner', data.rep]].map(([k, v], i) => (
-                      <div key={i} style={{ padding: 12, borderRadius: 10, background: 'var(--inset)', border: '1px solid var(--border-soft)' }}>
-                        <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 4 }}>{k}</div>
-                        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--t1)' }}>{v}</div>
-                      </div>
-                    ))}
+                <div>{SEC('Deal Progress')}
+                  <div className="pbar" style={{ height: 8 }}><div className="pbar-fill" style={{ width: `${data.health}%`, background: data.health < 40 ? 'var(--danger)' : data.health < 60 ? 'linear-gradient(90deg,var(--warn),var(--o))' : 'var(--ok)' }}></div></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 10, color: 'var(--t3)' }}>
+                    <span>Discovery</span><span>Negotiation</span><span>Closing</span><span>Won</span>
                   </div>
-                )}
+                </div>
               </div>
             )}
-            {tab !== 'overview' && (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 24px', textAlign: 'center', color: 'var(--t4)' }}>
-                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 6, textTransform: 'capitalize' }}>{tab}</div>
-                <div style={{ fontSize: 12, lineHeight: 1.5, maxWidth: 240 }}>Detailed {tab} view connects to live signal data once integrations sync for this account.</div>
+
+            {/* SIGNALS */}
+            {tab === 'signals' && (
+              <div>
+                {(data.sigItems && data.sigItems.length > 0) ? data.sigItems.map((s, i) => {
+                  const c = s.sev === 'danger' ? 'var(--danger)' : s.sev === 'warn' ? 'var(--warn)' : 'var(--ok)'
+                  const bg = s.sev === 'danger' ? '224,62,62' : s.sev === 'warn' ? '232,133,10' : '42,157,92'
+                  const lb = s.sev === 'danger' ? 'CRITICAL' : s.sev === 'warn' ? 'WARNING' : 'POSITIVE'
+                  return (
+                    <div key={i} style={{ display: 'flex', gap: 12, padding: 14, background: 'var(--inset)', borderRadius: 12, marginBottom: 8, borderLeft: `3px solid ${c}` }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, color: 'var(--t1)', lineHeight: 1.55, marginBottom: 8 }}>{s.msg}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 10, fontWeight: 600, padding: '2px 7px', borderRadius: 20, background: `rgba(${bg},.08)`, color: c, border: `1px solid rgba(${bg},.15)`, fontFamily: "'DM Mono',monospace" }}>{lb}</span>
+                          <span style={{ fontSize: 10, color: 'var(--t3)' }}>{s.time} ago · {s.via}</span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                }) : <Empty label="No signals on file for this account" />}
+              </div>
+            )}
+
+            {/* COMMS */}
+            {tab === 'comms' && (
+              <div>
+                {SEC('Recent Communications')}
+                {(data.comms && data.comms.length > 0) ? data.comms.map((c, ci) => {
+                  if (c.dir === 'out') {
+                    return (
+                      <div key={ci} style={{ borderRadius: 'var(--r)', boxShadow: 'var(--sh-sm)', overflow: 'hidden', marginBottom: 8, borderLeft: '3px solid var(--o)' }}>
+                        <div style={{ padding: '12px 16px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--o)' }}>You</span>
+                            <span style={{ fontSize: 10, color: 'var(--t3)' }}>{c.time} · {c.via}</span>
+                          </div>
+                          <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>&quot;{c.msg}&quot;</div>
+                        </div>
+                      </div>
+                    )
+                  }
+                  const sigColor = c.signalColor || 'var(--t3)'
+                  const sigLabel = c.signal || 'Signal'
+                  const isExp = expandedComm === ci
+                  return (
+                    <div key={ci} style={{ borderRadius: 'var(--r)', boxShadow: 'var(--sh-sm)', overflow: 'hidden', marginBottom: 8, background: 'var(--surface)' }}>
+                      <div style={{ padding: '12px 16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                          <div style={{ width: 32, height: 32, borderRadius: 9, background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{viaIcon(c.via)}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 }}>
+                              <span style={{ fontSize: 13, fontWeight: 700 }}>{c.from}</span>
+                              <span style={{ fontSize: 10, color: 'var(--t3)' }}>{c.time}</span>
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--t3)', marginBottom: 8 }}>{c.role} · via {c.via}</div>
+                            <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55, background: 'var(--inset)', padding: '8px 10px', borderRadius: 8, borderLeft: `2.5px solid ${sigColor}` }}>&quot;{c.msg}&quot;</div>
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', padding: '6px 16px 8px', borderTop: '1px solid var(--border)' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 700, color: sigColor, fontFamily: "'DM Mono',monospace" }}>
+                          <span style={{ width: 5, height: 5, borderRadius: '50%', background: sigColor, display: 'inline-block', flexShrink: 0 }}></span>{sigLabel} signal
+                        </span>
+                        <div style={{ flex: 1 }}></div>
+                        <div onClick={() => setExpandedComm(isExp ? null : ci)} style={{ display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', userSelect: 'none' }}>
+                          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--o)' }}>Actions</span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" style={{ transition: 'transform .2s', transform: isExp ? 'rotate(180deg)' : 'none' }}><polyline points="6 9 12 15 18 9"/></svg>
+                        </div>
+                      </div>
+                      {isExp && (
+                        <div style={{ padding: '0 14px 12px' }}>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button onClick={() => askAI(`Draft a reply to ${c.from}'s ${c.via} message at ${data!.name}`)} style={{ flex: 1, padding: 8, borderRadius: 10, background: 'var(--o)', color: '#fff', border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Draft Reply</button>
+                            <button onClick={() => askAI(`Analyse the ${c.via} from ${c.from} at ${data!.name} and recommend next steps`)} style={{ flex: 1, padding: 8, borderRadius: 10, background: 'rgba(255,107,53,.08)', color: 'var(--o)', border: '1.5px solid rgba(255,107,53,.22)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Ask AI</button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )
+                }) : <Empty label="No communications logged yet" />}
+              </div>
+            )}
+
+            {/* PEOPLE */}
+            {tab === 'people' && (
+              <div>
+                {(data.people && data.people.length > 0) ? data.people.map((p, i) => (
+                  <div key={i} style={{ padding: 16, background: 'var(--inset)', borderRadius: 14, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                      <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 800, color: 'var(--t2)' }}>{p.name.split(' ').map(w => w[0]).join('')}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--t1)' }}>{p.name}</span>
+                          {p.badge && <span style={{ fontSize: 8, fontWeight: 800, padding: '2px 6px', borderRadius: 20, background: 'rgba(0,0,0,.04)', color: p.badgeColor || 'var(--t3)', border: '1px solid rgba(0,0,0,.06)', letterSpacing: '.5px' }}>{p.badge}</span>}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--t3)' }}>{p.role} · Last active {p.last}</div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 16, fontWeight: 900, color: p.eng > 60 ? 'var(--ok)' : p.eng > 35 ? 'var(--warn)' : 'var(--danger)' }}>{p.eng}%</div>
+                        <div style={{ fontSize: 9, color: 'var(--t3)' }}>engagement</div>
+                      </div>
+                    </div>
+                    {p.desc && <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, padding: '8px 0 0', borderTop: '1px solid var(--border)' }}>{p.desc}</div>}
+                  </div>
+                )) : <Empty label="No contacts mapped for this account" />}
+              </div>
+            )}
+
+            {/* TIMELINE */}
+            {tab === 'timeline' && (
+              <div>
+                {(data.timeline && data.timeline.length > 0) ? data.timeline.map((t, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 12 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 14, flexShrink: 0 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: t.color, flexShrink: 0, marginTop: 4 }}></div>
+                      {i < data.timeline!.length - 1 && <div style={{ flex: 1, width: 1, background: 'var(--border)', margin: '4px 0' }}></div>}
+                    </div>
+                    <div style={{ flex: 1, paddingBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{t.title}</span>
+                        <span style={{ fontSize: 10, color: 'var(--t3)' }}>{t.time}</span>
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55 }}>{t.desc}</div>
+                    </div>
+                  </div>
+                )) : <Empty label="No timeline events yet" />}
+              </div>
+            )}
+
+            {/* CONTRACTS */}
+            {tab === 'contracts' && (
+              <div>
+                {(data.contracts && data.contracts.length > 0) ? data.contracts.map((ct, i) => (
+                  <div key={i} style={{ padding: 16, background: 'var(--inset)', borderRadius: 14, marginBottom: 10 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--t1)' }}>{ct.name}</div>
+                        <div style={{ fontSize: 11, color: 'var(--t3)' }}>{ct.type}</div>
+                      </div>
+                      <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, color: ct.statusColor, background: 'rgba(0,0,0,.03)', border: '1px solid rgba(0,0,0,.06)' }}>{ct.status}</span>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
+                      {[['Value', ct.value], ['PO Number', ct.po], ['Start', ct.start], ['End', ct.end]].map(([k, v], j) => (
+                        <div key={j}>
+                          <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px', marginBottom: 2 }}>{k}</div>
+                          <div style={{ fontSize: j === 0 ? 15 : 12, fontWeight: j === 0 ? 900 : 600, color: 'var(--t1)', fontFamily: j === 1 ? "'DM Mono',monospace" : 'inherit' }}>{v}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ padding: '8px 10px', background: 'var(--surface)', borderRadius: 8, fontSize: 11, color: 'var(--t2)' }}>{ct.invoice}</div>
+                  </div>
+                )) : <Empty label="No contracts on file" />}
               </div>
             )}
           </div>
 
+          {/* Action column */}
           <div className="a360-action-col">
             <div className="a360-action-label">Recommended Actions</div>
             {actions.map((a, i) => (
-              <button key={i} className={`a360-action-btn${a.primary ? ' primary' : ''}`} onClick={() => askAI(a.prompt)}>
-                {a.icon}
-                {a.label}
+              <button key={i} className={`a360-action-btn${a.primary ? ' primary' : ''}`} onClick={a.onClick}>
+                {a.icon}{a.label}
               </button>
             ))}
           </div>
         </div>
       </div>
+
+      <A360Modal config={modal} onClose={() => setModal(null)} />
     </>
+  )
+}
+
+function Empty({ label }: { label: string }) {
+  return <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--t3)', fontSize: 13 }}>{label}</div>
+}
+
+function LogNoteBody({ onChange }: { onChange: (text: string, type: string) => void }) {
+  const [text, setText] = useState('')
+  const [type, setType] = useState('Call Summary')
+  const types = ['Call Summary', 'Meeting Note', 'Internal Update', 'Follow-up', 'Risk Flag', 'Other']
+  useEffect(() => { onChange(text, type) }, [text, type, onChange])
+  return (
+    <div>
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 7 }}>Note</div>
+      <textarea value={text} onChange={e => setText(e.target.value)} placeholder="Type your note..." style={{ width: '100%', minHeight: 110, fontSize: 13, color: 'var(--t1)', lineHeight: 1.6, fontFamily: "'Outfit',sans-serif", border: '1.5px solid var(--border)', borderRadius: 12, padding: 12, background: 'var(--inset)', resize: 'vertical', outline: 'none', boxSizing: 'border-box', display: 'block', marginBottom: 14 }} />
+      <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 7 }}>Type</div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {types.map(t => {
+          const active = t === type
+          return <div key={t} onClick={() => setType(t)} style={{ padding: '5px 12px', borderRadius: 20, border: `1.5px solid ${active ? 'var(--o)' : 'var(--border)'}`, background: active ? 'rgba(255,107,53,.08)' : 'var(--inset)', fontSize: 11, fontWeight: 600, color: active ? 'var(--o)' : 'var(--t2)', cursor: 'pointer' }}>{t}</div>
+        })}
+      </div>
+    </div>
   )
 }

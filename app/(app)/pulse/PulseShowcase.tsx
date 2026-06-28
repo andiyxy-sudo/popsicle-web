@@ -1,5 +1,7 @@
 'use client'
 
+import { buildA360 } from '@/lib/demo-accounts'
+
 // Demo showcase Pulse — pixel-faithful to popsicle-desktop-v15b prototype.
 // Shown only for demo@popsicle-labs.app.
 
@@ -40,12 +42,10 @@ const zoomIcon = (
 
 export function PulseShowcase() {
   function openA360(r: typeof accountsRows[number]) {
-    window.dispatchEvent(new CustomEvent('open-a360', { detail: {
-      id: r.id, name: r.name, contact: r.contact, stage: r.stage, arr: r.arr,
-      health: r.health, signals: r.signals, daysDark: r.daysDark, risk: r.risk,
-      rep: r.rep, lastTouch: r.lastTouch, tags: r.tags,
-      brief: r.brief, briefTypes: r.briefTypes, healthBars: r.healthBars,
-    }}))
+    const payload = buildA360(r.id)
+    if (payload) {
+      window.dispatchEvent(new CustomEvent('open-a360', { detail: payload }))
+    }
   }
   return (
     <div className="dsk-screen on" id="d-pulse">
