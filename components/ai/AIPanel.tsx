@@ -7,6 +7,7 @@ interface AIPanelProps {
   onClose: () => void
   isDemo: boolean
   greetingName: string
+  prefill?: string
 }
 
 interface Followups { acts: { label: string; prompt?: string; color: string }[]; pills: { label: string; prompt: string }[] }
@@ -116,11 +117,19 @@ const SUGGESTION_GROUPS = [
     items: ['Show me this week forecast', 'What is the best case forecast scenario for Q4?'] },
 ]
 
-export function AIPanel({ open, onClose, isDemo, greetingName }: AIPanelProps) {
+export function AIPanel({ open, onClose, isDemo, greetingName, prefill }: AIPanelProps) {
   const [messages, setMessages] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const msgsRef = useRef<HTMLDivElement>(null)
+
+  // Auto-send a prefilled prompt when the panel is opened with one
+  useEffect(() => {
+    if (open && prefill) {
+      send(prefill)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, prefill])
 
   useEffect(() => {
     msgsRef.current?.scrollTo({ top: msgsRef.current.scrollHeight, behavior: 'smooth' })

@@ -4,11 +4,11 @@
 // Shown only for demo@popsicle-labs.app.
 
 const accountsRows = [
-  { id: 'acme', cls: 'row-hi', health: 31, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Acme Corp', contact: 'Sarah Chen · CFO', arr: '$480K', risk: 'HIGH', rcls: 'rhi', stage: 'Negotiation', sig: 'Exec dark 8 days', sigc: 'var(--danger)', tags: [['Exec Dark','red'],['Competitor','amber']], delta: '-14%', dc: 'var(--danger)', last: '2d ago', action: 'Draft Email', actionPrimary: true },
-  { id: 'meridian', cls: 'row-hi', health: 28, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Meridian Labs', contact: 'Alex Park · CEO', arr: '$850K', risk: 'HIGH', rcls: 'rhi', stage: 'Renewal', sig: 'Timeline slipping Q2', sigc: 'var(--danger)', tags: [['Silent Stall','red'],['Churn Risk','red']], delta: '-11%', dc: 'var(--danger)', last: '5d ago', action: 'Schedule Call', actionPrimary: true },
-  { id: 'axion', cls: 'row-md', health: 52, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'Axion Partners', contact: 'Marcus Webb · VP Eng', arr: '$95K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Legal Review', sig: 'Contract stall day 3', sigc: 'var(--amber)', tags: [['Legal Hold','amber']], delta: '-4%', dc: 'var(--amber)', last: '1d ago', action: 'Send Redline', actionPrimary: true },
-  { id: 'techflow', cls: 'row-md', health: 55, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'TechFlow Inc', contact: 'Lena Ford · COO', arr: '$210K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Discovery', sig: 'Budget stall detected', sigc: 'var(--amber)', tags: [['Budget Stall','amber'],['Multi-thread','blue']], delta: '-6%', dc: 'var(--amber)', last: '3d ago', action: 'Pricing Deck', actionPrimary: true },
-  { id: 'nexus', cls: 'row-ok', health: 88, hbg: 'var(--ok-bg)', hc: 'var(--ok)', name: 'Nexus AI', contact: 'Priya Sharma · CTO', arr: '$320K', risk: 'LOW', rcls: 'rlo', stage: 'Closing', sig: 'PO expected this week', sigc: 'var(--ok)', tags: [['Buyer Active','green'],['Legal Clear','green']], delta: '+12%', dc: 'var(--ok)', last: 'Today', action: 'Follow Up', actionPrimary: false },
+  { id: 'acme', cls: 'row-hi', health: 31, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Acme Corp', contact: 'Sarah Chen · CFO', arr: '$480K', risk: 'HIGH', rcls: 'rhi', stage: 'Negotiation', sig: 'Exec dark 8 days', sigc: 'var(--danger)', tags: [['Exec Dark','red'],['Competitor','amber']] as [string,string][], delta: '-14%', dc: 'var(--danger)', last: '2d ago', action: 'Draft Email', actionPrimary: true, signals: 14, daysDark: 8, rep: 'Andy G', lastTouch: 'Last exec touch: 8 days ago · 3 unanswered emails', topSignal: 'CFO Sarah Chen has gone dark for 8 days. Last 3 emails opened but unanswered. Competitor evaluation rumoured.' },
+  { id: 'meridian', cls: 'row-hi', health: 28, hbg: 'var(--danger-bg)', hc: 'var(--danger)', name: 'Meridian Labs', contact: 'Alex Park · CEO', arr: '$850K', risk: 'HIGH', rcls: 'rhi', stage: 'Renewal', sig: 'Timeline slipping Q2', sigc: 'var(--danger)', tags: [['Silent Stall','red'],['Churn Risk','red']] as [string,string][], delta: '-11%', dc: 'var(--danger)', last: '5d ago', action: 'Schedule Call', actionPrimary: true, signals: 11, daysDark: 8, rep: 'Mike Ross', lastTouch: 'Last exec touch: 5 days ago · renewal timeline slipped to Q2', topSignal: 'CEO Alex Park confirmed Gong evaluation 5 days ago. CTO dark 8 days. Procurement slipped to Q2.' },
+  { id: 'axion', cls: 'row-md', health: 52, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'Axion Partners', contact: 'Marcus Webb · VP Eng', arr: '$95K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Legal Review', sig: 'Contract stall day 3', sigc: 'var(--amber)', tags: [['Legal Hold','amber']] as [string,string][], delta: '-4%', dc: 'var(--amber)', last: '1d ago', action: 'Send Redline', actionPrimary: true, signals: 6, daysDark: 3, rep: 'Andy G', lastTouch: 'Last touch: 1 day ago · legal review day 3 of 14-21', topSignal: 'VP Eng Marcus Webb asked to loop in legal 3 days ago. Adds 3-5 weeks to close.' },
+  { id: 'techflow', cls: 'row-md', health: 55, hbg: 'var(--amber-bg)', hc: 'var(--amber)', name: 'TechFlow Inc', contact: 'Lena Ford · COO', arr: '$210K', risk: 'MEDIUM', rcls: 'rmd', stage: 'Discovery', sig: 'Budget stall detected', sigc: 'var(--amber)', tags: [['Budget Stall','amber'],['Multi-thread','blue']] as [string,string][], delta: '-6%', dc: 'var(--amber)', last: '3d ago', action: 'Pricing Deck', actionPrimary: true, signals: 9, daysDark: 3, rep: 'Andy G', lastTouch: 'Last touch: 3 days ago · CFO budget check pending', topSignal: 'COO Lena Ford said "need to check with finance" on Zoom 3h ago. Budget stall detected.' },
+  { id: 'nexus', cls: 'row-ok', health: 88, hbg: 'var(--ok-bg)', hc: 'var(--ok)', name: 'Nexus AI', contact: 'Priya Sharma · CTO', arr: '$320K', risk: 'LOW', rcls: 'rlo', stage: 'Closing', sig: 'PO expected this week', sigc: 'var(--ok)', tags: [['Buyer Active','green'],['Legal Clear','green']] as [string,string][], delta: '+12%', dc: 'var(--ok)', last: 'Today', action: 'Follow Up', actionPrimary: false, signals: 7, daysDark: 0, rep: 'Jamie T', lastTouch: 'Last touch: today · CTO fast-tracked to legal', topSignal: 'CTO Priya Sharma fast-tracked contract to legal. Proposal opened 7x. PO expected in 3-5 days.' },
 ]
 
 const gmailIcon = (
@@ -24,6 +24,13 @@ const zoomIcon = (
 )
 
 export function PulseShowcase() {
+  function openA360(r: typeof accountsRows[number]) {
+    window.dispatchEvent(new CustomEvent('open-a360', { detail: {
+      id: r.id, name: r.name, contact: r.contact, stage: r.stage, arr: r.arr,
+      health: r.health, signals: r.signals, daysDark: r.daysDark, risk: r.risk,
+      rep: r.rep, lastTouch: r.lastTouch, topSignal: r.topSignal, tags: r.tags,
+    }}))
+  }
   return (
     <div className="dsk-screen on" id="d-pulse">
       {/* Header */}
@@ -195,7 +202,7 @@ export function PulseShowcase() {
           <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th style={{ whiteSpace: 'nowrap' }}>Trend %</th><th style={{ whiteSpace: 'nowrap' }}>Last Touch</th><th>Action</th></tr></thead>
           <tbody>
             {accountsRows.map(r => (
-              <tr key={r.id} className={r.cls}>
+              <tr key={r.id} className={r.cls} onClick={() => openA360(r)} style={{ cursor: 'pointer' }}>
                 <td><div className="port-health" style={{ background: r.hbg, color: r.hc }}>{r.health}</div></td>
                 <td><div><div style={{ fontWeight: 700 }}>{r.name}</div><div style={{ fontSize: 11, color: 'var(--t3)' }}>{r.contact}</div></div></td>
                 <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{r.arr}</td>
@@ -204,7 +211,7 @@ export function PulseShowcase() {
                 <td style={{ fontSize: 12, color: r.sigc }}>{r.sig}</td>
                 <td><div className="port-tags">{r.tags.map((t, i) => <span key={i} className={`port-tag port-tag-${t[1]}`}>{t[0]}</span>)}</div></td>
                 <td>
-                  <span style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace", display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap' }}>
+                  <span onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt: `Why is ${r.name} trending ${r.delta} in health score this week?` } })) }} style={{ fontSize: 13, fontWeight: 900, color: r.dc, fontFamily: "'DM Mono',monospace", display: 'inline-flex', alignItems: 'center', whiteSpace: 'nowrap', cursor: 'pointer' }}>
                     {r.delta}
                     <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" style={{ marginLeft: 3, opacity: .5 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   </span>
@@ -214,6 +221,7 @@ export function PulseShowcase() {
                   <button
                     className={r.actionPrimary ? 'sig-card-btn primary' : 'sig-card-btn'}
                     style={!r.actionPrimary ? { color: 'var(--ok)', borderColor: 'rgba(42,157,92,.2)' } : undefined}
+                    onClick={(e) => { e.stopPropagation(); window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt: `Help me with this action for ${r.name}: ${r.action}` } })) }}
                   >
                     {r.action}
                   </button>

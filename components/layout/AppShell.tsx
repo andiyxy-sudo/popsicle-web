@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { AIPanel } from '@/components/ai/AIPanel'
+import { Account360 } from '@/components/account/Account360'
 import { getInitials } from '@/lib/utils'
 
 interface AppShellProps {
@@ -15,16 +16,19 @@ interface AppShellProps {
 
 export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps) {
   const [aiOpen, setAiOpen] = useState(false)
+  const [aiPrefill, setAiPrefill] = useState<string | undefined>(undefined)
 
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
   const greetingName = isDemo ? 'Andy' : (user.name || user.email.split('@')[0])
 
-  // Allow any child to open the AI panel via a global event:
-  // window.dispatchEvent(new CustomEvent('open-ai', { detail: { prompt } }))
-  const handleOpenAI = useCallback(() => setAiOpen(true), [])
+  const handleOpenAI = useCallback(() => { setAiPrefill(undefined); setAiOpen(true) }, [])
 
   useEffect(() => {
-    function onOpen() { setAiOpen(true) }
+    function onOpen(e: Event) {
+      const detail = (e as CustomEvent).detail as { prompt?: string } | undefined
+      setAiPrefill(detail?.prompt)
+      setAiOpen(true)
+    }
     window.addEventListener('open-ai', onOpen as EventListener)
     return () => window.removeEventListener('open-ai', onOpen as EventListener)
   }, [])
@@ -38,7 +42,8 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           {children}
         </div>
       </div>
-      <AIPanel open={aiOpen} onClose={() => setAiOpen(false)} isDemo={isDemo} greetingName={greetingName} />
+      <AIPanel open={aiOpen} onClose={() => setAiOpen(false)} isDemo={isDemo} greetingName={greetingName} prefill={aiPrefill} />
+      <Account360 />
     </>
   )
 }
