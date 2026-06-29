@@ -341,15 +341,22 @@ export default function LoginPage() {
         {/* Footer */}
         <div style={{ marginTop: 16, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, fontSize: 11, color: '#B0A89C' }}>
-            {['Security', 'Privacy', 'Terms'].map((t, i) => (
-              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <span style={{ cursor: 'pointer', transition: 'color .15s' }}
+            {[
+              { label: 'Privacy', href: 'https://popsicle-labs.app/privacy.html' },
+              { label: 'Terms', href: 'https://popsicle-labs.app/terms.html' },
+            ].map((link, i, arr) => (
+              <span key={link.label} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <a
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ cursor: 'pointer', transition: 'color .15s', color: 'inherit', textDecoration: 'none' }}
                   onMouseOver={e => (e.currentTarget.style.color = '#6B5C50')}
                   onMouseOut={e => (e.currentTarget.style.color = '#B0A89C')}
                 >
-                  {t}
-                </span>
-                {i < 2 && <span style={{ opacity: .4 }}>·</span>}
+                  {link.label}
+                </a>
+                {i < arr.length - 1 && <span style={{ opacity: .4 }}>·</span>}
               </span>
             ))}
           </div>
