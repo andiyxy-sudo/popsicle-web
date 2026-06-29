@@ -56,7 +56,7 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/pulse` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=/pulse` },
       })
       if (error) throw error
       // On success the browser is redirected to Google; nothing else to do here.
