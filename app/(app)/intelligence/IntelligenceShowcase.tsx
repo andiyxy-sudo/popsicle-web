@@ -11,6 +11,14 @@ const SEC = (t: string, right?: React.ReactNode) => (
   </div>
 )
 
+// Icon per action kind: email (draft), phone (call/escalate), document (redline)
+function actionIcon(kind: string) {
+  if (kind === 'schedule') return <><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.79 19.79 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></>
+  if (kind === 'escalate') return <><path d="M22 16.92v3a2 2 0 01-2.18 2A19.79 19.79 0 013.09 5.18 2 2 0 015.11 3h3"/><polyline points="16 2 22 2 22 8"/><line x1="23" y1="1" x2="16" y2="8"/></>
+  if (kind === 'redline') return <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>
+  return <><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></>
+}
+
 // Hero period data
 const INTEL_PERIODS: Record<number, { val: string; delta: string; sub: string; signals: string; deals: string; resp: string }> = {
   30: { val: '$560K', delta: '▲ +38%', sub: '7 deals', signals: '42', deals: '7', resp: '3.4d' },
@@ -70,7 +78,7 @@ export function IntelligenceShowcase() {
               <div style={{ fontSize: 48, fontWeight: 900, color: '#fff', letterSpacing: '-2.5px', lineHeight: 1, textShadow: '0 0 28px rgba(255,255,255,.2)' }}>{h.val}</div>
               <span style={{ fontSize: 13, fontWeight: 700, color: '#7DCEA0' }}>{h.delta}</span>
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', marginTop: 4 }}>saved this quarter across {h.sub} · avg <strong style={{ color: '#fff' }}>{h.resp}</strong> to intervention</div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', marginTop: 4 }}>saved this quarter across {h.sub} · avg <strong style={{ color: '#fff' }}>{h.resp.replace('d', ' days')}</strong> to intervention</div>
             <div style={{ marginTop: 18 }}>
               <svg width="100%" height="48" viewBox="0 0 400 48" preserveAspectRatio="none">
                 <defs><linearGradient id="hero-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FFB088" stopOpacity=".2"/><stop offset="100%" stopColor="#FFB088" stopOpacity="0"/></linearGradient></defs>
@@ -247,7 +255,7 @@ export function IntelligenceShowcase() {
                 else actionConfirm('schedule', 'Call Scheduled', 'Calendar invite drafted with AI agenda attached.')
               }} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: a.rec ? 'rgba(42,157,92,.04)' : 'var(--inset)', border: a.rec ? '1px solid rgba(42,157,92,.12)' : '1px solid transparent', borderRadius: 12, cursor: 'pointer' }}>
                 <div style={{ width: 36, height: 36, borderRadius: 10, background: a.rec ? 'rgba(42,157,92,.08)' : 'rgba(255,107,53,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={a.rec ? 'var(--ok)' : 'var(--o)'} strokeWidth="2" strokeLinecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={a.rec ? 'var(--ok)' : 'var(--o)'} strokeWidth="2" strokeLinecap="round">{actionIcon(a.kind)}</svg>
                 </div>
                 <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{a.title}</div><div style={{ fontSize: 11, color: a.rec ? 'var(--ok)' : 'var(--t3)', fontWeight: a.rec ? 600 : 400 }}>{a.sub}</div></div>
                 <div style={{ textAlign: 'right' }}><div style={{ fontSize: 18, fontWeight: 900, color: a.pc }}>{a.pct}</div><div style={{ fontSize: 9, color: a.rec ? 'var(--ok)' : 'var(--t3)' }}>success</div></div>
@@ -362,7 +370,7 @@ export function IntelligenceShowcase() {
                 else if (a.kind === 'escalate') actionConfirm('escalate', 'Escalated to CRO', 'Risk brief sent. Exec-to-exec recommended within 24h.')
                 else actionConfirm('email', 'Redline Sent', 'Simplified redline sent to legal.')
               }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--inset)', borderRadius: 10, cursor: 'pointer' }}>
-                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,107,53,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2"/><polyline points="22 7 12 13 2 7"/></svg></div>
+                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(255,107,53,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2">{actionIcon(a.kind)}</svg></div>
                 <div style={{ flex: 1 }}><div style={{ fontSize: 12, fontWeight: 700 }}>{a.title}</div><div style={{ fontSize: 10, color: 'var(--t3)' }}>{a.sub}</div></div>
               </div>
             ))}
