@@ -6,17 +6,38 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    setNotice(null)
     try {
+      if (mode === 'signup') {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { name } },
+        })
+        if (error) throw error
+        // If email confirmation is on, there is no session yet.
+        if (!data.session) {
+          setNotice('Account created. Check your email to confirm, then sign in.')
+          setMode('signin')
+          return
+        }
+        router.push('/pulse')
+        router.refresh()
+        return
+      }
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
       router.push('/pulse')
@@ -183,6 +204,17 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* Notice */}
+        {notice && (
+          <div style={{
+            background: 'rgba(22,163,74,.07)', border: '1px solid rgba(22,163,74,.18)',
+            borderRadius: 9, padding: '10px 14px', marginBottom: 12,
+            fontSize: 13, color: '#16A34A',
+          }}>
+            {notice}
+          </div>
+        )}
+
         {/* Demo button */}
         <button className="login-demo-btn" onClick={handleDemo} disabled={loading}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -200,10 +232,20 @@ export default function LoginPage() {
         </button>
 
         {/* Divider */}
-        <div className="login-divider">or sign in with email</div>
+        <div className="login-divider">{mode === 'signup' ? 'create your account' : 'or sign in with email'}</div>
 
         {/* Email + Password */}
         <form onSubmit={handleSubmit}>
+          {mode === 'signup' && (
+            <input
+              className="login-input"
+              type="text"
+              placeholder="Full name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+            />
+          )}
           <input
             className="login-input"
             type="email"
@@ -215,15 +257,28 @@ export default function LoginPage() {
           <input
             className="login-input"
             type="password"
-            placeholder="Password"
+            placeholder={mode === 'signup' ? 'Choose a password' : 'Password'}
             value={password}
             onChange={e => setPassword(e.target.value)}
             required
           />
           <button className="login-btn" type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In →'}
+            {loading
+              ? (mode === 'signup' ? 'Creating account...' : 'Signing in...')
+              : (mode === 'signup' ? 'Create Account →' : 'Sign In →')}
           </button>
         </form>
+
+        {/* Mode toggle */}
+        <div style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: '#6B5C50' }}>
+          {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
+          <span
+            onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(null); setNotice(null) }}
+            style={{ color: '#FF6B35', fontWeight: 700, cursor: 'pointer' }}
+          >
+            {mode === 'signup' ? 'Sign in' : 'Create one'}
+          </span>
+        </div>
 
         {/* Social */}
         <div className="login-divider" style={{ marginTop: 16 }}>or continue with</div>
