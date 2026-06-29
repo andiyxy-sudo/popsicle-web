@@ -6,7 +6,7 @@ interface Account {
 }
 
 function fmtVal(v?: number) {
-  if (!v) return '$0'
+  if (!v) return '--'
   if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`
   if (v >= 1000) return `$${Math.round(v / 1000)}K`
   return `$${v}`
