@@ -1,16 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
-import { SettingsClient } from './SettingsClient'
+import { SettingsShowcase } from './SettingsShowcase'
 
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data } = await supabase.auth.getClaims()
+  if (!data) return null
+  const email = (data.claims.email as string | undefined) ?? ''
 
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '32px 36px 56px' }}>
-        <SettingsClient user={{ email: user.email ?? '', id: user.id }} />
-      </div>
-    </div>
-  )
+  return <SettingsShowcase email={email} />
 }

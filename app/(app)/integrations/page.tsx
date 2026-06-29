@@ -1,29 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
-import { IntegrationsClient } from './IntegrationsClient'
+import { DEMO_EMAIL } from '@/lib/data'
+import { IntegrationsShowcase } from './IntegrationsShowcase'
+import { IntegrationsReal } from './IntegrationsReal'
 
 export default async function IntegrationsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const { data } = await supabase.auth.getClaims()
+  if (!data) return null
+  const claims = data.claims
+  const email = claims.email as string | undefined
+  const userId = claims.sub as string
+
+  if (email === DEMO_EMAIL) {
+    return <IntegrationsShowcase />
+  }
 
   const { data: integrations } = await supabase
     .from('integrations')
-    .select('*')
-    .eq('user_id', user.id)
+    .select('provider, is_active')
+    .eq('user_id', userId)
 
-  return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '32px 36px 56px' }}>
-        <div style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-0.8px', marginBottom: 6 }}>
-            Connect your tools
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--t3)' }}>
-            Popsicle reads signals from your existing workflows. Connect to start monitoring.
-          </p>
-        </div>
-        <IntegrationsClient integrations={integrations ?? []} userId={user.id} />
-      </div>
-    </div>
-  )
+  return <IntegrationsReal active={(integrations ?? []).filter(i => i.is_active).map(i => i.provider)} />
 }
