@@ -49,6 +49,28 @@ export default function LoginPage() {
     }
   }
 
+  async function handleGoogle() {
+    setLoading(true)
+    setError(null)
+    setNotice(null)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/pulse` },
+      })
+      if (error) throw error
+      // On success the browser is redirected to Google; nothing else to do here.
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Google sign-in is unavailable.'
+      setError(
+        /provider is not enabled/i.test(msg)
+          ? 'Google sign-in is not enabled yet. Enable the Google provider in Supabase Auth settings.'
+          : msg,
+      )
+      setLoading(false)
+    }
+  }
+
   async function handleDemo() {
     setLoading(true)
     setError(null)
@@ -283,7 +305,7 @@ export default function LoginPage() {
         {/* Social */}
         <div className="login-divider" style={{ marginTop: 16 }}>or continue with</div>
         <div className="login-social">
-          <button type="button" title="Coming soon" disabled>
+          <button type="button" onClick={handleGoogle} disabled={loading}>
             <svg width="15" height="15" viewBox="0 0 48 48">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.33 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/>
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
