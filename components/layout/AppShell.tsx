@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { AIPanel } from '@/components/ai/AIPanel'
 import { Account360 } from '@/components/account/Account360'
+import { LiveSignals } from './LiveSignals'
 import { getInitials } from '@/lib/utils'
 
 interface AppShellProps {
@@ -44,6 +45,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       </div>
       <AIPanel open={aiOpen} onClose={() => setAiOpen(false)} isDemo={isDemo} greetingName={greetingName} prefill={aiPrefill} />
       <Account360 />
+      {!isDemo && <LiveSignals userId={user.id} />}
     </>
   )
 }
