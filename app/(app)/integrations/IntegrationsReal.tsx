@@ -126,7 +126,7 @@ export function IntegrationsReal({ active }: { active: string[] }) {
                 <div key={p.key} className={`int-card${on ? ' connected' : ''}`}>
                   <div className="int-ico" style={{ background: 'var(--inset)' }}>{LOGOS[p.key] ?? <span style={{ fontWeight: 800, color: 'var(--t2)', fontSize: 13 }}>{p.name[0]}</span>}</div>
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}{!live && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', marginLeft: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>soon</span>}</div>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{p.desc}</div>
                   </div>
                   {on ? (
@@ -134,8 +134,10 @@ export function IntegrationsReal({ active }: { active: string[] }) {
                       <span className="int-signal" style={{ cursor: 'default' }}>Connected</span>
                       <button onClick={() => sync(p)} disabled={syncing === p.key} style={{ padding: '4px 10px', borderRadius: 8, background: 'var(--inset)', border: '1px solid var(--border)', fontSize: 10, fontWeight: 600, color: 'var(--t2)', cursor: 'pointer', fontFamily: 'Outfit,sans-serif' }}>{syncing === p.key ? 'Syncing...' : 'Sync'}</button>
                     </div>
-                  ) : (
+                  ) : live ? (
                     <button onClick={() => connect(p)} disabled={busy === p.key} style={{ padding: '4px 12px', borderRadius: 8, background: 'rgba(255,107,53,.08)', border: '1px solid rgba(255,107,53,.2)', color: 'var(--o)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit'", opacity: busy === p.key ? 0.6 : 1 }}>{busy === p.key ? 'Starting...' : 'Connect'}</button>
+                  ) : (
+                    <span style={{ padding: '4px 12px', borderRadius: 8, background: 'var(--inset)', border: '1px solid var(--border)', color: 'var(--t4)', fontSize: 11, fontWeight: 700, fontFamily: "'Outfit'", whiteSpace: 'nowrap' }}>Coming soon</span>
                   )}
                 </div>
               )
