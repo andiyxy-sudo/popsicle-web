@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/components/account/A360Modal'
+import { LOGOS } from './IntegrationsShowcase'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -123,7 +124,7 @@ export function IntegrationsReal({ active }: { active: string[] }) {
               const live = !!p.fn
               return (
                 <div key={p.key} className={`int-card${on ? ' connected' : ''}`}>
-                  <div className="int-ico" style={{ background: 'var(--inset)', fontWeight: 800, color: 'var(--t2)', fontSize: 13 }}>{p.name[0]}</div>
+                  <div className="int-ico" style={{ background: 'var(--inset)' }}>{LOGOS[p.key] ?? <span style={{ fontWeight: 800, color: 'var(--t2)', fontSize: 13 }}>{p.name[0]}</span>}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}{!live && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', marginLeft: 6, textTransform: 'uppercase', letterSpacing: '.5px' }}>soon</span>}</div>
                     <div style={{ fontSize: 10, color: 'var(--t3)' }}>{p.desc}</div>

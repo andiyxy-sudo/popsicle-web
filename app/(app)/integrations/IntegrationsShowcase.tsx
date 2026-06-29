@@ -7,7 +7,7 @@ const chevron = <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stro
 const syncIco = <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M21 2v6h-6M3 12a9 9 0 0115-6.7L21 8M3 22v-6h6M21 12a9 9 0 01-15 6.7L3 16"/></svg>
 
 // Brand logos as inline SVG (ported from prototype)
-const LOGOS: Record<string, React.ReactNode> = {
+export const LOGOS: Record<string, React.ReactNode> = {
   gmail: <svg width="20" height="15" viewBox="0 0 24 18"><rect width="24" height="18" rx="2.5" fill="#fff"/><rect x=".5" y=".5" width="23" height="17" rx="2" fill="none" stroke="#ddd" strokeWidth=".5"/><path d="M2 2l10 7.5L22 2" stroke="#EA4335" strokeWidth="2.2" fill="none" strokeLinecap="round"/></svg>,
   outlook: <svg width="20" height="20" viewBox="0 0 100 100"><rect width="100" height="100" rx="18" fill="#0078D4"/><rect x="10" y="28" width="50" height="44" rx="4" fill="#fff" fillOpacity=".95"/><text x="35" y="56" textAnchor="middle" fontFamily="Calibri,Arial,sans-serif" fontSize="22" fontWeight="700" fill="#0078D4">Oa</text><rect x="60" y="36" width="32" height="28" rx="3" fill="#5BA3E0"/><path d="M60 38l16 10 16-10" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round"/></svg>,
   linkedin: <svg width="20" height="20" viewBox="0 0 48 48"><rect width="48" height="48" rx="6" fill="#0A66C2"/><rect x="9" y="20" width="7" height="20" rx="1" fill="#fff"/><circle cx="12.5" cy="13" r="4" fill="#fff"/><path d="M22 20h6v3.2c1-1.8 3.2-3.7 6.5-3.7 6 0 8.5 3.5 8.5 9V40h-7V28.5c0-2.8-.8-4.5-3-4.5-2.8 0-4.5 2.2-4.5 5.5V40H22V20z" fill="#fff"/></svg>,
