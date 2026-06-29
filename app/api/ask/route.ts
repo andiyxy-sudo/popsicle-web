@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { DEMO_EMAIL } from '@/lib/data'
+import { DEMO_AI_CONTEXT } from '@/lib/demo-ai-context'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -10,6 +12,12 @@ export async function POST(req: NextRequest) {
   }
 
   const { messages } = await req.json()
+
+  // Demo account: answer from the showcase context block (no DB round-trip), so the
+  // co-pilot's answers match exactly what is on screen.
+  if (user.email === DEMO_EMAIL) {
+    return runAnthropic(DEMO_AI_CONTEXT, messages)
+  }
 
   // Fetch context: recent signals + at-risk accounts
   const [signalsRes, accountsRes] = await Promise.all([
@@ -49,6 +57,11 @@ Rules:
 - Keep responses concise and well structured. Lead with a one-line summary, then use bullet points (start each with "- ") for lists of accounts, risks, or actions. Use **bold** for key numbers and account names. Avoid long paragraphs.
 `.trim()
 
+  return runAnthropic(contextBlock, messages)
+}
+
+// Shared Anthropic call used by both the demo and real-user paths.
+async function runAnthropic(system: string, messages: { role: string; content: string }[]) {
   // Explicit check so we get a clear message instead of a silent failure
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'AI is not configured. Add ANTHROPIC_API_KEY in Vercel environment variables.' }, { status: 500 })
@@ -63,13 +76,10 @@ Rules:
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-5',
+        model: 'claude-opus-4-8',
         max_tokens: 1024,
-        system: contextBlock,
-        messages: messages.map((m: { role: string; content: string }) => ({
-          role: m.role,
-          content: m.content,
-        })),
+        system,
+        messages: messages.map((m) => ({ role: m.role, content: m.content })),
       }),
     })
 
