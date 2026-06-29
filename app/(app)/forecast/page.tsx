@@ -1,13 +1,25 @@
-export default function ForecastPage() {
-  return (
-    <div className="dsk-screen on">
-      <div className="page-hdr fade-in">
-        <h1 style={{ marginBottom: 0, textTransform: 'capitalize' }}>forecast</h1>
-        <p>Coming next - we are building screens one at a time.</p>
-      </div>
-      <div className="dcard fade-in" style={{ textAlign: 'center', padding: '56px 24px' }}>
-        <div style={{ fontSize: 14, color: 'var(--t3)' }}>This screen is next in the build queue.</div>
-      </div>
-    </div>
-  )
+import { createClient } from '@/lib/supabase/server'
+import { DEMO_EMAIL } from '@/lib/data'
+import { ForecastShowcase } from './ForecastShowcase'
+import { ForecastReal } from './ForecastReal'
+
+export default async function ForecastPage() {
+  const supabase = await createClient()
+  const { data } = await supabase.auth.getClaims()
+  if (!data) return null
+  const claims = data.claims
+  const email = claims.email as string | undefined
+  const userId = claims.sub as string
+
+  if (email === DEMO_EMAIL) {
+    return <ForecastShowcase />
+  }
+
+  const { data: accounts } = await supabase
+    .from('accounts')
+    .select('*')
+    .eq('user_id', userId)
+    .order('probability', { ascending: false })
+
+  return <ForecastReal accounts={accounts ?? []} />
 }
