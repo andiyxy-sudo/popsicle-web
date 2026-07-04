@@ -25,9 +25,10 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
   function openA360(a: Account) {
     window.dispatchEvent(new CustomEvent('open-a360', { detail: {
       id: a.id, name: a.name, contact: a.domain || '', stage: a.stage || 'Active',
-      arr: fmtVal(a.value), health: a.health_score ?? 0, signals: 0, daysDark: 0,
+      arr: fmtVal(a.value), health: a.health_score ?? 50, signals: 0, daysDark: '--',
       risk: (a.risk_level || 'low').toUpperCase(), rep: a.owner || 'You',
       lastTouch: a.last_contact_date ? `Last contact: ${a.last_contact_date}` : 'No recent contact',
+      _needsLoad: true,
     } }))
   }
 

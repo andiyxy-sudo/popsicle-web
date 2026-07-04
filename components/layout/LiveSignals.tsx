@@ -49,7 +49,7 @@ export function LiveSignals({ userId }: { userId: string }) {
       {toasts.map(t => (
         <div
           key={t.id}
-          onClick={() => { window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: 0, signals: 1, rep: 'You', lastTouch: t.title } })); dismiss(t.id) }}
+          onClick={() => { window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, contact: '', stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: 50, signals: 1, daysDark: '--', rep: 'You', lastTouch: t.title, _needsLoad: true } })); dismiss(t.id) }}
           style={{
             background: 'var(--surface)', border: '1px solid var(--border-soft)',
             borderLeft: `4px solid ${color(t.severity)}`, borderRadius: 12,

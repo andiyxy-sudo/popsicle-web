@@ -45,8 +45,9 @@ export function SignalsReal({ signals }: { signals: DBSignal[] }) {
     if (!s.account_name) return
     window.dispatchEvent(new CustomEvent('open-a360', { detail: {
       name: s.account_name, contact: '', stage: 'Active', arr: fmtMoney(s.risk_amount) || '--',
-      health: 0, signals: 1, daysDark: 0, risk: (s.severity || 'watch').toUpperCase(),
+      health: 50, signals: 1, daysDark: '--', risk: (s.severity || 'watch').toUpperCase(),
       rep: 'You', lastTouch: s.title || 'Signal detected',
+      _needsLoad: true,
     } }))
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { loadRealAccount360 } from '@/lib/account360'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody, ConfirmKind } from './A360Modal'
 
 export interface SigItem { sev: 'danger' | 'warn' | 'ok'; msg: string; time: string; via: string }
@@ -31,6 +32,9 @@ export interface A360Data {
   people?: PersonItem[]
   timeline?: TimelineItem[]
   contracts?: ContractItem[]
+  // Internal: set by real-user dispatchers. Tells the panel to open immediately
+  // on this seed, then enrich itself from live Supabase data. Absent for demo.
+  _needsLoad?: boolean
 }
 
 function riskClass(risk: string) {
@@ -61,7 +65,23 @@ export function Account360() {
   useEffect(() => {
     function onOpen(e: Event) {
       const detail = (e as CustomEvent).detail as A360Data
-      if (detail) { setData(detail); setTab('overview'); setOpen(true); setExpandedComm(null) }
+      if (!detail) return
+      // Open instantly on whatever the dispatcher knows (name, severity, etc).
+      setData(detail); setTab('overview'); setOpen(true); setExpandedComm(null)
+      // Real users: enrich from live data, then merge over the seed. Demo
+      // payloads omit _needsLoad and render exactly as before.
+      if (detail._needsLoad && detail.name) {
+        const seedName = detail.name
+        loadRealAccount360(seedName)
+          .then(real => {
+            setData(prev => {
+              // Ignore a stale response if the user opened a different account.
+              if (!prev || prev.name !== seedName) return prev
+              return { ...prev, ...real, _needsLoad: false }
+            })
+          })
+          .catch(() => {/* keep the seed; a partial panel beats a broken one */})
+      }
     }
     // Open a specific modal directly without showing the full panel
     function onOpenModal(e: Event) {
@@ -125,6 +145,19 @@ export function Account360() {
   const hstroke = healthStroke(data.health)
   const circ = 2 * Math.PI * 26
   const mono = data.monogram || data.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+
+  // Tabs are shown only when they have something to display. Overview and
+  // Signals always show; the rest appear when real data populated them (demo
+  // payloads fill them all, so demo is unchanged). While a real account is
+  // still enriching (_needsLoad), keep the extra tabs hidden rather than
+  // flashing empty ones - they appear as data arrives.
+  const availTabs = ['overview', 'signals',
+    ...((data.comms && data.comms.length) ? ['comms'] : []),
+    ...((data.people && data.people.length) ? ['people'] : []),
+    ...((data.timeline && data.timeline.length) ? ['timeline'] : []),
+    ...((data.contracts && data.contracts.length) ? ['contracts'] : []),
+  ]
+  const activeTab = availTabs.includes(tab) ? tab : 'overview'
 
   // ---------- modal builders ----------
   function successModal(title: string, desc: string, kind: ConfirmKind = 'success') {
@@ -426,8 +459,8 @@ export function Account360() {
 
         {/* Tabs */}
         <div className="a360-tabs">
-          {['overview', 'signals', 'comms', 'people', 'timeline', 'contracts'].map(t => (
-            <div key={t} className={`a360-tab${tab === t ? ' on' : ''}`} onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>{t}</div>
+          {availTabs.map(t => (
+            <div key={t} className={`a360-tab${activeTab === t ? ' on' : ''}`} onClick={() => setTab(t)} style={{ textTransform: 'capitalize' }}>{t}</div>
           ))}
         </div>
 
@@ -435,7 +468,7 @@ export function Account360() {
         <div className="a360-two-col" style={{ height: 'calc(100vh - 280px)' }}>
           <div className="a360-main-col">
             {/* OVERVIEW */}
-            {tab === 'overview' && (
+            {activeTab === 'overview' && (
               <div>
                 {data.brief && data.brief.length > 0 && (
                   <div style={{ marginBottom: 18 }}>{SEC('AI Risk Signals')}
@@ -477,7 +510,7 @@ export function Account360() {
             )}
 
             {/* SIGNALS */}
-            {tab === 'signals' && (
+            {activeTab === 'signals' && (
               <div>
                 {(data.sigItems && data.sigItems.length > 0) ? data.sigItems.map((s, i) => {
                   const c = s.sev === 'danger' ? 'var(--danger)' : s.sev === 'warn' ? 'var(--warn)' : 'var(--ok)'
@@ -499,7 +532,7 @@ export function Account360() {
             )}
 
             {/* COMMS */}
-            {tab === 'comms' && (
+            {activeTab === 'comms' && (
               <div>
                 {SEC('Recent Communications')}
                 {(data.comms && data.comms.length > 0) ? data.comms.map((c, ci) => {
@@ -559,7 +592,7 @@ export function Account360() {
             )}
 
             {/* PEOPLE */}
-            {tab === 'people' && (
+            {activeTab === 'people' && (
               <div>
                 {(data.people && data.people.length > 0) ? data.people.map((p, i) => (
                   <div key={i} style={{ padding: 16, background: 'var(--inset)', borderRadius: 14, marginBottom: 10 }}>
@@ -584,7 +617,7 @@ export function Account360() {
             )}
 
             {/* TIMELINE */}
-            {tab === 'timeline' && (
+            {activeTab === 'timeline' && (
               <div>
                 {(data.timeline && data.timeline.length > 0) ? data.timeline.map((t, i) => (
                   <div key={i} style={{ display: 'flex', gap: 12 }}>
@@ -605,7 +638,7 @@ export function Account360() {
             )}
 
             {/* CONTRACTS */}
-            {tab === 'contracts' && (
+            {activeTab === 'contracts' && (
               <div>
                 {(data.contracts && data.contracts.length > 0) ? data.contracts.map((ct, i) => (
                   <div key={i} style={{ padding: 16, background: 'var(--inset)', borderRadius: 14, marginBottom: 10 }}>
