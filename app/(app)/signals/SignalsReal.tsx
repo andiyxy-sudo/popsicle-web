@@ -20,6 +20,7 @@ const TYPE_LABELS: Record<string, string> = {
   reengaged: 'Re-engaged',
   call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
   call_buying_signal: 'Buying Signal', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
+  meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
 }
 
 function fmtMoney(v?: number) {
