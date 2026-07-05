@@ -18,6 +18,8 @@ const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent Stall', competitor_mention: 'Competitor Mention', legal_loopin: 'Legal Loop-in',
   price_flinch: 'Price Flinch', champion_change: 'Champion Change', timeline_slip: 'Timeline Slip',
   reengaged: 'Re-engaged',
+  call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
+  call_buying_signal: 'Buying Signal', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
 }
 
 function fmtMoney(v?: number) {
