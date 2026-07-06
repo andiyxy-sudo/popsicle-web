@@ -1,5 +1,14 @@
 'use client'
 
+// Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
+// or answered with an AI-drafted follow-up email grounded in the signal's own
+// analysis + the real thread. Snooze/dismiss update optimistically; the draft
+// opens in a modal with copy / open-in-email / regenerate.
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
 interface DBSignal {
   id: string
   account_name?: string
@@ -38,7 +47,18 @@ function timeAgo(iso?: string) {
   return `${Math.floor(d)}d ago`
 }
 
-export function SignalsReal({ signals }: { signals: DBSignal[] }) {
+interface Draft { subject: string; body: string; to: string }
+
+export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
+  const router = useRouter()
+  const [signals, setSignals] = useState<DBSignal[]>(initial)
+  const [busyId, setBusyId] = useState<string | null>(null)
+  // Draft modal state
+  const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
+  const [draft, setDraft] = useState<Draft | null>(null)
+  const [draftState, setDraftState] = useState<'loading' | 'ready' | 'error'>('loading')
+  const [copied, setCopied] = useState(false)
+
   const high = signals.filter(s => s.severity === 'high')
   const watch = signals.filter(s => s.severity === 'watch')
   const positive = signals.filter(s => s.severity === 'positive')
@@ -53,6 +73,59 @@ export function SignalsReal({ signals }: { signals: DBSignal[] }) {
       _needsLoad: true,
     } }))
   }
+
+  // Optimistic: remove from the list immediately, write in the background,
+  // restore on failure so nothing silently disappears.
+  async function setFlag(s: DBSignal, flag: 'is_snoozed' | 'is_dismissed') {
+    if (busyId) return
+    setBusyId(s.id)
+    const prev = signals
+    setSignals(prev.filter(x => x.id !== s.id))
+    const { error } = await createClient().from('signals').update({ [flag]: true }).eq('id', s.id)
+    if (error) setSignals(prev)
+    else router.refresh()
+    setBusyId(null)
+  }
+
+  async function openDraft(s: DBSignal) {
+    setDraftFor(s); setDraft(null); setDraftState('loading'); setCopied(false)
+    try {
+      const r = await fetch('/api/draft', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ signal_id: s.id }),
+      })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j.body) { setDraftState('error'); return }
+      setDraft({ subject: j.subject || '', body: j.body, to: j.to || '' })
+      setDraftState('ready')
+    } catch { setDraftState('error') }
+  }
+
+  function copyDraft() {
+    if (!draft) return
+    navigator.clipboard.writeText(`Subject: ${draft.subject}\n\n${draft.body}`).then(() => {
+      setCopied(true); setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  const mailto = draft
+    ? `mailto:${encodeURIComponent(draft.to)}?subject=${encodeURIComponent(draft.subject)}&body=${encodeURIComponent(draft.body)}`
+    : '#'
+
+  const actionBtn = (label: string, onClick: (e: React.MouseEvent) => void, primary?: boolean) => (
+    <button
+      onClick={(e) => { e.stopPropagation(); onClick(e) }}
+      style={{
+        padding: '5px 11px', fontSize: 10.5, fontWeight: 700, borderRadius: 7, cursor: 'pointer',
+        fontFamily: "'Outfit',sans-serif", whiteSpace: 'nowrap',
+        background: primary ? 'var(--o)' : 'transparent',
+        color: primary ? '#fff' : 'var(--t3)',
+        border: primary ? 'none' : '1px solid var(--line)',
+      }}>
+      {label}
+    </button>
+  )
 
   if (signals.length === 0) {
     return (
@@ -105,7 +178,7 @@ export function SignalsReal({ signals }: { signals: DBSignal[] }) {
           const money = fmtMoney(s.risk_amount)
           const impact = s.impact_pct ? (typeof s.impact_pct === 'number' ? `${s.impact_pct}%` : s.impact_pct) : null
           return (
-            <div key={s.id} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: '0 1px 4px rgba(13,10,7,.06)', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default' }}>
+            <div key={s.id} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: '0 1px 4px rgba(13,10,7,.06)', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : 1 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{headline}</span>
@@ -118,12 +191,80 @@ export function SignalsReal({ signals }: { signals: DBSignal[] }) {
                   {money && <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', fontFamily: "'DM Mono',monospace" }}>{money}{impact ? ` · ${impact}` : ''}</span>}
                   {s.created_at && <span style={{ fontSize: 10, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(s.created_at)}</span>}
                 </div>
+                {/* Action row */}
+                <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
+                  {actionBtn('Draft follow-up', () => openDraft(s), true)}
+                  {actionBtn('Snooze', () => setFlag(s, 'is_snoozed'))}
+                  {actionBtn('Dismiss', () => setFlag(s, 'is_dismissed'))}
+                </div>
               </div>
               {s.source_integration && <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', flexShrink: 0, textTransform: 'capitalize' }}>{s.source_integration}</div>}
             </div>
           )
         })}
       </div>
+
+      {/* Draft modal */}
+      {draftFor && (
+        <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--t1)' }}>Follow-up draft</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>{draftFor.account_name || ''} · responding to: {draftFor.title || TYPE_LABELS[draftFor.signal_type || ''] || 'signal'}</div>
+              </div>
+              <button onClick={() => setDraftFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
+            </div>
+
+            <div style={{ padding: 20, maxHeight: '60vh', overflowY: 'auto' }}>
+              {draftState === 'loading' && (
+                <div style={{ textAlign: 'center', padding: '36px 0' }}>
+                  <div style={{ width: 36, height: 36, margin: '0 auto 14px', border: '3px solid rgba(255,107,53,.15)', borderTopColor: 'var(--o)', borderRadius: '50%', animation: 'spin .9s linear infinite' }} />
+                  <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+                  <div style={{ fontSize: 12.5, color: 'var(--t3)' }}>Writing a draft from the thread and the signal...</div>
+                </div>
+              )}
+              {draftState === 'error' && (
+                <div style={{ textAlign: 'center', padding: '28px 0' }}>
+                  <div style={{ fontSize: 13, color: 'var(--t2)', fontWeight: 700, marginBottom: 6 }}>Could not generate a draft</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Give it another try in a moment.</div>
+                  <button onClick={() => openDraft(draftFor)} style={{ padding: '9px 18px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Retry</button>
+                </div>
+              )}
+              {draftState === 'ready' && draft && (
+                <>
+                  {draft.to && <div style={{ fontSize: 11.5, color: 'var(--t3)', marginBottom: 8 }}>To: <span style={{ fontWeight: 700, color: 'var(--t2)', fontFamily: "'DM Mono',monospace" }}>{draft.to}</span></div>}
+                  <input
+                    value={draft.subject}
+                    onChange={e => setDraft({ ...draft, subject: e.target.value })}
+                    style={{ width: '100%', padding: '10px 12px', fontSize: 13, fontWeight: 700, color: 'var(--t1)', border: '1px solid var(--line)', borderRadius: 9, marginBottom: 10, fontFamily: "'Outfit',sans-serif", background: 'transparent', boxSizing: 'border-box' }}
+                  />
+                  <textarea
+                    value={draft.body}
+                    onChange={e => setDraft({ ...draft, body: e.target.value })}
+                    rows={11}
+                    style={{ width: '100%', padding: '12px', fontSize: 13, lineHeight: 1.65, color: 'var(--t1)', border: '1px solid var(--line)', borderRadius: 9, resize: 'vertical', fontFamily: "'Outfit',sans-serif", background: 'transparent', boxSizing: 'border-box' }}
+                  />
+                </>
+              )}
+            </div>
+
+            {draftState === 'ready' && draft && (
+              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button onClick={() => openDraft(draftFor)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>↻ Regenerate</button>
+                <div style={{ display: 'flex', gap: 9 }}>
+                  <button onClick={copyDraft} style={{ padding: '10px 16px', background: 'transparent', color: 'var(--t2)', border: '1px solid var(--line)', borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
+                    {copied ? '✓ Copied' : 'Copy'}
+                  </button>
+                  <a href={mailto} style={{ padding: '10px 16px', background: 'var(--o)', color: '#fff', borderRadius: 9, fontSize: 12.5, fontWeight: 700, textDecoration: 'none', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 12px rgba(255,107,53,.22)' }}>
+                    Open in email
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
