@@ -213,7 +213,7 @@ export function SettingsShowcase({ email }: { email: string }) {
         <SRow label="Version" value="v1.0" valStyle={{ fontFamily: 'DM Mono,monospace' }} />
         <SRow label="Release" value="June 2026" />
         <SRow label="Platform" value="Revenue Intelligence" />
-        <SRow label="Support" value={userEmail} valStyle={{ fontSize: 11, fontFamily: 'DM Mono,monospace' }} />
+        <SRow label="Support" value="support@popsicle-labs.app" valStyle={{ fontSize: 11, fontFamily: 'DM Mono,monospace' }} />
         <div style={{ marginTop: 12, textAlign: 'center', fontSize: 11, color: 'var(--t3)' }}>© 2026 Popsicle Labs. All rights reserved.</div>
       </>
     )
@@ -255,7 +255,7 @@ export function SettingsShowcase({ email }: { email: string }) {
     { label: "What's New", badge: 'v1.0', onClick: smWhatsNew },
     { label: 'Help & Support', value: 'Chat with AI →', vc: 'var(--o)', onClick: () => window.dispatchEvent(new CustomEvent('open-ai', { detail: {} })) },
     { label: 'About', value: 'v1.0 · June 2026', vc: 'var(--t3)', onClick: smAbout },
-    { label: 'Email Support', value: userEmail, vc: 'var(--t3)', mono: true, onClick: smAbout },
+    { label: 'Email Support', value: 'support@popsicle-labs.app', vc: 'var(--t3)', mono: true, onClick: () => { window.location.href = 'mailto:support@popsicle-labs.app' } },
   ]
 
   return (

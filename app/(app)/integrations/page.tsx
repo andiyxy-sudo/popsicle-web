@@ -16,7 +16,7 @@ export default async function IntegrationsPage() {
   }
 
   const [{ data: integrations }, { data: signals }] = await Promise.all([
-    supabase.from('integrations').select('provider, is_active, connected_at, last_synced_at').eq('user_id', userId),
+    supabase.from('integrations').select('provider, is_active, connected_at, last_synced_at, team_name, metadata').eq('user_id', userId),
     supabase.from('signals').select('source_integration, severity, created_at').eq('user_id', userId).eq('is_dismissed', false),
   ])
 
@@ -38,6 +38,7 @@ export default async function IntegrationsPage() {
     stats[row.provider] = {
       total: sigs.length, thisMonth, high, watch, positive,
       lastSignal, connectedAt: row.connected_at ?? null, lastSynced: row.last_synced_at ?? null,
+      identity: row.provider === 'slack' ? (row.team_name ?? null) : ((row.metadata as { account_email?: string } | null)?.account_email ?? null),
     }
   }
 

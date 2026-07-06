@@ -28,10 +28,10 @@ function CallbackInner() {
       }
       const supabase = createClient()
       const { data: { session } } = await supabase.auth.getSession()
-      if (provider === 'gmail' && session) {
-        const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', session.user.id)
-        if (!cancelled && (count ?? 0) === 0) { router.replace('/welcome'); return }
-      }
+      // Gmail connects always route into the guided discovery flow. force=1
+      // means users who already have accounts still get discovery (it only
+      // surfaces companies not yet tracked).
+      if (provider === 'gmail' && session) { router.replace('/welcome?force=1'); return }
       // Slack syncs nothing until channels are picked, so skip the empty sync
       // and route straight into the channel picker.
       if (provider === 'slack') { router.replace('/integrations?slack_channels=1'); return }

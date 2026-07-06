@@ -28,6 +28,7 @@ const CAT_ORDER = ['Email', 'Messaging', 'Calendar', 'CRM', 'Voice & Meetings']
 export type ProviderStat = {
   total: number; thisMonth: number; high: number; watch: number; positive: number
   lastSignal: string | null; connectedAt: string | null; lastSynced: string | null
+  identity?: string | null
 }
 
 function fmtDate(iso: string | null) {
@@ -247,6 +248,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)' }}>{p.name}</div>
             <div style={{ fontSize: 12, color: 'var(--t3)' }}>Connected</div>
+            {st?.identity && <div style={{ fontSize: 11.5, color: 'var(--t2)', fontWeight: 700, fontFamily: "'DM Mono',monospace", marginTop: 4 }}>{st.identity}</div>}
           </div>
           <div style={{ fontSize: 13, color: 'var(--t2)', textAlign: 'center', lineHeight: 1.55, marginBottom: 18 }}>
             Popsicle is syncing from {p.name}. You can disconnect at any time.

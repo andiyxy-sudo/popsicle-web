@@ -41,7 +41,8 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
         </div>
         <div className="dcard fade-in" style={{ textAlign: 'center', padding: '56px 24px' }}>
           <div style={{ fontSize: 14, color: 'var(--t3)', marginBottom: 6 }}>No accounts yet.</div>
-          <div style={{ fontSize: 13, color: 'var(--t4)' }}>Connect an integration to start tracking accounts and signals.</div>
+          <div style={{ fontSize: 13, color: 'var(--t4)', marginBottom: 18 }}>Let Popsicle scan your inbox and find the companies worth tracking.</div>
+          <button onClick={() => { window.location.href = '/welcome?force=1' }} style={{ padding: '11px 22px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 14px rgba(255,107,53,.22)' }}>Discover accounts</button>
         </div>
       </div>
     )
@@ -50,8 +51,13 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
   return (
     <div className="dsk-screen on">
       <div className="page-hdr fade-in">
-        <h1>Portfolio</h1>
-        <p>{accounts.length} active account{accounts.length === 1 ? '' : 's'}</p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h1>Portfolio</h1>
+            <p>{accounts.length} active account{accounts.length === 1 ? '' : 's'}</p>
+          </div>
+          <button onClick={() => { window.location.href = '/welcome?force=1' }} style={{ padding: '9px 16px', background: 'transparent', color: 'var(--o)', border: '1px solid var(--o)', borderRadius: 'var(--r-sm)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Discover accounts</button>
+        </div>
       </div>
       <div className="dcard fade-in" style={{ padding: 0, overflow: 'hidden', maxHeight: 'none' }}>
         <table className="dtable">
