@@ -149,7 +149,8 @@ export function WelcomeFlow({ name }: { name: string }) {
       if (!r.ok) return fail('Account discovery failed. Retry in a moment.', 'discovering')
       const companies: Discovered[] = j.discovered_companies ?? []
       setEmailsScanned(j.total_emails_scanned ?? 0)
-      if (!companies.length) { setPhase('none'); return }
+      // Even with zero discoveries the user lands in the picker: the manual
+      // add field is there, so "we found nothing" is never a dead end.
       setDiscovered(companies)
       setChecked(new Set(companies.filter(c => c.suggested).map(c => c.domain)))
       setPhase('pick')
@@ -255,15 +256,22 @@ export function WelcomeFlow({ name }: { name: string }) {
           {emailsScanned.toLocaleString()} emails scanned
         </div>
         <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--t1)', marginBottom: 4 }}>
-          We found {discovered.length} compan{discovered.length === 1 ? 'y' : 'ies'} in your inbox
+          {discovered.length
+            ? <>We found {discovered.length} compan{discovered.length === 1 ? 'y' : 'ies'} in your inbox</>
+            : <>No obvious B2B companies stood out</>}
         </div>
         <div style={{ fontSize: 12.5, color: 'var(--t3)', marginBottom: 14 }}>
-          Pick the ones you want Popsicle to watch. Recommended ones are pre-selected.
+          {discovered.length
+            ? 'Pick the ones you want Popsicle to watch. Recommended ones are pre-selected.'
+            : 'That can happen with newer or personal inboxes. Add the companies you want Popsicle to watch below, they will be tracked from now on.'}
         </div>
+        {discovered.length > 1 && (
         <div style={{ display: 'flex', gap: 14, marginBottom: 10 }}>
           <button onClick={() => setChecked(new Set(discovered.map(c => c.domain)))} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--o)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Select all</button>
           <button onClick={() => setChecked(new Set())} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Clear</button>
         </div>
+        )}
+        {discovered.length > 0 && (
         <div style={{ maxHeight: 380, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', marginBottom: 16 }}>
           {discovered.map(c => {
             const on = checked.has(c.domain)
@@ -287,6 +295,7 @@ export function WelcomeFlow({ name }: { name: string }) {
             )
           })}
         </div>
+        )}
         <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
           <input
             value={manualName}
