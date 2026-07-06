@@ -38,6 +38,50 @@ export async function POST(req: NextRequest) {
   const signals = signalsRes.data ?? []
   const accounts = accountsRes.data ?? []
 
+  // ---- self-extract relevant message content ----
+  // Figure out which companies or terms the question refers to (account names
+  // first, distinctive keywords as fallback) and pull their most recent
+  // full-text messages, so the AI analyzes actual email/Slack content instead
+  // of replying "not enough data".
+  const lastUser = [...(messages ?? [])].reverse().find((m: { role: string; content: string }) => m.role === 'user')
+  const question = String(lastUser?.content ?? '').toLowerCase()
+  const nameSet = new Set<string>()
+  for (const a of accounts) if (a.name && question.includes(String(a.name).toLowerCase())) nameSet.add(String(a.name))
+  for (const s of signals) if (s.account_name && question.includes(String(s.account_name).toLowerCase())) nameSet.add(String(s.account_name))
+
+  type RelMsg = { sender: string | null; subject: string | null; content: string | null; received_at: string | null; direction: string | null; integration: string | null }
+  const relevantMsgs: RelMsg[] = []
+  const seen = new Set<string>()
+  const fetchFor = async (terms: string[]) => {
+    for (const term of terms.slice(0, 3)) {
+      const p = `%${term.replace(/[%_,()]/g, ' ').trim().slice(0, 60)}%`
+      const { data: rows } = await supabase
+        .from('messages')
+        .select('sender, subject, content, received_at, direction, integration')
+        .eq('user_id', user.id)
+        .or(`account_name.ilike.${p},sender.ilike.${p},subject.ilike.${p}`)
+        .order('received_at', { ascending: false })
+        .limit(8)
+      for (const r of (rows ?? []) as RelMsg[]) {
+        const k = `${r.sender}|${r.received_at}`
+        if (!seen.has(k)) { seen.add(k); relevantMsgs.push(r) }
+      }
+    }
+  }
+  if (nameSet.size) {
+    await fetchFor(Array.from(nameSet))
+  } else {
+    const stop = new Set(['about', 'which', 'their', 'there', 'would', 'could', 'should', 'email', 'emails', 'gmail', 'slack', 'message', 'messages', 'analyse', 'analyze', 'recommend', 'account', 'accounts', 'signal', 'signals', 'popsicle', 'please', 'latest', 'recent', 'between', 'against', 'steps'])
+    const words = Array.from(new Set((question.match(/[a-z0-9][a-z0-9&.-]{4,}/g) ?? []).filter(w => !stop.has(w)))).slice(0, 3)
+    if (words.length) await fetchFor(words)
+  }
+  const picked = relevantMsgs
+    .sort((a, b) => String(b.received_at ?? '').localeCompare(String(a.received_at ?? '')))
+    .slice(0, 8)
+  const msgBlock = picked.length
+    ? `\n\nRELEVANT MESSAGES (full text, newest first, pulled from the user's synced data because the question mentions these companies or terms):\n${picked.map(m => `--- [${m.integration ?? '?'} ${m.direction ?? ''} ${m.received_at ? new Date(m.received_at).toLocaleDateString() : ''}] From: ${m.sender ?? '?'} | Subject: ${m.subject ?? '(none)'}\n${String(m.content ?? '').replace(/\s+/g, ' ').slice(0, 1500)}`).join('\n')}`
+    : ''
+
   const contextBlock = `
 You are Popsicle, a revenue intelligence AI assistant. You help sales and revenue teams understand their pipeline health, identify risks, and prioritize action.
 
@@ -47,10 +91,11 @@ ACTIVE ACCOUNTS (${accounts.length} total):
 ${accounts.map(a => `- ${a.name} | Stage: ${a.stage ?? 'unknown'} | Value: ${a.value ? '$' + a.value.toLocaleString() : 'unknown'} | Health: ${a.health_score ?? 'unknown'} | Risk: ${a.risk_level ?? 'unknown'} | Last contact: ${a.last_contact_date ?? 'never'}`).join('\n')}
 
 RECENT SIGNALS (${signals.length} active):
-${signals.map(s => `- [${s.severity?.toUpperCase() ?? 'INFO'}] ${s.title} (${s.account_name ?? 'unknown account'}, via ${s.source_integration ?? 'unknown'}) - ${new Date(s.created_at).toLocaleDateString()}`).join('\n')}
+${signals.map(s => `- [${s.severity?.toUpperCase() ?? 'INFO'}] ${s.title} (${s.account_name ?? 'unknown account'}, via ${s.source_integration ?? 'unknown'}) - ${new Date(s.created_at).toLocaleDateString()}`).join('\n')}${msgBlock}
 
 Rules:
 - Be specific and action-oriented. Name accounts and numbers.
+- When RELEVANT MESSAGES are present, analyze their actual content directly: quote or paraphrase what was said, then give recommendations grounded in it. Do not say you lack the message.
 - Never make up data not in the context above. Say "not enough data" when unsure.
 - Use "at risk" not "high severity" when referring to danger signals.
 - No em-dashes in your response. Use a hyphen or rewrite the sentence.
