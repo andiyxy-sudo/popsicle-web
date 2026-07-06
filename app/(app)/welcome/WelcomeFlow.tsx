@@ -49,6 +49,27 @@ function timeAgo(iso?: string | null): string {
   return `${Math.floor(d / 30)}mo ago`
 }
 
+// Module-scope UI bits. These MUST live outside the component: defining them
+// inside makes React see a brand-new component type on every render, which
+// remounts the subtree and drops input focus after each keystroke.
+const Card = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
+  <div className="dsk-screen on">
+    <div className="dcard fade-in" style={{ maxWidth: wide ? 640 : 480, margin: '48px auto 0', padding: wide ? '28px 28px 24px' : '48px 32px', textAlign: wide ? 'left' : 'center' }}>
+      {children}
+    </div>
+  </div>
+)
+const Spinner = () => (
+  <div style={{ width: 44, height: 44, margin: '0 auto 20px', border: '3px solid rgba(255,107,53,.15)', borderTopColor: 'var(--o)', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }}>
+    <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+  </div>
+)
+const Cta = ({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) => (
+  <button onClick={onClick} disabled={disabled} style={{ padding: '12px 26px', background: disabled ? 'var(--t4)' : 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13.5, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: disabled ? 'none' : '0 3px 14px rgba(255,107,53,.22)' }}>
+    {label}
+  </button>
+)
+
 export function WelcomeFlow({ name }: { name: string }) {
   const router = useRouter()
   const [phase, setPhase] = useState<Phase>('checking')
@@ -195,25 +216,6 @@ export function WelcomeFlow({ name }: { name: string }) {
   const toggle = (domain: string) => {
     setChecked(prev => { const n = new Set(prev); if (n.has(domain)) n.delete(domain); else n.add(domain); return n })
   }
-
-  // ---- shared UI bits ----
-  const Card = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
-    <div className="dsk-screen on">
-      <div className="dcard fade-in" style={{ maxWidth: wide ? 640 : 480, margin: '48px auto 0', padding: wide ? '28px 28px 24px' : '48px 32px', textAlign: wide ? 'left' : 'center' }}>
-        {children}
-      </div>
-    </div>
-  )
-  const Spinner = () => (
-    <div style={{ width: 44, height: 44, margin: '0 auto 20px', border: '3px solid rgba(255,107,53,.15)', borderTopColor: 'var(--o)', borderRadius: '50%', animation: 'spin 0.9s linear infinite' }}>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
-  )
-  const Cta = ({ label, onClick, disabled }: { label: string; onClick: () => void; disabled?: boolean }) => (
-    <button onClick={onClick} disabled={disabled} style={{ padding: '12px 26px', background: disabled ? 'var(--t4)' : 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13.5, fontWeight: 700, cursor: disabled ? 'default' : 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: disabled ? 'none' : '0 3px 14px rgba(255,107,53,.22)' }}>
-      {label}
-    </button>
-  )
 
   if (phase === 'checking') return <Card><Spinner /><div style={{ fontSize: 13, color: 'var(--t3)' }}>Just a second...</div></Card>
 
