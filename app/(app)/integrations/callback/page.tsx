@@ -16,8 +16,9 @@ function CallbackInner() {
   const ok = status === 'ok'
   const [phase, setPhase] = useState<'result' | 'syncing'>('result')
 
-  // On success, immediately kick a first sync so the user has data when they
-  // land back on the dashboard. Then redirect to integrations.
+  // On success: first-run Gmail users (no accounts yet) go into the guided
+  // welcome flow, which owns the first sync + account discovery. Everyone else
+  // gets the quick background sync and returns to integrations as before.
   useEffect(() => {
     let cancelled = false
     async function run() {
@@ -25,11 +26,15 @@ function CallbackInner() {
         const t = setTimeout(() => router.replace('/integrations'), 3500)
         return () => clearTimeout(t)
       }
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (provider === 'gmail' && session) {
+        const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', session.user.id)
+        if (!cancelled && (count ?? 0) === 0) { router.replace('/welcome'); return }
+      }
       setPhase('syncing')
       try {
         const fn = `oauth-${provider}`
-        const supabase = createClient()
-        const { data: { session } } = await supabase.auth.getSession()
         if (session) {
           await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/${fn}?action=sync`, {
             method: 'POST',

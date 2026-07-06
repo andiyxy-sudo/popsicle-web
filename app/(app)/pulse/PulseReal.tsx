@@ -39,10 +39,12 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           </div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)', marginBottom: 8 }}>Welcome to Popsicle</div>
           <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 380, margin: '0 auto 20px' }}>
-            Connect Gmail, Slack, or Zoom and Popsicle will start surfacing revenue signals across your accounts automatically.
+            {integrationCount > 0
+              ? 'Your integration is connected. Next, let Popsicle scan your inbox and find the accounts worth watching.'
+              : 'Connect Gmail and Popsicle will scan your inbox, find your accounts, and start surfacing revenue signals automatically.'}
           </div>
-          <button onClick={() => router.push('/integrations')} style={{ padding: '11px 22px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 14px rgba(255,107,53,.22)' }}>
-            Connect your first integration →
+          <button onClick={() => router.push('/welcome')} style={{ padding: '11px 22px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 14px rgba(255,107,53,.22)' }}>
+            {integrationCount > 0 ? 'Find my accounts →' : 'Set up Popsicle →'}
           </button>
         </div>
       </div>
