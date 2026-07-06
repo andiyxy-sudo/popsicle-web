@@ -1,25 +1,44 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { IntelligenceShowcase } from './IntelligenceShowcase'
+import { IntelligenceReal } from './IntelligenceReal'
 
 export default async function IntelligencePage() {
   const supabase = await createClient()
   const { data } = await supabase.auth.getClaims()
   if (!data) return null
   const email = data.claims.email as string | undefined
+  const userId = data.claims.sub as string
 
   if (email === DEMO_EMAIL) {
     return <IntelligenceShowcase />
   }
 
-  // Real users: intelligence requires accumulated signal history.
+  const since = new Date(Date.now() - 56 * 86400000).toISOString()
+  const [signalsRes, msgsRes, baselinesRes] = await Promise.all([
+    supabase.from('signals')
+      .select('created_at, severity, signal_type, source_integration, risk_amount, is_dismissed, is_snoozed')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(500),
+    supabase.from('messages')
+      .select('received_at, direction, integration')
+      .eq('user_id', userId)
+      .gte('received_at', since)
+      .order('received_at', { ascending: true })
+      .limit(8000),
+    supabase.from('account_baselines')
+      .select('account_name, emails_per_week, total_messages, last_message_at, our_median_reply_hours, their_median_reply_hours, total_reply_pairs, confidence')
+      .eq('user_id', userId)
+      .order('total_messages', { ascending: false })
+      .limit(20),
+  ])
+
   return (
-    <div className="dsk-screen on">
-      <div className="page-hdr"><h1>Revenue Intelligence</h1><p>Historical and predictive analysis across revenue signals</p></div>
-      <div className="dcard" style={{ textAlign: 'center', padding: '56px 24px' }}>
-        <div style={{ fontSize: 14, color: 'var(--t3)', marginBottom: 6 }}>Not enough signal history yet.</div>
-        <div style={{ fontSize: 13, color: 'var(--t4)', lineHeight: 1.6, maxWidth: 360, margin: '0 auto' }}>Revenue intelligence builds over time as Popsicle tracks signals and interventions across your accounts. Check back after a few weeks of activity.</div>
-      </div>
-    </div>
+    <IntelligenceReal
+      signals={signalsRes.data ?? []}
+      messages={msgsRes.data ?? []}
+      baselines={baselinesRes.data ?? []}
+    />
   )
 }
