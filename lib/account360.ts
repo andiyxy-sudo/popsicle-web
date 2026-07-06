@@ -64,6 +64,16 @@ function sevColor(sev?: string): string {
 
 const cap = (s?: string | null) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '')
 
+// Safety net: decode any HTML entities that survived ingestion so comms never
+// display raw &#39; style codes. Numeric first, &amp; last.
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(parseInt(n, 10)) } catch { return '' } })
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => { try { return String.fromCodePoint(parseInt(n, 16)) } catch { return '' } })
+    .replace(/&apos;/gi, "'").replace(/&quot;/gi, '"').replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')
+}
+
 // Clean a Gmail-style "Name <email>" sender down to a display name.
 function senderName(raw?: string | null): string {
   if (!raw) return 'Unknown'
@@ -169,7 +179,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
     out.comms = msgs.map<CommItem>(m => ({
       from: senderName(m.sender),
       role: '',
-      msg: String(m.content || '').replace(/\s+/g, ' ').trim().slice(0, 160),
+      msg: decodeEntities(String(m.content || '')).replace(/\s+/g, ' ').trim().slice(0, 160),
       time: timeAgo(m.received_at),
       via: cap(m.integration) || 'Gmail',
       dir: m.direction === 'outbound' ? 'out' : 'in',
