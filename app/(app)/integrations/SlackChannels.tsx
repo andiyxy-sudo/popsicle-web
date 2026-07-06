@@ -108,6 +108,13 @@ export function SlackChannelPicker({ onCancel, onSaved }: { onCancel: () => void
         />
       )}
 
+      {!loading && !error && channels.length > 1 && (
+        <div style={{ display: 'flex', gap: 14, marginBottom: 8 }}>
+          <button onClick={() => setSelected(new Set(channels.map(c => c.channel_id)))} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--o)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Select all</button>
+          <button onClick={() => setSelected(new Set())} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Clear</button>
+        </div>
+      )}
+
       <div style={{ maxHeight: 320, overflowY: 'auto', margin: '0 -4px', padding: '0 4px' }}>
         {loading && (
           <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--t3)', fontSize: 13 }}>Loading channels...</div>
