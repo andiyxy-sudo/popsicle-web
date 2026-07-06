@@ -1,9 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/components/account/A360Modal'
 import { LOGOS } from './IntegrationsShowcase'
+import { SlackChannelPicker } from './SlackChannels'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -39,6 +40,20 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   const [modal, setModal] = useState<ModalConfig | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
+
+  // Arriving from a fresh Slack connect (?slack_channels=1): open the channel
+  // picker immediately so the first-run user is never stranded with a
+  // connected-but-silent Slack. window.location avoids the useSearchParams
+  // Suspense requirement; the param is stripped so refreshes don't re-open it.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('slack_channels') === '1' && active.includes('slack')) {
+      window.history.replaceState({}, '', '/integrations')
+      const slack = PROVIDERS.find(p => p.key === 'slack')
+      if (slack) openSlackChannels(slack)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const cats = CAT_ORDER.filter(c => PROVIDERS.some(p => p.cat === c))
 
   // Kick off real OAuth: ask the edge function for the consent URL (with our JWT
@@ -102,7 +117,17 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       })
       const data = await res.json()
       const inserted = data?.inserted ?? 0
-      const signals = data?.signalCount ?? data?.signalsRaised ?? 0
+      const signals = data?.signalCount ?? data?.signals ?? data?.signalsRaised ?? 0
+      // Slack with nothing selected: point the user at channel selection instead
+      // of reporting an empty sync.
+      if (p.key === 'slack' && data?.tracked_channels === 0) {
+        setModal({
+          title: 'Choose channels first',
+          body: <ActionConfirmBody kind="connect" title="No channels selected" desc="Popsicle needs to know which Slack channels to read. Choose channels, then Popsicle will start pulling signals." />,
+          footer: <ModalBtn primary onClick={() => openSlackChannels(p)}>Choose channels</ModalBtn>,
+        })
+        return
+      }
       setModal({
         title: 'Sync complete',
         body: <ActionConfirmBody kind="success" title={`${p.name} synced`} desc={data?.stub
@@ -176,6 +201,33 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
     })
   }
 
+  // Slack channel picker: choose which channels Popsicle reads. On save, kick an
+  // immediate sync so signals start flowing from the newly-tracked channels.
+  function openSlackChannels(p: Provider) {
+    setModal({
+      title: 'Slack channels',
+      body: (
+        <SlackChannelPicker
+          onCancel={() => detail(p)}
+          onSaved={(count) => {
+            if (count > 0) {
+              // Close the picker and run a sync (shows its own result modal).
+              setModal(null)
+              sync(p)
+            } else {
+              setModal({
+                title: 'Channels updated',
+                body: <ActionConfirmBody kind="success" title="No channels tracked" desc="Popsicle will not read any Slack channels until you select some. Open Slack channels again to pick." />,
+                footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
+              })
+            }
+          }}
+        />
+      ),
+      footer: null,
+    })
+  }
+
   // The connected-integration detail sheet (stats + sync + disconnect).
   function detail(p: Provider) {
     const st = stats[p.key]
@@ -204,10 +256,24 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
             {statBox(st?.total ?? 0, 'Signals total')}
             {statBox(st?.thisMonth ?? 0, 'This month')}
           </div>
-          <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
-            {statBox(p.fn === 'oauth-gcal' ? (st?.total ?? 0) : '0', p.fn === 'oauth-gcal' ? 'Events synced' : 'Items synced')}
-            <div style={{ flex: 1 }} />
-          </div>
+          {p.key === 'slack' ? (
+            <button
+              onClick={() => openSlackChannels(p)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', marginBottom: 14, fontFamily: "'Outfit',sans-serif" }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9" /><line x1="4" y1="15" x2="20" y2="15" /><line x1="10" y1="3" x2="8" y2="21" /><line x1="16" y1="3" x2="14" y2="21" /></svg>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>Choose channels</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>Pick which channels Popsicle reads</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          ) : (
+            <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
+              {statBox(p.fn === 'oauth-gcal' ? (st?.total ?? 0) : '0', p.fn === 'oauth-gcal' ? 'Events synced' : 'Items synced')}
+              <div style={{ flex: 1 }} />
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, fontWeight: 600 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--danger)' }} />{st?.high ?? 0} high</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--amber)' }} />{st?.watch ?? 0} watch</span>

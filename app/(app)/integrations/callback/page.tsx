@@ -32,6 +32,9 @@ function CallbackInner() {
         const { count } = await supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', session.user.id)
         if (!cancelled && (count ?? 0) === 0) { router.replace('/welcome'); return }
       }
+      // Slack syncs nothing until channels are picked, so skip the empty sync
+      // and route straight into the channel picker.
+      if (provider === 'slack') { router.replace('/integrations?slack_channels=1'); return }
       setPhase('syncing')
       try {
         const fn = `oauth-${provider}`
