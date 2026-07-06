@@ -61,7 +61,24 @@ export function WelcomeFlow({ name }: { name: string }) {
   const [createdCount, setCreatedCount] = useState(0)
   const [errMsg, setErrMsg] = useState('')
   const [errRetry, setErrRetry] = useState<Phase>('scanning')
+  const [manualName, setManualName] = useState('')
+  const [manualDomain, setManualDomain] = useState('')
   const startedRef = useRef(false)
+
+  // Manually add a company discovery missed (it filters newsletters, tools and
+  // personal domains aggressively, so a real account can be excluded). Accepts
+  // an optional email or domain; an email is reduced to its domain.
+  function addManual() {
+    const name = manualName.trim()
+    if (!name) return
+    let dom = manualDomain.trim().toLowerCase().replace(/^https?:\/\//, '').split('/')[0]
+    if (dom.includes('@')) dom = dom.split('@')[1] || ''
+    const key = dom || `manual-${name.toLowerCase().replace(/[^a-z0-9]/g, '')}`
+    if (discovered.some(c => c.domain === key)) { setManualName(''); setManualDomain(''); return }
+    setDiscovered(prev => [{ name, domain: key, email_count: 0, two_way: false, last_contact: null, suggested: true }, ...prev])
+    setChecked(prev => new Set(prev).add(key))
+    setManualName(''); setManualDomain('')
+  }
 
   const token = useCallback(async (): Promise<string | null> => {
     const { data: { session } } = await createClient().auth.getSession()
@@ -131,7 +148,7 @@ export function WelcomeFlow({ name }: { name: string }) {
         const r = await fetch(FN('enrich-account'), {
           method: 'POST',
           headers: { 'content-type': 'application/json', authorization: `Bearer ${t}` },
-          body: JSON.stringify({ account_name: picks[i].name, domain: picks[i].domain }),
+          body: JSON.stringify({ account_name: picks[i].name, domain: picks[i].domain.startsWith('manual-') ? undefined : picks[i].domain }),
         })
         if (r.ok) done++
       } catch { /* skip this one, keep going */ }
@@ -258,7 +275,7 @@ export function WelcomeFlow({ name }: { name: string }) {
                     <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--t1)' }}>{c.name}</span>
                     {c.two_way && <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--ok)', background: 'rgba(42,157,92,.1)', padding: '2px 7px', borderRadius: 20, letterSpacing: .4 }}>ACTIVE THREAD</span>}
                   </div>
-                  <div style={{ fontSize: 11.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{c.domain}</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{c.domain.startsWith('manual-') ? 'added by you' : c.domain}</div>
                 </div>
                 <div style={{ textAlign: 'right', flexShrink: 0 }}>
                   <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t2)' }}>{c.email_count} emails</div>
@@ -267,6 +284,23 @@ export function WelcomeFlow({ name }: { name: string }) {
               </div>
             )
           })}
+        </div>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 14, alignItems: 'center' }}>
+          <input
+            value={manualName}
+            onChange={e => setManualName(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') addManual() }}
+            placeholder="Add a company Popsicle missed"
+            style={{ flex: 1.3, minWidth: 0, padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'transparent', color: 'var(--t1)', fontSize: 12.5, fontFamily: "'Outfit',sans-serif", outline: 'none' }}
+          />
+          <input
+            value={manualDomain}
+            onChange={e => setManualDomain(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') addManual() }}
+            placeholder="email or domain (optional)"
+            style={{ flex: 1, minWidth: 0, padding: '9px 12px', borderRadius: 9, border: '1px solid var(--line)', background: 'transparent', color: 'var(--t1)', fontSize: 12.5, fontFamily: "'DM Mono',monospace", outline: 'none' }}
+          />
+          <button onClick={addManual} disabled={!manualName.trim()} style={{ padding: '9px 16px', borderRadius: 9, background: manualName.trim() ? 'var(--o)' : 'var(--t4)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: manualName.trim() ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", flexShrink: 0 }}>Add</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 12, color: 'var(--t3)' }}>{nSel} selected</span>
