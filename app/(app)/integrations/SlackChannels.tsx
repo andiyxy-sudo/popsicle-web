@@ -65,7 +65,25 @@ export function SlackChannelPicker({ onCancel, onSaved }: { onCancel: () => void
         setChannels(data.channels || [])
         setAccounts(data.accounts || [])
         setSelected(new Set<string>(data.tracked || []))
-        setLinks(data.links || {})
+        // Auto-suggest links: a channel like #proj-kata pre-links to the
+        // account "Kata" when the names overlap. Existing links win; the user
+        // can always change or clear a suggestion before saving.
+        const links: Record<string, string> = { ...(data.links || {}) }
+        const accList: Account[] = data.accounts || []
+        const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '')
+        for (const c of (data.channels || []) as Channel[]) {
+          if (links[c.channel_id]) continue
+          const chNorm = norm(c.name)
+          const chTokens = c.name.toLowerCase().split(/[-_\s]+/).filter(w => w.length >= 4)
+          for (const a of accList) {
+            const aFirst = norm(String(a.name).split(' ')[0])
+            if (aFirst.length >= 4 && (chNorm.includes(aFirst) || chTokens.some(t => norm(a.name).includes(t)))) {
+              links[c.channel_id] = a.id
+              break
+            }
+          }
+        }
+        setLinks(links)
       }
     } catch {
       setError('Network error loading channels. Try again.')
