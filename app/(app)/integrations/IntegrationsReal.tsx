@@ -10,14 +10,14 @@ const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
 // Providers whose OAuth + ingestion are live (reusing the Android backend).
 // fn = the edge function slug. Others are shown as "coming soon".
-type Provider = { key: string; name: string; desc: string; cat: string; fn?: string }
+type Provider = { key: string; name: string; desc: string; cat: string; fn?: string; token?: boolean }
 const PROVIDERS: Provider[] = [
   { key: 'gmail', name: 'Gmail', desc: 'Reads sales threads · Detects tone & ghosting', cat: 'Email', fn: 'oauth-gmail' },
   { key: 'outlook', name: 'Outlook', desc: 'Microsoft 365 email · Same AI analysis', cat: 'Email' },
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
   { key: 'whatsapp', name: 'WhatsApp Business', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
   { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence · Engagement drop detection', cat: 'Calendar', fn: 'oauth-gcal' },
-  { key: 'hubspot', name: 'HubSpot', desc: 'Deal data sync · Churn probability signals', cat: 'CRM' },
+  { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot', token: true },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
   { key: 'zoom', name: 'Zoom', desc: 'Call transcripts · Buyer sentiment analysis', cat: 'Voice & Meetings', fn: 'oauth-zoom' },
@@ -29,6 +29,74 @@ export type ProviderStat = {
   total: number; thisMonth: number; high: number; watch: number; positive: number
   lastSignal: string | null; connectedAt: string | null; lastSynced: string | null
   identity?: string | null
+}
+
+
+// HubSpot connects with a private-app token instead of an OAuth redirect.
+// Module scope so the input keeps focus across re-renders.
+function HubspotConnectBody({ onDone }: { onDone: () => void }) {
+  const [token, setToken] = useState('')
+  const [err, setErr] = useState<string | null>(null)
+  const [working, setWorking] = useState(false)
+  const [done, setDone] = useState<string | null>(null)
+
+  async function submit() {
+    if (!token.trim()) { setErr('Paste your access token first.'); return }
+    setWorking(true); setErr(null)
+    try {
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      const res = await fetch(`${SUPA_URL}/functions/v1/oauth-hubspot?action=connect`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ token: token.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok) {
+        setWorking(false)
+        setErr(String(data?.detail || data?.error || 'Connection failed.'))
+        return
+      }
+      const fs = data.first_sync || {}
+      setDone(`Connected. Synced ${fs.deals ?? 0} deals, enriched ${fs.accounts_enriched ?? 0} accounts, created ${fs.accounts_created ?? 0}.`)
+      setTimeout(onDone, 1600)
+    } catch {
+      setWorking(false)
+      setErr('Network error. Try again.')
+    }
+  }
+
+  const step = { fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.6 }
+  return (
+    <div style={{ padding: '4px 2px' }}>
+      <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 10 }}>
+        Popsicle reads your deals and companies with a private app token from your own HubSpot. Two minutes, read-only scopes, no HubSpot review needed.
+      </div>
+      <div style={{ background: 'var(--inset)', border: '1px solid var(--border)', borderRadius: 10, padding: '10px 14px', marginBottom: 12 }}>
+        <div style={step}>1. In HubSpot: Settings gear, then Integrations, then Private Apps (or Legacy apps, then Create, then Private)</div>
+        <div style={step}>2. Name it Popsicle, open the Scopes tab</div>
+        <div style={step}>3. Add read scopes: deals, companies, contacts, owners</div>
+        <div style={step}>4. Create app, then Show token and copy it</div>
+      </div>
+      <input
+        type="password"
+        value={token}
+        onChange={e => setToken(e.target.value)}
+        placeholder="Paste your HubSpot access token"
+        autoFocus
+        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t1)', fontSize: 12.5, fontFamily: "'DM Mono',monospace", outline: 'none', boxSizing: 'border-box' }}
+      />
+      {err && <div style={{ fontSize: 11.5, color: 'var(--danger)', marginTop: 8 }}>{err}</div>}
+      {done && <div style={{ fontSize: 11.5, color: 'var(--ok)', marginTop: 8, fontWeight: 700 }}>{done}</div>}
+      <button
+        onClick={submit}
+        disabled={working || !!done}
+        style={{ marginTop: 12, width: '100%', padding: '10px 0', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: working ? 'default' : 'pointer', fontFamily: "'Outfit'", opacity: working || done ? 0.7 : 1 }}
+      >{working ? 'Connecting and running first sync...' : done ? 'Connected' : 'Connect HubSpot'}</button>
+      <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 8, textAlign: 'center' }}>The token is stored encrypted and only used to read your CRM data.</div>
+    </div>
+  )
 }
 
 function fmtDate(iso: string | null) {
@@ -61,6 +129,13 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   // + platform=web), then send the browser there. The function will 302 back to
   // /integrations/callback when done.
   async function connect(p: Provider) {
+    if (p.token) {
+      setModal({
+        title: `Connect ${p.name}`,
+        body: <HubspotConnectBody onDone={() => window.location.reload()} />,
+      })
+      return
+    }
     if (!p.fn) {
       setModal({
         title: 'Coming soon',
