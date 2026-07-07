@@ -16,7 +16,7 @@ const PROVIDERS: Provider[] = [
   { key: 'outlook', name: 'Outlook', desc: 'Microsoft 365 email · Same AI analysis', cat: 'Email' },
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
   { key: 'whatsapp', name: 'WhatsApp Business', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
-  { key: 'gcal', name: 'Google Calendar & Meet', desc: 'Meeting cadence & stall detection · Meet call transcripts & analysis', cat: 'Calendar + Calls', fn: 'oauth-gcal' },
+  { key: 'gcal', name: 'Google Calendar & Meet', desc: 'Meeting cadence & stall detection · Meet call transcripts & analysis', cat: 'Calendar', fn: 'oauth-gcal' },
   { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
