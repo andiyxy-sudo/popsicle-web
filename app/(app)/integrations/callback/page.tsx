@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
-const LABEL: Record<string, string> = { gmail: 'Gmail', gcal: 'Google Calendar', slack: 'Slack', zoom: 'Zoom' }
+const LABEL: Record<string, string> = { gmail: 'Gmail', gcal: 'Google Calendar', slack: 'Slack', zoom: 'Zoom', hubspot: 'HubSpot' }
 
 function CallbackInner() {
   const router = useRouter()

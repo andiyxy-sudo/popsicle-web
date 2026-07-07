@@ -17,7 +17,7 @@ const PROVIDERS: Provider[] = [
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
   { key: 'whatsapp', name: 'WhatsApp Business', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
   { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence · Engagement drop detection', cat: 'Calendar', fn: 'oauth-gcal' },
-  { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot', token: true },
+  { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
   { key: 'zoom', name: 'Zoom', desc: 'Call transcripts · Buyer sentiment analysis', cat: 'Voice & Meetings', fn: 'oauth-zoom' },
@@ -129,13 +129,6 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   // + platform=web), then send the browser there. The function will 302 back to
   // /integrations/callback when done.
   async function connect(p: Provider) {
-    if (p.token) {
-      setModal({
-        title: `Connect ${p.name}`,
-        body: <HubspotConnectBody onDone={() => window.location.reload()} />,
-      })
-      return
-    }
     if (!p.fn) {
       setModal({
         title: 'Coming soon',
@@ -158,6 +151,14 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       if (data?.url) {
         window.location.href = data.url   // off to Google / Slack / Zoom consent
       } else {
+        if (p.key === 'hubspot' && data?.error === 'provider_not_configured') {
+          setBusy(null)
+          setModal({
+            title: 'Connect HubSpot',
+            body: <HubspotConnectBody onDone={() => window.location.reload()} />,
+          })
+          return
+        }
         const detail = data?.error === 'provider_not_configured'
           ? `${p.name} OAuth keys are not set on the server yet.`
           : (data?.error ?? 'Could not start the connection.')
