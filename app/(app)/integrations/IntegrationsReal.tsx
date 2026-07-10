@@ -392,8 +392,13 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       body: (
         <div>
           <div style={{ textAlign: 'center', marginBottom: 18 }}>
-            <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(42,157,92,.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px' }}>
-              <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'var(--ok)' }} />
+            <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 12px' }}>
+              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--inset)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1)', overflow: 'hidden' }}>
+                <div style={{ transform: 'scale(1.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {LOGOS[p.key] ?? <span style={{ fontWeight: 800, color: 'var(--t2)', fontSize: 20 }}>{p.name[0]}</span>}
+                </div>
+              </div>
+              <div style={{ position: 'absolute', right: -3, bottom: -3, width: 16, height: 16, borderRadius: '50%', background: 'var(--ok)', border: '2.5px solid var(--surface, #fff)' }} />
             </div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)' }}>{p.name}</div>
             <div style={{ fontSize: 12, color: 'var(--t3)' }}>Connected</div>
