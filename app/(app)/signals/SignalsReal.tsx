@@ -275,6 +275,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const reason = typeof ai.reason === 'string' && ai.reason.trim() ? ai.reason.trim() : null
         const unmapped = !d.account_name || /\(unmapped\)/i.test(d.account_name)
         const cleanAccount = d.account_name ? d.account_name.replace(/\s*\(unmapped\)\s*/i, '').trim() : null
+        const topicRaw = typeof ai.topic === 'string' ? ai.topic : ''
+        const topic = topicRaw.replace(/^(Zoom|Meet|Fireflies):\s*/i, '').trim()
+        const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
+        const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
+        const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
         const inactive = d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
@@ -292,13 +297,16 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{TYPE_LABELS[d.signal_type || ''] || 'Signal'}</span>
                     {inactive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{inactive}</span>}
                   </div>
-                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', lineHeight: 1.35 }}>{d.title || 'Signal'}</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', lineHeight: 1.25, letterSpacing: '-.3px' }}>{headerTitle}</div>
+                  {d.title && d.title !== headerTitle && (
+                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--t2)', lineHeight: 1.45, marginTop: 4 }}>{d.title}</div>
+                  )}
                 </div>
                 <button onClick={() => setDetailFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
               </div>
               <div style={{ padding: 20, maxHeight: '62vh', overflowY: 'auto' }}>
-                {(d.description || ai.summary) ? (
-                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{String(d.description || ai.summary).replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')}</div>
+                {descText && !descDuplicatesTitle ? (
+                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{descText}</div>
                 ) : null}
                 {quote && (
                   <div style={{ borderLeft: '3px solid var(--o)', background: 'rgba(255,107,53,.05)', borderRadius: '0 10px 10px 0', padding: '10px 14px', marginBottom: 12 }}>
