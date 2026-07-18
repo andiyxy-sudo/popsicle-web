@@ -4,6 +4,12 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
+function pendingNext(): string {
+  if (typeof window === 'undefined') return '/pulse'
+  const next = new URLSearchParams(window.location.search).get('next') || ''
+  return next.startsWith('/') && !next.startsWith('//') ? next : '/pulse'
+}
+
 export default function LoginPage() {
   const router = useRouter()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
@@ -34,13 +40,13 @@ export default function LoginPage() {
           setMode('signin')
           return
         }
-        router.push('/pulse')
+        router.push(pendingNext())
         router.refresh()
         return
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
-      router.push('/pulse')
+      router.push(pendingNext())
       router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -56,7 +62,7 @@ export default function LoginPage() {
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-        options: { redirectTo: `${window.location.origin}/auth/callback?next=/pulse` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(pendingNext())}` },
       })
       if (error) throw error
       // On success the browser is redirected to Google; nothing else to do here.
@@ -341,22 +347,15 @@ export default function LoginPage() {
         {/* Footer */}
         <div style={{ marginTop: 16, textAlign: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, fontSize: 11, color: '#B0A89C' }}>
-            {[
-              { label: 'Privacy', href: 'https://popsicle-labs.app/privacy.html' },
-              { label: 'Terms', href: 'https://popsicle-labs.app/terms.html' },
-            ].map((link, i, arr) => (
-              <span key={link.label} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ cursor: 'pointer', transition: 'color .15s', color: 'inherit', textDecoration: 'none' }}
+            {['Security', 'Privacy', 'Terms'].map((t, i) => (
+              <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <span style={{ cursor: 'pointer', transition: 'color .15s' }}
                   onMouseOver={e => (e.currentTarget.style.color = '#6B5C50')}
                   onMouseOut={e => (e.currentTarget.style.color = '#B0A89C')}
                 >
-                  {link.label}
-                </a>
-                {i < arr.length - 1 && <span style={{ opacity: .4 }}>·</span>}
+                  {t}
+                </span>
+                {i < 2 && <span style={{ opacity: .4 }}>·</span>}
               </span>
             ))}
           </div>

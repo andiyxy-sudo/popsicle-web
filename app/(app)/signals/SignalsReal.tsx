@@ -5,7 +5,7 @@
 // analysis + the real thread. Snooze/dismiss update optimistically; the draft
 // opens in a modal with copy / open-in-email / regenerate.
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -16,7 +16,9 @@ interface DBSignal {
   severity?: string
   title?: string
   description?: string
-  ai_analysis?: { summary?: string; recommendation?: string } | null
+  ai_analysis?: ({ summary?: string; recommendation?: string } & Record<string, unknown>) | null
+  is_dismissed?: boolean
+  is_snoozed?: boolean
   risk_amount?: number
   impact_pct?: string | number
   source_integration?: string
@@ -58,6 +60,35 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [draftState, setDraftState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [copied, setCopied] = useState(false)
+  // Deep link (?signal=<id>): opened detail, row flash, and not-found state
+  const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
+  const [deepNotFound, setDeepNotFound] = useState(false)
+  const [flashId, setFlashId] = useState<string | null>(null)
+
+  // Handle /signals?signal=<id> deep links (Slack "Open in Popsicle" etc).
+  // If the signal is in the visible list: scroll to it, flash it, open detail.
+  // If not (dismissed, snoozed, or older): fetch it directly (RLS keeps this
+  // scoped to the signed-in user). Unknown or foreign ids get a friendly
+  // not-found panel instead of an error.
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('signal')
+    if (!id) return
+    const inList = initial.find(x => x.id === id)
+    if (inList) {
+      setDetailFor(inList)
+      setFlashId(id)
+      setTimeout(() => {
+        document.getElementById(`sig-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 60)
+      setTimeout(() => setFlashId(null), 3200)
+      return
+    }
+    createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
+      if (error || !data) { setDeepNotFound(true); return }
+      setDetailFor(data as DBSignal)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const high = signals.filter(s => s.severity === 'high')
   const watch = signals.filter(s => s.severity === 'watch')
@@ -178,7 +209,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           const money = fmtMoney(s.risk_amount)
           const impact = s.impact_pct ? (typeof s.impact_pct === 'number' ? `${s.impact_pct}%` : s.impact_pct) : null
           return (
-            <div key={s.id} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: '0 1px 4px rgba(13,10,7,.06)', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : 1 }}>
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: flashId === s.id ? '0 0 0 3px rgba(255,107,53,.45), 0 6px 20px rgba(255,107,53,.25)' : '0 1px 4px rgba(13,10,7,.06)', transition: 'box-shadow .5s ease', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : 1 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{headline}</span>
@@ -205,6 +236,78 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
       </div>
 
       {/* Draft modal */}
+      {/* Signal detail (deep-linked or opened): full analysis breakdown */}
+      {detailFor && (() => {
+        const d = detailFor
+        const sev = d.severity === 'high' ? 'HIGH' : d.severity === 'positive' ? 'POSITIVE' : 'WATCH'
+        const sevColor = d.severity === 'high' ? 'var(--danger)' : d.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
+        const ai = (d.ai_analysis ?? {}) as Record<string, unknown>
+        const aiRows = Object.entries(ai)
+          .filter(([k, v]) => v != null && v !== '' && typeof v !== 'object' && !['summary', 'recommendation', 'detector'].includes(k))
+          .slice(0, 8)
+        const inactive = d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
+        const row = (label: string, val: React.ReactNode) => (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
+            <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 700, textAlign: 'right', fontFamily: "'DM Mono',monospace" }}>{val}</span>
+          </div>
+        )
+        return (
+          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: sevColor, padding: '2px 8px', borderRadius: 20, letterSpacing: '.5px' }}>{sev}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{TYPE_LABELS[d.signal_type || ''] || 'Signal'}</span>
+                    {inactive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{inactive}</span>}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', lineHeight: 1.35 }}>{d.title || 'Signal'}</div>
+                </div>
+                <button onClick={() => setDetailFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
+              </div>
+              <div style={{ padding: 20, maxHeight: '62vh', overflowY: 'auto' }}>
+                {(d.description || ai.summary) ? (
+                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{d.description || String(ai.summary)}</div>
+                ) : null}
+                {typeof ai.recommendation === 'string' && ai.recommendation && (
+                  <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, background: 'rgba(255,107,53,.06)', border: '1px solid rgba(255,107,53,.18)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+                    <span style={{ fontWeight: 800, color: 'var(--o)' }}>Recommended: </span>{ai.recommendation}
+                  </div>
+                )}
+                <div style={{ marginBottom: 4 }}>
+                  {d.account_name ? row('Account', d.account_name) : null}
+                  {d.risk_amount ? row('At risk', fmtMoney(d.risk_amount)) : null}
+                  {d.source_integration ? row('Source', d.source_integration) : null}
+                  {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
+                  {aiRows.map(([k, v]) => row(k.replace(/_/g, ' '), String(v)))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                  {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
+                  {d.account_name && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
+                  {!inactive && actionBtn('Snooze', () => { setDetailFor(null); setFlag(d, 'is_snoozed') })}
+                  {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Deep link pointed at a signal that does not exist for this user */}
+      {deepNotFound && (
+        <div onClick={() => setDeepNotFound(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', padding: '32px 28px', textAlign: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', marginBottom: 6 }}>Signal not found</div>
+            <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 18 }}>This link points to a signal that does not exist or belongs to a different account. It may have been deleted, or you may be signed in as a different user.</div>
+            <button onClick={() => setDeepNotFound(false)} style={{ padding: '9px 22px', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit'" }}>Got it</button>
+          </div>
+        </div>
+      )}
+
       {draftFor && (
         <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>

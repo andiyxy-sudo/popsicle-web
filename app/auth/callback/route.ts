@@ -9,7 +9,9 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get('code')
   const error = searchParams.get('error_description') ?? searchParams.get('error')
   // Where to land after login (defaults to /pulse).
-  const next = searchParams.get('next') ?? '/pulse'
+  const rawNext = searchParams.get('next') ?? '/pulse'
+  // Only same-site relative paths (blocks open-redirects via ?next=https://evil).
+  const next = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '/pulse'
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`)
