@@ -242,9 +242,28 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const sev = d.severity === 'high' ? 'HIGH' : d.severity === 'positive' ? 'POSITIVE' : 'WATCH'
         const sevColor = d.severity === 'high' ? 'var(--danger)' : d.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
         const ai = (d.ai_analysis ?? {}) as Record<string, unknown>
+        // Only show analysis fields that read well to a human, with proper labels.
+        const FACT_LABELS: Record<string, string> = {
+          sentiment: 'Sentiment', confidence: 'Confidence', days_silent: 'Days silent',
+          days: 'Slipped by', old_date: 'Previous close', new_date: 'New close',
+          old_stage: 'Previous stage', new_stage: 'New stage', meeting_at: 'Meeting',
+          email: 'Contact', last_meeting_at: 'Last meeting', start: 'Scheduled',
+        }
+        const fmtFact = (k: string, v: unknown): string => {
+          if ((k === 'meeting_at' || k === 'last_meeting_at' || k === 'start') && typeof v === 'string') {
+            const t = new Date(v); if (!isNaN(t.getTime())) return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          }
+          if (k === 'confidence' && typeof v === 'number') return `${v}%`
+          if (k === 'days' || k === 'days_silent') return `${v}d`
+          return String(v)
+        }
         const aiRows = Object.entries(ai)
-          .filter(([k, v]) => v != null && v !== '' && typeof v !== 'object' && !['summary', 'recommendation', 'detector'].includes(k))
-          .slice(0, 8)
+          .filter(([k, v]) => FACT_LABELS[k] && v != null && v !== '' && typeof v !== 'boolean' && typeof v !== 'object')
+          .slice(0, 6)
+        const quote = typeof ai.quote === 'string' && ai.quote.trim() ? ai.quote.trim() : null
+        const reason = typeof ai.reason === 'string' && ai.reason.trim() ? ai.reason.trim() : null
+        const unmapped = !d.account_name || /\(unmapped\)/i.test(d.account_name)
+        const cleanAccount = d.account_name ? d.account_name.replace(/\s*\(unmapped\)\s*/i, '').trim() : null
         const inactive = d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
@@ -268,23 +287,36 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               </div>
               <div style={{ padding: 20, maxHeight: '62vh', overflowY: 'auto' }}>
                 {(d.description || ai.summary) ? (
-                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{d.description || String(ai.summary)}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{String(d.description || ai.summary).replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')}</div>
                 ) : null}
+                {quote && (
+                  <div style={{ borderLeft: '3px solid var(--o)', background: 'rgba(255,107,53,.05)', borderRadius: '0 10px 10px 0', padding: '10px 14px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.6, fontStyle: 'italic' }}>&ldquo;{quote}&rdquo;</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4, fontWeight: 600 }}>From the call</div>
+                  </div>
+                )}
+                {reason && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 5 }}>Why this signal</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6 }}>{reason}</div>
+                  </div>
+                )}
                 {typeof ai.recommendation === 'string' && ai.recommendation && (
                   <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, background: 'rgba(255,107,53,.06)', border: '1px solid rgba(255,107,53,.18)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
                     <span style={{ fontWeight: 800, color: 'var(--o)' }}>Recommended: </span>{ai.recommendation}
                   </div>
                 )}
                 <div style={{ marginBottom: 4 }}>
-                  {d.account_name ? row('Account', d.account_name) : null}
+                  {cleanAccount && !unmapped ? row('Account', cleanAccount) : null}
+                  {unmapped && cleanAccount ? row('Account', `${cleanAccount} (not linked yet)`) : null}
                   {d.risk_amount ? row('At risk', fmtMoney(d.risk_amount)) : null}
-                  {d.source_integration ? row('Source', d.source_integration) : null}
+                  {d.source_integration ? row('Source', d.source_integration.charAt(0).toUpperCase() + d.source_integration.slice(1)) : null}
                   {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
-                  {aiRows.map(([k, v]) => row(k.replace(/_/g, ' '), String(v)))}
+                  {aiRows.map(([k, v]) => row(FACT_LABELS[k], fmtFact(k, v)))}
                 </div>
                 <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
                   {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
-                  {d.account_name && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
+                  {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
                   {!inactive && actionBtn('Snooze', () => { setDetailFor(null); setFlag(d, 'is_snoozed') })}
                   {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
                 </div>
