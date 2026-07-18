@@ -71,11 +71,18 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   // scoped to the signed-in user). Unknown or foreign ids get a friendly
   // not-found panel instead of an error.
   useEffect(() => {
-    const id = new URLSearchParams(window.location.search).get('signal')
+    const q = new URLSearchParams(window.location.search)
+    const id = q.get('signal')
     if (!id) return
+    // &action=reply (Slack "Draft a reply") jumps straight into the AI draft
+    // view; anything else (or a signal that is no longer actionable) lands on
+    // the detail view. Auth preservation carries the action param through
+    // login automatically since proxy.ts keeps the full query string.
+    const wantReply = q.get('action') === 'reply'
     const inList = initial.find(x => x.id === id)
     if (inList) {
-      setDetailFor(inList)
+      if (wantReply) openDraft(inList)
+      else setDetailFor(inList)
       setFlashId(id)
       setTimeout(() => {
         document.getElementById(`sig-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -85,7 +92,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     }
     createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
       if (error || !data) { setDeepNotFound(true); return }
-      setDetailFor(data as DBSignal)
+      const sig = data as DBSignal
+      // Reply only makes sense for live signals; dismissed/snoozed fall back
+      // to detail so the user sees why it is inactive.
+      if (wantReply && !sig.is_dismissed && !sig.is_snoozed) openDraft(sig)
+      else setDetailFor(sig)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
