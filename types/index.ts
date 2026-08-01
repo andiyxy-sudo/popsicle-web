@@ -16,6 +16,9 @@ export interface Account {
 
 export interface Signal {
   id: string
+  status?: string | null
+  risk_amount?: number | null
+  handled_action?: string | null
   account_id: string | null
   account_name: string | null
   signal_type: string | null

@@ -115,6 +115,42 @@ function PreMeetingBrief() {
   )
 }
 
+
+// Live activity: the user's most recent synced communications.
+function ActivityFeed() {
+  const [items, setItems] = useState<Array<{ sender: string | null; subject: string | null; integration: string | null; received_at: string | null; account_name: string | null }>>([])
+  useEffect(() => {
+    let dead = false
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      createClient().from('messages')
+        .select('sender, subject, integration, received_at, account_name')
+        .eq('user_id', user.id).order('received_at', { ascending: false }).limit(6)
+        .then(({ data }) => { if (!dead) setItems((data as typeof items) ?? []) })
+    })
+    return () => { dead = true }
+  }, [])
+  const ago = (iso: string | null) => {
+    if (!iso) return ''
+    const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+    if (m < 60) return `${Math.max(1, m)}m`
+    if (m < 1440) return `${Math.floor(m / 60)}h`
+    return `${Math.floor(m / 1440)}d`
+  }
+  if (!items.length) return <div style={{ padding: '24px 20px', fontSize: 11.5, color: 'var(--t4)', textAlign: 'center' }}>Activity appears as messages sync.</div>
+  return (
+    <div style={{ padding: '10px 20px' }}>
+      {items.map((a, i) => (
+        <div key={i} className="activity-item">
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(a.integration || '?').slice(0, 2)}</div>
+          <div className="activity-body"><strong>{a.account_name || (a.sender || '').replace(/<.*>/, '').trim() || 'Message'}</strong>{a.subject ? ` — ${String(a.subject).slice(0, 64)}` : ''}</div>
+          <div className="activity-time">{ago(a.received_at)}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
   const router = useRouter()
 
@@ -173,6 +209,119 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       </div>
 
       <PreMeetingBrief />
+
+
+      {/* AI Brief + Revenue Loop + Activity (showcase layout, real data) */}
+      {(() => {
+        const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+        const handled = signals.filter(sg => sg.status === 'handled')
+        const highs = open.filter(sg => sg.severity === 'high')
+        const positives = signals.filter(sg => sg.severity === 'positive')
+        const bySrc = new Set(open.map(sg => sg.source_integration).filter(Boolean))
+        const riskByAcct = new Map<string, number>()
+        for (const sg of open) if (sg.account_name && sg.risk_amount) riskByAcct.set(sg.account_name, (riskByAcct.get(sg.account_name) || 0) + Number(sg.risk_amount))
+        const topRisk = Array.from(riskByAcct.entries()).sort((a, b) => b[1] - a[1])[0]
+        const openAccts = new Set(open.map(sg => sg.account_name).filter(Boolean))
+        const protectedVal = handled.reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
+        const stalest = [...accounts].filter(a => a.last_contact_date).sort((a, b) => String(a.last_contact_date).localeCompare(String(b.last_contact_date)))[0]
+        const daysDark = stalest?.last_contact_date ? Math.floor((Date.now() - new Date(stalest.last_contact_date).getTime()) / 86400000) : null
+
+        const briefItems: Array<{ color: string; bg: string; bd: string; text: React.ReactNode }> = []
+        if (highs[0]) briefItems.push({ color: 'var(--danger)', bg: 'rgba(224,62,62,.04)', bd: 'rgba(224,62,62,.1)', text: <>{highs[0].account_name ? <strong>{highs[0].account_name}: </strong> : null}{highs[0].title}</> })
+        if (topRisk) briefItems.push({ color: 'var(--amber)', bg: 'rgba(232,133,10,.04)', bd: 'rgba(232,133,10,.1)', text: <><strong>{formatCurrency(topRisk[1])}</strong> at risk on {topRisk[0]} — highest exposure right now</> })
+        if (positives[0]) briefItems.push({ color: 'var(--ok)', bg: 'rgba(42,157,92,.04)', bd: 'rgba(42,157,92,.1)', text: <>{positives[0].account_name ? <strong>{positives[0].account_name}: </strong> : null}{positives[0].title}</> })
+        if (stalest && daysDark != null && daysDark > 14) briefItems.push({ color: 'var(--blue)', bg: 'rgba(59,111,222,.04)', bd: 'rgba(59,111,222,.1)', text: <><strong>{stalest.name}</strong> dark for {daysDark} days — worth a touch this week</> })
+
+        const secHead = (icon: React.ReactNode, label: string) => (
+          <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            {icon}
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>{label}</span>
+          </div>
+        )
+        const loopStep = (title: string, sub: string, n: string, color: string, done?: boolean) => (
+          <div className="loop-step" style={done ? { background: 'rgba(42,157,92,.06)', borderColor: 'rgba(42,157,92,.15)' } : undefined}>
+            <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div><div style={{ fontSize: 11, color: 'var(--t3)' }}>{sub}</div></div>
+            <span style={{ fontSize: 18, fontWeight: 900, color }}>{n}</span>
+          </div>
+        )
+
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 320px', gap: 20, marginBottom: 24 }}>
+            <div className="dcard fade-in fade-in-3" style={{ padding: 0, overflow: 'hidden' }}>
+              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, 'AI Brief')}
+              <div style={{ padding: '14px 20px' }}>
+                {briefItems.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)', textAlign: 'center', padding: '14px 0' }}>All quiet. The brief fills in as signals arrive.</div>}
+                {briefItems.map((b, i) => (
+                  <div key={i} className="ai-brief-item" style={{ background: b.bg, border: `1px solid ${b.bd}`, borderRadius: 10 }}>
+                    <div className="ai-brief-dot" style={{ background: b.color }}></div>
+                    <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>{b.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="dcard fade-in fade-in-4" style={{ padding: 0, overflow: 'hidden' }}>
+              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>, 'Revenue Loop')}
+              <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+                {loopStep('Signals', bySrc.size ? `Across ${Array.from(bySrc).map(x => String(x)).join(' · ')}` : 'Open right now', String(open.length), 'var(--danger)')}
+                <div className="loop-connector"></div>
+                {loopStep('Accounts flagged', 'With at least one open signal', String(openAccts.size), 'var(--amber)')}
+                <div className="loop-connector"></div>
+                {loopStep('Handled', 'Actions you have taken', String(handled.length), 'var(--o)')}
+                <div className="loop-connector"></div>
+                {loopStep('Value acted on', 'At-risk $ on handled signals', protectedVal > 0 ? formatCurrency(protectedVal) : '$0', 'var(--ok)', true)}
+              </div>
+            </div>
+
+            <div className="dcard fade-in fade-in-5" style={{ padding: 0, overflow: 'hidden' }}>
+              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, 'Activity')}
+              <ActivityFeed />
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Accounts needing attention */}
+      {(() => {
+        const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+        const topSig = new Map<string, { title: string | null; severity: string | null }>()
+        for (const sg of open) if (sg.account_name && !topSig.has(sg.account_name)) topSig.set(sg.account_name, { title: sg.title ?? null, severity: sg.severity ?? null })
+        const rows = accounts
+          .map(a => {
+            const sg = topSig.get(a.name)
+            const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
+            return { a, sg, dark, score: (sg?.severity === 'high' ? 3 : sg ? 2 : 0) + ((dark ?? 0) > 21 ? 1 : 0) }
+          })
+          .filter(r => r.score > 0)
+          .sort((x, y) => y.score - x.score || (Number(y.a.value) || 0) - (Number(x.a.value) || 0))
+          .slice(0, 6)
+        if (!rows.length) return null
+        return (
+          <div className="dcard fade-in fade-in-5" style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
+            <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Accounts Needing Attention</span>
+              </div>
+              <span className="see-all" onClick={() => router.push('/portfolio')} style={{ cursor: 'pointer' }}>View portfolio →</span>
+            </div>
+            <table className="dtable">
+              <thead><tr><th>Account</th><th>Value</th><th>Stage</th><th>Top Signal</th><th>Last Touch</th></tr></thead>
+              <tbody>
+                {rows.map(({ a, sg, dark }) => (
+                  <tr key={a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ cursor: 'pointer' }}>
+                    <td><div style={{ fontWeight: 700 }}>{a.name}</div>{a.owner && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{a.owner}</div>}</td>
+                    <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</td>
+                    <td style={{ fontSize: 12, color: 'var(--t2)' }}>{a.stage || '--'}</td>
+                    <td style={{ fontSize: 12, color: sg?.severity === 'high' ? 'var(--danger)' : sg?.severity === 'positive' ? 'var(--ok)' : 'var(--amber)' }}>{sg?.title || '--'}</td>
+                    <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      })()}
 
       <div className="kpi-grid">
         <div className="kpi-hero">
