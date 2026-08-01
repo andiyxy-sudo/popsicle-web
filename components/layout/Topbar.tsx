@@ -39,6 +39,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
       const { data } = await supa.from('signals')
         .select('id, title, account_name, severity, created_at')
         .eq('user_id', user.id).eq('is_dismissed', false).eq('is_snoozed', false)
+        .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(8)
       if (cancelled) return
       const rows = (data ?? []) as NotifSignal[]

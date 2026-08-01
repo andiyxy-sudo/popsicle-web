@@ -21,6 +21,7 @@ export default async function SignalsPage() {
     .eq('user_id', userId)
     .eq('is_dismissed', false)
     .eq('is_snoozed', false)
+    .or('status.is.null,status.eq.open,status.eq.handled')
     .order('created_at', { ascending: false })
 
   return <SignalsReal signals={signals ?? []} />

@@ -19,6 +19,9 @@ interface DBSignal {
   ai_analysis?: ({ summary?: string; recommendation?: string } & Record<string, unknown>) | null
   is_dismissed?: boolean
   is_snoozed?: boolean
+  status?: string | null
+  handled_action?: string | null
+  handled_at?: string | null
   risk_amount?: number
   impact_pct?: string | number
   source_integration?: string
@@ -51,6 +54,8 @@ function timeAgo(iso?: string) {
 
 interface Draft { subject: string; body: string; to: string }
 
+const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
+
 export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const router = useRouter()
   const [signals, setSignals] = useState<DBSignal[]>(initial)
@@ -63,7 +68,15 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   // Deep link (?signal=<id>): opened detail, row flash, and not-found state
   const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
   const [deepNotFound, setDeepNotFound] = useState(false)
+  const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign'>('view')
+  const [handleText, setHandleText] = useState('')
+  const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
+  const [assignPick, setAssignPick] = useState('')
   const [flashId, setFlashId] = useState<string | null>(null)
+
+  useEffect(() => {
+    setModalMode('view'); setHandleText(''); setAssignPick('')
+  }, [detailFor?.id])
 
   // Handle /signals?signal=<id> deep links (Slack "Open in Popsicle" etc).
   // If the signal is in the visible list: scroll to it, flash it, open detail.
@@ -93,9 +106,12 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
       if (error || !data) { setDeepNotFound(true); return }
       const sig = data as DBSignal
-      // Reply only makes sense for live signals; dismissed/snoozed fall back
-      // to detail so the user sees why it is inactive.
-      if (wantReply && !sig.is_dismissed && !sig.is_snoozed) openDraft(sig)
+      // Soft-deleted signals are gone as far as users are concerned.
+      if (sig.status === 'deleted') { setDeepNotFound(true); return }
+      // Reply only makes sense for live signals; handled/dismissed/snoozed
+      // fall back to detail so the user sees the state.
+      const live = !sig.is_dismissed && !sig.is_snoozed && sig.status !== 'handled'
+      if (wantReply && live) openDraft(sig)
       else setDetailFor(sig)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,6 +142,70 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     const { error } = await createClient().from('signals').update({ [flag]: true }).eq('id', s.id)
     if (error) setSignals(prev)
     else router.refresh()
+    setBusyId(null)
+  }
+
+  async function markHandled(s: DBSignal, action: string) {
+    if (busyId) return
+    setBusyId(s.id)
+    const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
+    const { error } = await createClient().from('signals').update(patch).eq('id', s.id)
+    if (!error) {
+      setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
+      setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
+      router.refresh()
+    }
+    setBusyId(null)
+  }
+
+  async function removeSignal(s: DBSignal, reason: string) {
+    if (busyId) return
+    setBusyId(s.id)
+    const prev = signals
+    setSignals(prev.filter(x => x.id !== s.id))
+    setDetailFor(null)
+    const { error } = await createClient().from('signals')
+      .update({ status: 'deleted', deleted_reason: reason, deleted_at: new Date().toISOString() }).eq('id', s.id)
+    if (error) setSignals(prev)
+    else router.refresh()
+    setBusyId(null)
+  }
+
+  // Assign an unmapped signal to an account. Prefers the shared remap-account
+  // edge function (audit-logged, cascades to source); falls back to a direct
+  // update + remap_log write if the function rejects the payload.
+  async function assignAccount(s: DBSignal, accountId: string, accountName: string) {
+    if (busyId) return
+    setBusyId(s.id)
+    const supa = createClient()
+    let ok = false
+    try {
+      const { data: { session } } = await supa.auth.getSession()
+      if (session) {
+        const r = await fetch(`${SUPA_URL}/functions/v1/remap-account`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ entity_type: 'signal', entity_id: s.id, account_id: accountId, method: 'manual_assign' }),
+        })
+        ok = r.ok
+      }
+    } catch { /* fall through */ }
+    if (!ok) {
+      const { data: { user } } = await supa.auth.getUser()
+      const { error } = await supa.from('signals').update({ account_name: accountName }).eq('id', s.id)
+      ok = !error
+      if (ok && user) {
+        await supa.from('remap_log').insert({
+          user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
+          method: 'manual_assign', prev_value: s.account_name ?? null,
+        }).then(() => {}, () => {})
+      }
+    }
+    if (ok) {
+      setSignals(prev => prev.map(x => x.id === s.id ? { ...x, account_name: accountName } : x))
+      setDetailFor(prev => prev && prev.id === s.id ? { ...prev, account_name: accountName } : prev)
+      router.refresh()
+    }
     setBusyId(null)
   }
 
@@ -218,11 +298,13 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           const headline = s.title || (label + (s.account_name ? ` - ${s.account_name}` : ''))
           const body = s.description || s.ai_analysis?.summary || ''
           const money = fmtMoney(s.risk_amount)
+          const isHandled = s.status === 'handled'
           const impact = s.impact_pct ? (typeof s.impact_pct === 'number' ? `${s.impact_pct}%` : s.impact_pct) : null
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: flashId === s.id ? '0 0 0 3px rgba(255,107,53,.45), 0 6px 20px rgba(255,107,53,.25)' : '0 1px 4px rgba(13,10,7,.06)', transition: 'box-shadow .5s ease', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : 1 }}>
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: flashId === s.id ? '0 0 0 3px rgba(255,107,53,.45), 0 6px 20px rgba(255,107,53,.25)' : '0 1px 4px rgba(13,10,7,.06)', transition: 'box-shadow .5s ease', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
+                  {isHandled && <span style={{ color: 'var(--ok)', fontWeight: 900, fontSize: 13 }}>✓</span>}
                   <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{headline}</span>
                   <span className={`rp ${riskCls}`} style={{ fontSize: 8 }}>{isHigh ? 'HIGH' : isPos ? 'POSITIVE' : 'WATCH'}</span>
                   {label !== 'Signal' && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</span>}
@@ -233,12 +315,19 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   {money && <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', fontFamily: "'DM Mono',monospace" }}>{money}{impact ? ` · ${impact}` : ''}</span>}
                   {s.created_at && <span style={{ fontSize: 10, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(s.created_at)}</span>}
                 </div>
-                {/* Action row */}
-                <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
-                  {actionBtn('Draft follow-up', () => openDraft(s), true)}
-                  {actionBtn('Snooze', () => setFlag(s, 'is_snoozed'))}
-                  {actionBtn('Dismiss', () => setFlag(s, 'is_dismissed'))}
-                </div>
+                {/* Action row (handled signals show what was done instead) */}
+                {isHandled ? (
+                  <div style={{ marginTop: 9 }}>
+                    <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ok)', background: 'rgba(42,157,92,.08)', border: '1px solid rgba(42,157,92,.2)', padding: '3px 10px', borderRadius: 20 }}>✓ {s.handled_action || 'Handled'}</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
+                    {actionBtn('Draft follow-up', () => openDraft(s), true)}
+                    {actionBtn('Mark handled', () => { setDetailFor(s); setModalMode('handle') })}
+                    {actionBtn('Snooze', () => setFlag(s, 'is_snoozed'))}
+                    {actionBtn('Dismiss', () => setFlag(s, 'is_dismissed'))}
+                  </div>
+                )}
               </div>
               {s.source_integration && <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', flexShrink: 0, textTransform: 'capitalize' }}>{s.source_integration}</div>}
             </div>
@@ -280,7 +369,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
         const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
         const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
-        const inactive = d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
+        const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
             <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
@@ -297,10 +386,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{TYPE_LABELS[d.signal_type || ''] || 'Signal'}</span>
                     {inactive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{inactive}</span>}
                   </div>
-                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', lineHeight: 1.25, letterSpacing: '-.3px' }}>{headerTitle}</div>
-                  {d.title && d.title !== headerTitle && (
-                    <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--t2)', lineHeight: 1.45, marginTop: 4 }}>{d.title}</div>
-                  )}
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 3 }}>{headerTitle}</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', lineHeight: 1.3, letterSpacing: '-.3px' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</div>
                 </div>
                 <button onClick={() => setDetailFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
               </div>
@@ -333,12 +420,77 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
                   {aiRows.map(([k, v]) => row(FACT_LABELS[k], fmtFact(k, v)))}
                 </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-                  {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
-                  {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
-                  {!inactive && actionBtn('Snooze', () => { setDetailFor(null); setFlag(d, 'is_snoozed') })}
-                  {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
-                </div>
+                {inactive === 'handled' && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ok)', background: 'rgba(42,157,92,.08)', border: '1px solid rgba(42,157,92,.2)', borderRadius: 10, padding: '9px 14px', marginBottom: 12 }}>
+                    ✓ Handled{d.handled_action ? `: ${d.handled_action}` : ''}{d.handled_at ? ` · ${new Date(d.handled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                  </div>
+                )}
+
+                {modalMode === 'handle' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>What did you do?</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                      {['Sent follow-up', 'Called them', 'Scheduled meeting', 'Updated CRM'].map(a => (
+                        <button key={a} onClick={() => setHandleText(a)} style={{ fontSize: 10.5, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: handleText === a ? '1.5px solid var(--o)' : '1px solid var(--border)', background: handleText === a ? 'rgba(255,107,53,.08)' : 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{a}</button>
+                      ))}
+                    </div>
+                    <input value={handleText} onChange={e => setHandleText(e.target.value)} placeholder="Or type what you did" style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, background: 'var(--surface)', color: 'var(--t1)', outline: 'none', marginBottom: 8 }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {actionBtn('Confirm handled', () => markHandled(d, handleText.trim() || 'Handled'), true)}
+                      {actionBtn('Cancel', () => setModalMode('view'))}
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'remove' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Why remove this? It trains detection.</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {[['not_a_signal', 'Not a signal'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
+                        <button key={k} onClick={() => removeSignal(d, k)} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{lbl}</button>
+                      ))}
+                      <button onClick={() => setModalMode('view')} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--t4)', cursor: 'pointer' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'assign' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Assign this signal to an account</div>
+                    {!acctOptions ? (
+                      <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>Loading accounts...</div>
+                    ) : (
+                      <div>
+                        <select value={assignPick} onChange={e => setAssignPick(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, background: 'var(--surface)', color: 'var(--t1)', marginBottom: 8 }}>
+                          <option value="">Choose an account</option>
+                          {acctOptions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        </select>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {actionBtn('Assign', () => { const a = acctOptions.find(x => x.id === assignPick); if (a) { assignAccount(d, a.id, a.name); setModalMode('view') } }, true)}
+                          {actionBtn('Cancel', () => setModalMode('view'))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {modalMode === 'view' && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                    {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
+                    {!inactive && actionBtn('Mark handled', () => setModalMode('handle'))}
+                    {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
+                    {unmapped && !inactive && actionBtn('Assign to account', () => {
+                      setModalMode('assign')
+                      if (!acctOptions) {
+                        createClient().from('accounts').select('id, name').order('name').limit(300)
+                          .then(({ data }) => setAcctOptions((data as Array<{ id: string; name: string }>) ?? []))
+                      }
+                    })}
+                    {!inactive && actionBtn('Snooze', () => { setDetailFor(null); setFlag(d, 'is_snoozed') })}
+                    {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
+                    {!inactive && actionBtn('Remove', () => setModalMode('remove'))}
+                  </div>
+                )}
               </div>
             </div>
           </div>
