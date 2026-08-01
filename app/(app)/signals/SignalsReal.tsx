@@ -11,6 +11,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface DBSignal {
   id: string
+  source_message_id?: string | null
   account_name?: string
   signal_type?: string
   severity?: string
@@ -478,6 +479,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
                     {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
                     {!inactive && actionBtn('Mark handled', () => setModalMode('handle'))}
+                    {d.signal_type?.startsWith('call') && d.source_message_id && actionBtn('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
                     {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
                     {unmapped && !inactive && actionBtn('Assign to account', () => {
                       setModalMode('assign')

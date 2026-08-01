@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import type { Account, Signal } from '@/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
 
@@ -9,6 +11,108 @@ interface Props {
   accounts: Account[]
   signals: Signal[]
   integrationCount: number
+}
+
+
+// Pre-meeting brief: within 30 minutes of a mapped-account meeting, assemble
+// the walk-in card: top open signals, last touch, outstanding commitments from
+// the latest analyzed call, and days dark. Data: gcal_event_state (RLS-scoped,
+// account_name pre-computed server-side). Renders nothing when no meeting is
+// near - honest empty state.
+interface BriefData {
+  summary: string; startTs: string; account: string
+  signals: Array<{ id: string; title: string | null; severity: string | null }>
+  lastTouch: string | null; daysDark: number | null
+  commitments: Array<{ who?: string; what?: string }>
+}
+
+function PreMeetingBrief() {
+  const router = useRouter()
+  const [brief, setBrief] = useState<BriefData | null>(null)
+
+  useEffect(() => {
+    let dead = false
+    async function load() {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user || dead) return
+      const now = Date.now()
+      const { data: ev } = await supa.from('gcal_event_state')
+        .select('event_id, start_ts, summary, account_name')
+        .eq('user_id', user.id).not('account_name', 'is', null)
+        .gte('start_ts', new Date(now - 5 * 60_000).toISOString())
+        .lte('start_ts', new Date(now + 30 * 60_000).toISOString())
+        .order('start_ts', { ascending: true }).limit(1).maybeSingle()
+      if (!ev || dead) return
+      const account = String(ev.account_name)
+      const [sigRes, blRes, acctRes] = await Promise.all([
+        supa.from('signals').select('id, title, severity')
+          .eq('user_id', user.id).eq('account_name', account)
+          .eq('is_dismissed', false).eq('is_snoozed', false)
+          .or('status.is.null,status.eq.open')
+          .order('created_at', { ascending: false }).limit(3),
+        supa.from('account_baselines').select('last_message_at')
+          .eq('user_id', user.id).eq('account_name', account).maybeSingle(),
+        supa.from('accounts').select('id').eq('user_id', user.id).eq('name', account).maybeSingle(),
+      ])
+      let commitments: Array<{ who?: string; what?: string }> = []
+      if (acctRes.data?.id) {
+        const { data: tr } = await supa.from('zoom_transcripts')
+          .select('commitments').eq('user_id', user.id).eq('account_id', acctRes.data.id)
+          .not('analyzed_at', 'is', null).order('start_time', { ascending: false }).limit(1).maybeSingle()
+        commitments = (tr?.commitments as Array<{ who?: string; what?: string }>) ?? []
+      }
+      const lastTouch = blRes.data?.last_message_at ?? null
+      if (dead) return
+      setBrief({
+        summary: String(ev.summary || 'Meeting'), startTs: String(ev.start_ts), account,
+        signals: (sigRes.data ?? []) as BriefData['signals'],
+        lastTouch,
+        daysDark: lastTouch ? Math.floor((now - new Date(lastTouch).getTime()) / 86400_000) : null,
+        commitments: commitments.slice(0, 3),
+      })
+    }
+    load()
+    const t = setInterval(load, 5 * 60_000)
+    return () => { dead = true; clearInterval(t) }
+  }, [])
+
+  if (!brief) return null
+  const mins = Math.max(0, Math.round((new Date(brief.startTs).getTime() - Date.now()) / 60_000))
+  return (
+    <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden', border: '1px solid rgba(255,107,53,.35)', boxShadow: '0 4px 18px rgba(255,107,53,.12)' }}>
+      <div style={{ padding: '12px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 10, fontWeight: 800, color: '#fff', background: 'var(--o)', padding: '3px 10px', borderRadius: 20, letterSpacing: '.5px' }}>{mins <= 1 ? 'STARTING NOW' : `IN ${mins} MIN`}</span>
+          <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{brief.summary}</span>
+          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t3)' }}>{brief.account}</span>
+        </div>
+        <div style={{ fontSize: 10.5, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>
+          {brief.daysDark != null ? `Last touch ${brief.daysDark === 0 ? 'today' : brief.daysDark + 'd ago'}` : 'No touches recorded'}
+        </div>
+      </div>
+      <div style={{ padding: '12px 20px', display: 'grid', gridTemplateColumns: brief.commitments.length ? '1fr 1fr' : '1fr', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Open signals</div>
+          {brief.signals.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)' }}>None open. Clean slate.</div>}
+          {brief.signals.map(sg => (
+            <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5, cursor: 'pointer' }}>
+              <span style={{ width: 7, height: 7, borderRadius: '50%', flexShrink: 0, background: sg.severity === 'high' ? 'var(--danger)' : sg.severity === 'positive' ? 'var(--ok)' : 'var(--amber)' }} />
+              <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--t2)' }}>{sg.title}</span>
+            </div>
+          ))}
+        </div>
+        {brief.commitments.length > 0 && (
+          <div>
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Outstanding commitments</div>
+            {brief.commitments.map((c, i) => (
+              <div key={i} style={{ fontSize: 11.5, color: 'var(--t2)', marginBottom: 5, lineHeight: 1.45 }}><b>{c.who}:</b> {c.what}</div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
@@ -67,6 +171,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           </div>
         </div>
       </div>
+
+      <PreMeetingBrief />
 
       <div className="kpi-grid">
         <div className="kpi-hero">
