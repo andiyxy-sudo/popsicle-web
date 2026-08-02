@@ -211,6 +211,42 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       <PreMeetingBrief />
 
 
+      <div className="kpi-grid">
+        <div className="kpi-hero">
+          <div className="kpi-hero-lbl">Pipeline Value</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
+            <div className="kpi-hero-val">{formatCurrency(pipelineValue)}</div>
+          </div>
+          <div className="kpi-hero-footer">
+            <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
+            <div className="kpi-hero-stat"><strong>{signals.length}</strong>Signals</div>
+            <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
+          </div>
+        </div>
+
+        <div className="dcard kpi-support kpi-support-danger">
+          <div className="dcard-title">Revenue at Risk</div>
+          <div className="dcard-val" style={{ color: 'var(--danger)' }}>{atRiskValue > 0 ? formatCurrency(atRiskValue) : '--'}</div>
+          <div className="dcard-sub">{atRisk.length} account{atRisk.length === 1 ? '' : 's'} flagged high risk</div>
+        </div>
+
+        <div className="dcard kpi-support kpi-support-blue">
+          <div className="dcard-title">Active Signals</div>
+          <div className="dcard-val">{signals.length}</div>
+          <div style={{ display: 'flex', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border-soft)' }}>
+            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--danger)' }}>{highSignals}</strong> High</span>
+            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--amber)' }}>{watchSignals}</strong> Watch</span>
+            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--ok)' }}>{posSignals}</strong> Pos</span>
+          </div>
+        </div>
+
+        <div className="dcard kpi-support kpi-support-ok">
+          <div className="dcard-title">Connected</div>
+          <div className="dcard-val" style={{ color: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)' }}>{integrationCount}</div>
+          <div className="dcard-sub">integration{integrationCount === 1 ? '' : 's'} active</div>
+        </div>
+      </div>
+
       {/* AI Brief + Revenue Loop + Activity (showcase layout, real data) */}
       {(() => {
         const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
@@ -322,42 +358,6 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           </div>
         )
       })()}
-
-      <div className="kpi-grid">
-        <div className="kpi-hero">
-          <div className="kpi-hero-lbl">Pipeline Value</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-            <div className="kpi-hero-val">{formatCurrency(pipelineValue)}</div>
-          </div>
-          <div className="kpi-hero-footer">
-            <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
-            <div className="kpi-hero-stat"><strong>{signals.length}</strong>Signals</div>
-            <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
-          </div>
-        </div>
-
-        <div className="dcard kpi-support kpi-support-danger">
-          <div className="dcard-title">Revenue at Risk</div>
-          <div className="dcard-val" style={{ color: 'var(--danger)' }}>{atRiskValue > 0 ? formatCurrency(atRiskValue) : '--'}</div>
-          <div className="dcard-sub">{atRisk.length} account{atRisk.length === 1 ? '' : 's'} flagged high risk</div>
-        </div>
-
-        <div className="dcard kpi-support kpi-support-blue">
-          <div className="dcard-title">Active Signals</div>
-          <div className="dcard-val">{signals.length}</div>
-          <div style={{ display: 'flex', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border-soft)' }}>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--danger)' }}>{highSignals}</strong> High</span>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--amber)' }}>{watchSignals}</strong> Watch</span>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--ok)' }}>{posSignals}</strong> Pos</span>
-          </div>
-        </div>
-
-        <div className="dcard kpi-support kpi-support-ok">
-          <div className="dcard-title">Connected</div>
-          <div className="dcard-val" style={{ color: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)' }}>{integrationCount}</div>
-          <div className="dcard-sub">integration{integrationCount === 1 ? '' : 's'} active</div>
-        </div>
-      </div>
 
       {/* Recent signals list */}
       <div className="dcard" style={{ padding: 0, overflow: 'hidden' }}>
