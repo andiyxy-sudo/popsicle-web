@@ -151,6 +151,7 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
 // until at least one signal carries a confidence value - never a made-up %.
 function ConfidenceRing({ signals }: { signals: Signal[] }) {
   const [open, setOpen] = useState(false)
+  const [big, setBig] = useState(false)
   const anchor = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   useEffect(() => {
@@ -165,7 +166,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
   const C = 2 * Math.PI * 19
   return (
     <div ref={anchor} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
-      onClick={() => setOpen(o => !o)} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      onClick={() => { setOpen(false); setBig(true) }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <div className="conf-ring" style={{ width: 46, height: 46 }}>
         <svg width="46" height="46" viewBox="0 0 46 46" style={{ overflow: 'visible' }}>
           <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="3.5"/>
@@ -177,6 +178,76 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
         <div style={{ fontSize: 10, fontWeight: 700, color }}>AI Confidence</div>
         <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
       </div>
+      {big && typeof document !== 'undefined' && createPortal((() => {
+        const hi = confs.filter(c => c >= 80).length
+        const mid = confs.filter(c => c >= 60 && c < 80).length
+        const lo = confs.filter(c => c < 60).length
+        const scored = signals
+          .map(sg => ({ sg, c: (sg.ai_analysis as { confidence?: number } | null)?.confidence }))
+          .filter((x): x is { sg: Signal; c: number } => typeof x.c === 'number')
+          .sort((a, b) => a.c - b.c)
+        const shown = scored.slice(0, 8)
+        const clrOf = (c: number) => c >= 80 ? 'var(--ok)' : c >= 60 ? 'var(--amber)' : 'var(--danger)'
+        const C2 = 2 * Math.PI * 30
+        const bigBar = (label: string, n: number, clr: string, hint: string) => (
+          <div style={{ marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--t1)' }}>{label} <span style={{ fontWeight: 600, color: 'var(--t3)' }}>· {hint}</span></span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: clr, fontFamily: "'DM Mono',monospace" }}>{n}</span>
+            </div>
+            <div style={{ height: 7, borderRadius: 5, background: 'var(--inset)', overflow: 'hidden' }}>
+              <div style={{ width: `${confs.length ? Math.round(n / confs.length * 100) : 0}%`, height: '100%', background: clr, borderRadius: 5 }}></div>
+            </div>
+          </div>
+        )
+        return (
+          <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, maxHeight: '84vh', overflowY: 'auto', background: 'var(--surface, #fff)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.3)' }}>
+              <div style={{ padding: '20px 26px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
+                  <svg width="72" height="72" viewBox="0 0 72 72">
+                    <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="5"/>
+                    <circle cx="36" cy="36" r="30" fill="none" stroke={color} strokeWidth="5" strokeDasharray={String(C2)} strokeDashoffset={String(C2 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 36 36)"/>
+                  </svg>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, color }}>{pct}%</div>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-.3px' }}>AI Confidence</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.5 }}>Average across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'} in your workspace</div>
+                </div>
+                <button onClick={() => setBig(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 19, lineHeight: 1 }}>✕</button>
+              </div>
+              <div style={{ padding: '18px 26px' }}>
+                <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65, marginBottom: 16 }}>
+                  Every signal Popsicle raises carries a confidence score: how clearly the evidence in the source conversation supports the claim. A direct quote like &ldquo;the price is too high for us&rdquo; scores high; an inferred mood shift scores lower. The number here is the average across everything analyzed, so it moves as new calls and threads are processed.
+                </div>
+                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>Distribution</div>
+                {bigBar('High ≥80%', hi, 'var(--ok)', 'act on these directly')}
+                {bigBar('Medium 60–79%', mid, 'var(--amber)', 'skim the quote first')}
+                {bigBar('Low <60%', lo, 'var(--danger)', 'verify before acting')}
+                {shown.length > 0 && (
+                  <div style={{ marginTop: 16 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 6 }}>What's driving the number</div>
+                    {shown.map(({ sg, c }) => (
+                      <div key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
+                        <span style={{ fontSize: 11, fontWeight: 900, color: clrOf(c), fontFamily: "'DM Mono',monospace", width: 34, flexShrink: 0 }}>{c}%</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sg.title}</div>
+                          {sg.account_name && <div style={{ fontSize: 10, color: 'var(--t3)' }}>{sg.account_name}</div>}
+                        </div>
+                      </div>
+                    ))}
+                    {scored.length > shown.length && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 6 }}>and {scored.length - shown.length} more</div>}
+                  </div>
+                )}
+                <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.6, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
+                  Confidence improves as Popsicle sees more: transcribed calls give the clearest evidence, and removing wrong signals (Remove → reason) teaches detection what to skip. Lowest-confidence signals are listed first above — worth opening each one and checking its quoted evidence.
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })(), document.body)}
       {open && pos && typeof document !== 'undefined' && createPortal((() => {
         const hi = confs.filter(c => c >= 80).length
         const mid = confs.filter(c => c >= 60 && c < 80).length
