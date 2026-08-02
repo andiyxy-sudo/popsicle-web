@@ -539,7 +539,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         )
 
         return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 320px', gap: 20, marginBottom: 24 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr 1fr', gap: 20, marginBottom: 24 }}>
             <div className="dcard fade-in fade-in-3" style={{ padding: 0, overflow: 'hidden' }}>
               <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
