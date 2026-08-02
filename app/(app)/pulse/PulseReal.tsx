@@ -454,13 +454,21 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       {/* Accounts needing attention */}
       {(() => {
         const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
-        const topSig = new Map<string, { title: string | null; severity: string | null }>()
-        for (const sg of open) if (sg.account_name && !topSig.has(sg.account_name)) topSig.set(sg.account_name, { title: sg.title ?? null, severity: sg.severity ?? null })
+        const topSig = new Map<string, { id: string; title: string | null; severity: string | null }>()
+        const counts = new Map<string, { h: number; w: number; p: number }>()
+        for (const sg of open) {
+          if (!sg.account_name) continue
+          if (!topSig.has(sg.account_name) || (sg.severity === 'high' && topSig.get(sg.account_name)!.severity !== 'high')) topSig.set(sg.account_name, { id: sg.id, title: sg.title ?? null, severity: sg.severity ?? null })
+          const c = counts.get(sg.account_name) ?? { h: 0, w: 0, p: 0 }
+          if (sg.severity === 'high') c.h++; else if (sg.severity === 'watch') c.w++; else if (sg.severity === 'positive') c.p++
+          counts.set(sg.account_name, c)
+        }
         const rows = accounts
           .map(a => {
             const sg = topSig.get(a.name)
+            const c = counts.get(a.name) ?? { h: 0, w: 0, p: 0 }
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
-            return { a, sg, dark, score: (sg?.severity === 'high' ? 3 : sg ? 2 : 0) + ((dark ?? 0) > 21 ? 1 : 0) }
+            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: (sg?.severity === 'high' ? 3 : sg ? 2 : 0) + ((dark ?? 0) > 21 ? 1 : 0) }
           })
           .filter(r => r.score > 0)
           .sort((x, y) => y.score - x.score || (Number(y.a.value) || 0) - (Number(x.a.value) || 0))
@@ -476,17 +484,41 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
               <span className="see-all" onClick={() => router.push('/portfolio')} style={{ cursor: 'pointer' }}>View portfolio →</span>
             </div>
             <table className="dtable">
-              <thead><tr><th>Account</th><th>Value</th><th>Stage</th><th>Top Signal</th><th>Last Touch</th></tr></thead>
+              <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>Value</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 120 }}>Action</th></tr></thead>
               <tbody>
-                {rows.map(({ a, sg, dark }) => (
-                  <tr key={a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ cursor: 'pointer' }}>
-                    <td><div style={{ fontWeight: 700 }}>{a.name}</div>{a.owner && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{a.owner}</div>}</td>
-                    <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</td>
-                    <td style={{ fontSize: 12, color: 'var(--t2)' }}>{a.stage || '--'}</td>
-                    <td style={{ fontSize: 12, color: sg?.severity === 'high' ? 'var(--danger)' : sg?.severity === 'positive' ? 'var(--ok)' : 'var(--amber)' }}>{sg?.title || '--'}</td>
-                    <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</td>
-                  </tr>
-                ))}
+                {rows.map(({ a, sg, sgId, nHigh, nWatch, nPos, dark }) => {
+                  const h = (a.health_score != null && a.health_score > 0) ? a.health_score : Math.max(25, Math.min(95, 90 - nHigh * 18 - nWatch * 6 + nPos * 4))
+                  const risk = a.risk_level || (nHigh ? 'high' : nWatch ? 'medium' : 'low')
+                  const tags: Array<[string, string]> = (a.tags && a.tags.length) ? a.tags.slice(0, 3).map(t => [t, 'blue'] as [string, string]) : (() => {
+                    const out: Array<[string, string]> = []
+                    if ((a.value ?? 0) >= 1_000_000) out.push(['Enterprise', 'blue'])
+                    if (nHigh) out.push(['At risk', 'red'])
+                    else if (nPos) out.push(['Momentum', 'green'])
+                    if (a.stage && /decision|contract|bought|negoti/i.test(a.stage)) out.push(['Late stage', 'amber'])
+                    return out.slice(0, 3)
+                  })()
+                  const hbg = h < 40 ? 'var(--danger-bg)' : h < 65 ? 'var(--amber-bg)' : 'var(--ok-bg)'
+                  const hc = h < 40 ? 'var(--danger)' : h < 65 ? 'var(--amber)' : 'var(--ok)'
+                  const btn = { fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" } as const
+                  return (
+                    <tr key={a.id} className={h < 40 ? 'row-hi' : h < 65 ? 'row-md' : 'row-ok'} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ cursor: 'pointer' }}>
+                      <td><div className="port-health" style={{ background: hbg, color: hc }}>{h}</div></td>
+                      <td><div style={{ fontWeight: 700 }}>{a.name}</div>{a.owner && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{a.owner}</div>}</td>
+                      <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</td>
+                      <td><span className={`rp ${risk === 'high' ? 'rhi' : risk === 'medium' ? 'rmd' : 'rlo'}`}>{risk.toUpperCase()}</span></td>
+                      <td style={{ fontSize: 12, color: 'var(--t2)' }}>{a.stage || '--'}</td>
+                      <td style={{ fontSize: 12, color: sg?.severity === 'high' ? 'var(--danger)' : sg?.severity === 'positive' ? 'var(--ok)' : 'var(--amber)', maxWidth: 200 }}>{sg?.title || '--'}</td>
+                      <td><div className="port-tags">{tags.length ? tags.map(([t, c], i) => <span key={i} className={`port-tag port-tag-${c}`}>{t}</span>) : <span style={{ color: 'var(--t4)', fontSize: 11 }}>--</span>}</div></td>
+                      <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <div style={{ display: 'flex', gap: 5 }}>
+                          <button style={btn} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)}>Open</button>
+                          {sgId && <button style={{ ...btn, borderColor: 'var(--o)', color: 'var(--o)' }} onClick={() => router.push(`/signals?signal=${sgId}&action=reply`)}>Draft</button>}
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
