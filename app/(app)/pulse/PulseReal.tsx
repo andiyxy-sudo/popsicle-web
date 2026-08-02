@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { LOGOS } from '../integrations/IntegrationsShowcase'
 import type { Account, Signal } from '@/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
 
@@ -142,7 +143,7 @@ function ActivityFeed() {
     <div style={{ padding: '10px 20px' }}>
       {items.map((a, i) => (
         <div key={i} className="activity-item">
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(a.integration || '?').slice(0, 2)}</div>
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{LOGOS[a.integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(a.integration || '?').slice(0, 2)}</span>}</div>
           <div className="activity-body"><strong>{a.account_name || (a.sender || '').replace(/<.*>/, '').trim() || 'Message'}</strong>{a.subject ? ` — ${String(a.subject).slice(0, 64)}` : ''}</div>
           <div className="activity-time">{ago(a.received_at)}</div>
         </div>
@@ -293,6 +294,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                     <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>{b.text}</div>
                   </div>
                 ))}
+                <div onClick={() => router.push('/ask')} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)', fontSize: 11.5, fontWeight: 700, color: 'var(--o)', cursor: 'pointer' }}>Ask AI to expand on any insight →</div>
               </div>
             </div>
 
