@@ -144,6 +144,43 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
   )
 }
 
+
+// AI Confidence ring (header, demo position): average model confidence across
+// analyzed signals, with a click/hover popover explaining the number. Hidden
+// until at least one signal carries a confidence value - never a made-up %.
+function ConfidenceRing({ signals }: { signals: Signal[] }) {
+  const [open, setOpen] = useState(false)
+  const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
+  if (!confs.length) return null
+  const pct = Math.round(confs.reduce((a, b) => a + b, 0) / confs.length)
+  const color = pct >= 80 ? '#22C55E' : pct >= 60 ? 'var(--amber)' : 'var(--danger)'
+  const C = 2 * Math.PI * 19
+  return (
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+      onClick={() => setOpen(o => !o)} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+      <div className="conf-ring" style={{ width: 46, height: 46 }}>
+        <svg width="46" height="46" viewBox="0 0 46 46" style={{ overflow: 'visible' }}>
+          <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="3.5"/>
+          <circle cx="23" cy="23" r="19" fill="none" stroke={color} strokeWidth="3.5" strokeDasharray={String(C)} strokeDashoffset={String(C * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 23 23)"/>
+        </svg>
+        <div className="conf-ring-val" style={{ fontSize: 11, fontWeight: 900, color }}>{pct}%</div>
+      </div>
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 700, color }}>AI Confidence</div>
+        <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
+      </div>
+      {open && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 264, background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 12px 36px rgba(15,12,9,.16)', padding: '14px 16px', zIndex: 120 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)', marginBottom: 5 }}>How confident is the AI?</div>
+          <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
+            The average confidence the AI assigned across your {confs.length} analyzed signal{confs.length === 1 ? '' : 's'}. Higher means clearer evidence in the source conversation. Low-confidence signals are worth opening before acting on.
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
   const router = useRouter()
 
@@ -198,6 +235,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
               {integrationCount} integration{integrationCount === 1 ? '' : 's'} connected
             </span>
           </div>
+          <ConfidenceRing signals={signals} />
         </div>
       </div>
 
@@ -225,14 +263,15 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                   Ask
                 </button>
               </div>
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 6 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <div className="kpi-hero-val">{health}</div>
                   <span style={{ fontSize: 20, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>/100</span>
                 </div>
-                <div style={{ textAlign: 'right', paddingBottom: 6 }}>
+                <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,.18)' }}></div>
+                <div>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>Pipeline Value</div>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', letterSpacing: '-.5px' }}>{formatCurrency(pipelineValue)}</div>
+                  <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-.5px', lineHeight: 1 }}>{formatCurrency(pipelineValue)}</div>
                 </div>
               </div>
               <div className="kpi-hero-footer">
