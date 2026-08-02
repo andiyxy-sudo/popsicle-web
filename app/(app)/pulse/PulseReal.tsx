@@ -490,11 +490,40 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         const stalest = [...accounts].filter(a => a.last_contact_date).sort((a, b) => String(a.last_contact_date).localeCompare(String(b.last_contact_date)))[0]
         const daysDark = stalest?.last_contact_date ? Math.floor((Date.now() - new Date(stalest.last_contact_date).getTime()) / 86400000) : null
 
+        // Demo-style items: one readable sentence each, insight + bolded action.
+        const ACTION_BY_TYPE: Record<string, string> = {
+          silent_stall: 'book a check-in this week', call_objection: 'address it in your next reply',
+          call_sentiment_drop: 'call before the mood hardens', timeline_slip: 'confirm the real date with your champion',
+          deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
+          meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
+          competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
+          legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
+          call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
+        }
+        const D = { danger: ['var(--danger)', 'rgba(224,62,62,.04)', 'rgba(224,62,62,.1)'], amber: ['var(--amber)', 'rgba(232,133,10,.04)', 'rgba(232,133,10,.1)'], ok: ['var(--ok)', 'rgba(42,157,92,.04)', 'rgba(42,157,92,.1)'], blue: ['var(--blue)', 'rgba(59,111,222,.04)', 'rgba(59,111,222,.1)'] } as const
+        const mk = (k: keyof typeof D, text: React.ReactNode) => ({ color: D[k][0], bg: D[k][1], bd: D[k][2], text })
+        const actFor = (sg: Signal) => {
+          const rec = (sg.ai_analysis as { recommendation?: string } | null)?.recommendation
+          if (typeof rec === 'string' && rec.length > 6 && rec.length < 90) return rec.replace(/\.$/, '')
+          return ACTION_BY_TYPE[sg.signal_type || ''] || 'open it and decide'
+        }
         const briefItems: Array<{ color: string; bg: string; bd: string; text: React.ReactNode }> = []
-        if (highs[0]) briefItems.push({ color: 'var(--danger)', bg: 'rgba(224,62,62,.04)', bd: 'rgba(224,62,62,.1)', text: <>{highs[0].account_name ? <strong>{highs[0].account_name}: </strong> : null}{highs[0].title}</> })
-        if (topRisk) briefItems.push({ color: 'var(--amber)', bg: 'rgba(232,133,10,.04)', bd: 'rgba(232,133,10,.1)', text: <><strong>{formatCurrency(topRisk[1])}</strong> at risk on {topRisk[0]} — highest exposure right now</> })
-        if (positives[0]) briefItems.push({ color: 'var(--ok)', bg: 'rgba(42,157,92,.04)', bd: 'rgba(42,157,92,.1)', text: <>{positives[0].account_name ? <strong>{positives[0].account_name}: </strong> : null}{positives[0].title}</> })
-        if (stalest && daysDark != null && daysDark > 14) briefItems.push({ color: 'var(--blue)', bg: 'rgba(59,111,222,.04)', bd: 'rgba(59,111,222,.1)', text: <><strong>{stalest.name}</strong> dark for {daysDark} days — worth a touch this week</> })
+        for (const sg of highs.slice(0, 3)) {
+          briefItems.push(mk('danger', <>{sg.account_name ? <>{sg.account_name}: </> : null}{sg.title} — <strong>{actFor(sg)}</strong></>))
+        }
+        if (topRisk) briefItems.push(mk('amber', <><strong>{formatCurrency(topRisk[1])} at risk</strong> across {riskByAcct.size} account{riskByAcct.size === 1 ? '' : 's'} — {topRisk[0]} carries the most exposure right now</>))
+        if (positives[0]) briefItems.push(mk('ok', <>{positives[0].account_name ? <>{positives[0].account_name}: </> : null}{positives[0].title} — <strong>{actFor(positives[0])}</strong></>))
+        if (handled.length > 0) briefItems.push(mk('ok', <>You handled <strong>{handled.length} signal{handled.length === 1 ? '' : 's'}</strong>{protectedVal > 0 ? <> worth {formatCurrency(protectedVal)} of at-risk value</> : null} — detection is feeding your pipeline hygiene</>))
+        if (stalest && daysDark != null && daysDark > 14) briefItems.push(mk('blue', <>{stalest.name} has been dark for <strong>{daysDark} days</strong>{stalest.value ? <> with {formatCurrency(Number(stalest.value))} on the table</> : null} — worth a touch this week</>))
+        {
+          const lowConf = signals.filter(sg => { const c = (sg.ai_analysis as { confidence?: number } | null)?.confidence; return typeof c === 'number' && c < 60 })
+          if (lowConf.length > 0) briefItems.push(mk('blue', <>{lowConf.length} signal{lowConf.length === 1 ? '' : 's'} sit under 60% AI confidence — <strong>check their quoted evidence before acting</strong></>))
+        }
+        const watchOnly = open.filter(sg => sg.severity === 'watch' && !highs.some(h => h.account_name === sg.account_name)).slice(0, 7 - briefItems.length)
+        for (const sg of watchOnly) {
+          if (briefItems.length >= 7) break
+          briefItems.push(mk('amber', <>{sg.account_name ? <>{sg.account_name}: </> : null}{sg.title} — <strong>{actFor(sg)}</strong></>))
+        }
 
         const secHead = (icon: React.ReactNode, label: string) => (
           <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -512,7 +541,15 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         return (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 320px', gap: 20, marginBottom: 24 }}>
             <div className="dcard fade-in fade-in-3" style={{ padding: 0, overflow: 'hidden' }}>
-              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>, 'AI Brief')}
+              <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>AI Brief</span>
+                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--ok)', animation: 'pulse 2s ease-in-out infinite' }}></div>
+                  <span style={{ fontSize: 10, color: 'var(--t3)' }}>just now</span>
+                  <span style={{ fontSize: 8, fontWeight: 700, background: 'linear-gradient(135deg,var(--o),#FFD166)', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>LIVE</span>
+                </div>
+              </div>
               <div style={{ padding: '14px 20px' }}>
                 {briefItems.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)', textAlign: 'center', padding: '14px 0' }}>All quiet. The brief fills in as signals arrive.</div>}
                 {briefItems.map((b, i) => (
