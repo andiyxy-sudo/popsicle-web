@@ -1,7 +1,8 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { LOGOS } from '../integrations/IntegrationsShowcase'
 import type { Account, Signal } from '@/types'
@@ -150,13 +151,20 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
 // until at least one signal carries a confidence value - never a made-up %.
 function ConfidenceRing({ signals }: { signals: Signal[] }) {
   const [open, setOpen] = useState(false)
+  const anchor = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
+  useEffect(() => {
+    if (!open || !anchor.current) { setPos(null); return }
+    const r = anchor.current.getBoundingClientRect()
+    setPos({ top: r.bottom + 10, right: Math.max(12, window.innerWidth - r.right) })
+  }, [open])
   const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
   if (!confs.length) return null
   const pct = Math.round(confs.reduce((a, b) => a + b, 0) / confs.length)
   const color = pct >= 80 ? '#22C55E' : pct >= 60 ? 'var(--amber)' : 'var(--danger)'
   const C = 2 * Math.PI * 19
   return (
-    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+    <div ref={anchor} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
       onClick={() => setOpen(o => !o)} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <div className="conf-ring" style={{ width: 46, height: 46 }}>
         <svg width="46" height="46" viewBox="0 0 46 46" style={{ overflow: 'visible' }}>
@@ -169,7 +177,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
         <div style={{ fontSize: 10, fontWeight: 700, color }}>AI Confidence</div>
         <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
       </div>
-      {open && (() => {
+      {open && pos && typeof document !== 'undefined' && createPortal((() => {
         const hi = confs.filter(c => c >= 80).length
         const mid = confs.filter(c => c >= 60 && c < 80).length
         const lo = confs.filter(c => c < 60).length
@@ -183,7 +191,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
           </div>
         )
         return (
-          <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 288, background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: '0 16px 44px rgba(15,12,9,.18)', padding: '16px 18px', zIndex: 120, cursor: 'default' }}>
+          <div style={{ position: 'fixed', top: pos.top, right: pos.right, width: 288, background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: '0 16px 44px rgba(15,12,9,.22)', padding: '16px 18px', zIndex: 900, cursor: 'default' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
               <span style={{ fontSize: 20, fontWeight: 900, color }}>{pct}%</span>
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)' }}>average AI confidence</span>
@@ -199,7 +207,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
             </div>
           </div>
         )
-      })()}
+      })(), document.body)}
     </div>
   )
 }
