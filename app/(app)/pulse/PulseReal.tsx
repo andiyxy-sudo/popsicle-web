@@ -169,19 +169,77 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
         <div style={{ fontSize: 10, fontWeight: 700, color }}>AI Confidence</div>
         <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
       </div>
-      {open && (
-        <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 264, background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 12, boxShadow: '0 12px 36px rgba(15,12,9,.16)', padding: '14px 16px', zIndex: 120 }}>
-          <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)', marginBottom: 5 }}>How confident is the AI?</div>
-          <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
-            The average confidence the AI assigned across your {confs.length} analyzed signal{confs.length === 1 ? '' : 's'}. Higher means clearer evidence in the source conversation. Low-confidence signals are worth opening before acting on.
+      {open && (() => {
+        const hi = confs.filter(c => c >= 80).length
+        const mid = confs.filter(c => c >= 60 && c < 80).length
+        const lo = confs.filter(c => c < 60).length
+        const bar = (label: string, n: number, clr: string) => (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+            <span style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t3)', width: 64 }}>{label}</span>
+            <div style={{ flex: 1, height: 5, borderRadius: 4, background: 'var(--inset)', overflow: 'hidden' }}>
+              <div style={{ width: `${confs.length ? Math.round(n / confs.length * 100) : 0}%`, height: '100%', background: clr, borderRadius: 4 }}></div>
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--t2)', fontFamily: "'DM Mono',monospace", width: 14, textAlign: 'right' }}>{n}</span>
           </div>
-        </div>
-      )}
+        )
+        return (
+          <div style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, width: 288, background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 14, boxShadow: '0 16px 44px rgba(15,12,9,.18)', padding: '16px 18px', zIndex: 120, cursor: 'default' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 4 }}>
+              <span style={{ fontSize: 20, fontWeight: 900, color }}>{pct}%</span>
+              <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)' }}>average AI confidence</span>
+            </div>
+            <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 10 }}>
+              Across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'}. Confidence reflects how clear the evidence was in the source conversation.
+            </div>
+            {bar('High ≥80%', hi, 'var(--ok)')}
+            {bar('Medium', mid, 'var(--amber)')}
+            {bar('Low <60%', lo, 'var(--danger)')}
+            <div style={{ fontSize: 10, color: 'var(--t4)', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line)' }}>
+              Open low-confidence signals and check the quoted evidence before acting. Marking wrong ones as removed teaches detection.
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
 
+
+// Shared health formula: 100 minus open risk, plus positive momentum.
+function computeHealth(signals: Signal[], accounts: Account[]): number {
+  const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+  const nHigh = open.filter(sg => sg.severity === 'high').length
+  const nWatch = open.filter(sg => sg.severity === 'watch').length
+  const nPos = signals.filter(sg => sg.severity === 'positive').length
+  const nRiskAcct = accounts.filter(a => a.risk_level === 'high').length
+  return Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
+  // Health trend: snapshot today's score, compare to the latest prior day.
+  const [healthDelta, setHealthDelta] = useState<{ pts: number; label: string } | null>(null)
+  useEffect(() => {
+    let dead = false
+    async function snap() {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user || dead) return
+      const today = new Date().toISOString().slice(0, 10)
+      const health = computeHealth(signals, accounts)
+      await supa.from('pulse_health_history').upsert({ user_id: user.id, day: today, health }, { onConflict: 'user_id,day' })
+      const { data: prev } = await supa.from('pulse_health_history')
+        .select('day, health').eq('user_id', user.id).lt('day', today)
+        .order('day', { ascending: false }).limit(1).maybeSingle()
+      if (dead || !prev) return
+      const pts = health - Number(prev.health)
+      const days = Math.round((new Date(today).getTime() - new Date(String(prev.day)).getTime()) / 86400000)
+      const label = days <= 1 ? 'vs yesterday' : days <= 7 ? `vs ${days}d ago` : 'vs last visit'
+      if (pts !== 0) setHealthDelta({ pts, label })
+    }
+    snap()
+    return () => { dead = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const router = useRouter()
 
   const hour = new Date().getHours()
@@ -229,13 +287,15 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
             <p style={{ marginBottom: 4, fontSize: 15, fontWeight: 600, color: 'var(--t2)' }}>{greeting}, {name}.</p>
             <h1 style={{ marginBottom: 0 }}>Revenue Pulse</h1>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{ width: 6, height: 6, borderRadius: '50%', background: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)' }}></div>
-            <span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>
-              {integrationCount} integration{integrationCount === 1 ? '' : 's'} connected
-            </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)', animation: integrationCount > 0 ? 'pulse 2s ease-in-out infinite' : undefined }}></div>
+              <span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>
+                {integrationCount} integration{integrationCount === 1 ? '' : 's'} connected
+              </span>
+            </div>
+            <ConfidenceRing signals={signals} />
           </div>
-          <ConfidenceRing signals={signals} />
         </div>
       </div>
 
@@ -246,12 +306,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         {(() => {
           // Deterministic pipeline health: start at 100, subtract for open
           // risk, credit positive momentum. Honest bounds, no invented deltas.
-          const openSigs = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
-          const nHigh = openSigs.filter(sg => sg.severity === 'high').length
-          const nWatch = openSigs.filter(sg => sg.severity === 'watch').length
-          const nPos = signals.filter(sg => sg.severity === 'positive').length
-          const nRiskAcct = accounts.filter(a => a.risk_level === 'high').length
-          const health = Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
+          const health = computeHealth(signals, accounts)
           const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
           const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
           return (
@@ -267,6 +322,11 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                   <div className="kpi-hero-val">{health}</div>
                   <span style={{ fontSize: 20, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>/100</span>
+                  {healthDelta && (
+                    <span className="kpi-hero-badge" style={{ marginLeft: 4 }}>
+                      {healthDelta.pts > 0 ? '▲ +' : '▼ '}{healthDelta.pts} pts {healthDelta.label}
+                    </span>
+                  )}
                 </div>
                 <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,.18)' }}></div>
                 <div>
@@ -293,6 +353,11 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         <div className="dcard kpi-support kpi-support-blue">
           <div className="dcard-title">Active Signals</div>
           <div className="dcard-val">{signals.length}</div>
+          {(() => {
+            const today = new Date(); today.setHours(0, 0, 0, 0)
+            const n = signals.filter(sg => sg.created_at && new Date(sg.created_at) >= today).length
+            return <div className="dcard-sub">{n > 0 ? <><span className="dcard-delta delta-up">▲ {n} new</span> today</> : 'No new signals today'}</div>
+          })()}
           <div style={{ display: 'flex', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border-soft)' }}>
             <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--danger)' }}>{highSignals}</strong> High</span>
             <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--amber)' }}>{watchSignals}</strong> Watch</span>
