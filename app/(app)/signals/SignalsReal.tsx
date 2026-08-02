@@ -150,11 +150,29 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     if (busyId) return
     setBusyId(s.id)
     const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
-    const { error } = await createClient().from('signals').update(patch).eq('id', s.id)
+    const supa = createClient()
+    const { error } = await supa.from('signals').update(patch).eq('id', s.id)
     if (!error) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
       setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
       router.refresh()
+      // Broadcast the resolution (mobile contract): Slack ✓ card update and
+      // HubSpot deal note, both opt-in, both fire-and-forget.
+      try {
+        const [{ data: { session } }, { data: { user } }] = await Promise.all([supa.auth.getSession(), supa.auth.getUser()])
+        if (session) {
+          const hdrs = { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` }
+          const actor = (user?.email || 'user').split('@')[0]
+          supa.from('integrations').select('provider, slack_post_resolutions, hubspot_log_resolutions')
+            .in('provider', ['slack', 'hubspot']).eq('is_active', true)
+            .then(({ data: integs }) => {
+              const slackOn = (integs ?? []).some(i => i.provider === 'slack' && i.slack_post_resolutions)
+              const hsOn = (integs ?? []).some(i => i.provider === 'hubspot' && i.hubspot_log_resolutions)
+              if (slackOn) fetch(`${SUPA_URL}/functions/v1/post-to-slack`, { method: 'POST', headers: hdrs, body: JSON.stringify({ signal_id: s.id, action: 'resolve', actor }) }).catch(() => {})
+              if (hsOn) fetch(`${SUPA_URL}/functions/v1/oauth-hubspot`, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'log-note', signal_id: s.id }) }).catch(() => {})
+            })
+        }
+      } catch { /* broadcasts never block the local transition */ }
     }
     setBusyId(null)
   }
@@ -179,28 +197,14 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     if (busyId) return
     setBusyId(s.id)
     const supa = createClient()
-    let ok = false
-    try {
-      const { data: { session } } = await supa.auth.getSession()
-      if (session) {
-        const r = await fetch(`${SUPA_URL}/functions/v1/remap-account`, {
-          method: 'POST',
-          headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ entity_type: 'signal', entity_id: s.id, account_id: accountId, method: 'manual_assign' }),
-        })
-        ok = r.ok
-      }
-    } catch { /* fall through */ }
-    if (!ok) {
-      const { data: { user } } = await supa.auth.getUser()
-      const { error } = await supa.from('signals').update({ account_name: accountName }).eq('id', s.id)
-      ok = !error
-      if (ok && user) {
-        await supa.from('remap_log').insert({
-          user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
-          method: 'manual_assign', prev_value: s.account_name ?? null,
-        }).then(() => {}, () => {})
-      }
+    const { data: { user } } = await supa.auth.getUser()
+    const { error } = await supa.from('signals').update({ account_name: accountName }).eq('id', s.id)
+    const ok = !error
+    if (ok && user) {
+      await supa.from('remap_log').insert({
+        user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
+        method: 'manual_assign', prev_value: s.account_name ?? null,
+      }).then(() => {}, () => {})
     }
     if (ok) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, account_name: accountName } : x))
