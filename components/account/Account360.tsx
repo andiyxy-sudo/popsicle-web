@@ -275,3 +275,12 @@ export function Account360() {
     </div>
   )
 }
+
+// ---- Compatibility type exports for the legacy loader (lib/account360.ts) ----
+// The rebuilt component no longer uses these shapes internally, but the loader
+// still imports them; permissive records keep it compiling until it is retired.
+export type A360Data = Record<string, any>
+export type SigItem = Record<string, any>
+export type CommItem = Record<string, any>
+export type PersonItem = Record<string, any>
+export type TimelineItem = Record<string, any>
