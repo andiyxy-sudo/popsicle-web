@@ -213,17 +213,45 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
 
       <div className="kpi-grid">
-        <div className="kpi-hero">
-          <div className="kpi-hero-lbl">Pipeline Value</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 6 }}>
-            <div className="kpi-hero-val">{formatCurrency(pipelineValue)}</div>
-          </div>
-          <div className="kpi-hero-footer">
-            <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
-            <div className="kpi-hero-stat"><strong>{signals.length}</strong>Signals</div>
-            <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
-          </div>
-        </div>
+        {(() => {
+          // Deterministic pipeline health: start at 100, subtract for open
+          // risk, credit positive momentum. Honest bounds, no invented deltas.
+          const openSigs = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+          const nHigh = openSigs.filter(sg => sg.severity === 'high').length
+          const nWatch = openSigs.filter(sg => sg.severity === 'watch').length
+          const nPos = signals.filter(sg => sg.severity === 'positive').length
+          const nRiskAcct = accounts.filter(a => a.risk_level === 'high').length
+          const health = Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
+          const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
+          const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
+          return (
+            <div className="kpi-hero">
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div className="kpi-hero-lbl" style={{ marginBottom: 0 }}>Pipeline Health Score</div>
+                <button onClick={() => router.push('/ask')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  Ask
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <div className="kpi-hero-val">{health}</div>
+                  <span style={{ fontSize: 20, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>/100</span>
+                </div>
+                <div style={{ textAlign: 'right', paddingBottom: 6 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>Pipeline Value</div>
+                  <div style={{ fontSize: 24, fontWeight: 900, color: '#fff', letterSpacing: '-.5px' }}>{formatCurrency(pipelineValue)}</div>
+                </div>
+              </div>
+              <div className="kpi-hero-footer">
+                <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
+                <div className="kpi-hero-stat"><strong>{signals.length}</strong>Signals</div>
+                <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
+                {aiConf != null && <div className="kpi-hero-stat"><strong>{aiConf}%</strong>AI conf</div>}
+              </div>
+            </div>
+          )
+        })()}
 
         <div className="dcard kpi-support kpi-support-danger">
           <div className="dcard-title">Revenue at Risk</div>
