@@ -117,20 +117,12 @@ function PreMeetingBrief() {
 }
 
 
-// Live activity: the user's most recent synced communications.
-function ActivityFeed() {
-  const [items, setItems] = useState<Array<{ sender: string | null; subject: string | null; integration: string | null; received_at: string | null; account_name: string | null }>>([])
-  useEffect(() => {
-    let dead = false
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      if (!user) return
-      createClient().from('messages')
-        .select('sender, subject, integration, received_at, account_name')
-        .eq('user_id', user.id).order('received_at', { ascending: false }).limit(6)
-        .then(({ data }) => { if (!dead) setItems((data as typeof items) ?? []) })
-    })
-    return () => { dead = true }
-  }, [])
+// Live activity: recent signal events only (not raw inbox traffic) - each
+// entry is something Popsicle judged worth surfacing, with its source platform.
+function ActivityFeed({ signals }: { signals: Signal[] }) {
+  const items = signals
+    .filter(sg => !sg.is_dismissed && sg.status !== 'deleted')
+    .slice(0, 6)
   const ago = (iso: string | null) => {
     if (!iso) return ''
     const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
@@ -138,14 +130,14 @@ function ActivityFeed() {
     if (m < 1440) return `${Math.floor(m / 60)}h`
     return `${Math.floor(m / 1440)}d`
   }
-  if (!items.length) return <div style={{ padding: '24px 20px', fontSize: 11.5, color: 'var(--t4)', textAlign: 'center' }}>Activity appears as messages sync.</div>
+  if (!items.length) return <div style={{ padding: '24px 20px', fontSize: 11.5, color: 'var(--t4)', textAlign: 'center' }}>Activity appears as signals arrive.</div>
   return (
     <div style={{ padding: '10px 20px' }}>
-      {items.map((a, i) => (
-        <div key={i} className="activity-item">
-          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{LOGOS[a.integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(a.integration || '?').slice(0, 2)}</span>}</div>
-          <div className="activity-body"><strong>{a.account_name || (a.sender || '').replace(/<.*>/, '').trim() || 'Message'}</strong>{a.subject ? ` — ${String(a.subject).slice(0, 64)}` : ''}</div>
-          <div className="activity-time">{ago(a.received_at)}</div>
+      {items.map(sg => (
+        <div key={sg.id} className="activity-item">
+          <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{LOGOS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
+          <div className="activity-body">{sg.status === 'handled' && <span style={{ color: 'var(--ok)', fontWeight: 900 }}>✓ </span>}{sg.account_name ? <strong>{sg.account_name}</strong> : null}{sg.account_name ? ' — ' : ''}{sg.title}</div>
+          <div className="activity-time">{ago(sg.created_at)}</div>
         </div>
       ))}
     </div>
@@ -341,7 +333,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
             <div className="dcard fade-in fade-in-5" style={{ padding: 0, overflow: 'hidden' }}>
               {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, 'Activity')}
-              <ActivityFeed />
+              <ActivityFeed signals={signals} />
             </div>
           </div>
         )
