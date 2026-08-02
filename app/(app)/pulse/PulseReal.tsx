@@ -162,7 +162,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
   const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
   if (!confs.length) return null
   const pct = Math.round(confs.reduce((a, b) => a + b, 0) / confs.length)
-  const color = pct >= 80 ? '#22C55E' : pct >= 60 ? 'var(--amber)' : 'var(--danger)'
+  const color = '#22C55E'  // demo brand green; per-signal colors live in the breakdown
   const C = 2 * Math.PI * 19
   return (
     <div ref={anchor} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
@@ -170,12 +170,13 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
       <div className="conf-ring" style={{ width: 46, height: 46 }}>
         <svg width="46" height="46" viewBox="0 0 46 46" style={{ overflow: 'visible' }}>
           <circle cx="23" cy="23" r="19" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="3.5"/>
-          <circle cx="23" cy="23" r="19" fill="none" stroke={color} strokeWidth="3.5" strokeDasharray={String(C)} strokeDashoffset={String(C * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 23 23)"/>
+          <circle cx="23" cy="23" r="19" fill="none" stroke="#22C55E" strokeWidth="6" strokeDasharray={String(C)} strokeDashoffset={String(C * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 23 23)" opacity=".25"/>
+          <circle cx="23" cy="23" r="19" fill="none" stroke="#22C55E" strokeWidth="3.5" strokeDasharray={String(C)} strokeDashoffset={String(C * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 23 23)"/>
         </svg>
         <div className="conf-ring-val" style={{ fontSize: 11, fontWeight: 900, color }}>{pct}%</div>
       </div>
       <div>
-        <div style={{ fontSize: 10, fontWeight: 700, color }}>AI Confidence</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ok)' }}>AI Confidence</div>
         <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
       </div>
       {big && typeof document !== 'undefined' && createPortal((() => {
