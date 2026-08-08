@@ -66,6 +66,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [draftState, setDraftState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [copied, setCopied] = useState(false)
+  const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'needs_scope' | 'error'>('idle')
+  const [sendErr, setSendErr] = useState('')
   // Deep link (?signal=<id>): opened detail, row flash, and not-found state
   const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
   const [deepNotFound, setDeepNotFound] = useState(false)
@@ -146,6 +148,45 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     setBusyId(null)
   }
 
+  async function sendNow() {
+    if (!draft || !draftFor || sendState === 'sending') return
+    setSendState('sending'); setSendErr('')
+    try {
+      const supa = createClient()
+      const { data: { session } } = await supa.auth.getSession()
+      if (!session) { window.location.href = '/login'; return }
+      const r = await fetch(`${SUPA_URL}/functions/v1/send-email`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ action: 'send', to: draft.to, subject: draft.subject, body: draft.body, signal_id: draftFor.id }),
+      })
+      const data = await r.json().catch(() => ({}))
+      if (r.ok && data?.ok) {
+        setSendState('sent')
+        // Close the loop: sending IS handling. Auto-record it.
+        markHandled(draftFor, 'Sent follow-up')
+        setTimeout(() => { setDraftFor(null); setSendState('idle') }, 1400)
+        return
+      }
+      if (data?.error === 'needs_scope') { setSendState('needs_scope'); return }
+      setSendErr(String(data?.detail || data?.error || 'Send failed.'))
+      setSendState('error')
+    } catch {
+      setSendErr('Network error.'); setSendState('error')
+    }
+  }
+
+  async function enableSending() {
+    const supa = createClient()
+    const { data: { session } } = await supa.auth.getSession()
+    if (!session) return
+    const r = await fetch(`${SUPA_URL}/functions/v1/send-email?action=upgrade&platform=web`, {
+      method: 'POST', headers: { authorization: `Bearer ${session.access_token}` },
+    })
+    const data = await r.json().catch(() => ({}))
+    if (data?.url) window.location.href = data.url
+  }
+
   async function markHandled(s: DBSignal, action: string) {
     if (busyId) return
     setBusyId(s.id)
@@ -215,6 +256,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   }
 
   async function openDraft(s: DBSignal) {
+    setSendState('idle'); setSendErr('')
     setDraftFor(s); setDraft(null); setDraftState('loading'); setCopied(false)
     try {
       const r = await fetch('/api/draft', {
@@ -549,12 +591,15 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               )}
               {draftState === 'ready' && draft && (
                 <div style={{ background: 'var(--surface, #fff)', borderRadius: 14, border: '1px solid var(--border-soft, var(--border))', boxShadow: '0 2px 10px rgba(13,10,7,.05)', overflow: 'hidden' }}>
-                  {draft.to && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--line)' }}>
-                      <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52 }}>To</span>
-                      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)', fontFamily: "'DM Mono',monospace", background: 'var(--inset, #F4EFE7)', padding: '3px 10px', borderRadius: 20 }}>{draft.to}</span>
-                    </div>
-                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderBottom: '1px solid var(--line)' }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52, flexShrink: 0 }}>To</span>
+                    <input
+                      value={draft.to || ''}
+                      onChange={e => setDraft({ ...draft, to: e.target.value })}
+                      placeholder="recipient@company.com"
+                      style={{ flex: 1, padding: '8px 0', fontSize: 12, fontWeight: 700, color: 'var(--t1)', border: 'none', outline: 'none', fontFamily: "'DM Mono',monospace", background: 'transparent' }}
+                    />
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderBottom: '1px solid var(--line)' }}>
                     <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52, flexShrink: 0 }}>Subject</span>
                     <input
@@ -579,13 +624,27 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
                   Regenerate
                 </button>
-                <div style={{ display: 'flex', gap: 9 }}>
+                <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
+                  {sendState === 'needs_scope' && (
+                    <span style={{ fontSize: 10.5, color: 'var(--t3)', maxWidth: 210, lineHeight: 1.4 }}>Sending needs one-time Google permission.</span>
+                  )}
+                  {sendState === 'error' && <span style={{ fontSize: 10.5, color: 'var(--danger)', maxWidth: 200, lineHeight: 1.4 }}>{sendErr}</span>}
                   <button onClick={copyDraft} style={{ padding: '10px 18px', background: 'var(--surface, #fff)', color: 'var(--t2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
-                  <a href={mailto} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', borderRadius: 10, fontSize: 12.5, fontWeight: 800, textDecoration: 'none', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)' }}>
-                    Open in email →
+                  <a href={mailto} style={{ padding: '10px 14px', color: 'var(--t3)', borderRadius: 10, fontSize: 11.5, fontWeight: 700, textDecoration: 'none', fontFamily: "'Outfit',sans-serif" }}>
+                    Open in email
                   </a>
+                  {sendState === 'needs_scope' ? (
+                    <button onClick={enableSending} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)' }}>
+                      Enable sending
+                    </button>
+                  ) : (
+                    <button onClick={sendNow} disabled={sendState === 'sending' || sendState === 'sent' || !draft.to}
+                      style={{ padding: '10px 22px', background: sendState === 'sent' ? 'var(--ok)' : 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: sendState === 'sending' ? 'default' : 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)', opacity: sendState === 'sending' ? .75 : 1 }}>
+                      {sendState === 'sending' ? 'Sending...' : sendState === 'sent' ? '✓ Sent' : 'Send email →'}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
