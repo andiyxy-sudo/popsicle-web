@@ -192,8 +192,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     setBusyId(s.id)
     const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
     const supa = createClient()
-    const { error } = await supa.from('signals').update(patch).eq('id', s.id)
-    if (!error) {
+    const { data: updated, error } = await supa.from('signals').update(patch).eq('id', s.id).select('id')
+    if (!error && (updated?.length ?? 0) > 0) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
       setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
       router.refresh()
