@@ -519,13 +519,17 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
 
       {draftFor && (
         <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>
-            <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 14.5, fontWeight: 800, color: 'var(--t1)' }}>Follow-up draft</div>
-                <div style={{ fontSize: 11, color: 'var(--t3)' }}>{draftFor.account_name || ''} · responding to: {draftFor.title || TYPE_LABELS[draftFor.signal_type || ''] || 'signal'}</div>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 580, background: 'var(--bg, #FBF8F3)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.32)', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 22px 16px', background: 'linear-gradient(135deg, #FF6B35 0%, #FF8F5C 55%, #FFB088 100%)', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: -30, right: -30, width: 140, height: 140, borderRadius: '50%', background: 'rgba(255,255,255,.09)' }}></div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', position: 'relative' }}>
+                <div>
+                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,.75)', fontFamily: "'DM Mono',monospace", marginBottom: 4 }}>✦ AI Follow-up</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: '#fff', letterSpacing: '-.3px' }}>{draftFor.account_name || 'Draft reply'}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,.85)', marginTop: 3, lineHeight: 1.45 }}>Responding to: {draftFor.title || TYPE_LABELS[draftFor.signal_type || ''] || 'signal'}</div>
+                </div>
+                <button onClick={() => setDraftFor(null)} style={{ background: 'rgba(255,255,255,.18)', border: 'none', cursor: 'pointer', color: '#fff', fontSize: 15, lineHeight: 1, width: 28, height: 28, borderRadius: '50%', flexShrink: 0 }}>✕</button>
               </div>
-              <button onClick={() => setDraftFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
             </div>
 
             <div style={{ padding: 20, maxHeight: '60vh', overflowY: 'auto' }}>
@@ -544,32 +548,43 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 </div>
               )}
               {draftState === 'ready' && draft && (
-                <>
-                  {draft.to && <div style={{ fontSize: 11.5, color: 'var(--t3)', marginBottom: 8 }}>To: <span style={{ fontWeight: 700, color: 'var(--t2)', fontFamily: "'DM Mono',monospace" }}>{draft.to}</span></div>}
-                  <input
-                    value={draft.subject}
-                    onChange={e => setDraft({ ...draft, subject: e.target.value })}
-                    style={{ width: '100%', padding: '10px 12px', fontSize: 13, fontWeight: 700, color: 'var(--t1)', border: '1px solid var(--line)', borderRadius: 9, marginBottom: 10, fontFamily: "'Outfit',sans-serif", background: 'transparent', boxSizing: 'border-box' }}
-                  />
+                <div style={{ background: 'var(--surface, #fff)', borderRadius: 14, border: '1px solid var(--border-soft, var(--border))', boxShadow: '0 2px 10px rgba(13,10,7,.05)', overflow: 'hidden' }}>
+                  {draft.to && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 16px', borderBottom: '1px solid var(--line)' }}>
+                      <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52 }}>To</span>
+                      <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)', fontFamily: "'DM Mono',monospace", background: 'var(--inset, #F4EFE7)', padding: '3px 10px', borderRadius: 20 }}>{draft.to}</span>
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderBottom: '1px solid var(--line)' }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52, flexShrink: 0 }}>Subject</span>
+                    <input
+                      value={draft.subject}
+                      onChange={e => setDraft({ ...draft, subject: e.target.value })}
+                      style={{ flex: 1, padding: '8px 0', fontSize: 13, fontWeight: 800, color: 'var(--t1)', border: 'none', outline: 'none', fontFamily: "'Outfit',sans-serif", background: 'transparent' }}
+                    />
+                  </div>
                   <textarea
                     value={draft.body}
                     onChange={e => setDraft({ ...draft, body: e.target.value })}
-                    rows={11}
-                    style={{ width: '100%', padding: '12px', fontSize: 13, lineHeight: 1.65, color: 'var(--t1)', border: '1px solid var(--line)', borderRadius: 9, resize: 'vertical', fontFamily: "'Outfit',sans-serif", background: 'transparent', boxSizing: 'border-box' }}
+                    rows={12}
+                    style={{ width: '100%', padding: '14px 16px', fontSize: 13, lineHeight: 1.7, color: 'var(--t1)', border: 'none', outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", background: 'transparent', boxSizing: 'border-box', display: 'block' }}
                   />
-                </>
+                </div>
               )}
             </div>
 
             {draftState === 'ready' && draft && (
-              <div style={{ padding: '14px 20px', borderTop: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <button onClick={() => openDraft(draftFor)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 12, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>↻ Regenerate</button>
+              <div style={{ padding: '13px 22px', borderTop: '1px solid var(--border-soft, var(--border))', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'var(--surface, #fff)' }}>
+                <button onClick={() => openDraft(draftFor)} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', padding: 0, fontSize: 11.5, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+                  Regenerate
+                </button>
                 <div style={{ display: 'flex', gap: 9 }}>
-                  <button onClick={copyDraft} style={{ padding: '10px 16px', background: 'transparent', color: 'var(--t2)', border: '1px solid var(--line)', borderRadius: 9, fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
+                  <button onClick={copyDraft} style={{ padding: '10px 18px', background: 'var(--surface, #fff)', color: 'var(--t2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>
-                  <a href={mailto} style={{ padding: '10px 16px', background: 'var(--o)', color: '#fff', borderRadius: 9, fontSize: 12.5, fontWeight: 700, textDecoration: 'none', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 12px rgba(255,107,53,.22)' }}>
-                    Open in email
+                  <a href={mailto} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', borderRadius: 10, fontSize: 12.5, fontWeight: 800, textDecoration: 'none', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)' }}>
+                    Open in email →
                   </a>
                 </div>
               </div>

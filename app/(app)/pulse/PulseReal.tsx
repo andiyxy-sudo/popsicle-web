@@ -226,20 +226,24 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
         )
         return (
           <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, maxHeight: '84vh', overflowY: 'auto', background: 'var(--surface, #fff)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.3)' }}>
-              <div style={{ padding: '20px 26px 16px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', gap: 16 }}>
-                <div style={{ position: 'relative', width: 72, height: 72, flexShrink: 0 }}>
-                  <svg width="72" height="72" viewBox="0 0 72 72">
-                    <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="5"/>
-                    <circle cx="36" cy="36" r="30" fill="none" stroke={color} strokeWidth="5" strokeDasharray={String(C2)} strokeDashoffset={String(C2 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 36 36)"/>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, maxHeight: '84vh', overflowY: 'auto', background: 'var(--bg, #FBF8F3)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.32)' }}>
+              <div style={{ padding: '22px 26px 18px', background: 'linear-gradient(135deg, rgba(34,197,94,.10) 0%, rgba(34,197,94,.04) 60%, transparent 100%)', borderBottom: '1px solid var(--border-soft, var(--border))', display: 'flex', alignItems: 'center', gap: 18, position: 'relative' }}>
+                <div style={{ position: 'absolute', top: -36, right: -36, width: 150, height: 150, borderRadius: '50%', background: 'rgba(34,197,94,.05)' }}></div>
+                <div style={{ position: 'relative', width: 78, height: 78, flexShrink: 0, filter: 'drop-shadow(0 3px 10px rgba(34,197,94,.28))' }}>
+                  <svg width="78" height="78" viewBox="0 0 78 78">
+                    <circle cx="39" cy="39" r="32" fill="var(--surface, #fff)"/>
+                    <circle cx="39" cy="39" r="32" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="5.5"/>
+                    <circle cx="39" cy="39" r="32" fill="none" stroke="#22C55E" strokeWidth="9" strokeDasharray={String(2 * Math.PI * 32)} strokeDashoffset={String(2 * Math.PI * 32 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 39 39)" opacity=".22"/>
+                    <circle cx="39" cy="39" r="32" fill="none" stroke="#22C55E" strokeWidth="5.5" strokeDasharray={String(2 * Math.PI * 32)} strokeDashoffset={String(2 * Math.PI * 32 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 39 39)"/>
                   </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 17, fontWeight: 900, color }}>{pct}%</div>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: '#22C55E' }}>{pct}%</div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-.3px' }}>AI Confidence</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.5 }}>Average across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'} in your workspace</div>
+                <div style={{ flex: 1, position: 'relative' }}>
+                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#22C55E', fontFamily: "'DM Mono',monospace", marginBottom: 3 }}>Detection Quality</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-.4px' }}>AI Confidence</div>
+                  <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5, marginTop: 2 }}>Average across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'} in your workspace</div>
                 </div>
-                <button onClick={() => setBig(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 19, lineHeight: 1 }}>✕</button>
+                <button onClick={() => setBig(false)} style={{ background: 'var(--surface, #fff)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--t3)', fontSize: 14, lineHeight: 1, width: 28, height: 28, borderRadius: '50%', flexShrink: 0, position: 'relative' }}>✕</button>
               </div>
               <div style={{ padding: '18px 26px' }}>
                 <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65, marginBottom: 16 }}>
@@ -250,22 +254,27 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
                 {bigBar('Medium 60–79%', mid, 'var(--amber)', 'skim the quote first')}
                 {bigBar('Low <60%', lo, 'var(--danger)', 'verify before acting')}
                 {shown.length > 0 && (
-                  <div style={{ marginTop: 16 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 6 }}>What's driving the number</div>
-                    {shown.map(({ sg, c }) => (
-                      <div key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-                        <span style={{ fontSize: 11, fontWeight: 900, color: clrOf(c), fontFamily: "'DM Mono',monospace", width: 34, flexShrink: 0 }}>{c}%</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sg.title}</div>
-                          {sg.account_name && <div style={{ fontSize: 10, color: 'var(--t3)' }}>{sg.account_name}</div>}
+                  <div style={{ marginTop: 18 }}>
+                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>What's driving the number</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {shown.map(({ sg, c }) => (
+                        <div key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 13px', background: 'var(--surface, #fff)', border: '1px solid var(--border-soft, var(--border))', borderRadius: 11, boxShadow: '0 1px 4px rgba(13,10,7,.04)' }}>
+                          <span style={{ fontSize: 10.5, fontWeight: 900, color: clrOf(c), fontFamily: "'DM Mono',monospace", background: c >= 80 ? 'rgba(42,157,92,.09)' : c >= 60 ? 'rgba(232,133,10,.09)' : 'rgba(224,62,62,.09)', padding: '3px 9px', borderRadius: 20, flexShrink: 0 }}>{c}%</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sg.title}</div>
+                            {sg.account_name && <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 1 }}>{sg.account_name}</div>}
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                    {scored.length > shown.length && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 6 }}>and {scored.length - shown.length} more</div>}
+                      ))}
+                    </div>
+                    {scored.length > shown.length && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 7, textAlign: 'center' }}>and {scored.length - shown.length} more</div>}
                   </div>
                 )}
-                <div style={{ fontSize: 11, color: 'var(--t3)', lineHeight: 1.6, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line)' }}>
-                  Confidence improves as Popsicle sees more: transcribed calls give the clearest evidence, and removing wrong signals (Remove → reason) teaches detection what to skip. Lowest-confidence signals are listed first above — worth opening each one and checking its quoted evidence.
+                <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 16, padding: '13px 15px', background: 'rgba(255,107,53,.05)', border: '1px solid rgba(255,107,53,.14)', borderRadius: 12 }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
+                    Confidence improves as Popsicle sees more: transcribed calls give the clearest evidence, and removing wrong signals teaches detection what to skip. The lowest-confidence signals are listed first — worth opening each and checking its quoted evidence.
+                  </div>
                 </div>
               </div>
             </div>
