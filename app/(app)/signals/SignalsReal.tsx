@@ -176,17 +176,6 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     }
   }
 
-  async function enableSending() {
-    const supa = createClient()
-    const { data: { session } } = await supa.auth.getSession()
-    if (!session) return
-    const r = await fetch(`${SUPA_URL}/functions/v1/send-email?action=upgrade&platform=web`, {
-      method: 'POST', headers: { authorization: `Bearer ${session.access_token}` },
-    })
-    const data = await r.json().catch(() => ({}))
-    if (data?.url) window.location.href = data.url
-  }
-
   async function markHandled(s: DBSignal, action: string) {
     if (busyId) return
     setBusyId(s.id)
@@ -626,7 +615,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 </button>
                 <div style={{ display: 'flex', gap: 9, alignItems: 'center' }}>
                   {sendState === 'needs_scope' && (
-                    <span style={{ fontSize: 10.5, color: 'var(--t3)', maxWidth: 210, lineHeight: 1.4 }}>Sending needs one-time Google permission.</span>
+                    <span style={{ fontSize: 10.5, color: 'var(--t3)', maxWidth: 210, lineHeight: 1.4 }}>Reconnect Gmail once to enable sending.</span>
                   )}
                   {sendState === 'error' && <span style={{ fontSize: 10.5, color: 'var(--danger)', maxWidth: 200, lineHeight: 1.4 }}>{sendErr}</span>}
                   <button onClick={copyDraft} style={{ padding: '10px 18px', background: 'var(--surface, #fff)', color: 'var(--t2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
@@ -636,8 +625,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     Open in email
                   </a>
                   {sendState === 'needs_scope' ? (
-                    <button onClick={enableSending} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)' }}>
-                      Enable sending
+                    <button onClick={() => { setDraftFor(null); router.push('/integrations') }} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', border: 'none', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 4px 16px rgba(255,107,53,.35)' }}>
+                      Reconnect Gmail
                     </button>
                   ) : (
                     <button onClick={sendNow} disabled={sendState === 'sending' || sendState === 'sent' || !draft.to}
