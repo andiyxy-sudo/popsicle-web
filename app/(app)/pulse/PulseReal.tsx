@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
+import { attentionScore } from '@/lib/attention'
 import type { Account, Signal } from '@/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
 
@@ -331,6 +332,106 @@ function computeHealth(signals: Signal[], accounts: Account[]): number {
   return Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
 }
 
+// TODAY block (mobile item 22): meetings today, due/overdue commitments, and
+// accounts needing attention ranked by the shared attention formula (order
+// only, no visible score). Sections are absent when empty; quiet day = block hidden.
+function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
+  const router = useRouter()
+  const [meetings, setMeetings] = useState<Array<{ event_id: string; start_ts: string; summary: string | null; account_name: string | null }>>([])
+  const [due, setDue] = useState<Array<{ id: string; text: string; owner: string | null; due_at: string | null; account_name: string | null }>>([])
+  const [soonAccts, setSoonAccts] = useState<Set<string>>(new Set())
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => {
+    let dead = false
+    async function load() {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user) return
+      const start = new Date(); start.setHours(0, 0, 0, 0)
+      const end = new Date(start); end.setDate(end.getDate() + 1)
+      const soon = new Date(Date.now() + 48 * 3600_000)
+      const [m, c, s48] = await Promise.all([
+        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').eq('user_id', user.id)
+          .gte('start_ts', start.toISOString()).lt('start_ts', end.toISOString()).neq('status', 'cancelled').order('start_ts').limit(12),
+        supa.from('commitments').select('id, text, owner, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+          .lte('due_at', end.toISOString()).order('due_at').limit(10),
+        supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+          .gte('start_ts', new Date().toISOString()).lte('start_ts', soon.toISOString()).limit(50),
+      ])
+      if (dead) return
+      setMeetings((m.data as typeof meetings) ?? [])
+      setDue((c.data as typeof due) ?? [])
+      setSoonAccts(new Set(((s48.data ?? []) as Array<{ account_name: string | null }>).map(x => x.account_name).filter(Boolean) as string[]))
+      setLoaded(true)
+    }
+    load()
+    return () => { dead = true }
+  }, [])
+
+  const attention = (() => {
+    const byAcct = new Map<string, Signal[]>()
+    for (const sg of signals) if (sg.account_name) { const a = byAcct.get(sg.account_name) ?? []; a.push(sg); byAcct.set(sg.account_name, a) }
+    return accounts.map(a => {
+      const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
+      const sigs = byAcct.get(a.name) ?? []
+      const top = sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open') && sg.severity === 'high') ?? sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
+      return { a, dark, top, score: attentionScore(sigs, dark, soonAccts.has(a.name)) }
+    }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 5)
+  })()
+
+  if (!loaded) return null
+  if (!meetings.length && !due.length && !attention.length) return null
+  const secLbl = (t: string) => <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 7 }}>{t}</div>
+  const cols = [meetings.length, due.length, attention.length].filter(Boolean).length
+  return (
+    <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden' }}>
+      <div style={{ padding: '12px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Today</span>
+        <span style={{ fontSize: 10.5, color: 'var(--t4)' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+      </div>
+      <div style={{ padding: '14px 20px', display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 20 }}>
+        {meetings.length > 0 && (
+          <div>
+            {secLbl(`${meetings.length} meeting${meetings.length === 1 ? '' : 's'}`)}
+            {meetings.map(m => (
+              <div key={m.event_id} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'baseline' }}>
+                <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--t3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{new Date(m.start_ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--t1)' }}>{m.summary || 'Meeting'}{m.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {m.account_name}</span> : null}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {due.length > 0 && (
+          <div>
+            {secLbl('Commitments due')}
+            {due.map(c => {
+              const overdue = c.due_at ? new Date(c.due_at).getTime() < Date.now() - 86400000 : false
+              return (
+                <div key={c.id} onClick={() => c.account_name && router.push(`/accounts?open=${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: 9, fontWeight: 800, color: overdue ? 'var(--danger)' : 'var(--amber)', flexShrink: 0 }}>{overdue ? 'OVERDUE' : 'DUE'}</span>
+                  <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 600 }}>{c.owner === 'them' ? 'They: ' : c.owner === 'us' ? 'We: ' : ''}{c.text}{c.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {c.account_name}</span> : null}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
+        {attention.length > 0 && (
+          <div>
+            {secLbl('Needs attention')}
+            {attention.map(({ a, top, dark }) => (
+              <div key={a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, position: 'relative', top: -1, background: top?.severity === 'high' ? 'var(--danger)' : top ? 'var(--amber)' : 'var(--t4)' }} />
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>{a.name}</span>
+                <span style={{ fontSize: 10.5, color: 'var(--t3)' }}>{top?.title || (dark != null ? `quiet ${dark}d` : '')}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
   // Health trend: snapshot today's score, compare to the latest prior day.
   const [healthDelta, setHealthDelta] = useState<{ pts: number; label: string } | null>(null)
@@ -417,6 +518,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
       <PreMeetingBrief />
 
+      <TodayBlock accounts={accounts} signals={signals} />
+
 
       <div className="kpi-grid">
         {(() => {
@@ -452,7 +555,6 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
               </div>
               <div className="kpi-hero-footer">
                 <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
-                <div className="kpi-hero-stat"><strong>{signals.length}</strong>Signals</div>
                 <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
                 {aiConf != null && <div className="kpi-hero-stat"><strong>{aiConf}%</strong>AI conf</div>}
               </div>
@@ -613,7 +715,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
             const sg = topSig.get(a.name)
             const c = counts.get(a.name) ?? { h: 0, w: 0, p: 0 }
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
-            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: (sg?.severity === 'high' ? 3 : sg ? 2 : 0) + ((dark ?? 0) > 21 ? 1 : 0) }
+            const acctSigs = signals.filter(x => x.account_name === a.name)
+            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: attentionScore(acctSigs, dark, false) }
           })
           .filter(r => r.score > 0)
           .sort((x, y) => y.score - x.score || (Number(y.a.value) || 0) - (Number(x.a.value) || 0))

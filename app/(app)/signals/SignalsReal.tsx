@@ -54,7 +54,7 @@ function timeAgo(iso?: string) {
   return `${Math.floor(d)}d ago`
 }
 
-interface Draft { subject: string; body: string; to: string; provenance?: { grounded_in: string[]; thread_messages: number; guards: { digits: string; greeting: string; deliberation: string }; attempts: number } }
+interface Draft { subject: string; body: string; to: string; cc?: string; provenance?: { grounded_in: string[]; thread_messages: number; guards: { digits: string; greeting: string; deliberation: string }; attempts: number } }
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -178,7 +178,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
       const r = await fetch(`${SUPA_URL}/functions/v1/send-email`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ action: 'send', to: draft.to, subject: draft.subject, body: draft.body, signal_id: draftFor.id }),
+        body: JSON.stringify({ action: 'send', to: draft.to, cc: draft.cc || '', subject: draft.subject, body: draft.body, signal_id: draftFor.id }),
       })
       const data = await r.json().catch(() => ({}))
       if (r.ok && data?.ok) {
@@ -636,6 +636,15 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                       onChange={e => setDraft({ ...draft, to: e.target.value })}
                       placeholder="recipient@company.com"
                       style={{ flex: 1, padding: '8px 0', fontSize: 12, fontWeight: 700, color: 'var(--t1)', border: 'none', outline: 'none', fontFamily: "'DM Mono',monospace", background: 'transparent' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px', borderBottom: '1px solid var(--line)' }}>
+                    <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52, flexShrink: 0 }}>Cc</span>
+                    <input
+                      value={draft.cc || ''}
+                      onChange={e => setDraft({ ...draft, cc: e.target.value })}
+                      placeholder="optional, comma-separated"
+                      style={{ flex: 1, padding: '7px 0', fontSize: 11.5, fontWeight: 600, color: 'var(--t2)', border: 'none', outline: 'none', fontFamily: "'DM Mono',monospace", background: 'transparent' }}
                     />
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 16px', borderBottom: '1px solid var(--line)' }}>

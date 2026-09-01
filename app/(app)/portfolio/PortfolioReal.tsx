@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { attentionScore } from '@/lib/attention'
 
 import { buildA360 } from '@/lib/demo-accounts'
 
@@ -25,7 +26,7 @@ function riskClass(r?: string) {
   return 'rlo'
 }
 
-type SigLite = { id: string; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; created_at: string | null }
+type SigLite = { id: string; corroboration?: unknown; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; created_at: string | null }
 
 // Demo-parity derivations, honest fallbacks: real values win; when absent we
 // derive from live signals rather than showing blanks or inventing numbers.
@@ -69,7 +70,7 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       supa.from('signals')
-        .select('id, account_name, title, severity, status, is_dismissed, created_at')
+        .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
         .eq('user_id', user.id).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(400)
@@ -129,7 +130,11 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
         <table className="dtable">
           <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 120 }}>Action</th></tr></thead>
           <tbody>
-            {accounts.map(a => {
+            {[...accounts].sort((x, y) => {
+              const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
+              const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
+              return attentionScore(sigMap.get(y.name) ?? [], dy, false) - attentionScore(sigMap.get(x.name) ?? [], dx, false)
+            }).map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)
               const risk = riskOf(a, sigs)
