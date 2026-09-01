@@ -17,7 +17,7 @@ export default async function IntelligencePage() {
   const since = new Date(Date.now() - 56 * 86400000).toISOString()
   const [signalsRes, msgsRes, baselinesRes] = await Promise.all([
     supabase.from('signals')
-      .select('created_at, severity, signal_type, source_integration, risk_amount, is_dismissed, is_snoozed')
+      .select('created_at, severity, signal_type, source_integration, risk_amount, is_dismissed, status')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(500),

@@ -19,7 +19,8 @@ interface DBSignal {
   description?: string
   ai_analysis?: ({ summary?: string; recommendation?: string } & Record<string, unknown>) | null
   is_dismissed?: boolean
-  is_snoozed?: boolean
+  snoozed_until?: string | null
+  corroboration?: { concern?: string; with?: Array<{ signal_id: string; source: string; at?: string }>; reason?: string } | null
   status?: string | null
   handled_action?: string | null
   handled_at?: string | null
@@ -71,7 +72,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   // Deep link (?signal=<id>): opened detail, row flash, and not-found state
   const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
   const [deepNotFound, setDeepNotFound] = useState(false)
-  const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign'>('view')
+  const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
   const [handleText, setHandleText] = useState('')
   const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
   const [assignPick, setAssignPick] = useState('')
@@ -113,7 +114,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
       if (sig.status === 'deleted') { setDeepNotFound(true); return }
       // Reply only makes sense for live signals; handled/dismissed/snoozed
       // fall back to detail so the user sees the state.
-      const live = !sig.is_dismissed && !sig.is_snoozed && sig.status !== 'handled'
+      const live = !sig.is_dismissed && (!sig.status || sig.status === 'open')
       if (wantReply && live) openDraft(sig)
       else setDetailFor(sig)
     })
@@ -137,7 +138,24 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
 
   // Optimistic: remove from the list immediately, write in the background,
   // restore on failure so nothing silently disappears.
-  async function setFlag(s: DBSignal, flag: 'is_snoozed' | 'is_dismissed') {
+  // Snooze = status transition (mobile contract): status='snoozed' + snoozed_until;
+  // wake_snoozed_signals cron reopens it. Row leaves every open feed until then.
+  async function snooze(s: DBSignal, until: Date) {
+    if (busyId) return
+    setBusyId(s.id)
+    const prev = signals
+    setSignals(prev.filter(x => x.id !== s.id))
+    setDetailFor(null)
+    const { error } = await createClient().from('signals')
+      .update({ status: 'snoozed', snoozed_until: until.toISOString() }).eq('id', s.id)
+    if (error) setSignals(prev)
+    else router.refresh()
+    setBusyId(null)
+  }
+  const tomorrow9 = () => { const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(9, 0, 0, 0); return d }
+  const nextWeek9 = () => { const d = new Date(); d.setDate(d.getDate() + 7); d.setHours(9, 0, 0, 0); return d }
+
+  async function setFlag(s: DBSignal, flag: 'is_dismissed') {
     if (busyId) return
     setBusyId(s.id)
     const prev = signals
@@ -342,6 +360,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
                   {isHandled && <span style={{ color: 'var(--ok)', fontWeight: 900, fontSize: 13 }}>✓</span>}
                   <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{headline}</span>
+                  {s.corroboration?.with?.length ? (
+                    <span onClick={e => { e.stopPropagation(); const sib = s.corroboration!.with![0]; router.push(`/signals?signal=${sib.signal_id}`) }} title={s.corroboration.reason || ''} style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}>
+                      Corroborated · {Array.from(new Set([s.source_integration, ...s.corroboration.with.map(w => w.source)].filter(Boolean))).join(' + ')}
+                    </span>
+                  ) : null}
                   <span className={`rp ${riskCls}`} style={{ fontSize: 8 }}>{isHigh ? 'HIGH' : isPos ? 'POSITIVE' : 'WATCH'}</span>
                   {label !== 'Signal' && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</span>}
                 </div>
@@ -360,7 +383,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
                     {actionBtn('Draft follow-up', () => openDraft(s), true)}
                     {actionBtn('Mark handled', () => { setDetailFor(s); setModalMode('handle') })}
-                    {actionBtn('Snooze', () => setFlag(s, 'is_snoozed'))}
+                    {actionBtn('Snooze', () => { setDetailFor(s); setModalMode('snooze') })}
                     {actionBtn('Dismiss', () => setFlag(s, 'is_dismissed'))}
                   </div>
                 )}
@@ -405,7 +428,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
         const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
         const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
-        const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.is_snoozed ? 'snoozed' : null
+        const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.status === 'snoozed' ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
             <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
@@ -456,6 +479,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
                   {aiRows.map(([k, v]) => row(FACT_LABELS[k], fmtFact(k, v)))}
                 </div>
+                {inactive === 'snoozed' && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', background: 'var(--inset, #F4EFE7)', border: '1px solid var(--border)', borderRadius: 10, padding: '9px 14px', marginBottom: 12 }}>
+                    Snoozed{d.snoozed_until ? ` until ${new Date(d.snoozed_until).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : ''} · wakes automatically
+                  </div>
+                )}
                 {inactive === 'handled' && (
                   <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ok)', background: 'rgba(42,157,92,.08)', border: '1px solid rgba(42,157,92,.2)', borderRadius: 10, padding: '9px 14px', marginBottom: 12 }}>
                     ✓ Handled{d.handled_action ? `: ${d.handled_action}` : ''}{d.handled_at ? ` · ${new Date(d.handled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
@@ -473,6 +501,18 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     <input value={handleText} onChange={e => setHandleText(e.target.value)} placeholder="Or type what you did" style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, background: 'var(--surface)', color: 'var(--t1)', outline: 'none', marginBottom: 8 }} />
                     <div style={{ display: 'flex', gap: 8 }}>
                       {actionBtn('Confirm handled', () => markHandled(d, handleText.trim() || 'Handled'), true)}
+                      {actionBtn('Cancel', () => setModalMode('view'))}
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'snooze' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Snooze until</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {actionBtn('2 hours', () => snooze(d, new Date(Date.now() + 2 * 3600_000)))}
+                      {actionBtn('Tomorrow 9am', () => snooze(d, tomorrow9()))}
+                      {actionBtn('Next week', () => snooze(d, nextWeek9()))}
                       {actionBtn('Cancel', () => setModalMode('view'))}
                     </div>
                   </div>
@@ -523,7 +563,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                           .then(({ data }) => setAcctOptions((data as Array<{ id: string; name: string }>) ?? []))
                       }
                     })}
-                    {!inactive && actionBtn('Snooze', () => { setDetailFor(null); setFlag(d, 'is_snoozed') })}
+                    {!inactive && actionBtn('Snooze', () => setModalMode('snooze'))}
                     {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
                     {!inactive && actionBtn('Remove', () => setModalMode('remove'))}
                   </div>

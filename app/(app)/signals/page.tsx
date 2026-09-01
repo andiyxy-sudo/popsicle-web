@@ -20,9 +20,8 @@ export default async function SignalsPage() {
     .select('*')
     .eq('user_id', userId)
     .eq('is_dismissed', false)
-    .eq('is_snoozed', false)
-    .or('status.is.null,status.eq.open,status.eq.handled')
-    .order('created_at', { ascending: false })
+        .or('status.is.null,status.eq.open,status.eq.handled')
+    .order('surfaced_at', { ascending: false })
 
   return <SignalsReal signals={signals ?? []} />
 }

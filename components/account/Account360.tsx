@@ -37,7 +37,7 @@ function isMeetingArtifact(sender?: string | null, subject?: string | null, body
 const CHUNK_GAP_MS = 30 * 60 * 1000
 
 interface Msg { id: string; integration: string | null; sender: string | null; subject: string | null; content: string | null; received_at: string | null; direction: string | null; channel_id: string | null; external_id: string | null; thread_id: string | null }
-interface Sig { id: string; signal_type: string | null; severity: string | null; title: string | null; description: string | null; risk_amount: number | null; source_integration: string | null; source_message_id: string | null; created_at: string | null; status: string | null; ai_analysis: Record<string, unknown> | null; is_dismissed?: boolean }
+interface Sig { id: string; corroboration?: { with?: Array<{ signal_id: string; source: string }>; reason?: string } | null; signal_type: string | null; severity: string | null; title: string | null; description: string | null; risk_amount: number | null; source_integration: string | null; source_message_id: string | null; created_at: string | null; status: string | null; ai_analysis: Record<string, unknown> | null; is_dismissed?: boolean }
 interface Tr { meeting_id: string | null; meeting_uuid: string; topic: string | null; start_time: string | null; duration: number | null; sentiment: string | null; analysis_confidence: number | null; analyzed_at: string | null }
 interface Payload { account: Record<string, unknown>; messages: Msg[]; signals: Sig[]; dismissed_signals: Sig[]; transcripts: Tr[]; baseline: Record<string, unknown> | null; slack_channels: Array<{ channel_id: string; is_external: boolean }>; slack_anchor_sigs: string[] }
 
@@ -46,7 +46,7 @@ const TYPE_LABELS: Record<string, string> = {
   champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', reengaged: 'Re-engaged', call_objection: 'Objection',
   call_sentiment_drop: 'Sentiment Drop', call_buying_signal: 'Buying Signal', call_commitment: 'Commitment',
   call_summary: 'Call Summary', meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
-  deal_stage_backward: 'Stage Backward',
+  deal_stage_backward: 'Stage Backward', commitment_overdue: 'Commitment Overdue',
 }
 const SRC_LABEL: Record<string, string> = { gmail: 'Email', slack: 'Slack message', zoom: 'Call · Zoom', meet: 'Call · Meet', fireflies: 'Call · Fireflies' }
 
@@ -261,6 +261,8 @@ export function Account360() {
                         <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: sevColor, padding: '2px 8px', borderRadius: 20 }}>{(sg.severity || 'watch').toUpperCase()}</span>
                         {handled && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ok)', border: '1px solid rgba(42,157,92,.3)', padding: '2px 8px', borderRadius: 20 }}>HANDLED</span>}
                         {sg.is_dismissed && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20 }}>DISMISSED</span>}
+                        {sg.status === 'snoozed' && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20 }}>SNOOZED</span>}
+                        {sg.corroboration?.with?.length ? <span onClick={() => { close(); router.push(`/signals?signal=${sg.corroboration!.with![0].signal_id}`) }} title={sg.corroboration.reason || ''} style={{ fontSize: 9, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}>Corroborated · {Array.from(new Set([sg.source_integration, ...sg.corroboration.with.map(w => w.source)].filter(Boolean))).join(' + ')}</span> : null}
                         {fmtMoney(sg.risk_amount) && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--t2)', fontFamily: "'DM Mono',monospace" }}>{fmtMoney(sg.risk_amount)}</span>}
                         {canLink && <button onClick={() => jumpToSource(sg)} style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'none', border: 'none', cursor: 'pointer' }}>View source →</button>}
                       </div>

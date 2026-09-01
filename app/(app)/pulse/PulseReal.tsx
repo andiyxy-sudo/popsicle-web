@@ -49,19 +49,23 @@ function PreMeetingBrief() {
       const [sigRes, blRes, acctRes] = await Promise.all([
         supa.from('signals').select('id, title, severity')
           .eq('user_id', user.id).eq('account_name', account)
-          .eq('is_dismissed', false).eq('is_snoozed', false)
+          .eq('is_dismissed', false)
           .or('status.is.null,status.eq.open')
           .order('created_at', { ascending: false }).limit(3),
         supa.from('account_baselines').select('last_message_at')
           .eq('user_id', user.id).eq('account_name', account).maybeSingle(),
         supa.from('accounts').select('id').eq('user_id', user.id).eq('name', account).maybeSingle(),
       ])
+      // Commitments state lives in the commitments TABLE (mobile contract #4).
       let commitments: Array<{ who?: string; what?: string }> = []
-      if (acctRes.data?.id) {
-        const { data: tr } = await supa.from('zoom_transcripts')
-          .select('commitments').eq('user_id', user.id).eq('account_id', acctRes.data.id)
-          .not('analyzed_at', 'is', null).order('start_time', { ascending: false }).limit(1).maybeSingle()
-        commitments = (tr?.commitments as Array<{ who?: string; what?: string }>) ?? []
+      {
+        const { data: cm } = await supa.from('commitments')
+          .select('text, owner, due_at').eq('user_id', user.id).eq('account_name', account)
+          .eq('status', 'open').order('due_at', { ascending: true, nullsFirst: false }).limit(5)
+        commitments = (cm ?? []).map((c: { text: string; owner: string | null; due_at: string | null }) => ({
+          who: c.owner === 'us' ? 'We' : c.owner === 'them' ? 'They' : undefined,
+          what: c.text + (c.due_at ? ` (due ${new Date(c.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})` : ''),
+        }))
       }
       const lastTouch = blRes.data?.last_message_at ?? null
       if (dead) return
@@ -107,7 +111,7 @@ function PreMeetingBrief() {
           <div>
             <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Outstanding commitments</div>
             {brief.commitments.map((c, i) => (
-              <div key={i} style={{ fontSize: 11.5, color: 'var(--t2)', marginBottom: 5, lineHeight: 1.45 }}><b>{c.who}:</b> {c.what}</div>
+              <div key={i} style={{ fontSize: 11.5, color: 'var(--t2)', marginBottom: 5, lineHeight: 1.45 }}>{c.who ? <b>{c.who}: </b> : null}{c.what}</div>
             ))}
           </div>
         )}
@@ -319,7 +323,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
 
 // Shared health formula: 100 minus open risk, plus positive momentum.
 function computeHealth(signals: Signal[], accounts: Account[]): number {
-  const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+  const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
   const nHigh = open.filter(sg => sg.severity === 'high').length
   const nWatch = open.filter(sg => sg.severity === 'watch').length
   const nPos = signals.filter(sg => sg.severity === 'positive').length
@@ -486,7 +490,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
       {/* AI Brief + Revenue Loop + Activity (showcase layout, real data) */}
       {(() => {
-        const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+        const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
         const handled = signals.filter(sg => sg.status === 'handled')
         const highs = open.filter(sg => sg.severity === 'high')
         const positives = signals.filter(sg => sg.severity === 'positive')
@@ -594,7 +598,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
       {/* Accounts needing attention */}
       {(() => {
-        const open = signals.filter(sg => !sg.is_dismissed && !sg.is_snoozed && (!sg.status || sg.status === 'open'))
+        const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
         const topSig = new Map<string, { id: string; title: string | null; severity: string | null }>()
         const counts = new Map<string, { h: number; w: number; p: number }>()
         for (const sg of open) {

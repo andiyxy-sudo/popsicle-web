@@ -25,7 +25,7 @@ function riskClass(r?: string) {
   return 'rlo'
 }
 
-type SigLite = { id: string; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; is_snoozed: boolean | null; created_at: string | null }
+type SigLite = { id: string; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; created_at: string | null }
 
 // Demo-parity derivations, honest fallbacks: real values win; when absent we
 // derive from live signals rather than showing blanks or inventing numbers.
@@ -69,8 +69,8 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
       supa.from('signals')
-        .select('id, account_name, title, severity, status, is_dismissed, is_snoozed, created_at')
-        .eq('user_id', user.id).eq('is_dismissed', false).eq('is_snoozed', false)
+        .select('id, account_name, title, severity, status, is_dismissed, created_at')
+        .eq('user_id', user.id).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(400)
         .then(({ data }) => {

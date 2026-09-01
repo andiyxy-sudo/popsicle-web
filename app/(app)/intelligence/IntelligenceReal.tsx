@@ -4,7 +4,7 @@
 // language (gradient hero, SEC section headers, flush cards). Every number is
 // computed from the user's own rows; sections render only when they have data.
 
-interface Sig { created_at?: string; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; is_snoozed?: boolean }
+interface Sig { created_at?: string; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
 interface Baseline { account_name?: string; emails_per_week?: number; total_messages?: number; last_message_at?: string; our_median_reply_hours?: number; their_median_reply_hours?: number; total_reply_pairs?: number; confidence?: string }
 
@@ -68,9 +68,9 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
   const msg30 = messages.filter(m => m.received_at && new Date(m.received_at).getTime() >= d30)
   const msgPrev = messages.filter(m => { const t = m.received_at ? new Date(m.received_at).getTime() : 0; return t >= d60 && t < d30 })
   const live = signals.filter(s => !s.is_dismissed)
-  const openHigh = live.filter(s => !s.is_snoozed && s.severity === 'high')
+  const openHigh = live.filter(s => (!s.status || s.status === 'open') && s.severity === 'high')
   const openRisk = live
-    .filter(s => !s.is_snoozed && (s.severity === 'high' || s.severity === 'watch'))
+    .filter(s => (!s.status || s.status === 'open') && (s.severity === 'high' || s.severity === 'watch'))
     .reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)
   const activeAccounts = baselines.filter(b => b.last_message_at && (now - new Date(b.last_message_at).getTime()) <= 14 * DAY).length
 
@@ -143,7 +143,7 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
   }
 
   const heroBig = openRisk > 0 ? fmtMoney(openRisk) : String(msg30.length)
-  const heroBigLbl = openRisk > 0 ? `at risk across ${live.filter(s => !s.is_snoozed && s.severity !== 'positive').length} open signals` : 'messages in the last 30 days'
+  const heroBigLbl = openRisk > 0 ? `at risk across ${live.filter(s => (!s.status || s.status === 'open') && s.severity !== 'positive').length} open signals` : 'messages in the last 30 days'
   const heroDelta = openRisk > 0 ? delta(sig30.length, sigPrev.length) : delta(msg30.length, msgPrev.length)
 
   return (

@@ -39,7 +39,8 @@ export interface Signal {
     commitments?: string[]
     risk_flags?: string[]
   } | null
-  is_snoozed: boolean
+  snoozed_until?: string | null
+  corroboration?: { concern?: string; with?: Array<{ signal_id: string; source: string; at?: string }>; reason?: string; original_severity?: string; linked_at?: string } | null
   is_dismissed: boolean
   created_at: string
   user_id: string
