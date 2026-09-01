@@ -54,7 +54,7 @@ function timeAgo(iso?: string) {
   return `${Math.floor(d)}d ago`
 }
 
-interface Draft { subject: string; body: string; to: string }
+interface Draft { subject: string; body: string; to: string; provenance?: { grounded_in: string[]; thread_messages: number; guards: { digits: string; greeting: string; deliberation: string }; attempts: number } }
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -65,6 +65,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   // Draft modal state
   const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [draftErr, setDraftErr] = useState<string>('')
+  const [draftSlow, setDraftSlow] = useState(false)
   const [draftState, setDraftState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [copied, setCopied] = useState(false)
   const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'needs_scope' | 'error'>('idle')
@@ -263,7 +265,9 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   }
 
   async function openDraft(s: DBSignal) {
-    setSendState('idle'); setSendErr('')
+    setSendState('idle'); setSendErr(''); setDraftErr(''); setDraftSlow(false)
+    const slowTimer = setTimeout(() => setDraftSlow(true), 9000)
+    setTimeout(() => clearTimeout(slowTimer), 31000)
     setDraftFor(s); setDraft(null); setDraftState('loading'); setCopied(false)
     try {
       const r = await fetch('/api/draft', {
@@ -272,10 +276,15 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         body: JSON.stringify({ signal_id: s.id }),
       })
       const j = await r.json().catch(() => ({}))
-      if (!r.ok || !j.body) { setDraftState('error'); return }
-      setDraft({ subject: j.subject || '', body: j.body, to: j.to || '' })
+      if (!r.ok || !j.body) {
+        setDraftErr(j?.error === 'draft_ungrounded'
+          ? 'The AI could not write a draft that stays strictly within what the thread and signal actually say, so nothing was shown. Try again, or write it yourself from the signal.'
+          : j?.error === 'draft_timeout' ? 'Drafting took too long. Try again in a moment.' : 'Give it another try in a moment.')
+        setDraftState('error'); return
+      }
+      setDraft({ subject: j.subject || '', body: j.body, to: j.to || '', provenance: j.provenance })
       setDraftState('ready')
-    } catch { setDraftState('error') }
+    } catch { setDraftErr('Give it another try in a moment.'); setDraftState('error') }
   }
 
   function copyDraft() {
@@ -608,13 +617,13 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 <div style={{ textAlign: 'center', padding: '36px 0' }}>
                   <div style={{ width: 36, height: 36, margin: '0 auto 14px', border: '3px solid rgba(255,107,53,.15)', borderTopColor: 'var(--o)', borderRadius: '50%', animation: 'spin .9s linear infinite' }} />
                   <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-                  <div style={{ fontSize: 12.5, color: 'var(--t3)' }}>Writing a draft from the thread and the signal...</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--t3)' }}>{draftSlow ? 'Still writing, checking every fact against the thread...' : 'Writing a draft from the thread and the signal...'}</div>
                 </div>
               )}
               {draftState === 'error' && (
                 <div style={{ textAlign: 'center', padding: '28px 0' }}>
                   <div style={{ fontSize: 13, color: 'var(--t2)', fontWeight: 700, marginBottom: 6 }}>Could not generate a draft</div>
-                  <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16 }}>Give it another try in a moment.</div>
+                  <div style={{ fontSize: 12, color: 'var(--t3)', marginBottom: 16, maxWidth: 380, margin: '0 auto 16px', lineHeight: 1.55 }}>{draftErr || 'Give it another try in a moment.'}</div>
                   <button onClick={() => openDraft(draftFor)} style={{ padding: '9px 18px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Retry</button>
                 </div>
               )}
@@ -637,6 +646,14 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                       style={{ flex: 1, padding: '8px 0', fontSize: 13, fontWeight: 800, color: 'var(--t1)', border: 'none', outline: 'none', fontFamily: "'Outfit',sans-serif", background: 'transparent' }}
                     />
                   </div>
+                  {draft.provenance && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderBottom: '1px solid var(--line)', background: 'rgba(42,157,92,.04)' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--ok)" strokeWidth="2.5" strokeLinecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      <span style={{ fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>
+                        Grounded in {draft.provenance.grounded_in.join(' + ')}{draft.provenance.thread_messages ? ` (${draft.provenance.thread_messages} messages)` : ''} · facts checked{draft.provenance.guards.greeting === 'rewritten' ? ' · greeting adjusted' : ''}
+                      </span>
+                    </div>
+                  )}
                   <textarea
                     value={draft.body}
                     onChange={e => setDraft({ ...draft, body: e.target.value })}

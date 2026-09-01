@@ -64,31 +64,104 @@ export async function POST(req: NextRequest) {
     '- Sign off with just "Best," followed by [Your name] on the next line.',
     '- Never use em dashes or en dashes anywhere. Use commas, colons, or periods.',
     '- If the thread shows they already answered something, do not re-ask it.',
+    '- Take no stance on pricing, discounts, contract terms, or internal decisions and commit to nothing not already in the thread; propose a conversation instead.',
+    '- Do not invent numbers, dates, amounts, or names. If a specific figure is not in the material provided, leave it out.',
   ].join('\n')
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'not_configured' }, { status: 501 })
 
-  const aResp = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({
-      model: 'claude-opus-4-8',
-      max_tokens: 700,
-      system,
-      messages: [{ role: 'user', content: ctx.join('\n') }],
-    }),
-  })
-  if (!aResp.ok) return NextResponse.json({ error: 'draft_failed' }, { status: 502 })
-  const aJson = await aResp.json()
-  const raw = (aJson.content?.[0]?.text ?? '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '')
+  // ---------- DETERMINISTIC GUARDS (house rule: guards over prompts) ----------
+  // Grounding corpus = everything the model was shown + the system prompt.
+  const corpus = (ctx.join('\n') + '\n' + system)
+  const groundedDigits = new Set((corpus.match(/\d+/g) ?? []))
+  const contactFirst = contact ? contact.split(' ')[0].toLowerCase() : null
+  const DELIBERATION = [
+    /\b(our|the|this) (signal|signals|analysis|monitoring|system|model|detector|detection|alert)\b/i,
+    /\bwe (noticed|detected|flagged|scored|classified)\b/i,
+    /\b(risk|health) (score|flag|level)\b/i,
+    /\b(churn|deal) risk\b/i,
+    /\binternal(ly)? (note|notes|deliberation|discussion)\b/i,
+    /\bdo not repeat\b/i,
+    /\btalking points?\b/i,
+    /\bsentiment\b/i,
+    /\bobjection\b/i,
+  ]
+
+  type Guard = { digits: 'pass' | 'fail'; greeting: 'pass' | 'rewritten'; deliberation: 'pass' | 'fail' }
+  function applyGuards(bodyIn: string): { body: string; guard: Guard; ok: boolean } {
+    let body = bodyIn
+    const guard: Guard = { digits: 'pass', greeting: 'pass', deliberation: 'pass' }
+    // Guard A: ungrounded digits -> discard
+    for (const d of (body.match(/\d+/g) ?? [])) {
+      if (!groundedDigits.has(d)) { guard.digits = 'fail'; break }
+    }
+    // Guard B: ungrounded greeting name -> rewrite (never discard for this)
+    const gm = body.match(/^\s*(hi|hello|hey|dear)\s+([A-Z][a-zA-Z'.-]*)\s*[,!.]/i)
+    if (gm) {
+      const nm = gm[2].toLowerCase()
+      if (!contactFirst || nm !== contactFirst) {
+        body = body.replace(gm[0], `${gm[1].charAt(0).toUpperCase() + gm[1].slice(1).toLowerCase()},`)
+        guard.greeting = 'rewritten'
+      }
+    }
+    // Guard C: internal-deliberation phrasing -> discard
+    if (DELIBERATION.some(r => r.test(body))) guard.deliberation = 'fail'
+    return { body, guard, ok: guard.digits === 'pass' && guard.deliberation === 'pass' }
+  }
+
+  const HARD_MS = 30_000
+  const controller = new AbortController()
+  const hardTimer = setTimeout(() => controller.abort(), HARD_MS)
   let parsed: { subject?: string; body?: string } = {}
-  try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {} } catch { /* fall through */ }
-  if (!parsed.body) return NextResponse.json({ error: 'draft_unparseable' }, { status: 502 })
+  let guard: Guard = { digits: 'pass', greeting: 'pass', deliberation: 'pass' }
+  let attempts = 0
+  let lastReason = ''
+  try {
+    for (attempts = 1; attempts <= 2; attempts++) {
+      const sys = attempts === 1 ? system : system + '\nSTRICT: the previous draft was rejected for ' + lastReason + '. Use NO numbers at all, and never reference how you know things.'
+      const aResp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 700, system: sys, messages: [{ role: 'user', content: ctx.join('\n') }] }),
+        signal: controller.signal,
+      })
+      if (!aResp.ok) { clearTimeout(hardTimer); return NextResponse.json({ error: 'draft_failed' }, { status: 502 }) }
+      const aJson = await aResp.json()
+      const raw = (aJson.content?.[0]?.text ?? '').trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '')
+      try { const m = raw.match(/\{[\s\S]*\}/); parsed = m ? JSON.parse(m[0]) : {} } catch { parsed = {} }
+      if (!parsed.body) { lastReason = 'unparseable output'; continue }
+      const g = applyGuards(parsed.body)
+      guard = g.guard
+      if (g.ok) { parsed.body = g.body; break }
+      lastReason = [g.guard.digits === 'fail' ? 'containing numbers not present in the source material' : null, g.guard.deliberation === 'fail' ? 'referencing internal analysis or monitoring' : null].filter(Boolean).join(' and ')
+      parsed = {}
+    }
+  } catch (e) {
+    clearTimeout(hardTimer)
+    const aborted = (e as { name?: string })?.name === 'AbortError'
+    return NextResponse.json({ error: aborted ? 'draft_timeout' : 'draft_failed' }, { status: aborted ? 504 : 502 })
+  }
+  clearTimeout(hardTimer)
+  if (!parsed.body) {
+    // Guards over prompts: never ship an ungrounded draft. Fail honestly.
+    return NextResponse.json({ error: 'draft_ungrounded', detail: lastReason || 'could not produce a grounded draft' }, { status: 422 })
+  }
+
+  // Subject guard: same digit rule applies
+  if (parsed.subject && (parsed.subject.match(/\d+/g) ?? []).some(d => !groundedDigits.has(d))) {
+    parsed.subject = `Re: ${sig.account_name || 'our conversation'}`
+  }
 
   return NextResponse.json({
     subject: parsed.subject || `Re: ${sig.account_name || 'our conversation'}`,
     body: parsed.body,
     to,
+    provenance: {
+      grounded_in: [ 'signal', thread ? 'thread' : (sig.raw_content ? 'source message' : null) ].filter(Boolean),
+      thread_messages: thread ? thread.split('\n').length : 0,
+      guards: guard,
+      attempts,
+    },
   })
 }
