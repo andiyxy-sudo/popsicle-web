@@ -56,12 +56,164 @@ function hhmm(iso: string) { return new Date(iso).toLocaleTimeString('en-US', { 
 const slackChannelOf = (m: Msg) => m.channel_id || (m.external_id ? m.external_id.replace(/:[^:]*$/, '') : null)
 const slackTsOf = (m: Msg) => { const raw = m.external_id?.split(':').pop(); const n = raw ? parseFloat(raw) : NaN; return isNaN(n) ? (m.received_at ? new Date(m.received_at).getTime() : 0) : n * 1000 }
 
+
+// ---------- Commitments (state lives in the commitments TABLE; ai_analysis is
+// the immutable extraction record). "Looks done?" nudges come from the
+// commitment_suggestions view; the user always decides - never auto-closed.
+// Dismissals persist in commitment_evidence. ----------
+interface Cm { id: string; text: string; owner: string | null; due_at: string | null; promised_at: string | null; status: string; done_at: string | null; source_signal_id: string | null }
+interface Sugg { evidence_id: string; commitment_id: string; strength: string; span: string | null; evidence_at: string | null; evidence_source: string | null; evidence_subject: string | null }
+
+function hashText(t: string) { let h = 5381; for (const ch of t.toLowerCase().replace(/\s+/g, ' ').trim()) h = ((h << 5) + h + ch.charCodeAt(0)) | 0; return (h >>> 0).toString(16) }
+
+function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSignal: (id: string) => void }) {
+  const [items, setItems] = useState<Cm[] | null>(null)
+  const [suggs, setSuggs] = useState<Sugg[]>([])
+  const [showClosed, setShowClosed] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [newText, setNewText] = useState('')
+  const [newOwner, setNewOwner] = useState<'us' | 'them'>('us')
+  const [newDue, setNewDue] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
+
+  async function load() {
+    const supa = createClient()
+    const { data: { user } } = await supa.auth.getUser()
+    if (!user) return
+    const [{ data: cms }, { data: sg }] = await Promise.all([
+      supa.from('commitments').select('id, text, owner, due_at, promised_at, status, done_at, source_signal_id')
+        .eq('user_id', user.id).eq('account_name', account).order('due_at', { ascending: true, nullsFirst: false }).limit(60),
+      supa.from('commitment_suggestions').select('evidence_id, commitment_id, strength, span, evidence_at, evidence_source, evidence_subject')
+        .eq('user_id', user.id).eq('account_name', account).limit(30),
+    ])
+    setItems((cms as Cm[]) ?? [])
+    setSuggs((sg as Sugg[]) ?? [])
+  }
+  useEffect(() => { setItems(null); load() /* eslint-disable-line react-hooks/exhaustive-deps */ }, [account])
+
+  async function setStatus(cm: Cm, status: 'done' | 'dropped', evidenceId?: string) {
+    setBusy(cm.id)
+    const supa = createClient()
+    const patch: Record<string, unknown> = { status }
+    if (status === 'done') patch.done_at = new Date().toISOString()
+    await supa.from('commitments').update(patch).eq('id', cm.id)
+    if (evidenceId) await supa.from('commitment_evidence').update({ verdict: 'confirmed', adjudicated_at: new Date().toISOString() }).eq('id', evidenceId).then(() => {}, () => {})
+    setBusy(null); load()
+  }
+  async function notDone(sg: Sugg) {
+    setBusy(sg.commitment_id)
+    await createClient().from('commitment_evidence').update({ verdict: 'dismissed', dismissed_at: new Date().toISOString(), adjudicated_at: new Date().toISOString() }).eq('id', sg.evidence_id)
+    setBusy(null); load()
+  }
+  async function addManual() {
+    const text = newText.trim(); if (!text) return
+    setBusy('new')
+    const supa = createClient()
+    const { data: { user } } = await supa.auth.getUser()
+    if (user) {
+      await supa.from('commitments').insert({
+        user_id: user.id, account_name: account, text, text_hash: hashText(text), owner: newOwner,
+        due_at: newDue ? new Date(newDue + 'T09:00:00').toISOString() : null, promised_at: new Date().toISOString(),
+        source: 'manual', status: 'open', backfilled: false,
+      })
+    }
+    setNewText(''); setNewDue(''); setAdding(false); setBusy(null); load()
+  }
+
+  if (!items) return <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 12.5, color: 'var(--t3)' }}>Loading commitments...</div>
+  const open = items.filter(c => c.status === 'open')
+  const closed = items.filter(c => c.status !== 'open')
+  const suggByCm = new Map<string, Sugg>()
+  for (const sg of suggs) if (!suggByCm.has(sg.commitment_id)) suggByCm.set(sg.commitment_id, sg)
+  const dueState = (c: Cm) => {
+    if (!c.due_at) return { txt: 'No date', color: 'var(--t4)' }
+    const d = Math.ceil((new Date(c.due_at).getTime() - Date.now()) / 86400000)
+    if (d < 0) return { txt: `${-d}d overdue`, color: 'var(--danger)' }
+    if (d === 0) return { txt: 'Due today', color: 'var(--amber)' }
+    return { txt: `Due in ${d}d`, color: 'var(--t3)' }
+  }
+  const btn = (label: string, onClick: () => void, primary?: boolean) => (
+    <button onClick={onClick} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 8, border: primary ? 'none' : '1px solid var(--border)', background: primary ? 'var(--o)' : 'var(--surface, #fff)', color: primary ? '#fff' : 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>{label}</button>
+  )
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px' }}>{open.length} open commitment{open.length === 1 ? '' : 's'}</div>
+        {btn(adding ? 'Cancel' : '+ Add manual', () => setAdding(a => !a))}
+      </div>
+      {adding && (
+        <div style={{ background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12 }}>
+          <input value={newText} onChange={e => setNewText(e.target.value)} placeholder="What was promised?" style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, marginBottom: 8, background: 'var(--bg, #FBF8F3)', color: 'var(--t1)', outline: 'none' }} />
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <select value={newOwner} onChange={e => setNewOwner(e.target.value as 'us' | 'them')} style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 11.5, background: 'var(--bg, #FBF8F3)', color: 'var(--t1)' }}>
+              <option value="us">We promised</option><option value="them">They promised</option>
+            </select>
+            <input type="date" value={newDue} onChange={e => setNewDue(e.target.value)} style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 11.5, background: 'var(--bg, #FBF8F3)', color: 'var(--t1)' }} />
+            {btn(busy === 'new' ? 'Saving...' : 'Save', addManual, true)}
+          </div>
+        </div>
+      )}
+      {open.length === 0 && !adding && <div style={{ textAlign: 'center', padding: '28px 0', fontSize: 12.5, color: 'var(--t4)' }}>No open commitments for this account.</div>}
+      {open.map(c => {
+        const ds = dueState(c)
+        const sg = suggByCm.get(c.id)
+        return (
+          <div key={c.id} style={{ background: 'var(--surface, #fff)', border: '1px solid var(--border-soft, var(--border))', borderRadius: 12, padding: '12px 15px', marginBottom: 8, opacity: busy === c.id ? .6 : 1 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+              <span style={{ fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 20, flexShrink: 0, marginTop: 1, background: c.owner === 'them' ? 'rgba(255,107,53,.08)' : 'var(--inset, #F4EFE7)', color: c.owner === 'them' ? 'var(--o)' : 'var(--t2)', textTransform: 'uppercase' }}>{c.owner === 'them' ? 'They' : c.owner === 'us' ? 'We' : '?'}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.45 }}>{c.text}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 800, color: ds.color, fontFamily: "'DM Mono',monospace" }}>{ds.txt}</span>
+                  {c.promised_at && <span style={{ fontSize: 10, color: 'var(--t4)' }}>promised {new Date(c.promised_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                  {c.source_signal_id && <button onClick={() => onOpenSignal(c.source_signal_id!)} style={{ fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View source →</button>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                {btn('Done', () => setStatus(c, 'done'))}
+                {btn('Drop', () => setStatus(c, 'dropped'))}
+              </div>
+            </div>
+            {sg && (
+              <div style={{ marginTop: 10, padding: '10px 13px', background: 'rgba(42,157,92,.05)', border: '1px solid rgba(42,157,92,.18)', borderRadius: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--ok)' }}>Looks done?</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '1px 7px', borderRadius: 20 }}>{sg.strength === 'likely_delivered' ? 'Likely delivered' : 'Possible match'}</span>
+                  <span style={{ fontSize: 9.5, color: 'var(--t4)', marginLeft: 'auto' }}>{sg.evidence_source || ''}{sg.evidence_at ? ` · ${new Date(sg.evidence_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</span>
+                </div>
+                {sg.span && <div style={{ fontSize: 11.5, color: 'var(--t2)', fontStyle: 'italic', lineHeight: 1.5, marginBottom: 8 }}>&ldquo;{sg.span}&rdquo;</div>}
+                {sg.evidence_subject && <div style={{ fontSize: 10, color: 'var(--t4)', marginBottom: 8 }}>{sg.evidence_subject}</div>}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {btn('Mark done', () => setStatus(c, 'done', sg.evidence_id), true)}
+                  {btn('Not done', () => notDone(sg))}
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
+      {closed.length > 0 && (
+        <div style={{ marginTop: 14 }}>
+          <button onClick={() => setShowClosed(v => !v)} style={{ background: 'none', border: 'none', padding: 0, fontSize: 10.5, fontWeight: 700, color: 'var(--t3)', cursor: 'pointer' }}>{showClosed ? 'Hide' : 'Show'} {closed.length} closed</button>
+          {showClosed && closed.slice(0, 10).map(c => (
+            <div key={c.id} style={{ fontSize: 11.5, color: 'var(--t3)', padding: '7px 0', borderBottom: '1px solid var(--line)', display: 'flex', gap: 8 }}>
+              <span style={{ color: c.status === 'done' ? 'var(--ok)' : 'var(--t4)', fontWeight: 800 }}>{c.status === 'done' ? '✓' : '✕'}</span>
+              <span style={{ textDecoration: 'line-through', opacity: .8 }}>{c.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Account360() {
   const router = useRouter()
   const [openFor, setOpenFor] = useState<{ id?: string; name: string } | null>(null)
   const [data, setData] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState<'comms' | 'timeline'>('comms')
+  const [tab, setTab] = useState<'comms' | 'timeline' | 'commitments'>('comms')
   const [fType, setFType] = useState<string | null>(null)
   const [fSev, setFSev] = useState<string | null>(null)
   const [fStatus, setFStatus] = useState<string | null>(null)
@@ -187,8 +339,8 @@ export function Account360() {
             <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 19, lineHeight: 1, paddingTop: 2 }}>✕</button>
           </div>
           <div style={{ display: 'flex', gap: 2, marginTop: 14 }}>
-            {(['comms', 'timeline'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 16px', fontSize: 12, fontWeight: 800, color: tab === t ? 'var(--o)' : 'var(--t3)', background: 'none', border: 'none', borderBottom: tab === t ? '2.5px solid var(--o)' : '2.5px solid transparent', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", textTransform: 'capitalize' }}>{t === 'comms' ? 'Comms' : 'Timeline'}</button>
+            {(['comms', 'timeline', 'commitments'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 16px', fontSize: 12, fontWeight: 800, color: tab === t ? 'var(--o)' : 'var(--t3)', background: 'none', border: 'none', borderBottom: tab === t ? '2.5px solid var(--o)' : '2.5px solid transparent', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", textTransform: 'capitalize' }}>{t === 'comms' ? 'Comms' : t === 'timeline' ? 'Timeline' : 'Commitments'}</button>
             ))}
           </div>
         </div>
@@ -233,6 +385,11 @@ export function Account360() {
                 )
               })}
             </div>
+          )}
+
+          {/* ============ COMMITMENTS: promises with state ============ */}
+          {!loading && data && tab === 'commitments' && (
+            <CommitmentsPanel account={acc.name || openFor.name} onOpenSignal={(id) => { close(); router.push(`/signals?signal=${id}`) }} />
           )}
 
           {/* ============ TIMELINE: judgment ============ */}
