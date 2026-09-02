@@ -432,6 +432,120 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   )
 }
 
+// Week-ahead digest (mobile item 20): Mondays only, dismissable per week
+// (digest_dismissals, week_start = local Monday). Sections: meetings this
+// week, commitments due this week, and gone-quiet accounts - gated on real
+// correspondence history (total_reply_pairs >= 1) and silence beyond ~2x the
+// account's own baseline interval (floor 14d). Quiet week = no card at all.
+// Testing hook: ?digest=1 shows it on any day.
+function WeekDigest() {
+  const router = useRouter()
+  const [state, setState] = useState<null | {
+    weekStart: string
+    meetings: Array<{ event_id: string; start_ts: string; summary: string | null; account_name: string | null }>
+    due: Array<{ id: string; text: string; owner: string | null; due_at: string | null; account_name: string | null }>
+    quiet: Array<{ name: string; days: number }>
+  }>(null)
+
+  useEffect(() => {
+    let dead = false
+    const now = new Date()
+    const preview = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('digest') === '1'
+    if (now.getDay() !== 1 && !preview) return
+    const monday = new Date(now); monday.setDate(now.getDate() - ((now.getDay() + 6) % 7)); monday.setHours(0, 0, 0, 0)
+    const weekStart = `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`
+    const weekEnd = new Date(monday); weekEnd.setDate(monday.getDate() + 7)
+    async function load() {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user || dead) return
+      const { data: dis } = await supa.from('digest_dismissals').select('week_start').eq('user_id', user.id).eq('week_start', weekStart).maybeSingle()
+      if (dis || dead) return
+      const [m, c, bl] = await Promise.all([
+        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').eq('user_id', user.id)
+          .gte('start_ts', monday.toISOString()).lt('start_ts', weekEnd.toISOString()).neq('status', 'cancelled').order('start_ts').limit(20),
+        supa.from('commitments').select('id, text, owner, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+          .gte('due_at', monday.toISOString()).lt('due_at', weekEnd.toISOString()).order('due_at').limit(12),
+        supa.from('account_baselines').select('account_name, last_message_at, avg_interval_hours, total_reply_pairs')
+          .eq('user_id', user.id).gte('total_reply_pairs', 1).not('last_message_at', 'is', null).limit(200),
+      ])
+      if (dead) return
+      const quiet: Array<{ name: string; days: number }> = []
+      for (const b of ((bl.data ?? []) as Array<{ account_name: string | null; last_message_at: string; avg_interval_hours: number | null; total_reply_pairs: number }>)) {
+        if (!b.account_name) continue
+        const days = Math.floor((Date.now() - new Date(b.last_message_at).getTime()) / 86400000)
+        const baselineDays = Math.max(14, ((b.avg_interval_hours ?? 0) / 24) * 2)
+        if (days >= baselineDays) quiet.push({ name: b.account_name, days })
+      }
+      quiet.sort((a, b) => b.days - a.days)
+      const dedup = Array.from(new Map(quiet.map(q => [q.name, q])).values()).slice(0, 5)
+      const meetings = (m.data as NonNullable<typeof state>['meetings']) ?? []
+      const due = (c.data as NonNullable<typeof state>['due']) ?? []
+      if (!meetings.length && !due.length && !dedup.length) return
+      setState({ weekStart, meetings, due, quiet: dedup })
+    }
+    load()
+    return () => { dead = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (!state) return null
+  const dismiss = async () => {
+    const supa = createClient()
+    const { data: { user } } = await supa.auth.getUser()
+    if (user) await supa.from('digest_dismissals').upsert({ user_id: user.id, week_start: state.weekStart, dismissed_at: new Date().toISOString() })
+    setState(null)
+  }
+  const secLbl = (t: string) => <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 7 }}>{t}</div>
+  const dayLbl = (iso: string) => new Date(iso).toLocaleDateString('en-US', { weekday: 'short' })
+  const cols = [state.meetings.length, state.due.length, state.quiet.length].filter(Boolean).length
+  return (
+    <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden', border: '1px solid rgba(255,107,53,.25)' }}>
+      <div style={{ padding: '12px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Your Week Ahead</span>
+        <span style={{ fontSize: 10.5, color: 'var(--t4)' }}>week of {new Date(state.weekStart).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+        <button onClick={dismiss} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 10.5, fontWeight: 700, color: 'var(--t4)', fontFamily: "'Outfit',sans-serif" }}>Dismiss for this week</button>
+      </div>
+      <div style={{ padding: '14px 20px', display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 20 }}>
+        {state.meetings.length > 0 && (
+          <div>
+            {secLbl(`${state.meetings.length} meeting${state.meetings.length === 1 ? '' : 's'} this week`)}
+            {state.meetings.slice(0, 7).map(m => (
+              <div key={m.event_id} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'baseline' }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', fontFamily: "'DM Mono',monospace", width: 30, flexShrink: 0 }}>{dayLbl(m.start_ts)}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--t1)' }}>{m.summary || 'Meeting'}{m.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {m.account_name}</span> : null}</span>
+              </div>
+            ))}
+            {state.meetings.length > 7 && <div style={{ fontSize: 10, color: 'var(--t4)' }}>and {state.meetings.length - 7} more</div>}
+          </div>
+        )}
+        {state.due.length > 0 && (
+          <div>
+            {secLbl('Commitments due')}
+            {state.due.map(c => (
+              <div key={c.id} onClick={() => c.account_name && router.push(`/accounts?open=${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 8, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--amber)', fontFamily: "'DM Mono',monospace", width: 30, flexShrink: 0 }}>{c.due_at ? dayLbl(c.due_at) : ''}</span>
+                <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 600 }}>{c.owner === 'them' ? 'They: ' : c.owner === 'us' ? 'We: ' : ''}{c.text}{c.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {c.account_name}</span> : null}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        {state.quiet.length > 0 && (
+          <div>
+            {secLbl('Gone quiet')}
+            {state.quiet.map(q => (
+              <div key={q.name} onClick={() => router.push(`/accounts?open=${encodeURIComponent(q.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>{q.name}</span>
+                <span style={{ fontSize: 10.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{q.days}d silent</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
   // Health trend: snapshot today's score, compare to the latest prior day.
   const [healthDelta, setHealthDelta] = useState<{ pts: number; label: string } | null>(null)
@@ -517,6 +631,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       </div>
 
       <PreMeetingBrief />
+
+      <WeekDigest />
 
       <TodayBlock accounts={accounts} signals={signals} />
 
