@@ -67,6 +67,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [draftErr, setDraftErr] = useState<string>('')
   const [draftSlow, setDraftSlow] = useState(false)
+  const [contacts, setContacts] = useState<string[]>([])
   const [draftState, setDraftState] = useState<'loading' | 'ready' | 'error'>('loading')
   const [copied, setCopied] = useState(false)
   const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'needs_scope' | 'error'>('idle')
@@ -266,6 +267,13 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
 
   async function openDraft(s: DBSignal) {
     setSendState('idle'); setSendErr(''); setDraftErr(''); setDraftSlow(false)
+    setContacts([])
+    if (s.account_name) {
+      createClient().from('account_baselines').select('contact_email')
+        .eq('account_name', s.account_name).not('contact_email', 'is', null)
+        .order('last_message_at', { ascending: false }).limit(6)
+        .then(({ data }) => setContacts(Array.from(new Set(((data ?? []) as Array<{ contact_email: string }>).map(x => x.contact_email.toLowerCase())))))
+    }
     const slowTimer = setTimeout(() => setDraftSlow(true), 9000)
     setTimeout(() => clearTimeout(slowTimer), 31000)
     setDraftFor(s); setDraft(null); setDraftState('loading'); setCopied(false)
@@ -638,6 +646,16 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                       style={{ flex: 1, padding: '8px 0', fontSize: 12, fontWeight: 700, color: 'var(--t1)', border: 'none', outline: 'none', fontFamily: "'DM Mono',monospace", background: 'transparent' }}
                     />
                   </div>
+                  {contacts.filter(c => c !== (draft.to || '').toLowerCase()).length > 0 && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderBottom: '1px solid var(--line)', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Known</span>
+                      {contacts.filter(c => c !== (draft.to || '').toLowerCase()).slice(0, 4).map(c => (
+                        <button key={c} onClick={() => setDraft(d => d ? (!d.to ? { ...d, to: c } : { ...d, cc: d.cc ? `${d.cc}, ${c}` : c }) : d)}
+                          title={!draft.to ? 'Set as recipient' : 'Add to Cc'}
+                          style={{ fontSize: 10, fontWeight: 700, color: 'var(--t2)', fontFamily: "'DM Mono',monospace", background: 'var(--inset, #F4EFE7)', border: '1px solid var(--border)', padding: '2px 9px', borderRadius: 20, cursor: 'pointer' }}>+ {c}</button>
+                      ))}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 16px', borderBottom: '1px solid var(--line)' }}>
                     <span style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.6px', width: 52, flexShrink: 0 }}>Cc</span>
                     <input
@@ -684,6 +702,9 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     <span style={{ fontSize: 10.5, color: 'var(--t3)', maxWidth: 210, lineHeight: 1.4 }}>Reconnect Gmail once to enable sending.</span>
                   )}
                   {sendState === 'error' && <span style={{ fontSize: 10.5, color: 'var(--danger)', maxWidth: 200, lineHeight: 1.4 }}>{sendErr}</span>}
+                  <span style={{ fontSize: 9.5, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>
+                    {draftFor.source_integration === 'gmail' && draftFor.source_message_id ? 'replies in thread' : 'sends as new email'}
+                  </span>
                   <button onClick={copyDraft} style={{ padding: '10px 18px', background: 'var(--surface, #fff)', color: 'var(--t2)', border: '1px solid var(--border)', borderRadius: 10, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>
                     {copied ? '✓ Copied' : 'Copy'}
                   </button>

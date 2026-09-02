@@ -64,11 +64,15 @@ function agoDays(iso?: string | null): string {
 
 export function PortfolioReal({ accounts }: { accounts: Account[] }) {
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
+  const [soon48, setSoon48] = useState<Set<string>>(new Set())
   useEffect(() => {
     let dead = false
     const supa = createClient()
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+        .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
+        .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
       supa.from('signals')
         .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
         .eq('user_id', user.id).eq('is_dismissed', false)
@@ -133,7 +137,7 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
             {[...accounts].sort((x, y) => {
               const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
               const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
-              return attentionScore(sigMap.get(y.name) ?? [], dy, false) - attentionScore(sigMap.get(x.name) ?? [], dx, false)
+              return attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name)) - attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name))
             }).map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)

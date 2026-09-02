@@ -346,7 +346,16 @@ export function Account360() {
         </div>
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '14px 24px 28px' }}>
-          {loading && <div style={{ textAlign: 'center', padding: '48px 0', fontSize: 12.5, color: 'var(--t3)' }}>Loading account...</div>}
+          {loading && (
+            <div>
+              {[80, 62, 71].map((w, i) => (
+                <div key={i} style={{ background: 'var(--surface, #fff)', border: '1px solid var(--border-soft, var(--border))', borderRadius: 12, padding: '13px 15px', marginBottom: 8, animation: 'pulse 1.6s ease-in-out infinite', animationDelay: `${i * .18}s` }}>
+                  <div style={{ height: 11, width: `${w}%`, background: 'var(--inset, #F4EFE7)', borderRadius: 6, marginBottom: 8 }}></div>
+                  <div style={{ height: 9, width: `${w - 25}%`, background: 'var(--inset, #F4EFE7)', borderRadius: 6 }}></div>
+                </div>
+              ))}
+            </div>
+          )}
           {!loading && !data && <div style={{ textAlign: 'center', padding: '48px 0', fontSize: 12.5, color: 'var(--t3)' }}>Account not found.</div>}
 
           {/* ============ COMMS: evidence ============ */}

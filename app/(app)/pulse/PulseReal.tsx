@@ -547,6 +547,19 @@ function WeekDigest() {
 }
 
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
+  // Accounts with a meeting inside 48h (attention-formula factor).
+  const [soon48, setSoon48] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    let dead = false
+    const supa = createClient()
+    supa.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+        .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
+        .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
+    })
+    return () => { dead = true }
+  }, [])
   // Health trend: snapshot today's score, compare to the latest prior day.
   const [healthDelta, setHealthDelta] = useState<{ pts: number; label: string } | null>(null)
   useEffect(() => {
@@ -832,7 +845,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
             const c = counts.get(a.name) ?? { h: 0, w: 0, p: 0 }
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
             const acctSigs = signals.filter(x => x.account_name === a.name)
-            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: attentionScore(acctSigs, dark, false) }
+            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: attentionScore(acctSigs, dark, soon48.has(a.name)) }
           })
           .filter(r => r.score > 0)
           .sort((x, y) => y.score - x.score || (Number(y.a.value) || 0) - (Number(x.a.value) || 0))
