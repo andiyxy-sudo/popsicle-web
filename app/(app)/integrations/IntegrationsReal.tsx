@@ -171,7 +171,37 @@ function fmtDate(iso: string | null) {
   return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`
 }
 
+function ResSwitch({ on }: { on: boolean }) {
+  return (
+    <div style={{ width: 36, height: 21, borderRadius: 20, background: on ? 'var(--ok)' : 'var(--border)', position: 'relative', transition: 'background .18s ease', flexShrink: 0 }}>
+      <div style={{ position: 'absolute', top: 2.5, left: on ? 17.5 : 2.5, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }}></div>
+    </div>
+  )
+}
+
 export function IntegrationsReal({ active, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
+  // Opt-in resolution broadcasts (shared columns with mobile).
+  const [resToggles, setResToggles] = useState<{ slack?: boolean; hubspot?: boolean }>({})
+  useEffect(() => {
+    createClient().from('integrations').select('provider, slack_post_resolutions, hubspot_log_resolutions')
+      .in('provider', ['slack', 'hubspot'])
+      .then(({ data }) => {
+        const t: { slack?: boolean; hubspot?: boolean } = {}
+        for (const r of ((data ?? []) as Array<{ provider: string; slack_post_resolutions: boolean | null; hubspot_log_resolutions: boolean | null }>)) {
+          if (r.provider === 'slack') t.slack = !!r.slack_post_resolutions
+          if (r.provider === 'hubspot') t.hubspot = !!r.hubspot_log_resolutions
+        }
+        setResToggles(t)
+      })
+  }, [active])
+  async function flipResToggle(p: Provider): Promise<boolean> {
+    const key = p.key as 'slack' | 'hubspot'
+    const col = key === 'slack' ? 'slack_post_resolutions' : 'hubspot_log_resolutions'
+    const next = !resToggles[key]
+    setResToggles(v => ({ ...v, [key]: next }))
+    await createClient().from('integrations').update({ [col]: next }).eq('provider', key)
+    return next
+  }
   const [modal, setModal] = useState<ModalConfig | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
@@ -379,8 +409,9 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   }
 
   // The connected-integration detail sheet (stats + sync + disconnect).
-  function detail(p: Provider) {
+  function detail(p: Provider, tOverride?: { slack?: boolean; hubspot?: boolean }) {
     const st = stats[p.key]
+    const tNow = { ...resToggles, ...tOverride }
     const statBox = (val: React.ReactNode, label: string) => (
       <div style={{ flex: 1, background: 'var(--inset)', borderRadius: 12, padding: '14px 16px' }}>
         <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--t1)' }}>{val}</div>
@@ -429,6 +460,18 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
               {statBox(p.fn === 'oauth-gcal' ? (st?.total ?? 0) : '0', p.fn === 'oauth-gcal' ? 'Events synced' : 'Items synced')}
               <div style={{ flex: 1 }} />
             </div>
+          )}
+          {(p.key === 'slack' || p.key === 'hubspot') && (
+            <button
+              onClick={async () => { const next = await flipResToggle(p); detail(p, { [p.key]: next } as { slack?: boolean; hubspot?: boolean }) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', marginBottom: 14, fontFamily: "'Outfit',sans-serif" }}
+            >
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{p.key === 'slack' ? 'Post ✓ when a signal is handled' : 'Log handled signals to the deal'}</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>{p.key === 'slack' ? 'Appends "Handled by..." to the original Slack card' : 'Writes a Popsicle note on the matching HubSpot deal'}</div>
+              </div>
+              <ResSwitch on={!!tNow[p.key as 'slack' | 'hubspot']} />
+            </button>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontSize: 11, fontWeight: 600 }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}><span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--danger)' }} />{st?.high ?? 0} high</span>

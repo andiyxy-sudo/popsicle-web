@@ -31,6 +31,8 @@ interface BriefData {
 function PreMeetingBrief() {
   const router = useRouter()
   const [brief, setBrief] = useState<BriefData | null>(null)
+  const [points, setPoints] = useState<string[]>([])
+  const notified = { current: false } as { current: boolean }
 
   useEffect(() => {
     let dead = false
@@ -77,6 +79,15 @@ function PreMeetingBrief() {
         daysDark: lastTouch ? Math.floor((now - new Date(lastTouch).getTime()) / 86400_000) : null,
         commitments: commitments.slice(0, 3),
       })
+      // Guarded talking points (optional content: empty result = hidden section)
+      fetch('/api/brief-points', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ account }) })
+        .then(r => r.json()).then(j => { if (!dead && Array.isArray(j.points)) setPoints(j.points) }).catch(() => {})
+      // Browser notification, only if the user already granted permission
+      if (!notified.current && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        notified.current = true
+        const mins = Math.max(0, Math.round((new Date(String(ev.start_ts)).getTime() - Date.now()) / 60_000))
+        try { new Notification(`Meeting in ${mins} min: ${ev.summary || 'Meeting'}`, { body: `${account} - open Pulse for your brief` }) } catch { /* blocked */ }
+      }
     }
     load()
     const t = setInterval(load, 5 * 60_000)
@@ -97,7 +108,7 @@ function PreMeetingBrief() {
           {brief.daysDark != null ? `Last touch ${brief.daysDark === 0 ? 'today' : brief.daysDark + 'd ago'}` : 'No touches recorded'}
         </div>
       </div>
-      <div style={{ padding: '12px 20px', display: 'grid', gridTemplateColumns: brief.commitments.length ? '1fr 1fr' : '1fr', gap: 16 }}>
+      <div style={{ padding: '12px 20px', display: 'grid', gridTemplateColumns: `repeat(${1 + (points.length ? 1 : 0) + (brief.commitments.length ? 1 : 0)}, 1fr)`, gap: 16 }}>
         <div>
           <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Open signals</div>
           {brief.signals.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)' }}>None open. Clean slate.</div>}
@@ -108,6 +119,17 @@ function PreMeetingBrief() {
             </div>
           ))}
         </div>
+        {points.length > 0 && (
+          <div>
+            <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Talking points</div>
+            {points.map((pt, i) => (
+              <div key={i} style={{ display: 'flex', gap: 7, marginBottom: 5, alignItems: 'baseline' }}>
+                <span style={{ color: 'var(--o)', fontWeight: 900, fontSize: 11, flexShrink: 0 }}>{i + 1}.</span>
+                <span style={{ fontSize: 11.5, color: 'var(--t2)', lineHeight: 1.5 }}>{pt}</span>
+              </div>
+            ))}
+          </div>
+        )}
         {brief.commitments.length > 0 && (
           <div>
             <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Outstanding commitments</div>
