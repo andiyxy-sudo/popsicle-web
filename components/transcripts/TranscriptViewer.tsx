@@ -231,10 +231,17 @@ export function TranscriptViewer({ row, userEmail }: { row: TRow | null; userEma
           const isFlash = flash === i
           const isHit = hits.includes(i)
           return (
-            <div key={i} id={`turn-${i}`} style={{ padding: '10px 20px', borderLeft: marked ? '3px solid var(--o)' : '3px solid transparent', background: isFlash ? 'rgba(255,107,53,.1)' : isHit && hits[hitIdx] === i ? 'rgba(255,107,53,.05)' : 'transparent', transition: 'background .4s ease' }}>
+            <div key={i} id={`turn-${i}`} onMouseEnter={e => { const b = e.currentTarget.querySelector('.turn-ask') as HTMLElement | null; if (b) b.style.opacity = '1' }} onMouseLeave={e => { const b = e.currentTarget.querySelector('.turn-ask') as HTMLElement | null; if (b) b.style.opacity = '0' }} style={{ padding: '10px 20px', borderLeft: marked ? '3px solid var(--o)' : '3px solid transparent', background: isFlash ? 'rgba(255,107,53,.1)' : isHit && hits[hitIdx] === i ? 'rgba(255,107,53,.05)' : 'transparent', transition: 'background .4s ease' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
                 <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)' }}>{t.sp}</span>
                 {role && <span style={{ fontSize: 8.5, fontWeight: 800, color: role === 'Buyer' ? 'var(--o)' : 'var(--t3)', border: `1px solid ${role === 'Buyer' ? 'rgba(255,107,53,.35)' : 'var(--border)'}`, padding: '1px 7px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '.5px' }}>{role}</span>}
+                <button
+                  onClick={() => router.push(`/ask?q=${encodeURIComponent(`In the "${(row.topic || 'call').replace(/^(Zoom|Meet|Fireflies):\s*/i, '')}" call, ${t.sp} said: "${t.tx.slice(0, 180)}". What does this mean for the deal and how should I respond?`)}`)}
+                  title="Ask AI about this moment"
+                  style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: 'var(--o)', background: 'none', border: '1px solid rgba(255,107,53,.25)', padding: '1px 8px', borderRadius: 20, cursor: 'pointer', opacity: .0, transition: 'opacity .15s ease' }}
+                  onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+                  className="turn-ask"
+                >Ask AI</button>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{t.tx}</div>
             </div>
