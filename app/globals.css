@@ -20,29 +20,29 @@
 
 :root {
   /* Brand — strict single-purpose orange */
-  --o:#FF6B35; --od:#E55A22; --o-glow:rgba(255,107,53,.22);
-  --o-bg:rgba(255,107,53,.06); --o-border:rgba(255,107,53,.16);
+  --o:#E85A25; --od:#C94A1D; --o-glow:rgba(232,90,37,.20);
+  --o-bg:#FFF1EA; --o-border:rgba(232,90,37,.22);
 
   /* Semantic — fully distinct, never bleed into each other */
-  --danger:#DC2626; --danger-bg:rgba(220,38,38,.07); --danger-bd:rgba(220,38,38,.18);
-  --amber:#D97706;  --amber-bg:rgba(217,119,6,.07);  --amber-bd:rgba(217,119,6,.18);
-  --ok:#16A34A;     --ok-bg:rgba(22,163,74,.07);     --ok-bd:rgba(22,163,74,.18);
-  --blue:#2563EB;   --blue-bg:rgba(37,99,235,.07);   --blue-bd:rgba(37,99,235,.18);
-  --warn:#D97706;
+  --danger:#c43d2b; --danger-bg:#FDECEA; --danger-bd:rgba(196,61,43,.28);
+  --amber:#d38b1d;  --amber-bg:#FFF4E6;  --amber-bd:rgba(211,139,29,.30);
+  --ok:#2f8f5b;     --ok-bg:#EAF5EE;     --ok-bd:rgba(47,143,91,.28);
+  --blue:#2f6f9f;   --blue-bg:#EAF1F7;   --blue-bd:rgba(47,111,159,.28);
+  --warn:#d38b1d; --defer:#6b4fbb; --defer-bg:#F0EBFA;
 
   /* Surface — warm white system (NOT cold gray) */
-  --bg:#F8F5F0;       /* main canvas */
+  --bg:#FBF8F3;       /* main canvas */
   --surface:#FFFFFF;  /* card face */
-  --raised:#FDFCFB;   /* slightly above canvas */
-  --inset:#F0EDE7;    /* pressed/recessed */
-  --border:#E4DDD3;   /* default border */
-  --border-soft:#F0EDE8; /* subtle border */
+  --raised:#FFFDFA;   /* slightly above canvas */
+  --inset:#F4F0E8;    /* pressed/recessed */
+  --border:#E5DFD4;   /* default border */
+  --border-soft:#EFEAE1; /* subtle border */
 
   /* Text — 4-level hierarchy */
-  --t1:#4A3C32;   /* headlines */
-  --t2:#6B5C50;   /* body */
-  --t3:#7A6E64;   /* secondary / labels */
-  --t4:#B0A89C;   /* placeholder / faint */
+  --t1:#0E0D0B;   /* headlines */
+  --t2:#5C5855;   /* body */
+  --t3:#8A857F;   /* secondary / labels */
+  --t4:#A09C97;   /* placeholder / faint */
 
   /* Shadows — physical layering */
   --sh-sm:  0 1px 3px rgba(15,12,9,.06), 0 1px 2px rgba(15,12,9,.04);
@@ -51,14 +51,14 @@
   --sh-xl:  0 16px 48px rgba(15,12,9,.12), 0 6px 16px rgba(15,12,9,.08);
 
   /* Sidebar */
-  --sidebar-bg:#100D09;
+  --sidebar-bg:#0E0D0B;
   --sidebar-w:220px;
 
   /* Spacing base — 8px grid */
   --s1:8px; --s2:16px; --s3:24px; --s4:32px;
 
   /* Radii */
-  --r:13px; --r-sm:9px; --r-lg:18px; --r-pill:999px;
+  --r:14px; --r-sm:9px; --r-lg:16px; --r-pill:999px;
 
   /* Transitions */
   --ease-out:cubic-bezier(0,.6,.4,1);
@@ -1778,3 +1778,109 @@ button:active, .sig-filter:active, .fc-tab:active {
   letter-spacing:.3px; margin-bottom:6px;
 }
 
+
+
+/* ============================================================
+   REDESIGN NATIVE TOKENS (Claude Design handoff, Phase 1)
+   Design-native names; later phases reference these directly.
+   ============================================================ */
+/* Popsicle Labs — Revenue Intelligence Portal
+   Design tokens. Single source of truth for the portal's visual language. */
+
+:root {
+  /* ---- Surfaces ---------------------------------------------------- */
+  --paper:            #FBF8F3; /* app background, modal background        */
+  --paper-raised:     #FFFDFA; /* notification panel                     */
+  --surface:          #FFFFFF; /* inputs, secondary buttons              */
+  --wash:             #F4F0E8; /* quoted message blocks, row hover       */
+  --wash-soft:  rgba(14,13,11,.035); /* quiet inset panels               */
+  --ink-panel:        #0E0D0B; /* sidebar, notification header           */
+
+  /* ---- Ink -------------------------------------------------------- */
+  --ink:              #0E0D0B; /* primary text, hairline rules under h2  */
+  --ink-muted:        #5C5855; /* body copy, secondary text              */
+  --ink-faint:        #A09C97; /* mono labels, meta, timestamps          */
+  --on-dark:          #FBF8F3; /* text on the ink panel                  */
+  --on-dark-muted: rgba(251,248,243,.65);
+  --on-dark-faint: rgba(251,248,243,.45);
+
+  /* ---- Lines ------------------------------------------------------ */
+  --hairline:         #EFEAE1; /* row dividers, light rules              */
+  --border:           #E5DFD4; /* button and input borders               */
+  --rule-strong:      #0E0D0B; /* section-opening rule, 1px              */
+  --line-on-dark:  rgba(251,248,243,.12);
+
+  /* ---- Brand ------------------------------------------------------ */
+  --accent:           #E85A25; /* links, active nav marker, AI eyebrows  */
+  --accent-hot:       #FF6B35; /* gradient end, active pill fill         */
+  --accent-light:     #FF8A50; /* gradient start                         */
+  --accent-tint:      #FFF1EA; /* row action button rest state           */
+  --accent-gradient: linear-gradient(135deg, #FF8A50, #FF6B35);
+
+  /* ---- Semantic: risk & status ------------------------------------ */
+  --critical:         #c43d2b; --critical-tint: #FDECEA; /* HIGH risk    */
+  --warn:             #d38b1d; --warn-tint:     #FFF4E6; /* MED / watch  */
+  --good:             #2f8f5b; --good-tint:     #EAF5EE; /* LOW / won    */
+  --info:             #2f6f9f; --info-tint:     #EAF1F7; /* calls, neutral */
+  --defer:            #6b4fbb; --defer-tint:    #F0EBFA; /* slipped deals */
+
+  /* ---- Type ------------------------------------------------------- */
+  --font-sans: 'Outfit', system-ui, sans-serif;   /* 400 500 600 700 800 900 */
+  --font-mono: 'DM Mono', monospace;              /* 400 500 — labels, time  */
+
+  --page-title:  clamp(30px, 3.4vw, 44px); /* 700, -.035em, 1.14          */
+  --display:     clamp(34px, 4.2vw, 60px); /* 800, -.04em  — account name */
+  --hero-num:    clamp(56px, 6vw, 84px);   /* 700, -.04em, tabular        */
+  --stat-lg:     52px; /* 800, -.045em — scenario / confidence numeral    */
+  --stat:        34px; /* 700, -.04em  — metric strip                     */
+  --stat-sm:     26px; /* 700, -.04em  — signal delta                     */
+  --section:     22px; /* 700, -.03em  — section heading                  */
+  --modal-title: 27px; /* 800, -.035em                                    */
+  --body-lg:     16px; /* 400, 1.55                                       */
+  --body:        15px; /* 400, 1.45–1.6                                   */
+  --body-sm:     13.5px;
+  --table:       13px; /* row text; 12.5px in dense tables                */
+  --nav:         14.4px; /* 500, -.01em                                   */
+  --label:       11px; /* mono, uppercase, 1.4px tracking                 */
+  --label-sm:    10px; /* mono, uppercase, 1.6px tracking                 */
+
+  /* ---- Radii ------------------------------------------------------ */
+  --r-none:   0;     /* editorial blocks, inset panels, nav rows          */
+  --r-sheet:  4px;   /* modals, textareas                                */
+  --r-block:  14px;  /* tinted callouts, suggested-action rows            */
+  --r-pill:   999px; /* buttons, filters, chips, the Ask bar              */
+  --r-round:  50%;   /* avatars, status dots                             */
+
+  /* ---- Elevation -------------------------------------------------- */
+  --shadow-bar:    0 24px 60px -20px rgba(14,13,11,.25), 0 2px 8px rgba(14,13,11,.04);
+  --shadow-panel:  0 32px 80px -24px rgba(14,13,11,.35), 0 2px 10px rgba(14,13,11,.06);
+  --shadow-modal:  0 50px 110px -40px rgba(14,13,11,.55);
+  --shadow-accent: 0 12px 30px -14px rgba(255,107,53,.7); /* primary CTA  */
+  --shadow-action: 0 6px 18px -6px rgba(255,107,53,.5);   /* row hover    */
+
+  /* ---- Spacing scale (4px base, editorial steps) ------------------ */
+  --s-1: 4px;  --s-2: 8px;  --s-3: 12px; --s-4: 16px; --s-5: 20px;
+  --s-6: 24px; --s-7: 32px; --s-8: 40px; --s-9: 56px; --s-10: 72px;
+  /* in-between values used deliberately: 6 10 14 18 22 26 28 34 44 48 */
+
+  /* ---- Layout ----------------------------------------------------- */
+  --sidebar-w:  216px;
+  --main-pad:   56px;   /* 56px top/sides, 150px bottom to clear Ask bar  */
+  --max-w:      1338px;
+  --ask-bar-w:  clamp(320px, 52vw, 720px);
+
+  /* ---- Motion ----------------------------------------------------- */
+  --ease:        cubic-bezier(.2,.8,.2,1);
+  --t-fast:      .2s;   /* hover, colour                                 */
+  --t-enter:     .4s;   /* table rows                                    */
+  --t-screen:    .6s;   /* screen entrance                               */
+  --stagger:     40ms;  /* per table row; 60ms on the Pulse ledger       */
+}
+
+/* Screen entrance + row entrance. Alternate the two names on state
+   change so the animation restarts when a filter switches. */
+@keyframes fadeUp  { from { opacity:0; transform: translateY(14px) } to { opacity:1; transform:none } }
+@keyframes fadeUpB { from { opacity:0; transform: translateY(10px) } to { opacity:1; transform:none } }
+@keyframes fillIn  { from { opacity:0 } to { opacity:1 } }
+@keyframes ping    { 0% { transform: scale(1); opacity:.7 } 100% { transform: scale(3.2); opacity:0 } }
+@keyframes draw    { from { stroke-dashoffset: 2400 } to { stroke-dashoffset: 0 } }

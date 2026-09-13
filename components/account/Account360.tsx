@@ -236,8 +236,11 @@ export function Account360() {
     setLoading(true)
     async function load() {
       const supa = createClient()
-      let id = openFor!.id
-      if (!id) {
+      // Only real UUIDs may reach the RPC - demo/static ids (e.g. 'acme') would
+      // 400 at the database. Non-uuid ids fall back to name resolution.
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+      let id = openFor!.id && UUID.test(openFor!.id) ? openFor!.id : undefined
+      if (!id && openFor!.name) {
         const { data: acc } = await supa.from('accounts').select('id').eq('name', openFor!.name).maybeSingle()
         id = acc?.id
       }
