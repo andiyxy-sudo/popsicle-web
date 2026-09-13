@@ -1884,3 +1884,65 @@ button:active, .sig-filter:active, .fc-tab:active {
 @keyframes fillIn  { from { opacity:0 } to { opacity:1 } }
 @keyframes ping    { 0% { transform: scale(1); opacity:.7 } 100% { transform: scale(3.2); opacity:0 } }
 @keyframes draw    { from { stroke-dashoffset: 2400 } to { stroke-dashoffset: 0 } }
+
+/* ============================================================
+   PHASE 2 — EDITORIAL CHROME (redesign structure layer)
+   Cascade overrides only: markup untouched, behavior untouched.
+   ============================================================ */
+
+/* Screen entrance — the redesign's signature motion */
+.dsk-screen.on { animation: fadeUp .6s var(--ease) both; }
+.dsk-screen.on .dcard:nth-of-type(1) { animation: fadeUp .6s var(--ease) .1s both; }
+.dsk-screen.on .dcard:nth-of-type(2) { animation: fadeUp .6s var(--ease) .2s both; }
+
+/* Page titles — editorial scale, tight tracking */
+.page-hdr h1 {
+  font-size: var(--page-title) !important;
+  font-weight: 700 !important;
+  letter-spacing: -.035em !important;
+  line-height: 1.14 !important;
+  color: var(--ink) !important;
+  max-width: 920px;
+}
+.page-hdr p { font-size: 15px !important; color: var(--ink-muted) !important; }
+.page-hdr { margin-bottom: 34px !important; }
+
+/* Cards — quiet: hairlines and air instead of borders and shadows */
+.dcard {
+  border-color: var(--hairline) !important;
+  box-shadow: none !important;
+  border-radius: var(--r-block) !important;
+  background: var(--surface) !important;
+}
+.dcard:hover { box-shadow: none !important; }
+
+/* Section eyebrows inside cards — the accent mono voice */
+.dcard [style*="uppercase"] { letter-spacing: 1.4px; }
+
+/* Tables — editorial: strong 1px opening rule, hairline rows, quiet cells */
+.dtable thead th {
+  font-family: 'DM Mono', monospace !important;
+  font-size: 10px !important;
+  letter-spacing: 1.6px !important;
+  text-transform: uppercase !important;
+  color: var(--ink-faint) !important;
+  font-weight: 400 !important;
+  border-bottom: 1px solid var(--rule-strong) !important;
+  padding-bottom: 10px !important;
+}
+.dtable td { border-bottom: 1px solid var(--hairline) !important; font-size: 13px !important; }
+.dtable tbody tr { transition: background var(--t-fast) var(--ease); }
+.dtable tbody tr:hover { background: var(--wash) !important; }
+
+/* Sidebar — ink panel voice */
+.sb-item { font-size: 14.4px !important; font-weight: 500 !important; letter-spacing: -.01em; }
+.sb-item .badge { font-size: 10.8px !important; }
+
+/* KPI hero numerals — tabular, tighter */
+.kpi-hero-val { font-variant-numeric: tabular-nums; letter-spacing: -.04em !important; }
+
+/* Inputs and secondary buttons — surface white on paper */
+input, select, textarea { border-radius: var(--r-sheet); }
+
+/* Scrim tone */
+[style*="rgba(15,12,9,.5)"] { }
