@@ -102,7 +102,7 @@ function parseAnswer(text: string) {
   lines.forEach((raw, i) => {
     const l = raw.trim()
     if (!l) { if (!inPlay) body.push(''); return }
-    if (i === 0 && l.length < 70 && !/^[-*•]/.test(l)) { title = l.replace(/[.:]$/, ''); return }
+    if (i === 0 && l.length < 70 && !/^[-*•]/.test(l) && !/[.!?]$/.test(l)) { title = l.replace(/\*\*/g, '').replace(/[.:]$/, ''); return }
     if (/^tags:/i.test(l)) { tags = l.replace(/^tags:/i, '').split('|').map(t => t.trim()).filter(Boolean); return }
     if (/^stats:/i.test(l)) {
       stats = l.replace(/^stats:/i, '').split(',').map(pair => {
@@ -123,10 +123,15 @@ function parseAnswer(text: string) {
   // Fallbacks: if the model ignored the shape, derive what we can from the text.
   const flat = [title, ...body].join(' ')
   if (!title && body.length) {
-    const first = body.find(Boolean) || ''
-    title = first.length > 70 ? first.slice(0, 64).replace(/[,.;:]\s*\S*$/, '') : first.replace(/[.:]$/, '')
-    const idx = body.indexOf(first); if (idx > -1 && body[idx].length <= 70) body.splice(idx, 1)
+    const first = (body.find(Boolean) || '').trim()
+    // Only promote a genuinely short opening line to the title, and never
+    // slice a sentence: a cut-off headline reads worse than no headline.
+    if (first && first.length <= 64 && !/[.!?]$/.test(first)) {
+      title = first
+      body.splice(body.indexOf(first), 1)
+    }
   }
+  title = title.replace(/\*\*/g, '').replace(/^#+\s*/, '').replace(/[:.]$/, '').trim()
   if (!tags.length) {
     const t: string[] = []
     if (/\bcritical\b/i.test(flat)) t.push('Critical')
@@ -140,7 +145,28 @@ function parseAnswer(text: string) {
   return { title, tags, body, play, sources, stats }
 }
 
-function AnswerCard({ text }: { text: string }) {
+// Follow-ups drawn from what the answer actually mentions, so they are useful
+// rather than decorative.
+function followUps(text: string): string[] {
+  // Pull a likely account name straight out of the answer: two or three
+  // capitalised words, which is how accounts are written throughout.
+  const m = text.replace(/\*\*/g, '').match(/\b([A-Z][a-zA-Z0-9.&-]+(?: [A-Z][a-zA-Z0-9.&-]+){0,2})\b/g) || []
+  const stop = new Set(['Today', 'Tomorrow', 'Recommended', 'Play', 'Critical', 'Backup', 'The', 'This', 'Your', 'No', 'Email', 'Slack', 'Gmail'])
+  const acct = m.map(x => x.trim()).find(x => x.includes(' ') && !stop.has(x.split(' ')[0]))
+  const out: string[] = []
+  if (acct) {
+    out.push(`Draft a follow-up to ${acct}`)
+    out.push(`Why is ${acct} at risk?`)
+    out.push(`Who should I contact at ${acct}?`)
+  } else {
+    out.push('What should I do first today?')
+    out.push('Which accounts have gone quiet?')
+    out.push('Where is my biggest exposure?')
+  }
+  return out.slice(0, 3)
+}
+
+function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void }) {
   const { title, tags, body, play, sources, stats } = parseAnswer(text)
   const sev = (tags[0] || '').toLowerCase()
   const sevColor = sev.includes('critical') || sev.includes('risk') ? 'var(--critical, #c43d2b)'
@@ -185,7 +211,7 @@ function AnswerCard({ text }: { text: string }) {
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
       </div>
       <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
-        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.22 }}>{title}</div>}
+        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
         {tags.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {tags.map((t, i) => (
@@ -212,7 +238,16 @@ function AnswerCard({ text }: { text: string }) {
             <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.7, letterSpacing: '-.004em' }}>{inline(play, 0)}</div>
           </div>
         )}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 12.5, color: 'var(--ink-faint)' }}>
+        <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 9 }}>Ask next</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {followUps(text).map(q => (
+              <button key={q} onClick={() => onAsk(q)}
+                style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 14px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{q}</button>
+            ))}
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 12.5, color: 'var(--ink-faint)' }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 700 }}>✓</span> Generated by Popsicle AI
           </span>
@@ -237,6 +272,7 @@ export function AskClient() {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState(0)
+
   const endRef = useRef<HTMLDivElement>(null)
   const paneRef = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
@@ -307,7 +343,7 @@ export function AskClient() {
         </div>
       ) : (
         <div key={i} style={{ marginTop: 16 }}>
-          <AnswerCard text={m.content} />
+          <AnswerCard text={m.content} onAsk={send} />
         </div>
       ))}
 
