@@ -109,11 +109,18 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
-      <Section title="Account" sub="Who you are and where your data lives.">
+      <Section title="Account" sub="Profile, workspace and data.">
+        <Row label="Workspace" sub="Popsicle Labs" value="1 seat" />
         <Row label="Work email" value={user.email} />
+        <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} />
+        <Row label="Weekly digest" sub="Appears on Pulse every Monday" value="Mondays" onClick={() => router.push('/pulse?digest=1')} />
+      </Section>
+
+      <Section title="Preferences" sub="How the portal looks and reads.">
+        <Row label="Appearance" value="Light" />
+        <Row label="Language" value="English (US)" />
         <Row label="Timezone" value={tz || '--'} />
-        <Row label="Workspace" value="Popsicle Labs" />
-        <Row label="Data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} />
+        <Row label="Currency" value="USD" />
       </Section>
 
       <Section title="Sources" sub="Channels Popsicle reads to raise signals.">
@@ -170,12 +177,14 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="More" sub="Product information.">
         <Row label="Ask AI" sub="Answers grounded in your own data" value="Open" onClick={() => router.push('/ask')} />
+        <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => router.push('/ask')} />
         <Row label="About Popsicle" value="Revenue intelligence infrastructure" />
+        <Row label="Email support" value="support@popsicle-labs.app" />
       </Section>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 44, paddingTop: 22, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
         <span onClick={signOut} style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '1.2px', color: 'var(--critical, #c43d2b)', fontWeight: 500, cursor: 'pointer' }}>Sign out</span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{user.email}</span>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>Popsicle Labs · {counts ? `${counts.accounts} accounts tracked` : 'workspace'}</span>
       </div>
     </div>
   )

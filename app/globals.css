@@ -2135,3 +2135,9 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 /* v2.6 — the wash must sit above the paper but below content, and must not
    scroll away with the column. */
 .ed-wash { position: fixed; top: 0; right: 0; width: min(900px, calc(100vw - var(--sidebar-w, 216px))); height: 900px; pointer-events: none; z-index: 0; }
+
+/* v2.7 — short pages must not leave the footer floating mid-screen:
+   the content column fills the viewport and the footer is pushed to the end. */
+.content { display: flex; flex-direction: column; min-height: 100%; }
+.content > .dsk-screen { flex: 1 0 auto; }
+.ed-footer { margin-top: auto !important; padding-top: 40px; }
