@@ -1886,8 +1886,8 @@ button:active, .sig-filter:active, .fc-tab:active {
    ============================================================ */
 
 /* Screen entrance — the redesign's signature motion */
-.dsk-screen, .dsk-screen.on { opacity: 1 !important; animation: none !important; }
-.dsk-screen .dcard, .dsk-screen.on .dcard { animation: none !important; opacity: 1 !important; }
+.dsk-screen, .dsk-screen.on { opacity: 1 !important; }
+.dsk-screen .dcard, .dsk-screen.on .dcard { opacity: 1 !important; }
 
 /* Page titles — editorial scale, tight tracking */
 .page-hdr h1 {
@@ -2110,18 +2110,17 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 
 /* Belt and braces: nothing in the content column may start invisible. */
-.content, .content * { animation-name: none; }
+
 .content [style*="animation"] { opacity: 1 !important; }
-.fade-in, .fade-in-2, .fade-in-3, .fade-in-4, .fade-in-5 { opacity: 1 !important; animation: none !important; }
+.fade-in, .fade-in-2, .fade-in-3, .fade-in-4, .fade-in-5 { opacity: 1 !important; }
 
 
 /* ============================================================
    BUILD v1.2 — opacity lock. No element in the content column may
    render below full opacity, whatever animation or class it carries.
    ============================================================ */
-.content, .content > *, .content * { opacity: 1 !important; }
-.content *, .content *::before, .content *::after { animation: none !important; }
-.dcard, .kpi-hero, .kpi-support, .fade-in, [class*="fade-in"] { opacity: 1 !important; animation: none !important; }
+.content, .content > * { opacity: 1 !important; }
+.dcard, .kpi-hero, .kpi-support, .fade-in, [class*="fade-in"] { opacity: 1 !important; }
 
 
 /* v1.5 — final: global rules may only flatten corners and shadows. */
@@ -2187,3 +2186,7 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 }
 /* screens whose first child is a heading block keep the same optical start */
 .dsk-screen > .page-hdr:first-child { display: block; min-height: 0; }
+
+
+/* Ask thinking dots must always animate */
+.ask-dot { animation: askDot 1.2s ease-in-out infinite !important; opacity: 1; }

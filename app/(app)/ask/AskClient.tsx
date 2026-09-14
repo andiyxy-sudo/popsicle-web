@@ -96,6 +96,7 @@ function parseAnswer(text: string) {
   let tags: string[] = []
   const body: string[] = []
   let play = ''
+  let stats: Array<{ v: string; k: string }> = []
   let sources: string[] = []
   let inPlay = false
   lines.forEach((raw, i) => {
@@ -103,6 +104,13 @@ function parseAnswer(text: string) {
     if (!l) { if (!inPlay) body.push(''); return }
     if (i === 0 && l.length < 70 && !/^[-*•]/.test(l)) { title = l.replace(/[.:]$/, ''); return }
     if (/^tags:/i.test(l)) { tags = l.replace(/^tags:/i, '').split('|').map(t => t.trim()).filter(Boolean); return }
+    if (/^stats:/i.test(l)) {
+      stats = l.replace(/^stats:/i, '').split(',').map(pair => {
+        const [v, k] = pair.split('|').map(x => x.trim())
+        return v && k ? { v, k } : null
+      }).filter(Boolean) as Array<{ v: string; k: string }>
+      return
+    }
     if (/^sources:/i.test(l)) { sources = l.replace(/^sources:/i, '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean); inPlay = false; return }
     if (/^(recommended play|counter-play|next move)\s*:?/i.test(l)) {
       inPlay = true
@@ -112,11 +120,11 @@ function parseAnswer(text: string) {
     if (inPlay) { play = (play + ' ' + l).trim(); return }
     body.push(l)
   })
-  return { title, tags, body, play, sources }
+  return { title, tags, body, play, sources, stats }
 }
 
 function AnswerCard({ text }: { text: string }) {
-  const { title, tags, body, play, sources } = parseAnswer(text)
+  const { title, tags, body, play, sources, stats } = parseAnswer(text)
   const sev = (tags[0] || '').toLowerCase()
   const sevColor = sev.includes('critical') || sev.includes('risk') ? 'var(--critical, #c43d2b)'
     : sev.includes('watch') ? 'var(--warn, #d38b1d)'
@@ -145,7 +153,7 @@ function AnswerCard({ text }: { text: string }) {
   flush(999)
 
   return (
-    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', boxShadow: '0 2px 12px rgba(14,13,11,.04)' }}>
+    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
@@ -164,9 +172,19 @@ function AnswerCard({ text }: { text: string }) {
             ))}
           </div>
         )}
+        {stats.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(stats.length, 3)}, 1fr)`, gap: 10, margin: '4px 0 16px' }}>
+            {stats.slice(0, 3).map((st, i) => (
+              <div key={i} style={{ background: 'var(--inset, #F0EDE7)', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: i === 0 ? sevColor : 'var(--good, #2f8f5b)' }}>{st.v}</div>
+                <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 3 }}>{st.k}</div>
+              </div>
+            ))}
+          </div>
+        )}
         {paras}
         {play && (
-          <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)' }}>
+          <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
             <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.6 }}>{inline(play, 0)}</div>
           </div>
@@ -271,7 +289,7 @@ export function AskClient() {
       ))}
 
       {busy && (
-        <div style={{ marginTop: 16, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', padding: '16px 20px', maxWidth: 430 }}>
+        <div style={{ marginTop: 16, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, padding: '16px 20px', maxWidth: 430, boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span style={{ display: 'inline-flex', gap: 6, padding: '8px 14px', borderRadius: 999, background: 'var(--inset, #F0EDE7)' }}>
               {[0, 1, 2].map(i => (
