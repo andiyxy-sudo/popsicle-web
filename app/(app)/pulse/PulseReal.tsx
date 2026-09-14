@@ -248,33 +248,33 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)', marginBottom: 14 }}>{t}</div>
         )
         const band = (label: string, n: number, color: string, hint: string) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flex: 'none' }} />
-            <span style={{ flex: 1, fontSize: 16, color: 'var(--ink)' }}>{label} <span style={{ color: 'var(--ink-faint)' }}>· {hint}</span></span>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-.03em', color }}>{n}</span>
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flex: 'none' }} />
+            <span style={{ flex: 1, fontSize: 14, color: 'var(--ink)' }}>{label} <span style={{ color: 'var(--ink-faint)' }}>· {hint}</span></span>
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: '-.03em', color }}>{n}</span>
           </div>
         )
         return (
           <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: 'var(--paper, #FBF8F3)', padding: '40px 44px 44px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 430, background: 'var(--paper, #FBF8F3)', padding: '26px 28px 28px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />detection quality
                 </span>
                 <button onClick={() => setBig(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
               </div>
-              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.035em', margin: '14px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
-              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '26px 0 28px' }} />
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '18px 0 18px' }} />
 
               {mlbl('average across ' + confs.length + ' analysed signal' + (confs.length === 1 ? '' : 's'))}
               <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
-                <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 56, letterSpacing: '-.045em', lineHeight: 1, color: clrOf(pct) }}>{pct}%</span>
+                <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, color: clrOf(pct) }}>{pct}%</span>
                 <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
                   <span style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: clrOf(pct) }} />
                 </span>
               </div>
 
-              <div style={{ marginTop: 34 }}>
+              <div style={{ marginTop: 24 }}>
                 {mlbl('distribution')}
                 {band('High', hi, 'var(--good, #2f8f5b)', 'act directly')}
                 {band('Medium', mid, 'var(--warn, #d38b1d)', 'skim the quote')}
@@ -282,21 +282,21 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
               </div>
 
               {scored.length > 0 && (
-                <div style={{ marginTop: 34 }}>
+                <div style={{ marginTop: 24 }}>
                   {mlbl("what's driving the number")}
                   {scored.slice(0, 6).map(({ sg, c }) => (
-                    <div key={sg.id} onClick={() => { setBig(false); router.push(`/signals?signal=${sg.id}`) }} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: clrOf(c), width: 42, flex: 'none' }}>{c}%</span>
-                      <span style={{ flex: 1, minWidth: 0, fontSize: 16, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sg.account_name ? `${sg.account_name}: ` : ''}{sg.title}</span>
+                    <div key={sg.id} onClick={() => { setBig(false); router.push(`/signals?signal=${sg.id}`) }} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: clrOf(c), width: 38, flex: 'none' }}>{c}%</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 14, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sg.account_name ? `${sg.account_name}: ` : ''}{sg.title}</span>
                       <span style={{ color: 'var(--accent)', fontSize: 15 }}>→</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div style={{ marginTop: 30, paddingLeft: 16, borderLeft: `3px solid var(--accent)` }}>
+              <div style={{ marginTop: 22, paddingLeft: 14, borderLeft: `2px solid var(--accent)` }}>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>how it improves</div>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>Transcribed calls give the clearest evidence. Removing wrong signals teaches detection what to skip.</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>Transcribed calls give the clearest evidence. Removing wrong signals teaches detection what to skip.</div>
               </div>
             </div>
           </div>
