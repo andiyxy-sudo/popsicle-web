@@ -119,14 +119,14 @@ export default function LoginPage() {
 
         {/* demo banner */}
         <button onClick={handleDemo} disabled={loading} style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 14, padding: '16px 18px', border: 0, cursor: 'pointer',
-          background: 'linear-gradient(135deg, #FF8A50, #FF6B35)', color: '#fff', textAlign: 'center', fontFamily: 'inherit',
+          width: '100%', display: 'flex', alignItems: 'center', gap: 14, padding: '16px 18px', border: 0, cursor: 'pointer',
+          background: 'linear-gradient(135deg, #FF8A50, #FF6B35)', color: '#fff', fontFamily: 'inherit',
           boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)', opacity: loading ? .7 : 1,
         }}>
           <span style={{ width: 26, height: 26, borderRadius: '50%', background: 'rgba(255,255,255,.22)', display: 'grid', placeItems: 'center', flex: 'none' }}>
             <svg width="9" height="10" viewBox="0 0 9 10" fill="#fff"><path d="M0 0l9 5-9 5z"/></svg>
           </span>
-          <span style={{ textAlign: 'center' }}>
+          <span style={{ flex: 1, textAlign: 'center' }}>
             <span style={{ display: 'block', fontSize: 14, fontWeight: 700 }}>Try the demo account</span>
             <span style={{ display: 'block', fontSize: 11.5, color: 'rgba(255,255,255,.85)', marginTop: 1 }}>Full access · no signup · instant</span>
           </span>
