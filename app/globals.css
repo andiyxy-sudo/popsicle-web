@@ -2164,3 +2164,6 @@ a.ed-sb-item.on, a.ed-sb-item:hover { color: #FBF8F3; }
   display: flex; justify-content: center; pointer-events: none;
 }
 .ed-askbar { pointer-events: auto; }
+
+/* v4.6 — the floating Ask bar hides while any sheet is open */
+body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
