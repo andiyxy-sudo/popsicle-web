@@ -7,7 +7,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS } from '@/lib/demo-dataset'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
@@ -23,44 +22,13 @@ const TYPE_LABELS: Record<string, string> = {
 }
 const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${v}`
 
-export function AccountPage({ accountName }: { accountName: string }) {
+export function AccountPage({ accountName, account, signals, messages }: { accountName: string; account: Acct | null; signals: Sig[]; messages: Msg[] }) {
   const router = useRouter()
   const [tab, setTab] = useState<'overview' | 'comms' | 'people' | 'timeline' | 'contracts'>('overview')
-  const [acct, setAcct] = useState<Acct | null>(null)
-  const [signals, setSignals] = useState<Sig[]>([])
-  const [messages, setMessages] = useState<Msg[]>([])
-  const [loading, setLoading] = useState(true)
+  const acct = account
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
-  useEffect(() => {
-    let dead = false
-    async function load() {
-      const demo = DEMO_ACCOUNTS.find(a => a.name === accountName) as Acct | undefined
-      if (demo) {
-        if (dead) return
-        setAcct(demo)
-        setSignals((DEMO_SIGNALS as unknown as Sig[]).filter(s => s.account_name === accountName))
-        setMessages((DEMO_MESSAGES as unknown as Msg[]).filter(m => m.account_name === accountName).slice(0, 40))
-        setLoading(false)
-        return
-      }
-      const supa = createClient()
-      const { data: { user } } = await supa.auth.getUser()
-      if (!user) return
-      const { data: a } = await supa.from('accounts').select('*').eq('user_id', user.id).eq('name', accountName).maybeSingle()
-      if (!a) { if (!dead) setLoading(false); return }
-      const payload = await supa.rpc('get_account_360', { p_account_id: a.id })
-      const p = (payload.data ?? {}) as { messages?: Msg[]; signals?: Sig[] }
-      if (dead) return
-      setAcct(a as Acct)
-      setSignals(p.signals ?? [])
-      setMessages(p.messages ?? [])
-      setLoading(false)
-    }
-    load()
-    return () => { dead = true }
-  }, [accountName])
 
   const open = useMemo(() => signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open')), [signals])
   const risk = (acct?.risk_level || (open.some(s => s.severity === 'high') ? 'high' : open.some(s => s.severity === 'watch') ? 'medium' : 'low')).toLowerCase()
@@ -91,7 +59,6 @@ export function AccountPage({ accountName }: { accountName: string }) {
     { k: 'Financial', v: Math.max(10, Math.min(100, 75 - open.filter(s => s.signal_type === 'price_flinch').length * 35)) },
   ]
 
-  if (loading) return <div className="dsk-screen on"><div style={{ padding: '60px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Loading account…</div></div>
   if (!acct) return (
     <div className="dsk-screen on">
       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Account 360</div>
@@ -214,24 +181,56 @@ export function AccountPage({ accountName }: { accountName: string }) {
       )}
 
       {/* COMMS */}
-      {tab === 'comms' && (
-        <div style={{ marginTop: 26 }}>
-          {messages.length === 0 && <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No correspondence recorded.</div>}
-          {messages.map(m => (
-            <div key={m.id} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>{(m.sender || '').replace(/<.*>/, '').trim() || 'Message'}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{m.integration}{m.direction ? ` · ${m.direction}` : ''}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
-                  {mounted && m.received_at ? new Date(m.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-                </span>
-              </div>
-              {m.subject && <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-muted)', marginTop: 4 }}>{m.subject}</div>}
-              {m.content && <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 4 }}>{m.content}</div>}
-            </div>
-          ))}
-        </div>
-      )}
+      {tab === 'comms' && (() => {
+        const sorted = [...messages].filter(m => m.received_at).sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))
+        if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No correspondence recorded for this account.</div>
+        const dayLabel = (iso: string) => {
+          const d = new Date(iso); const t = new Date(); t.setHours(0, 0, 0, 0)
+          const y = new Date(t); y.setDate(y.getDate() - 1)
+          const dd = new Date(d); dd.setHours(0, 0, 0, 0)
+          if (dd.getTime() === t.getTime()) return 'Today'
+          if (dd.getTime() === y.getTime()) return 'Yesterday'
+          return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+        }
+        let lastDay = ''
+        return (
+          <div style={{ marginTop: 26 }}>
+            {sorted.map(m => {
+              const day = mounted ? dayLabel(m.received_at!) : ''
+              const showDay = !!day && day !== lastDay
+              if (showDay) lastDay = day
+              const out = (m.direction || '').toLowerCase() === 'outbound'
+              const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].trim() || 'Them')
+              return (
+                <div key={m.id}>
+                  {showDay && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 6px' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{day}</span>
+                      <span style={{ flex: 1, height: 1, background: 'var(--hairline, #EFEAE1)' }} />
+                    </div>
+                  )}
+                  <div style={{ display: 'grid', gridTemplateColumns: '76px minmax(0,1fr) auto', gap: 16, alignItems: 'baseline', padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: out ? 'var(--accent)' : 'var(--ink-faint)' }}>
+                      {out ? 'sent' : 'received'}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{who}</span>
+                        {m.subject && <span style={{ fontSize: 14, color: 'var(--ink)' }}>{m.subject}</span>}
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{m.integration}</span>
+                      </div>
+                      {m.content && <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5 }}>{m.content}</div>}
+                    </div>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+                      {mounted && m.received_at ? new Date(m.received_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
+                    </span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* PEOPLE */}
       {tab === 'people' && (
@@ -258,27 +257,40 @@ export function AccountPage({ accountName }: { accountName: string }) {
       )}
 
       {/* TIMELINE */}
-      {tab === 'timeline' && (
-        <div style={{ marginTop: 26 }}>
-          {signals.length === 0 && <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>}
-          {signals.map(s => (
-            <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
-              style={{ display: 'flex', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', width: 64, flex: 'none', paddingTop: 3 }}>
-                {mounted && s.created_at ? new Date(s.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-              </span>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{s.title}</div>
-                <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.55 }}>{s.description}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 6 }}>
-                  {TYPE_LABELS[s.signal_type || ''] || 'signal'} · via {s.source_integration || 'unknown'}{s.status === 'handled' ? ' · handled' : ''}
+      {tab === 'timeline' && (() => {
+        const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+        if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
+        return (
+          <div style={{ marginTop: 30, position: 'relative', paddingLeft: 26 }}>
+            <span style={{ position: 'absolute', left: 4, top: 6, bottom: 6, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+            {sorted.map(sg => {
+              const c = sg.severity === 'high' ? 'var(--critical, #c43d2b)' : sg.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
+              const handled = sg.status === 'handled'
+              return (
+                <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)}
+                  style={{ position: 'relative', padding: '0 0 28px', cursor: 'pointer', opacity: handled ? .62 : 1 }}>
+                  <span style={{ position: 'absolute', left: -26, top: 5, width: 9, height: 9, borderRadius: '50%', background: handled ? 'var(--paper, #FBF8F3)' : c, border: `2px solid ${c}` }} />
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: c }}>
+                      {TYPE_LABELS[sg.signal_type || ''] || 'signal'}
+                    </span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+                      {mounted && sg.created_at ? new Date(sg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                      {sg.source_integration ? ` · ${sg.source_integration}` : ''}
+                    </span>
+                    {handled && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--good, #2f8f5b)' }}>handled</span>}
+                    {sg.risk_amount ? <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: c }}>{money(sg.risk_amount)}</span> : null}
+                  </div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', marginTop: 6, lineHeight: 1.4 }}>{sg.title}</div>
+                  {sg.description && sg.description !== sg.title && (
+                    <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 5 }}>{sg.description}</div>
+                  )}
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )
+      })()}
 
       {/* CONTRACTS */}
       {tab === 'contracts' && (
