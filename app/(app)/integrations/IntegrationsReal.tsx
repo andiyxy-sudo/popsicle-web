@@ -531,7 +531,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                 const live = !!p.fn
                 return (
                   <div key={p.key} onClick={on ? () => detail(p) : undefined}
-                    style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
+                    style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
@@ -546,14 +546,14 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                     </div>
                     {on ? (
                       <button onClick={e => { e.stopPropagation(); detail(p) }}
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 22px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
                     ) : live ? (
                       <button onClick={e => { e.stopPropagation(); connect(p) }} disabled={busy === p.key}
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 24px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>
                         {busy === p.key ? 'Starting...' : 'Connect'}
                       </button>
                     ) : (
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>soon</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', textAlign: 'center' }}>soon</span>
                     )}
                   </div>
                 )

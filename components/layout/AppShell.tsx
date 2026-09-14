@@ -44,8 +44,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       ? new MutationObserver(() => { if (el.scrollTop < 240) el.scrollTop = 0 })
       : null
     if (obs && el) obs.observe(el, { childList: true, subtree: true })
-    const t3 = setTimeout(() => obs?.disconnect(), 1500)
-    return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); obs?.disconnect() }
+    // Content growing (data arriving) must not push the view down either.
+    const ro = el && typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => { if (el.scrollTop > 0 && el.scrollTop < 240) el.scrollTop = 0 })
+      : null
+    if (ro && el) ro.observe(el)
+    const t3 = setTimeout(() => { obs?.disconnect(); ro?.disconnect() }, 2000)
+    return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); obs?.disconnect(); ro?.disconnect() }
   }, [pathname])
 
   const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }
@@ -62,7 +67,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v2.0</span>
+            <span>v2.3</span>
           </footer>
         </div>
       </div>

@@ -268,7 +268,10 @@ button { font-family:'Outfit',sans-serif; }
   flex:1; overflow-y:auto; overflow-x:hidden;
   padding:32px 36px 56px;
   background:var(--bg);
-  scroll-behavior:smooth;
+  /* must be auto: smooth turns every programmatic reset into an animation
+     that can be interrupted, leaving the page part-scrolled on load. */
+  scroll-behavior:auto;
+  overflow-anchor:none;
 }
 .content::-webkit-scrollbar { width:7px; }
 .content::-webkit-scrollbar-track { background:transparent; }

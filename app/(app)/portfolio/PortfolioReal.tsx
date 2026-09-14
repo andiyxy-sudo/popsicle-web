@@ -199,7 +199,8 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
-                  <span style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span onClick={e => { e.stopPropagation(); openA360(a) }} title="Open account risk detail"
+                    style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} /><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px' }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>

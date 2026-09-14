@@ -175,22 +175,65 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
         ))}
       </div>
 
-      {/* conversation volume */}
+      {/* conversation volume - flowing line + area (prototype style) */}
       {hasVolume && (
         <section style={{ marginTop: 64 }}>
-          {SEC('Conversation volume', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{WEEKS} weeks</span>)}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 150, marginTop: 24 }}>
-            {weeks.map((w, i) => {
-              const total = w.in + w.out
-              const h = Math.max(2, (total / maxWeek) * 130)
-              return (
-                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: '100%', height: h, background: i === weeks.length - 1 ? 'var(--accent)' : 'var(--ink)', opacity: i === weeks.length - 1 ? 1 : .16 }} />
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: 'var(--ink-faint)' }}>{w.label}</span>
+          {SEC('Conversation volume', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{WEEKS} weeks · inbound + outbound</span>)}
+          {(() => {
+            const W = 900, H = 190, PAD = 6
+            const maxV = Math.max(1, ...weeks.map(w => w.in + w.out))
+            const xs = weeks.map((_, i) => (i / Math.max(1, WEEKS - 1)) * W)
+            const ysTotal = weeks.map(w => H - PAD - ((w.in + w.out) / maxV) * (H - PAD * 2))
+            const ysIn = weeks.map(w => H - PAD - (w.in / maxV) * (H - PAD * 2))
+            // Catmull-Rom -> cubic bezier for the flowing curve the prototype uses
+            const curve = (ys: number[]) => {
+              let d = `M${xs[0]},${ys[0]}`
+              for (let i = 0; i < xs.length - 1; i++) {
+                const x0 = xs[Math.max(0, i - 1)], y0 = ys[Math.max(0, i - 1)]
+                const x1 = xs[i], y1 = ys[i]
+                const x2 = xs[i + 1], y2 = ys[i + 1]
+                const x3 = xs[Math.min(xs.length - 1, i + 2)], y3 = ys[Math.min(ys.length - 1, i + 2)]
+                d += ` C${x1 + (x2 - x0) / 6},${y1 + (y2 - y0) / 6} ${x2 - (x3 - x1) / 6},${y2 - (y3 - y1) / 6} ${x2},${y2}`
+              }
+              return d
+            }
+            const lineTotal = curve(ysTotal)
+            const lineIn = curve(ysIn)
+            const area = `${lineTotal} L${W},${H} L0,${H} Z`
+            return (
+              <div style={{ marginTop: 26 }}>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={190} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+                  <defs>
+                    <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--accent, #E85A25)" stopOpacity=".16" />
+                      <stop offset="100%" stopColor="var(--accent, #E85A25)" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {[0.25, 0.5, 0.75].map(f => (
+                    <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--hairline, #EFEAE1)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                  ))}
+                  <path d={area} fill="url(#volFill)" />
+                  <path d={lineTotal} fill="none" stroke="var(--accent, #E85A25)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d={lineIn} fill="none" stroke="var(--ink, #0E0D0B)" strokeWidth="1.5" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" opacity=".45" strokeLinecap="round" />
+                  {xs.map((x, i) => (
+                    <circle key={i} cx={x} cy={ysTotal[i]} r={i === xs.length - 1 ? 5 : 3}
+                      fill={i === xs.length - 1 ? 'var(--accent, #E85A25)' : 'var(--paper, #FBF8F3)'}
+                      stroke="var(--accent, #E85A25)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                  ))}
+                </svg>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
+                  {weeks.map((w, i) => (
+                    <span key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: i === weeks.length - 1 ? 'var(--accent)' : 'var(--ink-faint)' }}>{w.label}</span>
+                  ))}
                 </div>
-              )
-            })}
-          </div>
+                <div style={{ display: 'flex', gap: 22, marginTop: 16, fontSize: 12.5, color: 'var(--ink-muted)' }}>
+                  <span><span style={{ display: 'inline-block', width: 16, height: 2, background: 'var(--accent)', verticalAlign: 'middle', marginRight: 8 }} />total messages</span>
+                  <span><span style={{ display: 'inline-block', width: 16, height: 2, background: 'var(--ink)', opacity: .45, verticalAlign: 'middle', marginRight: 8 }} />inbound only</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>peak {maxV}/week</span>
+                </div>
+              </div>
+            )
+          })()}
         </section>
       )}
 

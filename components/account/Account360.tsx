@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS } from '@/lib/demo-dataset'
 
 // ---------- meeting-artifact classifier (port of _shared/messageArtifact.ts
 // per the mobile contract's 5 rule families; the DB column is informational,
@@ -214,7 +214,7 @@ export function Account360() {
   const [openFor, setOpenFor] = useState<{ id?: string; name: string } | null>(null)
   const [data, setData] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(false)
-  const [tab, setTab] = useState<'comms' | 'timeline' | 'commitments'>('comms')
+  const [tab, setTab] = useState<'comms' | 'timeline' | 'commitments' | 'people' | 'contracts'>('comms')
   const [fType, setFType] = useState<string | null>(null)
   const [fSev, setFSev] = useState<string | null>(null)
   const [fStatus, setFStatus] = useState<string | null>(null)
@@ -359,8 +359,8 @@ export function Account360() {
             <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 19, lineHeight: 1, paddingTop: 2 }}>✕</button>
           </div>
           <div style={{ display: 'flex', gap: 2, marginTop: 14 }}>
-            {(['comms', 'timeline', 'commitments'] as const).map(t => (
-              <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 16px', fontSize: 12, fontWeight: 800, color: tab === t ? 'var(--o)' : 'var(--t3)', background: 'none', border: 'none', borderBottom: tab === t ? '2.5px solid var(--o)' : '2.5px solid transparent', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", textTransform: 'capitalize' }}>{t === 'comms' ? 'Comms' : t === 'timeline' ? 'Timeline' : 'Commitments'}</button>
+            {(['comms', 'people', 'timeline', 'commitments', 'contracts'] as const).map(t => (
+              <button key={t} onClick={() => setTab(t)} style={{ padding: '9px 16px', fontSize: 12, fontWeight: 800, color: tab === t ? 'var(--o)' : 'var(--t3)', background: 'none', border: 'none', borderBottom: tab === t ? '2.5px solid var(--o)' : '2.5px solid transparent', cursor: 'pointer', fontFamily: "'Outfit',sans-serif", textTransform: 'capitalize' }}>{t === 'comms' ? 'Comms' : t === 'timeline' ? 'Timeline' : t === 'commitments' ? 'Commitments' : t === 'people' ? 'People' : 'Contracts'}</button>
             ))}
           </div>
         </div>
@@ -415,6 +415,58 @@ export function Account360() {
               })}
             </div>
           )}
+
+          {/* ============ PEOPLE ============ */}
+          {!loading && data && tab === 'people' && (() => {
+            const ppl = DEMO_PEOPLE[acc.name || openFor.name] ?? []
+            if (!ppl.length) return <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>No contact roles recorded for this account yet.</div>
+            const badgeColor = (b: string) => b === 'CHAMPION' ? 'var(--good, #2f8f5b)' : b === 'BLOCKER' || b === 'DECISION MAKER' ? 'var(--critical, #c43d2b)' : 'var(--blue, #2f6f9f)'
+            return (
+              <div>
+                {ppl.map(person => (
+                  <div key={person.name} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{person.name}</span>
+                      <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{person.role}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', color: badgeColor(person.badge) }}>{person.badge}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{person.last}</span>
+                    </div>
+                    <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.55, marginTop: 6 }}>{person.desc}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+                      <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative', maxWidth: 220 }}>
+                        <span style={{ position: 'absolute', inset: 0, width: `${person.eng}%`, background: person.eng >= 70 ? 'var(--good, #2f8f5b)' : person.eng >= 40 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)' }} />
+                      </span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{person.eng}% engaged · {person.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
+
+          {/* ============ CONTRACTS ============ */}
+          {!loading && data && tab === 'contracts' && (() => {
+            const cons = DEMO_CONTRACTS[acc.name || openFor.name] ?? []
+            if (!cons.length) return <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>No contracts on file for this account.</div>
+            return (
+              <div>
+                {cons.map(c => (
+                  <div key={c.name} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{c.name}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', color: c.status.includes('DUE') || c.status.includes('PENDING') ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)' }}>{c.status}</span>
+                      <span style={{ marginLeft: 'auto', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-.03em', color: 'var(--ink)' }}>{c.value}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 4 }}>{c.type}</div>
+                    <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 10, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+                      <span>{c.po}</span><span>{c.start} → {c.end}</span>
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 8 }}>{c.invoice}</div>
+                  </div>
+                ))}
+              </div>
+            )
+          })()}
 
           {/* ============ COMMITMENTS: promises with state ============ */}
           {!loading && data && tab === 'commitments' && (
