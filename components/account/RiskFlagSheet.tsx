@@ -1,6 +1,6 @@
 'use client'
 
-// RiskFlagSheet — the diagnosis sheet behind every risk pill, ported from the
+// RiskFlagSheet, the diagnosis sheet behind every risk pill, ported from the
 // design handoff (react/RiskFlagModal.jsx). Severity is carried by a mono
 // eyebrow, the confidence numeral and the pattern rule, all in the flag colour.
 // Everything shown is derived from that account's real open signals.

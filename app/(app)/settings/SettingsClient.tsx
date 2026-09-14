@@ -1,6 +1,6 @@
 'use client'
 
-// Settings — design layout: left section label column, right hairline rows.
+// Settings, design layout: left section label column, right hairline rows.
 // Every row reflects something real; nothing here implies a feature that
 // does not exist (no billing, no seats, no fabricated device list).
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-// Forecast — real close dates, real values, real risk. Weighted by stage
+// Forecast, real close dates, real values, real risk. Weighted by stage
 // (a published ladder, not a hidden model) and discounted by open high-severity
 // signals on that account, so the "at risk" figure traces to actual evidence.
 // No close date, no row: absence over invention.

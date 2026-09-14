@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 
-// Team — coverage by owner, computed from the accounts each person owns and
+// Team, coverage by owner, computed from the accounts each person owns and
 // the signals raised on them. Single-seat workspaces see their own coverage
 // rather than an empty "invite your team" screen. Seats/invites are not built,
 // so nothing here pretends they are.

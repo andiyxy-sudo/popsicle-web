@@ -190,7 +190,7 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
       {items.map(sg => (
         <div key={sg.id} className="activity-item">
           <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
-          <div className="activity-body">{sg.status === 'handled' && <span style={{ color: 'var(--ok)', fontWeight: 900 }}>✓ </span>}{sg.account_name ? <strong>{sg.account_name}</strong> : null}{sg.account_name ? ' — ' : ''}{sg.title}</div>
+          <div className="activity-body">{sg.status === 'handled' && <span style={{ color: 'var(--ok)', fontWeight: 900 }}>✓ </span>}{sg.account_name ? <strong>{sg.account_name}</strong> : null}{sg.account_name ? ', ' : ''}{sg.title}</div>
           <div className="activity-time">{ago(sg.created_at)}</div>
         </div>
       ))}
@@ -685,7 +685,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         <span style={{ color: 'var(--ink-muted)' }}>
           {atRiskTotal > 0 && riskAccts > 0
             ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRiskTotal)}</span> of risk{highs.length > 0 ? ' and need you today' : ''}.</>
-            : positives.length > 0 ? <>Momentum is on your side — {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
+            : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
             : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
             : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
         </span>
@@ -710,10 +710,10 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       return ACTION_BY_TYPE[sg.signal_type || ''] || 'open it and decide'
     }
     const rows: Array<{ pre: string; strong: string }> = []
-    for (const sg of highs.slice(0, 3)) rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) })
-    if (rows.length < 3 && positives[0]) rows.push({ pre: `${positives[0].account_name ? positives[0].account_name + ': ' : ''}${positives[0].title} — `, strong: actFor(positives[0]) })
+    for (const sg of highs.slice(0, 3)) rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title}: `, strong: actFor(sg) })
+    if (rows.length < 3 && positives[0]) rows.push({ pre: `${positives[0].account_name ? positives[0].account_name + ': ' : ''}${positives[0].title}: `, strong: actFor(positives[0]) })
     const watch = open.filter(sg => sg.severity === 'watch').slice(0, Math.max(0, 3 - rows.length))
-    for (const sg of watch) { if (rows.length >= 5) break; rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) }) }
+    for (const sg of watch) { if (rows.length >= 5) break; rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title}: `, strong: actFor(sg) }) }
     return rows.slice(0, 3)
   })()
 
@@ -771,6 +771,10 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
               </span>
               <span>{open.length} signal{open.length === 1 ? '' : 's'}</span>
             </button>
+            {inboxOpen && (
+              <div onClick={() => setInboxOpen(false)} aria-hidden
+                style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)' }} />
+            )}
             {inboxOpen && (
               <div style={{ position: 'absolute', top: 44, right: 0, width: 430, maxWidth: 'calc(100vw - 280px)', zIndex: 60, background: 'var(--raised, #FFFDFA)', boxShadow: 'var(--shadow-panel, 0 32px 80px -24px rgba(14,13,11,.35))', animation: 'fadeUp .25s both', textAlign: 'left' }}>
                 <div style={{ background: 'var(--ink)', color: 'var(--paper, #FBF8F3)', padding: '18px 22px 16px' }}>
@@ -870,7 +874,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--wash, #F4F0E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
               <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.45 }}>
                 {sg.status === 'handled' && <span style={{ color: 'var(--good)', fontWeight: 800 }}>✓ </span>}
-                {sg.account_name ? <strong style={{ fontWeight: 600 }}>{sg.account_name}</strong> : null}{sg.account_name ? ' — ' : ''}{sg.title}
+                {sg.account_name ? <strong style={{ fontWeight: 600 }}>{sg.account_name}</strong> : null}{sg.account_name ? ', ' : ''}{sg.title}
               </div>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', flexShrink: 0 }}>{ago(sg.created_at)}</span>
             </div>
@@ -878,7 +882,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         </section>
       </div>
 
-      {/* Accounts needing attention — design AccountTable grid (no <table>,
+      {/* Accounts needing attention, design AccountTable grid (no <table>,
           never scrolls sideways; text tracks truncate before the action button) */}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       <div style={{ marginTop: 80 }}>

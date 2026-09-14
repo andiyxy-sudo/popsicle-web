@@ -66,5 +66,5 @@ export function integrationLabel(provider: string): string {
 }
 
 export function stripEmDash(text: string): string {
-  return text.replace(/[—–]/g, ' - ')
+  return text.replace(/[--]/g, ' - ')
 }

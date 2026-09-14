@@ -136,7 +136,7 @@ async function runAnthropic(system: string, messages: { role: string; content: s
     }
 
     const content = data.content?.[0]?.text ?? ''
-    const cleaned = content.replace(/[—–]/g, ' - ')
+    const cleaned = content.replace(/[--]/g, ' - ')
 
     return NextResponse.json({ content: cleaned })
   } catch (err) {

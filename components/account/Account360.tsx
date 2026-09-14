@@ -1,6 +1,6 @@
 'use client'
 
-// Account 360 — mobile-parity rebuild on the get_account_360 RPC.
+// Account 360, mobile-parity rebuild on the get_account_360 RPC.
 // Architecture (mobile contract): Comms = the EVIDENCE record (one chronological
 // multi-channel feed: emails + Slack + calls interleaved), Timeline = the
 // JUDGMENT record (signals only). Cross-links both ways. Client-side filters
