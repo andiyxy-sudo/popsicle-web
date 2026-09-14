@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 import { PageHead } from '@/components/layout/PageHead'
 // Revenue Intelligence over REAL data, styled to match the showcase design
 // language (gradient hero, SEC section headers, flush cards). Every number is
@@ -60,6 +62,8 @@ function fmtHours(h?: number | null): string {
 const pct = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : 0)
 
 export function IntelligenceReal({ signals, messages, baselines }: { signals: Sig[]; messages: Msg[]; baselines: Baseline[] }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const now = Date.now()
 
   // ---- stats ----
@@ -151,7 +155,7 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
     <div className="dsk-screen on">
       <PageHead
         eyebrow="Intelligence"
-        crumb={`${live.length} signals · last 30 days`}
+        crumb={mounted ? `${live.length} signals · last 30 days` : `${live.length} signals`}
         title={openRisk > 0
           ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtMoney(openRisk)}</span> is exposed across {openHigh.length} critical signal{openHigh.length === 1 ? '' : 's'}.{' '}<span style={{ color: 'var(--ink-muted)' }}>Here is what the last weeks of conversation add up to.</span></>
           : <>{msg30.length} conversations in the last 30 days.{' '}<span style={{ color: 'var(--ink-muted)' }}>Nothing is flagged critical right now.</span></>}

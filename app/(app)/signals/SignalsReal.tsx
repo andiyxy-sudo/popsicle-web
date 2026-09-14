@@ -76,6 +76,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
   const [deepNotFound, setDeepNotFound] = useState(false)
   const [filter, setFilter] = useState<'all' | 'critical' | 'watch' | 'positive'>('all')
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
   const [handleText, setHandleText] = useState('')
   const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
@@ -340,7 +342,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const critical = high
   const totalWatchRisk = watch.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
   const posValue = positive.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
-  const newest = signals[0]?.created_at ? timeAgo(signals[0].created_at) : ''
+  const newest = mounted && signals[0]?.created_at ? timeAgo(signals[0].created_at) : ''
   const srcCount = new Set(signals.map(x => x.source_integration).filter(Boolean)).size
   const shown = filter === 'critical' ? critical : filter === 'watch' ? watch : filter === 'positive' ? positive : [...critical, ...watch, ...positive]
   const ACTION_LABEL: Record<string, string> = {
@@ -443,7 +445,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 5 }}>{quote ? `"${quote}"` : (s.title || body)}</div>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 7 }}>
-                  via {s.source_integration || 'unknown'}{s.created_at ? ` · ${timeAgo(s.created_at)}` : ''}{money ? ` · ${money}` : ''}
+                  via {s.source_integration || 'unknown'}{mounted && s.created_at ? ` · ${timeAgo(s.created_at)}` : ''}{money ? ` · ${money}` : ''}
                 </div>
               </div>
               <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>

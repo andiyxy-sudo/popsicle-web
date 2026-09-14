@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 // Forecast — real close dates, real values, real risk. Weighted by stage
 // (a published ladder, not a hidden model) and discounted by open high-severity
 // signals on that account, so the "at risk" figure traces to actual evidence.
@@ -27,6 +29,8 @@ const monthKey = (iso: string) => { const d = new Date(iso); return `${d.getFull
 const monthLabel = (k: string) => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }
 
 export function ForecastReal({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const open = signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
   const highBy = new Map<string, number>()
@@ -119,7 +123,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       {rows.map(r => (
         <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
           style={{ display: 'grid', gridTemplateColumns: '96px minmax(120px,1.6fr) minmax(70px,.7fr) minmax(90px,.9fr) minmax(60px,.5fr) 96px', columnGap: 10, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 12.5 }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>
             {r.a.name}{r.risky && <span style={{ color: 'var(--critical, #c43d2b)', marginLeft: 8, fontSize: 11.5, fontWeight: 500 }}>at risk</span>}
           </span>

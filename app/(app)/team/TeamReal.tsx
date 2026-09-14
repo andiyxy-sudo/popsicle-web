@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+
 // Team — coverage by owner, computed from the accounts each person owns and
 // the signals raised on them. Single-seat workspaces see their own coverage
 // rather than an empty "invite your team" screen. Seats/invites are not built,
@@ -11,6 +13,8 @@ import { PageHead } from '@/components/layout/PageHead'
 import { formatCurrency } from '@/lib/utils'
 
 export function TeamReal({ accounts, signals, me, integrations }: { accounts: Account[]; signals: Signal[]; me: string; integrations: string[] }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const open = signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
   const handled = signals.filter(s => s.status === 'handled')
@@ -48,7 +52,7 @@ export function TeamReal({ accounts, signals, me, integrations }: { accounts: Ac
     <div className="dsk-screen on">
       <PageHead
         eyebrow="Team"
-        crumb={`${rows.length} owner${rows.length === 1 ? '' : 's'} · ${accounts.length} accounts`}
+        crumb={mounted ? `${rows.length} owner${rows.length === 1 ? '' : 's'} · ${accounts.length} accounts` : `${accounts.length} accounts`}
         title={rows.length > 1
           ? <>{rows.length} people carry {formatCurrency(rows.reduce((s, [, o]) => s + o.value, 0))}.{' '}<span style={{ color: 'var(--ink-muted)' }}>{open.length} signal{open.length === 1 ? '' : 's'} are open across the book.</span></>
           : <>You carry {formatCurrency(rows[0]?.[1].value ?? 0)} across {accounts.length} account{accounts.length === 1 ? '' : 's'}.{' '}<span style={{ color: 'var(--ink-muted)' }}>{open.length} signal{open.length === 1 ? '' : 's'} open{handled.length ? `, ${handled.length} handled so far` : ''}.</span></>}

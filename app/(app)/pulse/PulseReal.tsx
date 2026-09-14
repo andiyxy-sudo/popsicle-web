@@ -666,6 +666,11 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
   const protectedVal = handled.reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
   const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
   const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
+  // Anything derived from the current clock renders after mount only: the
+  // server renders in UTC and the browser in local time, and that mismatch
+  // was blanking the column on first paint.
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const [inboxOpen, setInboxOpen] = useState(false)
   const [confOpen, setConfOpen] = useState(false)
 
@@ -723,7 +728,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
   const activityRows = signals.filter(sg => !sg.is_dismissed && sg.status !== 'deleted').slice(0, 6)
   const ago = (iso?: string | null) => {
-    if (!iso) return ''
+    if (!iso || !mounted) return ''
     const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
     if (m < 60) return `${Math.max(1, m)}m`
     if (m < 1440) return `${Math.floor(m / 60)}h`
@@ -746,7 +751,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       live
     </span>
   )
-  const dateCrumb = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+  const dateCrumb = mounted ? new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' }) : ''
 
   return (
     <div className="dsk-screen on" style={{ maxWidth: 1080 }}>

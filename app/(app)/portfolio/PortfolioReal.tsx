@@ -63,6 +63,8 @@ function agoDays(iso?: string | null): string {
 }
 
 export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; demoSignals?: unknown[] }) {
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
   useEffect(() => {
@@ -207,7 +209,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{agoDays(a.last_contact_date)}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : openA360(a)}
                     style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
