@@ -35,7 +35,7 @@ export async function proxy(request: NextRequest) {
     const dest = pathname + (request.nextUrl.search || '')
     url.pathname = '/login'
     url.search = ''
-    if (dest && dest !== '/dashboard') url.searchParams.set('next', dest)
+    if (dest && dest !== '/pulse') url.searchParams.set('next', dest)
     return NextResponse.redirect(url)
   }
 
@@ -51,7 +51,7 @@ export async function proxy(request: NextRequest) {
       url.pathname = p
       if (q) url.search = '?' + q
     } else {
-      url.pathname = '/dashboard'
+      url.pathname = '/pulse'
     }
     return NextResponse.redirect(url)
   }
