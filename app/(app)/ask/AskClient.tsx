@@ -54,42 +54,43 @@ export function AskClient() {
         eyebrow="Ask AI"
         crumb="grounded in your data"
         title={<>Ask anything.{' '}<span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts, and correspondence.</span></>}
-        right={<span onClick={() => router.back()} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>back</span>}
       />
 
-      <div style={{ paddingBottom: 8 }}>
-        {msgs.length === 0 && !busy && (
-          <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 10 }}>Try asking</div>
-            {SUGGESTIONS.map(sg => (
-              <button key={sg} onClick={() => send(sg)} style={{ display: 'block', width: '100%', textAlign: 'left', background: 'var(--surface, #fff)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', marginBottom: 8, fontSize: 12.5, fontWeight: 600, color: 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>{sg}</button>
-            ))}
-          </div>
-        )}
-        {msgs.map((m, i) => (
-          <div key={i} style={{ display: 'flex', justifyContent: m.role === 'user' ? 'flex-end' : 'flex-start', marginBottom: 10 }}>
-            <div style={{ maxWidth: '82%', padding: '11px 15px', borderRadius: m.role === 'user' ? '14px 14px 4px 14px' : '14px 14px 14px 4px', background: m.role === 'user' ? 'linear-gradient(135deg, #FF6B35, #FF8F5C)' : 'var(--surface, #fff)', border: m.role === 'user' ? 'none' : '1px solid var(--border)', color: m.role === 'user' ? '#fff' : 'var(--t1)', fontSize: 12.5, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-              {m.content}
+      {msgs.length === 0 && !busy && (
+        <div>
+          {SUGGESTIONS.map(sg => (
+            <div key={sg} onClick={() => send(sg)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 15, color: 'var(--ink)' }}>
+              <span>{sg}</span><span style={{ color: 'var(--accent)' }}>→</span>
             </div>
-          </div>
-        ))}
-        {busy && (
-          <div style={{ display: 'flex', gap: 5, padding: '10px 4px' }}>
-            {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--o)', opacity: .5, animation: 'pulse 1.2s ease-in-out infinite', animationDelay: `${i * .18}s` }} />)}
-          </div>
-        )}
-        <div ref={endRef} />
-      </div>
+          ))}
+        </div>
+      )}
 
-      <div style={{ display: 'flex', gap: 9, paddingTop: 18, borderTop: '1px solid var(--hairline, #EFEAE1)', marginTop: 24 }}>
+      {msgs.map((m, i) => (
+        <div key={i} style={{ padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: m.role === 'user' ? 'var(--accent)' : 'var(--ink-faint)', marginBottom: 8 }}>
+            {m.role === 'user' ? 'you' : 'popsicle'}
+          </div>
+          <div style={{ fontSize: 15.5, lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{m.content}</div>
+        </div>
+      ))}
+
+      {busy && (
+        <div style={{ padding: '20px 0', display: 'flex', gap: 5 }}>
+          {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', opacity: .5 }} />)}
+        </div>
+      )}
+      <div ref={endRef} />
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 28 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') send() }}
           placeholder="Ask about any account, signal, or conversation"
-          style={{ flex: 1, padding: '12px 16px', borderRadius: 12, border: '1px solid var(--border)', fontSize: 13, background: 'var(--surface, #fff)', color: 'var(--t1)', outline: 'none', fontFamily: "'Outfit',sans-serif" }}
+          style={{ flex: 1, padding: '14px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', fontSize: 15, background: 'transparent', color: 'var(--ink)', outline: 'none', fontFamily: "'Outfit',sans-serif" }}
         />
-        <button onClick={() => send()} disabled={busy || !input.trim()} style={{ padding: '12px 22px', background: 'linear-gradient(135deg, #FF6B35, #FF8F5C)', color: '#fff', border: 'none', borderRadius: 12, fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", opacity: busy || !input.trim() ? .55 : 1, boxShadow: '0 4px 16px rgba(255,107,53,.3)' }}>Ask</button>
+        <button onClick={() => send()} disabled={busy || !input.trim()} style={{ padding: '12px 26px', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', border: 0, borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", opacity: busy || !input.trim() ? .55 : 1 }}>Ask</button>
       </div>
     </div>
   )

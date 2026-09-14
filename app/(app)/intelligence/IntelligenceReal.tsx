@@ -22,8 +22,8 @@ const WEEKS = 8
 const DAY = 86400000
 
 const SEC = (t: string, right?: React.ReactNode) => (
-  <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-    <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>{t}</span>
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+    <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{t}</h2>
     {right}
   </div>
 )
@@ -151,163 +151,125 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
     <div className="dsk-screen on">
       <PageHead
         eyebrow="Intelligence"
-        crumb="analysed"
-        title={<>Patterns across <span style={{ color: 'var(--accent)' }}>{signals.length}</span> signals.{' '}<span style={{ color: 'var(--ink-muted)' }}>What the last weeks of conversation add up to.</span></>}
+        crumb={`${live.length} signals · last 30 days`}
+        title={openRisk > 0
+          ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtMoney(openRisk)}</span> is exposed across {openHigh.length} critical signal{openHigh.length === 1 ? '' : 's'}.{' '}<span style={{ color: 'var(--ink-muted)' }}>Here is what the last weeks of conversation add up to.</span></>
+          : <>{msg30.length} conversations in the last 30 days.{' '}<span style={{ color: 'var(--ink-muted)' }}>Nothing is flagged critical right now.</span></>}
       />
 
-      {/* Hero */}
-      <div className="dcard" style={{ marginBottom: 20, padding: 0, overflow: 'hidden', background: 'linear-gradient(135deg,#FF5E22 0%,#FF7A30 45%,#F06A1A 80%,#E55F10 100%)', position: 'relative', border: '1px solid rgba(255,107,53,.3)', boxShadow: '0 4px 20px rgba(255,107,53,.32)' }}>
-        <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle,rgba(255,255,255,.07) 1px,transparent 1px)', backgroundSize: '20px 20px', pointerEvents: 'none' }}></div>
-        <div style={{ position: 'absolute', top: -60, right: -40, width: 260, height: 260, background: 'radial-gradient(circle,rgba(255,220,140,.18) 0%,transparent 65%)', pointerEvents: 'none' }}></div>
-        <div style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 0 }}>
-          <div style={{ padding: '24px 30px 20px', borderRight: '1px solid rgba(255,255,255,.12)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.7)" strokeWidth="2" strokeLinecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'rgba(255,255,255,.95)', fontFamily: "'DM Mono',monospace" }}>Pipeline watched by Popsicle</span>
+      {/* naked stats over the rule */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
+        {[
+          { n: openRisk > 0 ? fmtMoney(openRisk) : String(msg30.length), lbl: openRisk > 0 ? `at risk · ${openHigh.length} critical` : 'messages · 30 days', color: openRisk > 0 ? 'var(--critical, #c43d2b)' : 'var(--ink)', d: heroDelta },
+          { n: String(sig30.length), lbl: 'signals raised · 30 days', color: 'var(--ink)', d: delta(sig30.length, sigPrev.length) },
+          { n: String(activeAccounts), lbl: 'accounts active · 14 days', color: 'var(--ink)', d: null },
+          { n: ourAvg != null ? `${Math.round(ourAvg)}h` : '--', lbl: 'our median reply', color: 'var(--accent)', d: null },
+        ].map((st, i, arr) => (
+          <div key={i} style={{ paddingRight: 24, paddingLeft: i === 0 ? 0 : 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+              <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</span>
+              {st.d && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{st.d}</span>}
             </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-              <div style={{ fontSize: 48, fontWeight: 900, color: '#fff', letterSpacing: '-2.5px', lineHeight: 1, textShadow: '0 0 28px rgba(255,255,255,.2)' }}>{heroBig}</div>
-              {heroDelta && <span style={{ fontSize: 13, fontWeight: 700, color: '#FFE0B8' }}>{heroDelta}</span>}
-            </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,.8)', marginTop: 4 }}>{heroBigLbl}</div>
-            {hasVolume && (
-              <div style={{ marginTop: 18 }}>
-                <svg width="100%" height="48" viewBox="0 0 400 48" preserveAspectRatio="none">
-                  <defs><linearGradient id="ir-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#FFB088" stopOpacity=".25"/><stop offset="100%" stopColor="#FFB088" stopOpacity="0"/></linearGradient></defs>
-                  <path d={sparkArea} fill="url(#ir-grad)"/>
-                  <path d={sparkLine} fill="none" stroke="#FFB088" strokeWidth="2" strokeLinecap="round" opacity=".7"/>
-                </svg>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 8, color: 'rgba(255,255,255,.55)', fontFamily: "'DM Mono',monospace", marginTop: 2 }}>
-                  {weeks.map(w => <span key={w.label}>{w.label}</span>)}
-                </div>
-                <div style={{ fontSize: 9, color: 'rgba(255,255,255,.6)', marginTop: 4 }}>Weekly communication volume, 8 weeks</div>
-              </div>
-            )}
+            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
           </div>
-          <div style={{ padding: '24px 28px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, alignContent: 'center' }}>
-            {[
-              [String(sig30.length), 'Signals · 30d'],
-              [String(msg30.length), 'Messages · 30d'],
-              [String(activeAccounts), 'Active accounts'],
-              [String(openHigh.length), 'High risk open'],
-            ].map((s, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,.04)', borderRadius: 12, padding: '14px 16px', border: '1px solid rgba(255,255,255,.04)' }}>
-                <div style={{ fontSize: 28, fontWeight: 900, color: '#fff', letterSpacing: '-1px' }}>{s[0]}</div>
-                <div style={{ fontSize: 10, color: 'rgba(255,255,255,.85)', marginTop: 2 }}>{s[1]}</div>
+        ))}
+      </div>
+
+      {/* conversation volume */}
+      {hasVolume && (
+        <section style={{ marginTop: 64 }}>
+          {SEC('Conversation volume', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{WEEKS} weeks</span>)}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 150, marginTop: 24 }}>
+            {weeks.map((w, i) => {
+              const total = w.in + w.out
+              const h = Math.max(2, (total / maxWeek) * 130)
+              return (
+                <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: '100%', height: h, background: i === weeks.length - 1 ? 'var(--accent)' : 'var(--ink)', opacity: i === weeks.length - 1 ? 1 : .16 }} />
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: 'var(--ink-faint)' }}>{w.label}</span>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 64 }}>
+        {/* signal mix */}
+        <section style={{ minWidth: 0 }}>
+          {SEC('Signal mix')}
+          <div style={{ display: 'flex', height: 6, marginTop: 22, marginBottom: 10 }}>
+            <div style={{ width: `${pct(sevCounts.high, live.length)}%`, background: 'var(--critical, #c43d2b)' }} />
+            <div style={{ width: `${pct(sevCounts.watch, live.length)}%`, background: 'var(--warn, #d38b1d)' }} />
+            <div style={{ width: `${pct(sevCounts.positive, live.length)}%`, background: 'var(--good, #2f8f5b)' }} />
+          </div>
+          <div style={{ display: 'flex', gap: 18, fontSize: 12.5, marginBottom: 20 }}>
+            <span style={{ color: 'var(--critical, #c43d2b)' }}>{sevCounts.high} high</span>
+            <span style={{ color: 'var(--warn, #d38b1d)' }}>{sevCounts.watch} watch</span>
+            <span style={{ color: 'var(--good, #2f8f5b)' }}>{sevCounts.positive} positive</span>
+          </div>
+          {topTypes.map(([k, n]) => (
+            <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+              <span style={{ flex: 1, fontSize: 14, color: 'var(--ink)' }}>{TYPE_LABELS[k] || k}</span>
+              <span style={{ width: 120, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
+                <span style={{ position: 'absolute', inset: 0, width: `${pct(n, Math.max(...topTypes.map(t => t[1])))}%`, background: 'var(--accent)' }} />
+              </span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink)', width: 20, textAlign: 'right' }}>{n}</span>
+            </div>
+          ))}
+        </section>
+
+        {/* where signals come from */}
+        <section style={{ minWidth: 0 }}>
+          {SEC('Where signals come from')}
+          <div style={{ marginTop: 22 }}>
+            {sources.length === 0 && <div style={{ fontSize: 14, color: 'var(--ink-faint)', padding: '16px 0' }}>No sources yet.</div>}
+            {sources.map(([k, n]) => (
+              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ flex: 1, fontSize: 14, color: 'var(--ink)', textTransform: 'capitalize' }}>{k}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{pct(n, live.length)}%</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink)', width: 20, textAlign: 'right' }}>{n}</span>
               </div>
             ))}
           </div>
-        </div>
+        </section>
+
+        {/* engagement */}
+        <section style={{ minWidth: 0 }}>
+          {SEC('Most engaged accounts')}
+          <div style={{ marginTop: 22 }}>
+            {engaged.length === 0 && <div style={{ fontSize: 14, color: 'var(--ink-faint)', padding: '16px 0' }}>No correspondence history yet.</div>}
+            {engaged.map(b => (
+              <div key={b.account_name} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.account_name}</span>
+                <span style={{ width: 90, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
+                  <span style={{ position: 'absolute', inset: 0, width: `${pct(b.total_messages || 0, maxEng)}%`, background: 'var(--ink)' }} />
+                </span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink)', width: 28, textAlign: 'right' }}>{b.total_messages || 0}</span>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
 
-      {/* Volume chart */}
-      {hasVolume && (
-        <div className="dcard" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
-          {SEC('Communication Volume', (
-            <div style={{ display: 'flex', gap: 14, fontSize: 10, color: 'var(--t3)', fontWeight: 600 }}>
-              <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'var(--o)', marginRight: 5 }} />Inbound</span>
-              <span><span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: 2, background: 'rgba(255,107,53,.3)', marginRight: 5 }} />Outbound</span>
+      {/* reply habits */}
+      {(ourAvg != null || theirAvg != null) && (
+        <section style={{ marginTop: 64 }}>
+          {SEC('Reply habits', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>median hours</span>)}
+          <div style={{ display: 'flex', gap: 56, marginTop: 24, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: '-.04em', color: 'var(--accent)' }}>{ourAvg != null ? `${Math.round(ourAvg)}h` : '--'}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6 }}>we reply in</div>
             </div>
-          ))}
-          <div style={{ padding: '18px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 10, height: 120 }}>
-              {weeks.map((w, i) => {
-                const hIn = Math.round((w.in / maxWeek) * 100)
-                const hOut = Math.round((w.out / maxWeek) * 100)
-                return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, height: '100%' }}>
-                    <div style={{ flex: 1, width: '100%', maxWidth: 44, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }} title={`${w.in + w.out} messages`}>
-                      <div style={{ height: `${hOut}%`, background: 'rgba(255,107,53,.3)', borderRadius: '5px 5px 0 0' }} />
-                      <div style={{ height: `${hIn}%`, background: 'var(--o)' }} />
-                    </div>
-                    <div style={{ fontSize: 9.5, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{w.label}</div>
-                  </div>
-                )
-              })}
+            <div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 36, letterSpacing: '-.04em', color: 'var(--ink)' }}>{theirAvg != null ? `${Math.round(theirAvg)}h` : '--'}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6 }}>they reply in</div>
+            </div>
+            <div style={{ flex: 1, minWidth: 220, fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, alignSelf: 'center' }}>
+              Measured across {withPairs.length} account{withPairs.length === 1 ? '' : 's'} with real back-and-forth. Accounts with no reply pairs are excluded rather than counted as zero.
             </div>
           </div>
-        </div>
-      )}
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 20 }}>
-        {/* Signal mix */}
-        {live.length > 0 && (
-          <div className="dcard" style={{ padding: 0, overflow: 'hidden' }}>
-            {SEC('Signal Mix')}
-            <div style={{ padding: '16px 20px' }}>
-              <div style={{ display: 'flex', height: 10, borderRadius: 6, overflow: 'hidden', marginBottom: 8 }}>
-                {sevCounts.high > 0 && <div style={{ width: `${pct(sevCounts.high, live.length)}%`, background: 'var(--danger)' }} />}
-                {sevCounts.watch > 0 && <div style={{ width: `${pct(sevCounts.watch, live.length)}%`, background: 'var(--amber)' }} />}
-                {sevCounts.positive > 0 && <div style={{ width: `${pct(sevCounts.positive, live.length)}%`, background: 'var(--ok)' }} />}
-              </div>
-              <div style={{ display: 'flex', gap: 14, fontSize: 10.5, fontWeight: 700, marginBottom: 16 }}>
-                <span style={{ color: 'var(--danger)' }}>{sevCounts.high} high</span>
-                <span style={{ color: 'var(--amber)' }}>{sevCounts.watch} watch</span>
-                <span style={{ color: 'var(--ok)' }}>{sevCounts.positive} positive</span>
-              </div>
-              {topTypes.map(([type, n]) => (
-                <div key={type} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 7 }}>
-                  <div style={{ width: 130, fontSize: 11.5, fontWeight: 600, color: 'var(--t2)', flexShrink: 0 }}>{TYPE_LABELS[type] || type}</div>
-                  <div style={{ flex: 1, height: 7, background: 'var(--line)', borderRadius: 4, overflow: 'hidden' }}>
-                    <div style={{ width: `${pct(n, topTypes[0][1])}%`, height: '100%', background: 'var(--o)', borderRadius: 4 }} />
-                  </div>
-                  <div style={{ width: 20, textAlign: 'right', fontSize: 11, fontWeight: 800, color: 'var(--t1)', fontFamily: "'DM Mono',monospace" }}>{n}</div>
-                </div>
-              ))}
-              {sources.length > 0 && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-                  {sources.map(([src, n]) => (
-                    <span key={src} style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t2)', background: 'var(--bg)', border: '1px solid var(--line)', padding: '4px 10px', borderRadius: 20, textTransform: 'capitalize' }}>
-                      {src} · {n}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Account engagement */}
-        {engaged.length > 0 && (
-          <div className="dcard" style={{ padding: 0, overflow: 'hidden' }}>
-            {SEC('Account Engagement')}
-            <div style={{ padding: '16px 20px' }}>
-              {engaged.map(b => (
-                <div key={b.account_name} style={{ marginBottom: 12 }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--t1)' }}>{b.account_name}</span>
-                    <span style={{ fontSize: 10, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(b.last_message_at)}</span>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ flex: 1, height: 7, background: 'var(--line)', borderRadius: 4, overflow: 'hidden' }}>
-                      <div style={{ width: `${pct(b.total_messages || 0, maxEng)}%`, height: '100%', background: 'var(--o)', borderRadius: 4 }} />
-                    </div>
-                    <span style={{ fontSize: 10.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>
-                      {b.total_messages} msgs{b.emails_per_week ? ` · ${b.emails_per_week}/wk` : ''}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Reply habits */}
-      {withPairs.length > 0 && (ourAvg != null || theirAvg != null) && (
-        <div className="dcard" style={{ padding: 0, overflow: 'hidden', marginBottom: 20 }}>
-          {SEC('Reply Habits', <span style={{ fontSize: 10, color: 'var(--t3)' }}>{withPairs.length} account{withPairs.length === 1 ? '' : 's'} with real back-and-forth</span>)}
-          <div style={{ padding: '16px 20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-            <div style={{ textAlign: 'center', padding: '14px 0', background: 'var(--bg)', borderRadius: 10 }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--t1)' }}>{fmtHours(ourAvg)}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--t3)', fontWeight: 600 }}>You reply in</div>
-            </div>
-            <div style={{ textAlign: 'center', padding: '14px 0', background: 'var(--bg)', borderRadius: 10 }}>
-              <div style={{ fontSize: 22, fontWeight: 900, color: 'var(--t1)' }}>{fmtHours(theirAvg)}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--t3)', fontWeight: 600 }}>They reply in</div>
-            </div>
-          </div>
-        </div>
+        </section>
       )}
     </div>
   )
