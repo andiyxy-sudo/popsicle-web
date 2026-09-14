@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { SignalsShowcase } from './SignalsShowcase'
+import { DEMO_SIGNALS } from '@/lib/demo-dataset'
 import { SignalsReal } from './SignalsReal'
 
 export default async function SignalsPage() {
@@ -12,7 +12,7 @@ export default async function SignalsPage() {
   const userId = claims.sub as string
 
   if (email === DEMO_EMAIL) {
-    return <SignalsShowcase />
+    return <SignalsReal signals={DEMO_SIGNALS as never} />
   }
 
   const { data: signals } = await supabase

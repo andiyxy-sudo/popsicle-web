@@ -1,5 +1,7 @@
 'use client'
 
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
@@ -53,6 +55,30 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const displayRole = isDemo ? 'Online · VP Sales' : 'Online'
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
 
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [draftName, setDraftName] = useState(displayName)
+  const [draftTz, setDraftTz] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  useEffect(() => {
+    if (profileOpen) {
+      setDraftName(displayName)
+      try { setDraftTz(Intl.DateTimeFormat().resolvedOptions().timeZone || '') } catch { setDraftTz('') }
+      setSaved(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileOpen])
+
+  async function saveProfile() {
+    setSaving(true)
+    // Name lives on the auth user's metadata; email changes are an auth flow,
+    // so this panel shows the address rather than pretending to edit it.
+    await supabase.auth.updateUser({ data: { name: draftName.trim() } }).catch(() => {})
+    setSaving(false); setSaved(true)
+    router.refresh()
+    setTimeout(() => setProfileOpen(false), 700)
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     router.push('/login')
@@ -90,13 +116,71 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         </div>
       </div>
 
-      <div className="ed-sb-user" onClick={handleSignOut} title="Sign out">
+      <div className="ed-sb-user" onClick={() => setProfileOpen(true)} title="Profile">
         <div className="ed-sb-avatar">{initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>
           <div style={{ fontSize: 11.5, color: 'rgba(251,248,243,.45)' }}>{displayRole}</div>
         </div>
       </div>
+      {profileOpen && typeof document !== 'undefined' && createPortal((
+        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both', color: 'var(--ink, #0E0D0B)' }}>
+            <div style={{ padding: '32px 32px 0', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: 'none' }}>{initials}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)' }}>Your profile</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.03em', marginTop: 2 }}>{displayName}</div>
+              </div>
+              <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
+            </div>
+
+            <div style={{ padding: '26px 32px 0', display: 'grid', gap: 20 }}>
+              <label style={{ display: 'block' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Display name</span>
+                <input value={draftName} onChange={e => setDraftName(e.target.value)}
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+              </label>
+              <label style={{ display: 'block' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Work email</span>
+                <input value={user.email} readOnly title="Email changes go through account recovery"
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--hairline, #EFEAE1)', background: 'transparent', color: 'var(--ink-muted, #5C5855)', outline: 0 }} />
+              </label>
+              <label style={{ display: 'block' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Timezone</span>
+                <input value={draftTz} readOnly
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--hairline, #EFEAE1)', background: 'transparent', color: 'var(--ink-muted, #5C5855)', outline: 0 }} />
+              </label>
+            </div>
+
+            <div style={{ padding: '28px 32px 0' }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 6, borderBottom: '1px solid var(--ink, #0E0D0B)' }}>Account</div>
+              {[['Integrations', 'Sources feeding your signals', '/integrations'], ['Settings', 'Preferences and workspace', '/settings']].map(([k, sub, href]) => (
+                <div key={k} onClick={() => { setProfileOpen(false); router.push(href) }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, cursor: 'pointer' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div>{k}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
+                  </div>
+                  <span style={{ color: 'var(--accent)' }}>→</span>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '24px 32px 28px' }}>
+              <span onClick={handleSignOut} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', color: 'var(--critical, #c43d2b)', fontWeight: 500, cursor: 'pointer' }}>Sign out</span>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={saveProfile} disabled={saving || !draftName.trim()}
+                  style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, color: '#fff', cursor: 'pointer',
+                    background: saved ? 'var(--good, #2f8f5b)' : 'linear-gradient(135deg,#FF8A50,#FF6B35)', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: saving ? .7 : 1 }}>
+                  {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ), document.body)}
     </nav>
   )
 }
