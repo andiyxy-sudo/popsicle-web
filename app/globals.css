@@ -2176,3 +2176,38 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
 .dsk-screen > .page-hdr:first-child h1 { margin-top: 0 !important; }
 .dsk-screen h1 { margin-top: 18px; }
 .dsk-screen > .page-hdr:first-child > :first-child { margin-top: 0; }
+
+/* ============================================================
+   REMAINING SCREENS — settings rows, integration tiles, A360 sheet
+   ============================================================ */
+
+/* Settings & any label/value row lists read as hairline rows */
+.set-section, .settings-section { border: 0 !important; background: transparent !important; padding: 0 !important; margin-bottom: 48px !important; }
+.set-row, .settings-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
+  border-radius: 0 !important; background: transparent !important; border-left: 0 !important; border-right: 0 !important; border-top: 0 !important;
+}
+.set-label, .settings-label { font-size: 15px !important; color: var(--ink) !important; font-weight: 500 !important; }
+.set-value, .settings-value { font-size: 14px !important; color: var(--ink-muted) !important; }
+
+/* Integration tiles: square, hairline, no gloss */
+.int-grid { gap: 0 !important; }
+.int-card {
+  border: 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
+  border-radius: 0 !important; box-shadow: none !important; background: transparent !important;
+  padding: 20px 0 !important;
+}
+.int-card:hover { background: rgba(14,13,11,.02) !important; }
+.int-cat { border-bottom: 1px solid var(--rule-strong, #0E0D0B) !important; padding: 0 0 12px !important; margin-top: 44px !important; }
+.int-cat-label {
+  font-family: 'DM Mono', monospace !important; font-size: 10px !important;
+  letter-spacing: 1.6px !important; text-transform: uppercase !important; color: var(--ink-faint) !important;
+}
+.int-ico { border-radius: 0 !important; background: var(--wash, #F4F0E8) !important; }
+
+/* Account 360 slide-over: square editorial sheet */
+[style*="width: 'min(680px"] { background: var(--paper, #FBF8F3) !important; }
+
+/* Forecast / Team / any remaining card grid */
+.dcard-grid { gap: 44px !important; }

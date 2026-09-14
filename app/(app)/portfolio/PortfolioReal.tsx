@@ -169,44 +169,58 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by attention</span>
       </div>
-      <table className="dtable">
-          <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 120 }}>Action</th></tr></thead>
-          <tbody>
-            {[...accounts].sort((x, y) => {
-              const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
-              const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
-              return attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name)) - attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name))
-            }).map(a => {
+      {(() => {
+        const COLS = '24px minmax(74px,1.45fr) minmax(44px,.6fr) minmax(44px,.6fr) minmax(40px,.78fr) minmax(48px,1.05fr) minmax(38px,.56fr) minmax(38px,.56fr) 62px'
+        const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+        const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
+        const ordered = [...accounts].sort((x, y) => {
+          const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
+          const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
+          return attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name)) - attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name))
+        })
+        return (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+              <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
+              <span>Stage</span><span>Signal</span><span>Owner</span><span>Touch</span><span />
+            </div>
+            {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)
               const risk = riskOf(a, sigs)
-              const tags = tagsOf(a, sigs)
               const top = topSignalOf(sigs)
-              const hbg = h < 40 ? 'var(--danger-bg)' : h < 65 ? 'var(--amber-bg)' : 'var(--ok-bg)'
-              const hc = h < 40 ? 'var(--danger)' : h < 65 ? 'var(--amber)' : 'var(--ok)'
-              const sigc = top?.severity === 'high' ? 'var(--danger)' : top?.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
-              const btn = { fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" } as const
               return (
-                <tr key={a.id} className={h < 40 ? 'row-hi' : h < 65 ? 'row-md' : 'row-ok'} onClick={() => openA360(a)} style={{ cursor: 'pointer' }}>
-                  <td><div className="port-health" style={{ background: hbg, color: hc }}>{h}</div></td>
-                  <td><div style={{ fontWeight: 700 }}>{a.name}</div>{a.domain && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{a.domain}</div>}</td>
-                  <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{fmtVal(a.value)}</td>
-                  <td><span className={`rp ${riskClass(risk)}`}>{risk.toUpperCase()}</span></td>
-                  <td style={{ fontSize: 12, color: 'var(--t2)' }}>{a.stage || '--'}</td>
-                  <td style={{ fontSize: 12, color: top ? sigc : 'var(--t4)', maxWidth: 200 }}>{top?.title || '--'}</td>
-                  <td><div className="port-tags">{tags.length ? tags.map(([t, c], i) => <span key={i} className={`port-tag port-tag-${c}`}>{t}</span>) : <span style={{ color: 'var(--t4)', fontSize: 11 }}>--</span>}</div></td>
-                  <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{agoDays(a.last_contact_date)}</td>
-                  <td onClick={e => e.stopPropagation()}>
-                    <div style={{ display: 'flex', gap: 5 }}>
-                      <button style={btn} onClick={() => openA360(a)}>Open</button>
-                      {top && <button style={{ ...btn, borderColor: 'var(--o)', color: 'var(--o)' }} onClick={() => router.push(`/signals?signal=${top.id}&action=reply`)}>Draft</button>}
+                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35 }}>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 21, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
+                  <div style={{ minWidth: 0, paddingLeft: 26 }}>
+                    <span onClick={() => openA360(a)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer' }}>{a.name}</span>
+                    <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
+                  </div>
+                  <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
+                  <span style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />{risk}
+                  </span>
+                  <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
+                  <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.owner || 'You'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{agoDays(a.last_contact_date)}</span>
+                  <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : openA360(a)}
+                    style={{ font: 'inherit', fontSize: 11, fontWeight: 600, width: 62, padding: '6px 0', borderRadius: 999, border: '1.5px solid transparent', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {top ? 'Draft' : 'Open'}
+                  </button>
+                  {sigs.length > 0 && (
+                    <div style={{ gridColumn: '2/-1', display: 'flex', gap: 22, flexWrap: 'wrap', paddingTop: 10, paddingLeft: 26 }}>
+                      {sigs.slice(0, 4).map(sg => (
+                        <span key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', color: sg.severity === 'high' ? riskColor.high : sg.severity === 'positive' ? riskColor.low : riskColor.medium }}>{sg.title}</span>
+                      ))}
                     </div>
-                  </td>
-                </tr>
+                  )}
+                </div>
               )
             })}
-          </tbody>
-        </table>
+          </>
+        )
+      })()}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { PageHead } from '@/components/layout/PageHead'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -49,13 +50,12 @@ export function AskClient() {
 
   return (
     <div className="dsk-screen on" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: 760, margin: '0 auto' }}>
-      <div className="page-hdr" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <h1 style={{ marginBottom: 4 }}>Ask Popsicle</h1>
-          <p>Answers grounded in your live signals, accounts, and correspondence</p>
-        </div>
-        <button onClick={() => router.back()} style={{ fontSize: 11, fontWeight: 700, padding: '7px 14px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Back</button>
-      </div>
+      <PageHead
+        eyebrow="Ask AI"
+        crumb="grounded in your data"
+        title={<>Ask anything.{' '}<span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts, and correspondence.</span></>}
+        right={<span onClick={() => router.back()} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>back</span>}
+      />
 
       <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 16 }}>
         {msgs.length === 0 && !busy && (

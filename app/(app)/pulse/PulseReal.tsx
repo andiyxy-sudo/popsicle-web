@@ -560,6 +560,14 @@ function WeekDigest() {
   )
 }
 
+const TYPE_LABEL_SHORT: Record<string, string> = {
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in',
+  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip',
+  reengaged: 'Re-engaged', call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
+  call_buying_signal: 'Buying signal', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
+  meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
+}
+
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
   // Accounts with a meeting inside 48h (attention-formula factor).
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
@@ -854,82 +862,75 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         </section>
       </div>
 
-      {/* Accounts needing attention (Phase-2 table styling applies) */}
+      {/* Accounts needing attention — design AccountTable grid (no <table>,
+          never scrolls sideways; text tracks truncate before the action button) */}
       <div style={{ marginTop: 80 }}>
-        {secHead('Accounts Needing Attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View portfolio →</span>)}
         {(() => {
-        const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
-        const topSig = new Map<string, { id: string; title: string | null; severity: string | null }>()
-        const counts = new Map<string, { h: number; w: number; p: number }>()
-        for (const sg of openT) {
-          if (!sg.account_name) continue
-          if (!topSig.has(sg.account_name) || (sg.severity === 'high' && topSig.get(sg.account_name)!.severity !== 'high')) topSig.set(sg.account_name, { id: sg.id, title: sg.title ?? null, severity: sg.severity ?? null })
-          const c = counts.get(sg.account_name) ?? { h: 0, w: 0, p: 0 }
-          if (sg.severity === 'high') c.h++; else if (sg.severity === 'watch') c.w++; else if (sg.severity === 'positive') c.p++
-          counts.set(sg.account_name, c)
-        }
-        const rows = accounts
-          .map(a => {
-            const sg = topSig.get(a.name)
-            const c = counts.get(a.name) ?? { h: 0, w: 0, p: 0 }
+          const COLS = '24px minmax(74px,1.45fr) minmax(44px,.6fr) minmax(44px,.6fr) minmax(40px,.78fr) minmax(48px,1.05fr) minmax(38px,.56fr) minmax(38px,.56fr) 62px'
+          const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+          const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
+          const byAcct = new Map<string, Signal[]>()
+          for (const sg of openT) if (sg.account_name) { const a = byAcct.get(sg.account_name) ?? []; a.push(sg); byAcct.set(sg.account_name, a) }
+          const ACTION_LABEL: Record<string, string> = {
+            silent_stall: 'Follow up', call_objection: 'Redline', price_flinch: 'ROI', competitor_mention: 'Compare',
+            legal_loopin: 'Redline', champion_change: 'Map', timeline_slip: 'Confirm', meeting_cancelled: 'Rebook',
+            meeting_declined: 'Rebook', deal_stage_backward: 'Call', call_buying_signal: 'Fast-track',
+            call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close', call_sentiment_drop: 'Call',
+          }
+          const rows = accounts.map(a => {
+            const sigs = byAcct.get(a.name) ?? []
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
-            const acctSigs = signals.filter(x => x.account_name === a.name)
-            return { a, sg, sgId: sg?.id ?? null, nHigh: c.h, nWatch: c.w, nPos: c.p, dark, score: attentionScore(acctSigs, dark, soon48.has(a.name)) }
-          })
-          .filter(r => r.score > 0)
-          .sort((x, y) => y.score - x.score || (Number(y.a.value) || 0) - (Number(x.a.value) || 0))
-          .slice(0, 6)
-        if (!rows.length) return null
-        return (
-          <div className="dcard fade-in fade-in-5" style={{ padding: 0, overflow: 'hidden', marginBottom: 24 }}>
-            <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Accounts Needing Attention</span>
+            const nHigh = sigs.filter(x => x.severity === 'high').length
+            const nWatch = sigs.filter(x => x.severity === 'watch').length
+            const nPos = sigs.filter(x => x.severity === 'positive').length
+            const top = sigs.find(x => x.severity === 'high') ?? sigs[0] ?? null
+            const risk = (a.risk_level || (nHigh ? 'high' : nWatch ? 'medium' : 'low')) as 'high' | 'medium' | 'low'
+            const health = (a.health_score != null && a.health_score > 0) ? a.health_score : Math.max(25, Math.min(95, 90 - nHigh * 18 - nWatch * 6 + nPos * 4))
+            return { a, sigs, dark, top, risk, health, score: attentionScore(sigs, dark, soon48.has(a.name)) }
+          }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 6)
+          if (!rows.length) return null
+          const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
+          return (
+            <>
+              {secHead('Accounts Needing Attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View portfolio →</span>)}
+              <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
+                <span>Stage</span><span>Signal</span><span>Owner</span><span>Touch</span><span />
               </div>
-              <span className="see-all" onClick={() => router.push('/portfolio')} style={{ cursor: 'pointer' }}>View portfolio →</span>
-            </div>
-            <table className="dtable">
-              <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>Value</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 120 }}>Action</th></tr></thead>
-              <tbody>
-                {rows.map(({ a, sg, sgId, nHigh, nWatch, nPos, dark }) => {
-                  const h = (a.health_score != null && a.health_score > 0) ? a.health_score : Math.max(25, Math.min(95, 90 - nHigh * 18 - nWatch * 6 + nPos * 4))
-                  const risk = a.risk_level || (nHigh ? 'high' : nWatch ? 'medium' : 'low')
-                  const tags: Array<[string, string]> = (a.tags && a.tags.length) ? a.tags.slice(0, 3).map(t => [t, 'blue'] as [string, string]) : (() => {
-                    const out: Array<[string, string]> = []
-                    if ((a.value ?? 0) >= 1_000_000) out.push(['Enterprise', 'blue'])
-                    if (nHigh) out.push(['At risk', 'red'])
-                    else if (nPos) out.push(['Momentum', 'green'])
-                    if (a.stage && /decision|contract|bought|negoti/i.test(a.stage)) out.push(['Late stage', 'amber'])
-                    return out.slice(0, 3)
-                  })()
-                  const hbg = h < 40 ? 'var(--danger-bg)' : h < 65 ? 'var(--amber-bg)' : 'var(--ok-bg)'
-                  const hc = h < 40 ? 'var(--danger)' : h < 65 ? 'var(--amber)' : 'var(--ok)'
-                  const btn = { fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" } as const
-                  return (
-                    <tr key={a.id} className={h < 40 ? 'row-hi' : h < 65 ? 'row-md' : 'row-ok'} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ cursor: 'pointer' }}>
-                      <td><div className="port-health" style={{ background: hbg, color: hc }}>{h}</div></td>
-                      <td><div style={{ fontWeight: 700 }}>{a.name}</div>{a.owner && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{a.owner}</div>}</td>
-                      <td style={{ fontWeight: 800, fontFamily: "'DM Mono',monospace" }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</td>
-                      <td><span className={`rp ${risk === 'high' ? 'rhi' : risk === 'medium' ? 'rmd' : 'rlo'}`}>{risk.toUpperCase()}</span></td>
-                      <td style={{ fontSize: 12, color: 'var(--t2)' }}>{a.stage || '--'}</td>
-                      <td style={{ fontSize: 12, color: sg?.severity === 'high' ? 'var(--danger)' : sg?.severity === 'positive' ? 'var(--ok)' : 'var(--amber)', maxWidth: 200 }}>{sg?.title || '--'}</td>
-                      <td><div className="port-tags">{tags.length ? tags.map(([t, c], i) => <span key={i} className={`port-tag port-tag-${c}`}>{t}</span>) : <span style={{ color: 'var(--t4)', fontSize: 11 }}>--</span>}</div></td>
-                      <td style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</td>
-                      <td onClick={e => e.stopPropagation()}>
-                        <div style={{ display: 'flex', gap: 5 }}>
-                          <button style={btn} onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)}>Open</button>
-                          {sgId && <button style={{ ...btn, borderColor: 'var(--o)', color: 'var(--o)' }} onClick={() => router.push(`/signals?signal=${sgId}&action=reply`)}>Draft</button>}
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        )
-      })()}
+              {rows.map(({ a, sigs, dark, top, risk, health }) => (
+                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35 }}>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 21, color: riskColor[risk], fontVariantNumeric: 'tabular-nums' }}>{health}</span>
+                  <div style={{ minWidth: 0, paddingLeft: 26 }}>
+                    <span onClick={() => router.push(`/accounts?open=${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer' }}>{a.name}</span>
+                    <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
+                  </div>
+                  <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
+                  <span style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />{risk}
+                  </span>
+                  <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
+                  <span style={{ ...cell, color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.owner || 'You'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d`) : '--'}</span>
+                  <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts?open=${encodeURIComponent(a.name)}`)}
+                    title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
+                    style={{ font: 'inherit', fontSize: 11, fontWeight: 600, width: 62, padding: '6px 0', borderRadius: 999, border: '1.5px solid transparent', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up').split(' ')[0] : 'Open'}
+                  </button>
+                  {sigs.length > 0 && (
+                    <div style={{ gridColumn: '2/-1', display: 'flex', gap: 22, flexWrap: 'wrap', paddingTop: 10, paddingLeft: 26 }}>
+                      {sigs.slice(0, 4).map(sg => (
+                        <span key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', color: sg.severity === 'high' ? 'var(--critical, #c43d2b)' : sg.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>
+                          {TYPE_LABEL_SHORT[sg.signal_type || ''] || sg.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </>
+          )
+        })()}
       </div>
 
       <div style={{ height: 60 }}></div>

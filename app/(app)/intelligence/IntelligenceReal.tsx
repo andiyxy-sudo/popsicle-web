@@ -1,3 +1,4 @@
+import { PageHead } from '@/components/layout/PageHead'
 'use client'
 
 // Revenue Intelligence over REAL data, styled to match the showcase design
@@ -131,7 +132,7 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
   if (nothing) {
     return (
       <div className="dsk-screen on">
-        <div className="page-hdr"><h1>Revenue Intelligence</h1><p>Historical and predictive analysis across revenue signals</p></div>
+        <PageHead eyebrow="Intelligence" crumb="no history yet" title={<>Not enough history yet. <span style={{ color: 'var(--ink-muted)' }}>This screen fills in as Popsicle syncs.</span></>} />
         <div className="dcard" style={{ textAlign: 'center', padding: '56px 24px' }}>
           <div style={{ fontSize: 14, color: 'var(--t3)', marginBottom: 6 }}>Not enough history yet.</div>
           <div style={{ fontSize: 13, color: 'var(--t4)', lineHeight: 1.6, maxWidth: 360, margin: '0 auto' }}>
@@ -148,10 +149,11 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr">
-        <h1>Revenue Intelligence</h1>
-        <p>Computed live from your synced communications and signals</p>
-      </div>
+      <PageHead
+        eyebrow="Intelligence"
+        crumb="analysed"
+        title={<>Patterns across <span style={{ color: 'var(--accent)' }}>{signals.length}</span> signals.{' '}<span style={{ color: 'var(--ink-muted)' }}>What the last weeks of conversation add up to.</span></>}
+      />
 
       {/* Hero */}
       <div className="dcard" style={{ marginBottom: 20, padding: 0, overflow: 'hidden', background: 'linear-gradient(135deg,#FF5E22 0%,#FF7A30 45%,#F06A1A 80%,#E55F10 100%)', position: 'relative', border: '1px solid rgba(255,107,53,.3)', boxShadow: '0 4px 20px rgba(255,107,53,.32)' }}>

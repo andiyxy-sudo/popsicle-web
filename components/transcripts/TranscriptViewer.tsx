@@ -9,6 +9,7 @@
 
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { PageHead } from '@/components/layout/PageHead'
 
 interface TRow {
   meeting_uuid: string; topic?: string | null; start_time?: string | null
@@ -130,21 +131,15 @@ export function TranscriptViewer({ row, userEmail }: { row: TRow | null; userEma
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-        <div>
-          <h1 style={{ marginBottom: 4 }}>{(row.topic || 'Call transcript').replace(/^(Zoom|Meet|Fireflies):\s*/i, '')}</h1>
-          <p>
-            {row.start_time ? new Date(row.start_time).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : ''}
-            {row.duration ? ` · ${row.duration} min` : ''}
-            {sent && <span style={{ color: sentColor, fontWeight: 800 }}> · {sent}</span>}
-            {row.analysis_confidence != null ? ` · ${row.analysis_confidence}% confidence` : ''}
-          </p>
-        </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <button onClick={copyAll} style={{ ...chip, cursor: 'pointer' }}>{copied ? 'Copied ✓' : 'Copy transcript'}</button>
-          <button onClick={() => router.back()} style={{ ...chip, cursor: 'pointer' }}>Back</button>
-        </div>
-      </div>
+      <PageHead
+        eyebrow="Transcript"
+        crumb={[row.start_time ? new Date(row.start_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '', row.duration ? `${row.duration} min` : '', sent].filter(Boolean).join(' · ')}
+        title={(row.topic || 'Call transcript').replace(/^(Zoom|Meet|Fireflies):\s*/i, '')}
+        right={<div style={{ display: 'flex', gap: 14 }}>
+          <span onClick={copyAll} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>{copied ? 'copied' : 'copy'}</span>
+          <span onClick={() => router.back()} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>back</span>
+        </div>}
+      />
 
       {/* Analysis strip */}
       {(row.summary_text || quoteList.length > 0 || (row.commitments || []).length > 0) && (

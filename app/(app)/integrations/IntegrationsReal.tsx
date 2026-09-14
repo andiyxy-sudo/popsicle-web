@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/components/account/A360Modal'
 import { LOGOS } from './IntegrationsShowcase'
 import { SlackChannelPicker } from './SlackChannels'
+import { PageHead } from '@/components/layout/PageHead'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -492,7 +493,13 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr"><h1>Integrations</h1><p>{liveCount} active · connect Gmail, Calendar, Slack, or Zoom to start pulling real signals</p></div>
+      <PageHead
+        eyebrow="Integrations"
+        crumb={`${liveCount} live`}
+        title={liveCount > 0
+          ? <><span style={{ color: 'var(--accent)' }}>{liveCount}</span> source{liveCount === 1 ? '' : 's'} feeding your pipeline.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect more and detection gets sharper.</span></>
+          : <>No sources connected yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect Gmail or Slack and signals start arriving.</span></>}
+      />
       {cats.map(cat => (
         <div key={cat}>
           <div className="int-cat"><span className="int-cat-label">{cat}</span></div>
