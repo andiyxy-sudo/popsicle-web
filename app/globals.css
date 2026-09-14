@@ -2181,7 +2181,7 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
    page:  content pad-top + (36px first row / 2)       = 77px centre
    Change one, change both.
    ============================================================ */
-:root { --header-center: 64px; --first-row-h: 36px; }
+:root { --header-center: 71px; --first-row-h: 36px; }
 .content { padding-top: calc(var(--header-center) - (var(--first-row-h) / 2)) !important; }
 .dsk-screen > :first-child {
   min-height: var(--first-row-h);
