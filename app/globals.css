@@ -2194,3 +2194,12 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 .content, .content * { animation-name: none; }
 .content [style*="animation"] { opacity: 1 !important; }
 .fade-in, .fade-in-2, .fade-in-3, .fade-in-4, .fade-in-5 { opacity: 1 !important; animation: none !important; }
+
+
+/* ============================================================
+   BUILD v1.2 — opacity lock. No element in the content column may
+   render below full opacity, whatever animation or class it carries.
+   ============================================================ */
+.content, .content > *, .content * { opacity: 1 !important; }
+.content *, .content *::before, .content *::after { animation: none !important; }
+.dcard, .kpi-hero, .kpi-support, .fade-in, [class*="fade-in"] { opacity: 1 !important; animation: none !important; }
