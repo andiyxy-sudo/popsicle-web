@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
@@ -61,66 +60,46 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   }
 
   return (
-    <nav className="sidebar">
-      <div className="sb-logo">
-        <svg width="29" height="51" viewBox="4 0 40 80" fill="none">
-          <defs><linearGradient id="lg-sb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#FF6B35"/><stop offset="100%" stopColor="#FFD166"/></linearGradient></defs>
+    <nav className="sidebar ed-sidebar">
+      <div className="ed-sb-logo" onClick={() => router.push('/pulse')}>
+        <svg width="34" height="60" viewBox="4 0 40 80" fill="none">
+          <defs><linearGradient id="lg-sb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#FF8A50"/><stop offset="100%" stopColor="#E85A25"/></linearGradient></defs>
           <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="url(#lg-sb)"/>
-          <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#E85A25"/>
+          <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#C94A1D"/>
           <path d="M25 16L17 34h6l-4 14 12-18h-6l4-14z" fill="white" fillOpacity=".95"/>
         </svg>
-        <div className="sb-logo-text"><span>popsicle</span><span>labs</span></div>
+        <div className="ed-sb-word"><span>popsicle</span><span>labs</span></div>
       </div>
 
-      <div className="sb-nav">
-        {NAV.map(group => (
+      <div className="ed-sb-nav">
+        {NAV.map((group, gi) => (
           <div key={group.section}>
-            <div className="sb-section">{group.section}</div>
+            <div className="ed-sb-rule" style={{ background: gi === 0 ? 'transparent' : 'rgba(251,248,243,.12)', margin: gi === 0 ? '30px 26px 0' : '20px 26px 18px' }} />
             {group.items.map(item => {
               const active = pathname === item.href
               const badgeVal = item.badgeKey ? badges[item.badgeKey] : undefined
               return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  prefetch
-                  className={`sb-item${active ? ' on' : ''}`}
-                  id={`nav-${item.id}`}
-                  style={{ textDecoration: 'none' }}
-                >
-                  {item.icon}
-                  <span>{item.label}</span>
-                  {badgeVal != null && badgeVal > 0 && (
-                    <div className={`badge${'badgeOk' in item && item.badgeOk ? ' badge-ok' : ''}`}>{badgeVal}</div>
-                  )}
-                </Link>
+                <div key={item.id} className={`ed-sb-item${active ? ' on' : ''}`} onClick={() => router.push(item.href)} id={`nav-${item.id}`}>
+                  <span className="ed-sb-dot" style={{ background: active ? '#E85A25' : 'transparent' }} />
+                  <span className="ed-sb-label">{item.label}</span>
+                  {badgeVal != null && badgeVal > 0 && <span className="ed-sb-count">{badgeVal}</span>}
+                </div>
               )
             })}
           </div>
         ))}
+        <div className="ed-sb-rule" style={{ background: 'rgba(251,248,243,.12)', margin: '20px 26px 18px' }} />
+        <div className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`} onClick={() => router.push('/ask')}>
+          <span className="ed-sb-dot" style={{ background: pathname === '/ask' ? '#E85A25' : 'transparent' }} />
+          <span className="ed-sb-label">Ask AI</span>
+        </div>
       </div>
 
-      <div className="sb-footer">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <div className="sb-user" style={{ cursor: 'pointer', flex: 1, minWidth: 0 }} onClick={() => router.push('/settings')} title="Settings">
-            <div style={{ position: 'relative', flexShrink: 0 }}>
-              <div className="sb-avatar">{initials}</div>
-              <div style={{ position: 'absolute', bottom: 1, right: 1, width: 9, height: 9, borderRadius: '50%', background: '#22C55E', border: '2px solid var(--sidebar-bg)' }} />
-            </div>
-            <div className="sb-user-info">
-              <div className="sb-user-name">{displayName}</div>
-              <div className="sb-user-role">{displayRole}</div>
-            </div>
-          </div>
-          <button
-            onClick={handleSignOut}
-            title="Sign out"
-            style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,.4)', transition: 'all .15s' }}
-            onMouseOver={e => { e.currentTarget.style.background = 'rgba(255,255,255,.06)'; e.currentTarget.style.color = 'rgba(255,255,255,.75)' }}
-            onMouseOut={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,.4)' }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          </button>
+      <div className="ed-sb-user" onClick={handleSignOut} title="Sign out">
+        <div className="ed-sb-avatar">{initials}</div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>
+          <div style={{ fontSize: 11.5, color: 'rgba(251,248,243,.45)' }}>{displayRole}</div>
         </div>
       </div>
     </nav>

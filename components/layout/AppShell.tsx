@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
-import { Topbar } from './Topbar'
 import { getInitials } from '@/lib/utils'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -20,7 +19,6 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const pathname = usePathname()
   const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }
 
-  const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
 
   return (
     <>
@@ -28,7 +26,6 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <div className="main" style={{ position: 'relative' }}>
         {/* warm corner wash (design shell) */}
         <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, width: 'min(900px,100%)', height: 900, pointerEvents: 'none', background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)', zIndex: 0 }} />
-        <Topbar signalCount={badges.signals ?? 0} onAskClick={() => setAiOpen(true)} initials={initials} />
         <div className="content" style={{ position: 'relative', zIndex: 1 }}>
           {children}
           <footer className="ed-footer">
