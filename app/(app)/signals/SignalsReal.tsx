@@ -355,10 +355,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           Live Signals <span style={{ margin: '0 8px' }}>/</span> {signals.length} active{srcCount ? ` · ${srcCount} sources` : ''}
         </div>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ position: 'relative', width: 6, height: 6, display: 'inline-block' }}>
-            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }} />
-            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 2s ease-out infinite' }} />
-          </span>
+          <span className="sig-pulse" style={{ width: 6, height: 6, display: 'inline-block', borderRadius: '50%', background: 'var(--accent)' }} />
           live{newest ? ` · ${newest}` : ''}
         </div>
       </div>

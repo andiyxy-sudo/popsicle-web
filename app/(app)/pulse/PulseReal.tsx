@@ -746,10 +746,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
   const mono = (txt: string) => <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{txt}</span>
   const liveDot = (
     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ position: 'relative', width: 6, height: 6, display: 'inline-block' }}>
-        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }}></span>
-        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 1.8s ease-out infinite' }}></span>
-      </span>
+      <span className="sig-pulse" style={{ width: 6, height: 6, display: 'inline-block', borderRadius: '50%', background: 'var(--accent)' }}></span>
       live
     </span>
   )
@@ -765,10 +762,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ position: 'relative' }}>
             <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'rgba(14,13,11,.05)' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
-              <span style={{ position: 'relative', width: 8, height: 8, flex: 'none' }}>
-                <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }}></span>
-                {open.length > 0 && <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 2s ease-out infinite' }}></span>}
-              </span>
+              <span className={open.length > 0 ? 'sig-pulse' : undefined}
+                style={{ width: 8, height: 8, flex: 'none', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}></span>
               <span>{open.length} signal{open.length === 1 ? '' : 's'}</span>
             </button>
             {inboxOpen && (
