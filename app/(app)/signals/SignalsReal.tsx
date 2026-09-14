@@ -75,6 +75,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   // Deep link (?signal=<id>): opened detail, row flash, and not-found state
   const [detailFor, setDetailFor] = useState<DBSignal | null>(null)
   const [deepNotFound, setDeepNotFound] = useState(false)
+  const [filter, setFilter] = useState<'all' | 'critical' | 'watch' | 'positive'>('all')
   const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
   const [handleText, setHandleText] = useState('')
   const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
@@ -323,10 +324,10 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   if (signals.length === 0) {
     return (
       <div className="dsk-screen on">
-        <div className="page-hdr">
-          <h1>Live Signals</h1>
-          <p>Signals from your connected channels will appear here.</p>
-        </div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Live Signals <span style={{ margin: '0 8px' }}>/</span> nothing open</div>
+        <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 40px', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
+          All quiet. <span style={{ color: 'var(--ink-muted)' }}>Signals appear here as your conversations come in.</span>
+        </h1>
         <div className="dcard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '56px 24px', textAlign: 'center' }}>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="1.5" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--t2)', margin: '12px 0 6px' }}>No signals yet</div>
@@ -336,79 +337,141 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     )
   }
 
+  const critical = high
+  const totalWatchRisk = watch.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
+  const posValue = positive.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
+  const newest = signals[0]?.created_at ? timeAgo(signals[0].created_at) : ''
+  const srcCount = new Set(signals.map(x => x.source_integration).filter(Boolean)).size
+  const shown = filter === 'critical' ? critical : filter === 'watch' ? watch : filter === 'positive' ? positive : [...critical, ...watch, ...positive]
+  const ACTION_LABEL: Record<string, string> = {
+    silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
+    competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
+    timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
+    deal_stage_backward: 'Book exec call', call_buying_signal: 'Fast-track', call_commitment: 'Confirm in writing',
+    reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
+  }
+
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr">
-        <h1>Live Signals</h1>
-        <p>{signals.length} active signal{signals.length === 1 ? '' : 's'}{totalRisk > 0 ? <> · <span style={{ fontWeight: 700, color: 'var(--danger)' }}>{fmtMoney(totalRisk)} at risk</span></> : null}</p>
-      </div>
-
-      {/* Summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 18 }}>
-        <div className="dcard" style={{ padding: '14px 18px', borderLeft: '3px solid var(--danger)' }}>
-          <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--danger)' }}>{high.length}</div>
-          <div style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600 }}>High Risk</div>
+      {/* breadcrumb */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 30 }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Live Signals <span style={{ margin: '0 8px' }}>/</span> {signals.length} active{srcCount ? ` · ${srcCount} sources` : ''}
         </div>
-        <div className="dcard" style={{ padding: '14px 18px', borderLeft: '3px solid var(--amber)' }}>
-          <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--amber)' }}>{watch.length}</div>
-          <div style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600 }}>Watch</div>
-        </div>
-        <div className="dcard" style={{ padding: '14px 18px', borderLeft: '3px solid var(--ok)' }}>
-          <div style={{ fontSize: 24, fontWeight: 900, color: 'var(--ok)' }}>{positive.length}</div>
-          <div style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600 }}>Positive</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ position: 'relative', width: 6, height: 6, display: 'inline-block' }}>
+            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }} />
+            <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 2s ease-out infinite' }} />
+          </span>
+          live{newest ? ` · ${newest}` : ''}
         </div>
       </div>
 
-      {/* Signal list - ordered high, watch, positive */}
-      <div>
-        {[...high, ...watch, ...positive].map(s => {
+      {/* narrative headline */}
+      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
+        {critical.length > 0 ? (
+          <>{critical.length === 1 ? 'One critical signal sits on the' : `${critical.length} critical signals sit on the`}{' '}
+            {totalRisk > 0 && <span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtMoney(totalRisk)}</span>} at risk right now.{' '}
+            <span style={{ color: 'var(--ink-muted)' }}>
+              {positive.length > 0 ? <>{positive[0].account_name || 'One account'} is the bright spot: <span style={{ color: 'var(--good, #2f8f5b)' }}>{(positive[0].title || '').toLowerCase()}</span>.</> : <>Nothing positive is in play yet.</>}
+            </span>
+          </>
+        ) : watch.length > 0 ? (
+          <>No critical signals today. <span style={{ color: 'var(--ink-muted)' }}>{watch.length} worth watching{totalWatchRisk > 0 ? <> across <span style={{ color: 'var(--warn, #d38b1d)' }}>{fmtMoney(totalWatchRisk)}</span> of exposure</> : null}.</span></>
+        ) : (
+          <>All quiet across your pipeline. <span style={{ color: 'var(--ink-muted)' }}>Nothing needs you right now.</span></>
+        )}
+      </h1>
+
+      {/* stat row, hairline-divided */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', marginTop: 40, paddingTop: 26, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        {[
+          { n: String(critical.length), lbl: `critical${totalRisk > 0 ? ` · ${fmtMoney(totalRisk)} at risk` : ''}`, color: 'var(--critical, #c43d2b)' },
+          { n: String(watch.length), lbl: `watch${totalWatchRisk > 0 ? ` · ${fmtMoney(totalWatchRisk)} exposure` : ''}`, color: 'var(--warn, #d38b1d)' },
+          { n: String(positive.length), lbl: `positive${posValue > 0 ? ` · ${fmtMoney(posValue)} closing` : ''}`, color: 'var(--good, #2f8f5b)' },
+          { n: String(signals.length), lbl: 'signals in view', color: 'var(--ink)' },
+        ].map((st, i, arr) => (
+          <div key={i} style={{ paddingRight: 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none', paddingLeft: i === 0 ? 0 : 24 }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* section head + filter pills */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 56, paddingBottom: 14 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All alerts</h2>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {([['all', 'All', signals.length], ['critical', 'Critical', critical.length], ['watch', 'Watch', watch.length], ['positive', 'Positive', positive.length]] as const).map(([k, lbl, n]) => (
+            <button key={k} onClick={() => setFilter(k as typeof filter)} style={{
+              font: 'inherit', fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 999, cursor: 'pointer', border: 0,
+              background: filter === k ? 'var(--ink)' : 'transparent', color: filter === k ? 'var(--paper, #FBF8F3)' : 'var(--ink-muted)',
+            }}>{lbl} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, opacity: .7 }}>{n}</span></button>
+          ))}
+        </div>
+      </div>
+
+      {/* alert rows */}
+      <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        {shown.length === 0 && <div style={{ padding: '28px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing in this filter.</div>}
+        {shown.map(s => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
-          const borderColor = isHigh ? 'var(--danger)' : isPos ? 'var(--ok)' : 'var(--amber)'
-          const riskCls = isHigh ? 'rhi' : isPos ? 'rlo' : 'rmd'
+          const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
           const label = TYPE_LABELS[s.signal_type || ''] || 'Signal'
-          const headline = s.title || (label + (s.account_name ? ` - ${s.account_name}` : ''))
           const body = s.description || s.ai_analysis?.summary || ''
-          const money = fmtMoney(s.risk_amount)
+          const quote = typeof s.ai_analysis?.quote === 'string' ? s.ai_analysis.quote : null
           const isHandled = s.status === 'handled'
-          const impact = s.impact_pct ? (typeof s.impact_pct === 'number' ? `${s.impact_pct}%` : s.impact_pct) : null
+          const money = fmtMoney(s.risk_amount)
+          const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => open360(s)} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--surface)', border: '1px solid var(--border-soft)', borderLeft: `4px solid ${borderColor}`, borderRadius: 12, padding: '12px 16px', boxShadow: flashId === s.id ? '0 0 0 3px rgba(255,107,53,.45), 0 6px 20px rgba(255,107,53,.25)' : '0 1px 4px rgba(13,10,7,.06)', transition: 'box-shadow .5s ease', marginBottom: 7, cursor: s.account_name ? 'pointer' : 'default', opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3, flexWrap: 'wrap' }}>
-                  {isHandled && <span style={{ color: 'var(--ok)', fontWeight: 900, fontSize: 13 }}>✓</span>}
-                  <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{headline}</span>
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)}
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto auto', alignItems: 'center', gap: 24,
+                padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
+                background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
+                opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
+              <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
+                  {isHandled && <span style={{ color: 'var(--good)', fontWeight: 800, fontSize: 13 }}>✓</span>}
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{s.account_name || 'Unmapped'}</span>
+                  <span style={{ fontSize: 13.5, color: accent }}>{label}</span>
+                  <span onClick={e => { e.stopPropagation(); setDetailFor(s) }} style={{ fontSize: 13, color: accent, cursor: 'pointer' }}>· why →</span>
                   {s.corroboration?.with?.length ? (
-                    <span onClick={e => { e.stopPropagation(); const sib = s.corroboration!.with![0]; router.push(`/signals?signal=${sib.signal_id}`) }} title={s.corroboration.reason || ''} style={{ fontSize: 9.5, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}>
-                      Corroborated · {Array.from(new Set([s.source_integration, ...s.corroboration.with.map(w => w.source)].filter(Boolean))).join(' + ')}
-                    </span>
+                    <span onClick={e => { e.stopPropagation(); router.push(`/signals?signal=${s.corroboration!.with![0].signal_id}`) }} title={s.corroboration.reason || ''}
+                      style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>corroborated</span>
                   ) : null}
-                  <span className={`rp ${riskCls}`} style={{ fontSize: 8 }}>{isHigh ? 'HIGH' : isPos ? 'POSITIVE' : 'WATCH'}</span>
-                  {label !== 'Signal' && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{label}</span>}
                 </div>
-                {body && <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.5 }}>{body}</div>}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 5 }}>
-                  {s.account_name && <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--t2)' }}>{s.account_name}</span>}
-                  {money && <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--danger)', fontFamily: "'DM Mono',monospace" }}>{money}{impact ? ` · ${impact}` : ''}</span>}
-                  {s.created_at && <span style={{ fontSize: 10, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{timeAgo(s.created_at)}</span>}
+                <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 5 }}>{quote ? `"${quote}"` : (s.title || body)}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 7 }}>
+                  via {s.source_integration || 'unknown'}{s.created_at ? ` · ${timeAgo(s.created_at)}` : ''}{money ? ` · ${money}` : ''}
                 </div>
-                {/* Action row (handled signals show what was done instead) */}
+              </div>
+              <div style={{ textAlign: 'right' }}>
                 {isHandled ? (
-                  <div style={{ marginTop: 9 }}>
-                    <span style={{ fontSize: 10.5, fontWeight: 700, color: 'var(--ok)', background: 'rgba(42,157,92,.08)', border: '1px solid rgba(42,157,92,.2)', padding: '3px 10px', borderRadius: 20 }}>✓ {s.handled_action || 'Handled'}</span>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', gap: 7, marginTop: 9 }}>
-                    {actionBtn('Draft follow-up', () => openDraft(s), true)}
-                    {actionBtn('Mark handled', () => { setDetailFor(s); setModalMode('handle') })}
-                    {actionBtn('Snooze', () => { setDetailFor(s); setModalMode('snooze') })}
-                    {actionBtn('Dismiss', () => setFlag(s, 'is_dismissed'))}
-                  </div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
+                ) : money ? (
+                  <>
+                    <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
+                  </>
+                ) : null}
+              </div>
+              <div onClick={e => e.stopPropagation()}>
+                {!isHandled && (
+                  <button onClick={() => openDraft(s)} style={{
+                    font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 18px', borderRadius: 999, border: 0, cursor: 'pointer',
+                    background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', whiteSpace: 'nowrap',
+                  }}>{action}</button>
                 )}
               </div>
-              {s.source_integration && <div style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)', flexShrink: 0, textTransform: 'capitalize' }}>{s.source_integration}</div>}
             </div>
           )
         })}
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, fontSize: 13 }}>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
+        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask AI to prioritise →</span>
       </div>
 
       {/* Draft modal */}

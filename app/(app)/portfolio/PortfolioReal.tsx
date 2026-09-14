@@ -133,17 +133,43 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr fade-in">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <h1>Portfolio</h1>
-            <p>{accounts.length} active account{accounts.length === 1 ? '' : 's'}</p>
-          </div>
-          <button onClick={() => { window.location.href = '/welcome?force=1' }} style={{ padding: '9px 16px', background: 'transparent', color: 'var(--o)', border: '1px solid var(--o)', borderRadius: 'var(--r-sm)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Discover accounts</button>
-        </div>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        Portfolio <span style={{ margin: '0 8px' }}>/</span> {accounts.length} accounts
       </div>
-      <div className="dcard fade-in" style={{ padding: 0, overflow: 'hidden', maxHeight: 'none' }}>
-        <table className="dtable">
+      {(() => {
+        const totalVal = accounts.reduce((a, x) => a + (Number(x.value) || 0), 0)
+        const atRisk = accounts.filter(x => (x.risk_level || '') === 'high')
+        const riskVal = atRisk.reduce((a, x) => a + (Number(x.value) || 0), 0)
+        const dark = accounts.filter(x => x.last_contact_date && (Date.now() - new Date(x.last_contact_date).getTime()) / 86400000 > 14)
+        return (
+          <>
+            <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
+              {fmtVal(totalVal)} across {accounts.length} account{accounts.length === 1 ? '' : 's'}.{' '}
+              <span style={{ color: 'var(--ink-muted)' }}>
+                {atRisk.length > 0 ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtVal(riskVal)}</span> sits in {atRisk.length} at-risk account{atRisk.length === 1 ? '' : 's'}{dark.length ? `, and ${dark.length} have gone quiet` : ''}.</> : <>Nothing flagged high risk right now.</>}
+              </span>
+            </h1>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', marginTop: 40, paddingTop: 26, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+              {[
+                { n: fmtVal(totalVal), lbl: 'pipeline value', color: 'var(--ink)' },
+                { n: fmtVal(riskVal), lbl: `at risk · ${atRisk.length} accounts`, color: 'var(--critical, #c43d2b)' },
+                { n: String(dark.length), lbl: 'gone quiet · 14d+', color: 'var(--warn, #d38b1d)' },
+                { n: String(accounts.length), lbl: 'accounts tracked', color: 'var(--ink)' },
+              ].map((st, i, arr) => (
+                <div key={i} style={{ paddingRight: 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none', paddingLeft: i === 0 ? 0 : 24 }}>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
+      })()}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 56, paddingBottom: 14 }}>
+        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by attention</span>
+      </div>
+      <table className="dtable">
           <thead><tr><th style={{ width: 50 }}>Health</th><th>Account</th><th>ARR</th><th>Risk</th><th>Stage</th><th>Top Signal</th><th>Tags</th><th>Last Touch</th><th style={{ width: 120 }}>Action</th></tr></thead>
           <tbody>
             {[...accounts].sort((x, y) => {
@@ -181,7 +207,6 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
             })}
           </tbody>
         </table>
-      </div>
     </div>
   )
 }
