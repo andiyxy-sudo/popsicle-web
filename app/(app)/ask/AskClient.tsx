@@ -49,7 +49,7 @@ export function AskClient() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, busy])
 
   return (
-    <div className="dsk-screen on" style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: 760, margin: '0 auto' }}>
+    <div className="dsk-screen on" style={{ maxWidth: 760 }}>
       <PageHead
         eyebrow="Ask AI"
         crumb="grounded in your data"
@@ -57,7 +57,7 @@ export function AskClient() {
         right={<span onClick={() => router.back()} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>back</span>}
       />
 
-      <div style={{ flex: 1, overflowY: 'auto', paddingBottom: 16 }}>
+      <div style={{ paddingBottom: 16, minHeight: 220 }}>
         {msgs.length === 0 && !busy && (
           <div style={{ marginTop: 8 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 10 }}>Try asking</div>
@@ -81,7 +81,7 @@ export function AskClient() {
         <div ref={endRef} />
       </div>
 
-      <div style={{ display: 'flex', gap: 9, padding: '12px 0 20px', borderTop: '1px solid var(--line)' }}>
+      <div style={{ display: 'flex', gap: 9, padding: '18px 0 8px', borderTop: '1px solid var(--hairline, #EFEAE1)', marginTop: 24, position: 'sticky', bottom: 0, background: 'var(--paper, #FBF8F3)' }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}

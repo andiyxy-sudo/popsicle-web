@@ -2044,10 +2044,13 @@ input, select, textarea { border-radius: var(--r-sheet); }
 .page-hdr { border-bottom: 1px solid var(--rule-strong, #0E0D0B); padding-bottom: 20px; }
 .page-hdr h1 { margin-bottom: 6px !important; }
 
-/* Cards dissolve into sections: hairline separation, no chrome */
+/* Cards: square, hairline, flat - but they keep their structure and padding. */
 .dcard {
-  border: 0 !important; border-radius: 0 !important; background: transparent !important;
-  padding: 0 !important; margin-bottom: 44px !important;
+  border: 1px solid var(--hairline, #EFEAE1) !important;
+  border-radius: 0 !important;
+  background: var(--raised, #FFFDFA) !important;
+  box-shadow: none !important;
+  margin-bottom: 20px !important;
 }
 /* inner card headers become rule-headed section heads */
 .dcard > div:first-child[style*="border-bottom"] {
@@ -2057,16 +2060,10 @@ input, select, textarea { border-radius: var(--r-sheet); }
 .dcard > div:first-child[style*="border-bottom"] span[style*="uppercase"] {
   font-size: 12px !important; letter-spacing: 1.5px !important;
 }
-/* card bodies lose their inset padding */
-.dcard > div:not(:first-child) { padding-left: 0 !important; padding-right: 0 !important; }
+
 .dcard table { margin-top: 4px; }
 
-/* Signal rows / list items: hairline rows, generous air, no boxes */
-.sig-row, .signal-card, .list-row {
-  border: 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
-  border-radius: 0 !important; background: transparent !important;
-  box-shadow: none !important; padding: 20px 0 !important; margin-bottom: 0 !important;
-}
+
 .sig-row:hover, .signal-card:hover, .list-row:hover { background: rgba(14,13,11,.02) !important; }
 
 /* Pills and chips: mono uppercase, square, quiet */
@@ -2110,11 +2107,8 @@ input:focus, textarea:focus, select:focus { border-color: var(--ink, #0E0D0B) !i
 
 /* KPI grid (any screen still using it) reads as naked stats */
 .kpi-grid { gap: 28px 32px !important; }
-.kpi-support, .kpi-hero {
-  background: transparent !important; border: 0 !important; border-radius: 0 !important;
-  box-shadow: none !important; padding: 0 !important; color: var(--ink) !important;
-}
-.kpi-hero { border-top: 1px solid var(--rule-strong, #0E0D0B) !important; padding-top: 28px !important; }
+.kpi-support, .kpi-hero { border-radius: 0 !important; box-shadow: none !important; }
+
 .kpi-hero-lbl, .dcard-title { font-family: 'DM Mono', monospace !important; font-size: 10.5px !important; letter-spacing: 1.5px !important; text-transform: uppercase !important; color: var(--ink-faint) !important; }
 .kpi-hero-val, .dcard-val {
   font-family: 'Outfit', sans-serif !important; font-weight: 700 !important;
@@ -2183,7 +2177,7 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
    ============================================================ */
 
 /* Settings & any label/value row lists read as hairline rows */
-.set-section, .settings-section { border: 0 !important; background: transparent !important; padding: 0 !important; margin-bottom: 48px !important; }
+/* settings sections keep their own layout; only corners and shadows change */
 .set-row, .settings-row {
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
   padding: 18px 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
@@ -2192,12 +2186,11 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
 .set-label, .settings-label { font-size: 15px !important; color: var(--ink) !important; font-weight: 500 !important; }
 .set-value, .settings-value { font-size: 14px !important; color: var(--ink-muted) !important; }
 
-/* Integration tiles: square, hairline, no gloss */
-.int-grid { gap: 0 !important; }
+/* Integration tiles keep their grid; square and flat only */
 .int-card {
-  border: 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
-  border-radius: 0 !important; box-shadow: none !important; background: transparent !important;
-  padding: 20px 0 !important;
+  border: 1px solid var(--hairline, #EFEAE1) !important;
+  border-radius: 0 !important; box-shadow: none !important;
+  background: var(--raised, #FFFDFA) !important;
 }
 .int-card:hover { background: rgba(14,13,11,.02) !important; }
 .int-cat { border-bottom: 1px solid var(--rule-strong, #0E0D0B) !important; padding: 0 0 12px !important; margin-top: 44px !important; }

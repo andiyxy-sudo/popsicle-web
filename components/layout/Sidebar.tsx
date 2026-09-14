@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
 
 interface SidebarProps {
-  user: { email: string; id: string; name?: string; role?: string }
+  user: { email: string; id: string; name?: string; role?: string; avatar_url?: string }
   isDemo: boolean
   badges?: { portfolio?: number; signals?: number; integrations?: number }
 }
@@ -58,6 +58,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [draftName, setDraftName] = useState(displayName)
   const [draftTz, setDraftTz] = useState('')
+  const [photo, setPhoto] = useState<string | null>((user as { avatar_url?: string }).avatar_url ?? null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   useEffect(() => {
@@ -69,11 +70,38 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileOpen])
 
+  function pickPhoto() {
+    const input = document.createElement('input')
+    input.type = 'file'; input.accept = 'image/*'
+    input.onchange = () => {
+      const file = input.files?.[0]
+      if (!file) return
+      const reader = new FileReader()
+      reader.onload = () => {
+        const img = new Image()
+        img.onload = () => {
+          // Downscale to 256px square so it fits in the profile record.
+          const size = 256
+          const canvas = document.createElement('canvas')
+          canvas.width = size; canvas.height = size
+          const ctx = canvas.getContext('2d')
+          if (!ctx) return
+          const side = Math.min(img.width, img.height)
+          ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, size, size)
+          setPhoto(canvas.toDataURL('image/jpeg', 0.82))
+        }
+        img.src = String(reader.result)
+      }
+      reader.readAsDataURL(file)
+    }
+    input.click()
+  }
+
   async function saveProfile() {
     setSaving(true)
     // Name lives on the auth user's metadata; email changes are an auth flow,
     // so this panel shows the address rather than pretending to edit it.
-    await supabase.auth.updateUser({ data: { name: draftName.trim() } }).catch(() => {})
+    await supabase.auth.updateUser({ data: { name: draftName.trim(), avatar_url: photo ?? null } }).catch(() => {})
     setSaving(false); setSaved(true)
     router.refresh()
     setTimeout(() => setProfileOpen(false), 700)
@@ -117,7 +145,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
       </div>
 
       <div className="ed-sb-user" onClick={() => setProfileOpen(true)} title="Profile">
-        <div className="ed-sb-avatar">{initials}</div>
+        <div className="ed-sb-avatar" style={photo ? { background: `center/cover url(${photo})`, color: 'transparent' } : undefined}>{photo ? '' : initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>
           <div style={{ fontSize: 11.5, color: 'rgba(251,248,243,.45)' }}>{displayRole}</div>
@@ -127,12 +155,24 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both', color: 'var(--ink, #0E0D0B)' }}>
             <div style={{ padding: '32px 32px 0', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: 'none' }}>{initials}</span>
+              <div style={{ position: 'relative', flex: 'none' }}>
+                <span onClick={pickPhoto} title="Change photo" style={{ width: 54, height: 54, borderRadius: '50%', background: photo ? `center/cover url(${photo})` : 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, cursor: 'pointer', overflow: 'hidden' }}>
+                  {!photo && initials}
+                </span>
+                <span onClick={pickPhoto} title="Change photo" style={{ position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: '50%', background: 'var(--ink, #0E0D0B)', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', border: '2px solid var(--paper, #FBF8F3)' }}>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
+                </span>
+              </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)' }}>Your profile</div>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.03em', marginTop: 2 }}>{displayName}</div>
               </div>
               <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
+            </div>
+
+            <div style={{ padding: '14px 32px 0', display: 'flex', gap: 16 }}>
+              <span onClick={pickPhoto} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>{photo ? 'Change photo' : 'Add photo'}</span>
+              {photo && <span onClick={() => setPhoto(null)} style={{ fontSize: 13, color: 'var(--ink-faint)', cursor: 'pointer' }}>Remove</span>}
             </div>
 
             <div style={{ padding: '26px 32px 0', display: 'grid', gap: 20 }}>
