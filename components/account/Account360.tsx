@@ -11,6 +11,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES } from '@/lib/demo-dataset'
 
 // ---------- meeting-artifact classifier (port of _shared/messageArtifact.ts
 // per the mobile contract's 5 rule families; the DB column is informational,
@@ -36,8 +37,8 @@ function isMeetingArtifact(sender?: string | null, subject?: string | null, body
 // Mirrors slack-detect's chunker window (mobile contract).
 const CHUNK_GAP_MS = 30 * 60 * 1000
 
-interface Msg { id: string; integration: string | null; sender: string | null; subject: string | null; content: string | null; received_at: string | null; direction: string | null; channel_id: string | null; external_id: string | null; thread_id: string | null }
-interface Sig { id: string; corroboration?: { with?: Array<{ signal_id: string; source: string }>; reason?: string } | null; signal_type: string | null; severity: string | null; title: string | null; description: string | null; risk_amount: number | null; source_integration: string | null; source_message_id: string | null; created_at: string | null; status: string | null; ai_analysis: Record<string, unknown> | null; is_dismissed?: boolean }
+interface Msg { id: string; account_name?: string | null; integration: string | null; sender: string | null; subject: string | null; content: string | null; received_at: string | null; direction: string | null; channel_id: string | null; external_id: string | null; thread_id: string | null }
+interface Sig { id: string; account_name?: string | null; corroboration?: { with?: Array<{ signal_id: string; source: string }>; reason?: string } | null; signal_type: string | null; severity: string | null; title: string | null; description: string | null; risk_amount: number | null; source_integration: string | null; source_message_id: string | null; created_at: string | null; status: string | null; ai_analysis: Record<string, unknown> | null; is_dismissed?: boolean }
 interface Tr { meeting_id: string | null; meeting_uuid: string; topic: string | null; start_time: string | null; duration: number | null; sentiment: string | null; analysis_confidence: number | null; analyzed_at: string | null }
 interface Payload { account: Record<string, unknown>; messages: Msg[]; signals: Sig[]; dismissed_signals: Sig[]; transcripts: Tr[]; baseline: Record<string, unknown> | null; slack_channels: Array<{ channel_id: string; is_external: boolean }>; slack_anchor_sigs: string[] }
 
@@ -235,6 +236,22 @@ export function Account360() {
     let dead = false
     setLoading(true)
     async function load() {
+      // Demo accounts have non-uuid ids and no rows in the database: build the
+      // payload locally so the slide-over works identically in the demo.
+      const demoAcct = DEMO_ACCOUNTS.find(a => a.id === openFor!.id || a.name === openFor!.name)
+      if (demoAcct) {
+        const sigs = (DEMO_SIGNALS as unknown as Sig[]).filter(x => x.account_name === demoAcct.name)
+        const msgs = (DEMO_MESSAGES as unknown as Msg[]).filter(x => x.account_name === demoAcct.name).slice(0, 30)
+        if (!dead) {
+          setData({
+            account: demoAcct as unknown as Record<string, unknown>,
+            messages: msgs, signals: sigs, dismissed_signals: [], transcripts: [],
+            baseline: null, slack_channels: [], slack_anchor_sigs: [],
+          })
+          setLoading(false)
+        }
+        return
+      }
       const supa = createClient()
       // Only real UUIDs may reach the RPC - demo/static ids (e.g. 'acme') would
       // 400 at the database. Non-uuid ids fall back to name resolution.

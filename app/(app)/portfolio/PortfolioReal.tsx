@@ -68,6 +68,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
   useEffect(() => {
     let dead = false
     if (demoSignals) {
+      // demo: no database round-trips
       const m = new Map<string, SigLite[]>()
       for (const raw of demoSignals) {
         const sg = raw as unknown as SigLite
@@ -81,6 +82,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
     const supa = createClient()
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
+      if (demoSignals) return
       supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })

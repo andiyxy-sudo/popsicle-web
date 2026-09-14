@@ -21,6 +21,10 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // a few pixels down on first paint.
   const contentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
+    // Lets client components skip database round-trips in demo mode.
+    if (typeof document !== 'undefined') document.body.dataset.demo = isDemo ? '1' : '0'
+  }, [isDemo])
+  useEffect(() => {
     // Defensive: a throwing scroll call here would take the whole shell down
     // and leave the content column blank until a client-side nav re-rendered it.
     try {
@@ -43,7 +47,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v1.6</span>
+            <span>v1.8</span>
           </footer>
         </div>
       </div>

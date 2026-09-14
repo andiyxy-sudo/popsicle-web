@@ -29,6 +29,7 @@ interface BriefData {
 }
 
 function PreMeetingBrief() {
+  const demoMode = typeof document !== 'undefined' && document.body.dataset.demo === '1'
   const router = useRouter()
   const [brief, setBrief] = useState<BriefData | null>(null)
   const [points, setPoints] = useState<string[]>([])
@@ -36,6 +37,7 @@ function PreMeetingBrief() {
 
   useEffect(() => {
     let dead = false
+    if (demoMode) return
     async function load() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
@@ -350,6 +352,7 @@ function computeHealth(signals: Signal[], accounts: Account[]): number {
 // accounts needing attention ranked by the shared attention formula (order
 // only, no visible score). Sections are absent when empty; quiet day = block hidden.
 function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
+  const demoMode = accounts.some(a => String(a.id).startsWith('demo-'))
   const router = useRouter()
   const [meetings, setMeetings] = useState<Array<{ event_id: string; start_ts: string; summary: string | null; account_name: string | null }>>([])
   const [due, setDue] = useState<Array<{ id: string; text: string; owner: string | null; due_at: string | null; account_name: string | null }>>([])
@@ -357,6 +360,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   const [loaded, setLoaded] = useState(false)
   useEffect(() => {
     let dead = false
+    if (demoMode) { setLoaded(true); return }
     async function load() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
@@ -453,6 +457,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
 // account's own baseline interval (floor 14d). Quiet week = no card at all.
 // Testing hook: ?digest=1 shows it on any day.
 function WeekDigest() {
+  const demoMode = typeof document !== 'undefined' && document.body.dataset.demo === '1'
   const router = useRouter()
   const [state, setState] = useState<null | {
     weekStart: string
@@ -569,10 +574,13 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
 }
 
 export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
+  // Demo rows live in the bundle, not the database: skip every client round-trip.
+  const isDemoData = accounts.some(a => String(a.id).startsWith('demo-')) || signals.some(s => String(s.id).startsWith('demo-'))
   // Accounts with a meeting inside 48h (attention-formula factor).
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
   useEffect(() => {
     let dead = false
+    if (isDemoData) return
     const supa = createClient()
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
@@ -586,6 +594,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
   const [healthDelta, setHealthDelta] = useState<{ pts: number; label: string } | null>(null)
   useEffect(() => {
     let dead = false
+    if (isDemoData) return
     async function snap() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
