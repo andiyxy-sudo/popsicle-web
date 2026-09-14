@@ -199,9 +199,11 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
 // AI Confidence ring (header, demo position): average model confidence across
 // analyzed signals, with a click/hover popover explaining the number. Hidden
 // until at least one signal carries a confidence value - never a made-up %.
-function ConfidenceRing({ signals }: { signals: Signal[] }) {
+function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; forceOpen?: boolean; onClose?: () => void }) {
   const [open, setOpen] = useState(false)
-  const [big, setBig] = useState(false)
+  const [big, setBigRaw] = useState(false)
+  const setBig = (v: boolean) => { setBigRaw(v); if (!v && onClose) onClose() }
+  useEffect(() => { if (forceOpen) setBigRaw(true) }, [forceOpen])
   const anchor = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number } | null>(null)
   useEffect(() => {
@@ -215,7 +217,7 @@ function ConfidenceRing({ signals }: { signals: Signal[] }) {
   const color = '#22C55E'  // demo brand green; per-signal colors live in the breakdown
   const C = 2 * Math.PI * 19
   return (
-    <div ref={anchor} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
+    <div ref={anchor} style={{ position: 'relative', display: forceOpen !== undefined ? 'none' : 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}
       onClick={() => { setOpen(false); setBig(true) }} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <div className="conf-ring" style={{ width: 46, height: 46 }}>
         <svg width="46" height="46" viewBox="0 0 46 46" style={{ overflow: 'visible' }}>
@@ -645,216 +647,232 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
     )
   }
 
+  // ---------- EDITORIAL PULSE (redesign Phase 3) ----------
+  const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
+  const handled = signals.filter(sg => sg.status === 'handled')
+  const highs = open.filter(sg => sg.severity === 'high')
+  const positives = signals.filter(sg => sg.severity === 'positive')
+  const health = computeHealth(signals, accounts)
+  const riskByAcct = new Map<string, number>()
+  for (const sg of open) if (sg.account_name && sg.risk_amount) riskByAcct.set(sg.account_name, (riskByAcct.get(sg.account_name) || 0) + Number(sg.risk_amount))
+  const atRiskTotal = Array.from(riskByAcct.values()).reduce((a, b) => a + b, 0)
+  const protectedVal = handled.reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
+  const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
+  const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
+  const [inboxOpen, setInboxOpen] = useState(false)
+  const [confOpen, setConfOpen] = useState(false)
+
+  const narrative = (() => {
+    const deltaTxt = healthDelta ? `, ${healthDelta.pts > 0 ? 'up' : 'down'} ${Math.abs(healthDelta.pts)} ${healthDelta.label.replace('vs ', 'since ')}` : ''
+    const riskAccts = riskByAcct.size
+    return (
+      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920 }}>
+        Pipeline health is <span style={{ color: 'var(--accent-hot, #FF6B35)' }}>{health}</span>{deltaTxt}.{' '}
+        <span style={{ color: 'var(--ink-muted)' }}>
+          {atRiskTotal > 0 && riskAccts > 0
+            ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRiskTotal)}</span> of risk{highs.length > 0 ? ' and need you today' : ''}.</>
+            : positives.length > 0 ? <>Momentum is on your side — {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
+            : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
+            : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
+        </span>
+      </h1>
+    )
+  })()
+
+  const briefRows = (() => {
+    const ACTION_BY_TYPE: Record<string, string> = {
+      silent_stall: 'book a check-in this week', call_objection: 'address it in your next reply',
+      call_sentiment_drop: 'call before the mood hardens', timeline_slip: 'confirm the real date with your champion',
+      deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
+      meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
+      competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
+      legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
+      call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
+      commitment_overdue: 'close it out or reset the date',
+    }
+    const actFor = (sg: Signal) => {
+      const rec = (sg.ai_analysis as { recommendation?: string } | null)?.recommendation
+      if (typeof rec === 'string' && rec.length > 6 && rec.length < 90) return rec.replace(/\.$/, '')
+      return ACTION_BY_TYPE[sg.signal_type || ''] || 'open it and decide'
+    }
+    const rows: Array<{ pre: string; strong: string }> = []
+    for (const sg of highs.slice(0, 3)) rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) })
+    if (positives[0]) rows.push({ pre: `${positives[0].account_name ? positives[0].account_name + ': ' : ''}${positives[0].title} — `, strong: actFor(positives[0]) })
+    const watch = open.filter(sg => sg.severity === 'watch').slice(0, 5 - rows.length)
+    for (const sg of watch) { if (rows.length >= 5) break; rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) }) }
+    return rows
+  })()
+
+  const loopRows = (() => {
+    const bySrc = new Set(open.map(sg => sg.source_integration).filter(Boolean))
+    const openAccts = new Set(open.map(sg => sg.account_name).filter(Boolean))
+    return [
+      { name: 'Signals', sub: bySrc.size ? `across ${Array.from(bySrc).join(' · ')}` : 'open right now', value: String(open.length), color: 'var(--critical, #c43d2b)' },
+      { name: 'Accounts flagged', sub: 'with at least one open signal', value: String(openAccts.size), color: 'var(--warn, #d38b1d)' },
+      { name: 'Handled', sub: 'actions you have taken', value: String(handled.length), color: 'var(--accent)' },
+      { name: 'Value acted on', sub: 'at-risk $ on handled signals', value: protectedVal > 0 ? formatCurrency(protectedVal) : '$0', color: 'var(--good, #2f8f5b)' },
+    ]
+  })()
+
+  const activityRows = signals.filter(sg => !sg.is_dismissed && sg.status !== 'deleted').slice(0, 6)
+  const ago = (iso?: string | null) => {
+    if (!iso) return ''
+    const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
+    if (m < 60) return `${Math.max(1, m)}m`
+    if (m < 1440) return `${Math.floor(m / 60)}h`
+    return `${Math.floor(m / 1440)}d`
+  }
+
+  const secHead = (title: string, right?: React.ReactNode) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+      <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{title}</h2>
+      {right}
+    </div>
+  )
+  const mono = (txt: string) => <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{txt}</span>
+  const liveDot = (
+    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ position: 'relative', width: 6, height: 6, display: 'inline-block' }}>
+        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }}></span>
+        <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 1.8s ease-out infinite' }}></span>
+      </span>
+      live
+    </span>
+  )
+  const dateCrumb = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })
+
   return (
-    <div className="dsk-screen on">
-      <div className="page-hdr fade-in">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <p style={{ marginBottom: 4, fontSize: 15, fontWeight: 600, color: 'var(--t2)' }}>{greeting}, {name}.</p>
-            <h1 style={{ marginBottom: 0 }}>Revenue Pulse</h1>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)', animation: integrationCount > 0 ? 'pulse 2s ease-in-out infinite' : undefined }}></div>
-              <span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>
-                {integrationCount} integration{integrationCount === 1 ? '' : 's'} connected
+    <div className="dsk-screen on" style={{ maxWidth: 1080 }}>
+      {/* breadcrumb + live signal inbox */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 36 }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Revenue Pulse <span style={{ margin: '0 8px' }}>/</span> {dateCrumb}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <ConfidenceRing signals={signals} />
+          <div style={{ position: 'relative' }}>
+            <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'rgba(14,13,11,.05)' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
+              <span style={{ position: 'relative', width: 8, height: 8, flex: 'none' }}>
+                <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)' }}></span>
+                {open.length > 0 && <span style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'var(--accent)', animation: 'ping 2s ease-out infinite' }}></span>}
               </span>
-            </div>
-            <ConfidenceRing signals={signals} />
+              <span>{open.length} signal{open.length === 1 ? '' : 's'}</span>
+            </button>
+            {inboxOpen && (
+              <div style={{ position: 'absolute', top: 44, right: 0, width: 430, maxWidth: 'calc(100vw - 280px)', zIndex: 60, background: 'var(--raised, #FFFDFA)', boxShadow: 'var(--shadow-panel, 0 32px 80px -24px rgba(14,13,11,.35))', animation: 'fadeUp .25s both', textAlign: 'left' }}>
+                <div style={{ background: 'var(--ink)', color: 'var(--paper, #FBF8F3)', padding: '18px 22px 16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(251,248,243,.5)' }}>Inbox · open now</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--accent-light, #FF8A50)' }}>live</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
+                    <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{open.length}</span>
+                    <span style={{ fontSize: 14, color: 'rgba(251,248,243,.62)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: 'var(--accent-light, #FF8A50)' }}>{highs.length} critical</span></> : null}</span>
+                  </div>
+                </div>
+                <div style={{ maxHeight: 390, overflowY: 'auto' }}>
+                  {open.slice(0, 8).map(sg => (
+                    <div key={sg.id} onClick={() => { setInboxOpen(false); router.push(`/signals?signal=${sg.id}`) }} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto', gap: '0 14px', alignItems: 'center', padding: '15px 22px', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', flex: 'none', background: sg.severity === 'high' ? 'var(--critical)' : sg.severity === 'positive' ? 'var(--good)' : 'var(--warn)' }}></span>
+                          <span style={{ fontWeight: 600, fontSize: 14.5, color: 'var(--ink)' }}>{sg.account_name || 'Unmapped'}</span>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{sg.source_integration || ''}</span>
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.45, paddingLeft: 16 }}>{sg.title}</div>
+                      </div>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap', alignSelf: 'start', paddingTop: 2 }}>{ago(sg.created_at)}</span>
+                    </div>
+                  ))}
+                  {open.length === 0 && <div style={{ padding: '26px 22px', fontSize: 13, color: 'var(--ink-faint)' }}>Nothing open right now.</div>}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 22px', borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+                  <span onClick={() => { setInboxOpen(false); router.push('/signals') }} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>All signals →</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {narrative}
 
       <PreMeetingBrief />
-
-      <WeekDigest />
-
+      <div style={{ marginTop: 24 }}><WeekDigest /></div>
       <TodayBlock accounts={accounts} signals={signals} />
 
-
-      <div className="kpi-grid">
-        {(() => {
-          // Deterministic pipeline health: start at 100, subtract for open
-          // risk, credit positive momentum. Honest bounds, no invented deltas.
-          const health = computeHealth(signals, accounts)
-          const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
-          const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
-          return (
-            <div className="kpi-hero">
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div className="kpi-hero-lbl" style={{ marginBottom: 0 }}>Pipeline Health Score</div>
-                <button onClick={() => router.push('/ask')} style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'rgba(255,255,255,.12)', border: '1px solid rgba(255,255,255,.2)', borderRadius: 20, padding: '4px 10px', cursor: 'pointer', color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: "'DM Mono',monospace" }}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                  Ask
-                </button>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <div className="kpi-hero-val">{health}</div>
-                  <span style={{ fontSize: 20, color: 'rgba(255,255,255,.4)', fontWeight: 500 }}>/100</span>
-                  {healthDelta && (
-                    <span className="kpi-hero-badge" style={{ marginLeft: 4 }}>
-                      {healthDelta.pts > 0 ? '▲ +' : '▼ '}{healthDelta.pts} pts {healthDelta.label}
-                    </span>
-                  )}
-                </div>
-                <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,.18)' }}></div>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,.55)', fontFamily: "'DM Mono',monospace", marginBottom: 2 }}>Pipeline Value</div>
-                  <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', letterSpacing: '-.5px', lineHeight: 1 }}>{formatCurrency(pipelineValue)}</div>
-                </div>
-              </div>
-              <div className="kpi-hero-footer">
-                <div className="kpi-hero-stat"><strong>{accounts.length}</strong>Accounts</div>
-                <div className="kpi-hero-stat"><strong>{atRisk.length}</strong>At risk</div>
-                {aiConf != null && <div className="kpi-hero-stat"><strong>{aiConf}%</strong>AI conf</div>}
-              </div>
-            </div>
-          )
-        })()}
-
-        <div className="dcard kpi-support kpi-support-danger">
-          <div className="dcard-title">Revenue at Risk</div>
-          <div className="dcard-val" style={{ color: 'var(--danger)' }}>{atRiskValue > 0 ? formatCurrency(atRiskValue) : '--'}</div>
-          <div className="dcard-sub">{atRisk.length} account{atRisk.length === 1 ? '' : 's'} flagged high risk</div>
+      {/* naked stat row over the ink rule */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '28px 32px', marginTop: 40, paddingTop: 28, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{atRiskTotal > 0 ? formatCurrency(atRiskTotal) : '$0'}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>revenue at risk · {riskByAcct.size} account{riskByAcct.size === 1 ? '' : 's'}</div>
         </div>
-
-        <div className="dcard kpi-support kpi-support-blue">
-          <div className="dcard-title">Active Signals</div>
-          <div className="dcard-val">{signals.length}</div>
-          {(() => {
-            const today = new Date(); today.setHours(0, 0, 0, 0)
-            const n = signals.filter(sg => sg.created_at && new Date(sg.created_at) >= today).length
-            return <div className="dcard-sub">{n > 0 ? <><span className="dcard-delta delta-up">▲ {n} new</span> today</> : 'No new signals today'}</div>
-          })()}
-          <div style={{ display: 'flex', gap: 10, marginTop: 6, paddingTop: 6, borderTop: '1px solid var(--border-soft)' }}>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--danger)' }}>{highSignals}</strong> High</span>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--amber)' }}>{watchSignals}</strong> Watch</span>
-            <span style={{ fontSize: 10, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}><strong style={{ color: 'var(--ok)' }}>{posSignals}</strong> Pos</span>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, background: 'var(--accent-gradient, linear-gradient(90deg,#FF8A50,#E85A25))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{protectedVal > 0 ? formatCurrency(protectedVal) : '$0'}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>value acted on · {handled.length} handled</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{formatCurrency(pipelineValue)}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>pipeline value · {accounts.length} accounts</div>
+        </div>
+        {aiConf != null && (
+          <div onClick={() => setConfOpen(true)} style={{ cursor: 'pointer' }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{aiConf}%</div>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 7 }}>AI confidence <span style={{ color: 'var(--accent)', fontWeight: 600 }}>→</span></div>
           </div>
-        </div>
+        )}
+      </div>
+      {confOpen && <ConfidenceRing signals={signals} forceOpen onClose={() => setConfOpen(false)} />}
 
-        <div className="dcard kpi-support kpi-support-ok">
-          <div className="dcard-title">Connected</div>
-          <div className="dcard-val" style={{ color: integrationCount > 0 ? 'var(--ok)' : 'var(--t4)' }}>{integrationCount}</div>
-          <div className="dcard-sub">integration{integrationCount === 1 ? '' : 's'} active</div>
-        </div>
+      {/* three editorial columns */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 80 }}>
+        <section style={{ minWidth: 0 }}>
+          {secHead('Today', liveDot)}
+          {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as signals arrive.</div>}
+          {briefRows.map((b, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 16, lineHeight: 1.5 }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', paddingTop: 6 }}>{String(i + 1).padStart(2, '0')}</span>
+              <div style={{ color: 'var(--ink)' }}>{b.pre}<strong style={{ fontWeight: 600 }}>{b.strong}</strong></div>
+            </div>
+          ))}
+          <span onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>
+        </section>
+        <section style={{ minWidth: 0 }}>
+          {secHead('Revenue Loop', mono('live'))}
+          {loopRows.map((l, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+              <div>
+                <div style={{ fontWeight: 500, fontSize: 15, color: 'var(--ink)' }}>{l.name}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
+              </div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color, fontVariantNumeric: 'tabular-nums' }}>{l.value}</div>
+            </div>
+          ))}
+        </section>
+        <section style={{ minWidth: 0 }}>
+          {secHead('Activity', mono('signal events'))}
+          {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as signals arrive.</div>}
+          {activityRows.map(sg => (
+            <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+              <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--wash, #F4F0E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.45 }}>
+                {sg.status === 'handled' && <span style={{ color: 'var(--good)', fontWeight: 800 }}>✓ </span>}
+                {sg.account_name ? <strong style={{ fontWeight: 600 }}>{sg.account_name}</strong> : null}{sg.account_name ? ' — ' : ''}{sg.title}
+              </div>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', flexShrink: 0 }}>{ago(sg.created_at)}</span>
+            </div>
+          ))}
+        </section>
       </div>
 
-      {/* AI Brief + Revenue Loop + Activity (showcase layout, real data) */}
-      {(() => {
-        const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
-        const handled = signals.filter(sg => sg.status === 'handled')
-        const highs = open.filter(sg => sg.severity === 'high')
-        const positives = signals.filter(sg => sg.severity === 'positive')
-        const bySrc = new Set(open.map(sg => sg.source_integration).filter(Boolean))
-        const riskByAcct = new Map<string, number>()
-        for (const sg of open) if (sg.account_name && sg.risk_amount) riskByAcct.set(sg.account_name, (riskByAcct.get(sg.account_name) || 0) + Number(sg.risk_amount))
-        const topRisk = Array.from(riskByAcct.entries()).sort((a, b) => b[1] - a[1])[0]
-        const openAccts = new Set(open.map(sg => sg.account_name).filter(Boolean))
-        const protectedVal = handled.reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
-        const stalest = [...accounts].filter(a => a.last_contact_date).sort((a, b) => String(a.last_contact_date).localeCompare(String(b.last_contact_date)))[0]
-        const daysDark = stalest?.last_contact_date ? Math.floor((Date.now() - new Date(stalest.last_contact_date).getTime()) / 86400000) : null
-
-        // Demo-style items: one readable sentence each, insight + bolded action.
-        const ACTION_BY_TYPE: Record<string, string> = {
-          silent_stall: 'book a check-in this week', call_objection: 'address it in your next reply',
-          call_sentiment_drop: 'call before the mood hardens', timeline_slip: 'confirm the real date with your champion',
-          deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
-          meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
-          competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
-          legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
-          call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
-        }
-        const D = { danger: ['var(--danger)', 'rgba(224,62,62,.04)', 'rgba(224,62,62,.1)'], amber: ['var(--amber)', 'rgba(232,133,10,.04)', 'rgba(232,133,10,.1)'], ok: ['var(--ok)', 'rgba(42,157,92,.04)', 'rgba(42,157,92,.1)'], blue: ['var(--blue)', 'rgba(59,111,222,.04)', 'rgba(59,111,222,.1)'] } as const
-        const mk = (k: keyof typeof D, text: React.ReactNode) => ({ color: D[k][0], bg: D[k][1], bd: D[k][2], text })
-        const actFor = (sg: Signal) => {
-          const rec = (sg.ai_analysis as { recommendation?: string } | null)?.recommendation
-          if (typeof rec === 'string' && rec.length > 6 && rec.length < 90) return rec.replace(/\.$/, '')
-          return ACTION_BY_TYPE[sg.signal_type || ''] || 'open it and decide'
-        }
-        const briefItems: Array<{ color: string; bg: string; bd: string; text: React.ReactNode }> = []
-        for (const sg of highs.slice(0, 3)) {
-          briefItems.push(mk('danger', <>{sg.account_name ? <>{sg.account_name}: </> : null}{sg.title} — <strong>{actFor(sg)}</strong></>))
-        }
-        if (topRisk) briefItems.push(mk('amber', <><strong>{formatCurrency(topRisk[1])} at risk</strong> across {riskByAcct.size} account{riskByAcct.size === 1 ? '' : 's'} — {topRisk[0]} carries the most exposure right now</>))
-        if (positives[0]) briefItems.push(mk('ok', <>{positives[0].account_name ? <>{positives[0].account_name}: </> : null}{positives[0].title} — <strong>{actFor(positives[0])}</strong></>))
-        if (handled.length > 0) briefItems.push(mk('ok', <>You handled <strong>{handled.length} signal{handled.length === 1 ? '' : 's'}</strong>{protectedVal > 0 ? <> worth {formatCurrency(protectedVal)} of at-risk value</> : null} — detection is feeding your pipeline hygiene</>))
-        if (stalest && daysDark != null && daysDark > 14) briefItems.push(mk('blue', <>{stalest.name} has been dark for <strong>{daysDark} days</strong>{stalest.value ? <> with {formatCurrency(Number(stalest.value))} on the table</> : null} — worth a touch this week</>))
-        {
-          const lowConf = signals.filter(sg => { const c = (sg.ai_analysis as { confidence?: number } | null)?.confidence; return typeof c === 'number' && c < 60 })
-          if (lowConf.length > 0) briefItems.push(mk('blue', <>{lowConf.length} signal{lowConf.length === 1 ? '' : 's'} sit under 60% AI confidence — <strong>check their quoted evidence before acting</strong></>))
-        }
-        const watchOnly = open.filter(sg => sg.severity === 'watch' && !highs.some(h => h.account_name === sg.account_name)).slice(0, 7 - briefItems.length)
-        for (const sg of watchOnly) {
-          if (briefItems.length >= 7) break
-          briefItems.push(mk('amber', <>{sg.account_name ? <>{sg.account_name}: </> : null}{sg.title} — <strong>{actFor(sg)}</strong></>))
-        }
-
-        const secHead = (icon: React.ReactNode, label: string) => (
-          <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            {icon}
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>{label}</span>
-          </div>
-        )
-        const loopStep = (title: string, sub: string, n: string, color: string, done?: boolean) => (
-          <div className="loop-step" style={done ? { background: 'rgba(42,157,92,.06)', borderColor: 'rgba(42,157,92,.15)' } : undefined}>
-            <div style={{ flex: 1 }}><div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div><div style={{ fontSize: 11, color: 'var(--t3)' }}>{sub}</div></div>
-            <span style={{ fontSize: 18, fontWeight: 900, color }}>{n}</span>
-          </div>
-        )
-
-        return (
-          <div style={{ display: 'grid', gridTemplateColumns: '1.25fr 1fr 1fr', gap: 20, marginBottom: 24 }}>
-            <div className="dcard fade-in fade-in-3" style={{ padding: 0, overflow: 'hidden' }}>
-              <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>AI Brief</span>
-                <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--ok)', animation: 'pulse 2s ease-in-out infinite' }}></div>
-                  <span style={{ fontSize: 10, color: 'var(--t3)' }}>just now</span>
-                  <span style={{ fontSize: 8, fontWeight: 700, background: 'linear-gradient(135deg,var(--o),#FFD166)', color: '#fff', padding: '2px 8px', borderRadius: 20 }}>LIVE</span>
-                </div>
-              </div>
-              <div style={{ padding: '14px 20px' }}>
-                {briefItems.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)', textAlign: 'center', padding: '14px 0' }}>All quiet. The brief fills in as signals arrive.</div>}
-                {briefItems.map((b, i) => (
-                  <div key={i} className="ai-brief-item" style={{ background: b.bg, border: `1px solid ${b.bd}`, borderRadius: 10 }}>
-                    <div className="ai-brief-dot" style={{ background: b.color }}></div>
-                    <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.55 }}>{b.text}</div>
-                  </div>
-                ))}
-                <div onClick={() => router.push('/ask')} style={{ marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line)', fontSize: 11.5, fontWeight: 700, color: 'var(--o)', cursor: 'pointer' }}>Ask AI to expand on any insight →</div>
-              </div>
-            </div>
-
-            <div className="dcard fade-in fade-in-4" style={{ padding: 0, overflow: 'hidden' }}>
-              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>, 'Revenue Loop')}
-              <div style={{ padding: '14px 20px', display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {loopStep('Signals', bySrc.size ? `Across ${Array.from(bySrc).map(x => String(x)).join(' · ')}` : 'Open right now', String(open.length), 'var(--danger)')}
-                <div className="loop-connector"></div>
-                {loopStep('Accounts flagged', 'With at least one open signal', String(openAccts.size), 'var(--amber)')}
-                <div className="loop-connector"></div>
-                {loopStep('Handled', 'Actions you have taken', String(handled.length), 'var(--o)')}
-                <div className="loop-connector"></div>
-                {loopStep('Value acted on', 'At-risk $ on handled signals', protectedVal > 0 ? formatCurrency(protectedVal) : '$0', 'var(--ok)', true)}
-              </div>
-            </div>
-
-            <div className="dcard fade-in fade-in-5" style={{ padding: 0, overflow: 'hidden' }}>
-              {secHead(<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>, 'Activity')}
-              <ActivityFeed signals={signals} />
-            </div>
-          </div>
-        )
-      })()}
-
-      {/* Accounts needing attention */}
-      {(() => {
-        const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
+      {/* Accounts needing attention (Phase-2 table styling applies) */}
+      <div style={{ marginTop: 80 }}>
+        {secHead('Accounts Needing Attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View portfolio →</span>)}
+        {(() => {
+        const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
         const topSig = new Map<string, { id: string; title: string | null; severity: string | null }>()
         const counts = new Map<string, { h: number; w: number; p: number }>()
-        for (const sg of open) {
+        for (const sg of openT) {
           if (!sg.account_name) continue
           if (!topSig.has(sg.account_name) || (sg.severity === 'high' && topSig.get(sg.account_name)!.severity !== 'high')) topSig.set(sg.account_name, { id: sg.id, title: sg.title ?? null, severity: sg.severity ?? null })
           const c = counts.get(sg.account_name) ?? { h: 0, w: 0, p: 0 }
@@ -923,34 +941,9 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           </div>
         )
       })()}
-
-      {/* Recent signals list */}
-      <div className="dcard" style={{ padding: 0, overflow: 'hidden' }}>
-        <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Recent Signals</span>
-          </div>
-          <span className="see-all" onClick={() => router.push('/signals')}>View all →</span>
-        </div>
-        <div style={{ padding: 16 }}>
-          {signals.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '24px', color: 'var(--t4)', fontSize: 13 }}>No active signals yet</div>
-          ) : signals.slice(0, 8).map(s => {
-            const c = s.severity === 'high' ? 'var(--danger)' : s.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
-            return (
-              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border-soft)' }}>
-                <div style={{ width: 3, height: 32, borderRadius: 2, background: c, flexShrink: 0 }}></div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{s.title}</div>
-                  {s.account_name && <div style={{ fontSize: 11, color: 'var(--t3)' }}>{s.account_name}</div>}
-                </div>
-                <div style={{ fontSize: 10, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>{formatRelativeTime(s.created_at)}</div>
-              </div>
-            )
-          })}
-        </div>
       </div>
+
+      <div style={{ height: 60 }}></div>
     </div>
   )
 }
