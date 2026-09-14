@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from './Sidebar'
+import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
 
 interface AppShellProps {
@@ -67,10 +68,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v2.4</span>
+            <span>v2.5</span>
           </footer>
         </div>
       </div>
+
+      {/* Account 360 listens globally for 'open-a360' from any screen */}
+      <Account360 />
 
       {/* floating Ask bar (design shell) */}
       {pathname !== '/ask' && (

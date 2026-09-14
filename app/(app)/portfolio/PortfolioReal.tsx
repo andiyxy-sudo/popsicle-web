@@ -199,9 +199,11 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
-                  <span onClick={e => { e.stopPropagation(); openA360(a) }} title="Open account risk detail"
-                    style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} /><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px' }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
+                  <span onClick={e => { e.stopPropagation(); openA360(a) }} title="Open account"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'start',
+                      padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
