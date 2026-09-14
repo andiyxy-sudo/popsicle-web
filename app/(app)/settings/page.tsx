@@ -1,11 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
-import { SettingsShowcase } from './SettingsShowcase'
+import { SettingsClient } from './SettingsClient'
 
+// No wrapper: the app shell already provides the scrolling column and padding.
+// The old nested scroll container here was overriding the redesigned layout.
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data } = await supabase.auth.getClaims()
-  if (!data) return null
-  const email = (data.claims.email as string | undefined) ?? ''
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-  return <SettingsShowcase email={email} />
+  return <SettingsClient user={{ email: user.email ?? '', id: user.id }} />
 }
