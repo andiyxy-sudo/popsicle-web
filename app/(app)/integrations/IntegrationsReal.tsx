@@ -206,6 +206,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   const [modal, setModal] = useState<ModalConfig | null>(null)
   const [busy, setBusy] = useState<string | null>(null)
   const [syncing, setSyncing] = useState<string | null>(null)
+  const [sheet, setSheet] = useState<Provider | null>(null)
+  const [confirmDc, setConfirmDc] = useState(false)
 
   // Arriving from a fresh Slack connect (?slack_channels=1): open the channel
   // picker immediately so the first-run user is never stranded with a
@@ -530,7 +532,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                 const on = active.includes(p.key)
                 const live = !!p.fn
                 return (
-                  <div key={p.key} onClick={on ? () => detail(p) : undefined}
+                  <div key={p.key} onClick={on ? () => { setSheet(p); setConfirmDc(false) } : undefined}
                     style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -545,7 +547,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                       )}
                     </div>
                     {on ? (
-                      <button onClick={e => { e.stopPropagation(); detail(p) }}
+                      <button onClick={e => { e.stopPropagation(); setSheet(p); setConfirmDc(false) }}
                         style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
                     ) : live ? (
                       <button onClick={e => { e.stopPropagation(); connect(p) }} disabled={busy === p.key}
@@ -562,6 +564,98 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
           </div>
         )
       })}
+
+
+      {sheet && (() => {
+        const p = sheet
+        const st = stats[p.key]
+        const on = active.includes(p.key)
+        const isToggleable = p.key === 'slack' || p.key === 'hubspot'
+        const fmtDate = (v?: string | null) => v ? new Date(v).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--'
+        const rows: Array<[string, string]> = [
+          ['Status', on ? 'Connected and syncing' : 'Not connected'],
+          ['Account', st?.identity || (on ? 'linked' : '--')],
+          ['Signals raised', st ? String(st.total) : '--'],
+          ['This month', st ? String(st.thisMonth) : '--'],
+          ['Severity split', st ? `${st.high} high · ${st.watch} watch · ${st.positive} positive` : '--'],
+          ['Last signal', fmtDate(st?.lastSignal)],
+          ['Last synced', fmtDate(st?.lastSynced)],
+          ['Connected', fmtDate(st?.connectedAt)],
+        ]
+        return (
+          <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: 'var(--paper, #FBF8F3)', padding: '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }} />integration
+                </span>
+                <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
+              </div>
+
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', margin: '12px 0 4px', color: 'var(--ink)' }}>{p.name}</h2>
+              <div style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{p.desc}</div>
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 0 6px' }} />
+
+              {rows.map(([k, v]) => (
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{k}</span>
+                  <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{v}</span>
+                </div>
+              ))}
+
+              {on && isToggleable && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <div>
+                    <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{p.key === 'slack' ? 'Post ✓ when a signal is handled' : 'Log handled signals to the deal'}</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{p.key === 'slack' ? 'Appends "Handled by…" to the original card' : 'Writes a Popsicle note on the matching deal'}</div>
+                  </div>
+                  <button onClick={async () => { await flipResToggle(p) }}
+                    style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
+                      background: resToggles[p.key as 'slack' | 'hubspot'] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
+                    <span style={{ position: 'absolute', top: 3, left: resToggles[p.key as 'slack' | 'hubspot'] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
+                  </button>
+                </div>
+              )}
+
+              {confirmDc && (
+                <div style={{ marginTop: 18, padding: '14px 16px', border: '1px solid rgba(196,61,43,.25)', background: 'rgba(196,61,43,.05)' }}>
+                  <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.55 }}>Disconnect {p.name}? Popsicle stops reading this source. Signals already raised stay where they are.</div>
+                  <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                    <button onClick={() => { setSheet(null); doDisconnect(p) }}
+                      style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 20px', borderRadius: 999, border: 0, background: 'var(--critical, #c43d2b)', color: '#fff', cursor: 'pointer' }}>Yes, disconnect</button>
+                    <button onClick={() => setConfirmDc(false)}
+                      style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 20px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Keep it</button>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 10, marginTop: 26, flexWrap: 'wrap' }}>
+                {on ? (
+                  <>
+                    <button onClick={() => sync(p)} disabled={syncing === p.key}
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 24px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: syncing === p.key ? .7 : 1 }}>
+                      {syncing === p.key ? 'Syncing…' : 'Sync now'}
+                    </button>
+                    <button onClick={() => connect(p)}
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>Reconnect</button>
+                    {p.key === 'slack' && (
+                      <button onClick={() => { setSheet(null); const el = document.getElementById('slack-channels'); el?.scrollIntoView({ behavior: 'smooth' }) }}
+                        style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 22px', borderRadius: 999, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>Channels</button>
+                    )}
+                    <button onClick={() => setConfirmDc(true)}
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 18px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--critical, #c43d2b)', cursor: 'pointer', marginLeft: 'auto' }}>Disconnect</button>
+                  </>
+                ) : (
+                  <button onClick={() => { setSheet(null); connect(p) }} disabled={!p.fn}
+                    style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 26px', borderRadius: 999, border: 0, background: p.fn ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--inset)', color: p.fn ? '#fff' : 'var(--ink-faint)', cursor: p.fn ? 'pointer' : 'default' }}>
+                    {p.fn ? `Connect ${p.name}` : 'Not available yet'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       <A360Modal config={modal} onClose={() => setModal(null)} />
     </div>
