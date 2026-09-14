@@ -133,7 +133,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const totalRisk = high.concat(watch).reduce((sum, s) => sum + (s.risk_amount || 0), 0)
 
   function open360(s: DBSignal) {
-    if (s.account_name) router.push(`/account/${encodeURIComponent(s.account_name)}`)
+    if (s.account_name) router.push(`/accounts/${encodeURIComponent(s.account_name)}`)
   }
 
   // Optimistic: remove from the list immediately, write in the background,

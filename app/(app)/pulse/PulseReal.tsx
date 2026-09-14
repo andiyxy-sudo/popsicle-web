@@ -425,7 +425,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
             {due.map(c => {
               const overdue = c.due_at ? new Date(c.due_at).getTime() < Date.now() - 86400000 : false
               return (
-                <div key={c.id} onClick={() => c.account_name && router.push(`/account/${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
+                <div key={c.id} onClick={() => c.account_name && router.push(`/accounts/${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
                   <span style={{ fontSize: 9, fontWeight: 800, color: overdue ? 'var(--danger)' : 'var(--amber)', flexShrink: 0 }}>{overdue ? 'OVERDUE' : 'DUE'}</span>
                   <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 600 }}>{c.owner === 'them' ? 'They: ' : c.owner === 'us' ? 'We: ' : ''}{c.text}{c.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {c.account_name}</span> : null}</span>
                 </div>
@@ -437,7 +437,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
           <div>
             {secLbl('Needs attention')}
             {attention.map(({ a, top, dark }) => (
-              <div key={a.id} onClick={() => router.push(`/account/${encodeURIComponent(a.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
+              <div key={a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, position: 'relative', top: -1, background: top?.severity === 'high' ? 'var(--danger)' : top ? 'var(--amber)' : 'var(--t4)' }} />
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>{a.name}</span>
                 <span style={{ fontSize: 10.5, color: 'var(--t3)' }}>{top?.title || (dark != null ? `quiet ${dark}d` : '')}</span>
@@ -542,7 +542,7 @@ function WeekDigest() {
           <div>
             {secLbl('Commitments due')}
             {state.due.map(c => (
-              <div key={c.id} onClick={() => c.account_name && router.push(`/account/${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 8, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
+              <div key={c.id} onClick={() => c.account_name && router.push(`/accounts/${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 8, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--amber)', fontFamily: "'DM Mono',monospace", width: 30, flexShrink: 0 }}>{c.due_at ? dayLbl(c.due_at) : ''}</span>
                 <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 600 }}>{c.owner === 'them' ? 'They: ' : c.owner === 'us' ? 'We: ' : ''}{c.text}{c.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {c.account_name}</span> : null}</span>
               </div>
@@ -553,7 +553,7 @@ function WeekDigest() {
           <div>
             {secLbl('Gone quiet')}
             {state.quiet.map(q => (
-              <div key={q.name} onClick={() => router.push(`/account/${encodeURIComponent(q.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
+              <div key={q.name} onClick={() => router.push(`/accounts/${encodeURIComponent(q.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>{q.name}</span>
                 <span style={{ fontSize: 10.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{q.days}d silent</span>
               </div>
@@ -915,7 +915,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                 <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35 }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 21, color: riskColor[risk], fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
-                    <span onClick={() => router.push(`/account/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer' }}>{a.name}</span>
+                    <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', cursor: 'pointer' }}>{a.name}</span>
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
@@ -927,7 +927,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d`) : '--'}</span>
-                  <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/account/${encodeURIComponent(a.name)}`)}
+                  <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts/${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
                     style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open account'}

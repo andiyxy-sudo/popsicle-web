@@ -110,7 +110,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
 
   const router = useRouter()
   function openA360(a: Account) {
-    router.push(`/account/${encodeURIComponent(a.name)}`)
+    router.push(`/accounts/${encodeURIComponent(a.name)}`)
   }
 
   if (accounts.length === 0) {
