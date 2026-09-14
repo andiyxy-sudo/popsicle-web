@@ -1,6 +1,6 @@
-import { PageHead } from '@/components/layout/PageHead'
 'use client'
 
+import { PageHead } from '@/components/layout/PageHead'
 // Revenue Intelligence over REAL data, styled to match the showcase design
 // language (gradient hero, SEC section headers, flush cards). Every number is
 // computed from the user's own rows; sections render only when they have data.

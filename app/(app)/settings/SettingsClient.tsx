@@ -1,5 +1,7 @@
 'use client'
 
+import { PageHead } from '@/components/layout/PageHead'
+
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
@@ -54,13 +56,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
   )
 
   return (
-    <div style={{ maxWidth: 600 }}>
-      <div style={{ marginBottom: 32 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-0.8px', marginBottom: 6 }}>
-          Settings
-        </h1>
-        <p style={{ fontSize: 13, color: 'var(--t3)' }}>Manage your account preferences.</p>
-      </div>
+    <div className="dsk-screen on">
+      <PageHead
+        eyebrow="Settings"
+        crumb={user.email}
+        title={<>Your account.{' '}<span style={{ color: 'var(--ink-muted)' }}>Profile, workspace, and how Popsicle behaves.</span></>}
+      />
 
       <Section title="Profile">
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
