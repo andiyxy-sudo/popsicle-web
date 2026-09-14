@@ -2171,3 +2171,19 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 /* Ask AI thinking dots - must actually animate */
 @keyframes askDot { 0%, 80%, 100% { transform: scale(.7); opacity: .35; } 40% { transform: scale(1); opacity: 1; } }
 .ask-dot { animation: askDot 1.2s ease-in-out infinite; }
+
+/* ============================================================
+   v5.0 — HEADER ALIGNMENT
+   The sidebar wordmark and every page's first line share one baseline.
+   logo:  sidebar pad 22 + logo pad 19 + (72 / 2)      = 77px centre
+   page:  content pad-top + (36px first row / 2)       = 77px centre
+   Change one, change both.
+   ============================================================ */
+:root { --header-center: 77px; --first-row-h: 36px; }
+.content { padding-top: calc(var(--header-center) - (var(--first-row-h) / 2)) !important; }
+.dsk-screen > :first-child {
+  min-height: var(--first-row-h);
+  display: flex; align-items: center; flex-wrap: wrap;
+}
+/* screens whose first child is a heading block keep the same optical start */
+.dsk-screen > .page-hdr:first-child { display: block; min-height: 0; }
