@@ -425,7 +425,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
             <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)}
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) auto auto', alignItems: 'center', gap: 24,
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 110px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
@@ -446,7 +446,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   via {s.source_integration || 'unknown'}{s.created_at ? ` · ${timeAgo(s.created_at)}` : ''}{money ? ` · ${money}` : ''}
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
+              <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
@@ -459,8 +459,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               <div onClick={e => e.stopPropagation()}>
                 {!isHandled && (
                   <button onClick={() => openDraft(s)} style={{
-                    font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 18px', borderRadius: 999, border: 0, cursor: 'pointer',
-                    background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', whiteSpace: 'nowrap',
+                    font: 'inherit', fontSize: 12.5, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, cursor: 'pointer',
+                    background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{action}</button>
                 )}
               </div>
