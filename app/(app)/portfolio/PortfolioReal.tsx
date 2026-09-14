@@ -170,7 +170,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by attention</span>
       </div>
       {(() => {
-        const COLS = '24px minmax(74px,1.45fr) minmax(44px,.6fr) minmax(44px,.6fr) minmax(40px,.78fr) minmax(48px,1.05fr) minmax(38px,.56fr) minmax(38px,.56fr) 62px'
+        const COLS = '30px minmax(90px,1.5fr) minmax(52px,.62fr) minmax(50px,.58fr) minmax(56px,.8fr) minmax(70px,1.2fr) minmax(44px,.5fr) 104px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
         const ordered = [...accounts].sort((x, y) => {
@@ -182,7 +182,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
           <>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-              <span>Stage</span><span>Signal</span><span>Owner</span><span>Touch</span><span />
+              <span>Stage</span><span>Top Signal</span><span>Touch</span><span />
             </div>
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
@@ -198,23 +198,15 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
                   <span style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />{risk}
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} /><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px' }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.owner || 'You'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{agoDays(a.last_contact_date)}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : openA360(a)}
-                    style={{ font: 'inherit', fontSize: 11, fontWeight: 600, width: 62, padding: '6px 0', borderRadius: 999, border: '1.5px solid transparent', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {top ? 'Draft' : 'Open'}
+                    style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {top ? 'Draft email' : 'Open account'}
                   </button>
-                  {sigs.length > 0 && (
-                    <div style={{ gridColumn: '2/-1', display: 'flex', gap: 22, flexWrap: 'wrap', paddingTop: 10, paddingLeft: 26 }}>
-                      {sigs.slice(0, 4).map(sg => (
-                        <span key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', color: sg.severity === 'high' ? riskColor.high : sg.severity === 'positive' ? riskColor.low : riskColor.medium }}>{sg.title}</span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )
             })}

@@ -866,16 +866,16 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           never scrolls sideways; text tracks truncate before the action button) */}
       <div style={{ marginTop: 80 }}>
         {(() => {
-          const COLS = '24px minmax(74px,1.45fr) minmax(44px,.6fr) minmax(44px,.6fr) minmax(40px,.78fr) minmax(48px,1.05fr) minmax(38px,.56fr) minmax(38px,.56fr) 62px'
+          const COLS = '30px minmax(90px,1.5fr) minmax(52px,.62fr) minmax(50px,.58fr) minmax(56px,.8fr) minmax(70px,1.2fr) minmax(44px,.5fr) 104px'
           const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
           const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
           const byAcct = new Map<string, Signal[]>()
           for (const sg of openT) if (sg.account_name) { const a = byAcct.get(sg.account_name) ?? []; a.push(sg); byAcct.set(sg.account_name, a) }
           const ACTION_LABEL: Record<string, string> = {
-            silent_stall: 'Follow up', call_objection: 'Redline', price_flinch: 'ROI', competitor_mention: 'Compare',
-            legal_loopin: 'Redline', champion_change: 'Map', timeline_slip: 'Confirm', meeting_cancelled: 'Rebook',
-            meeting_declined: 'Rebook', deal_stage_backward: 'Call', call_buying_signal: 'Fast-track',
-            call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close', call_sentiment_drop: 'Call',
+            silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
+            legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
+            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
+            call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
           }
           const rows = accounts.map(a => {
             const sigs = byAcct.get(a.name) ?? []
@@ -892,10 +892,10 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
           return (
             <>
-              {secHead('Accounts Needing Attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View portfolio →</span>)}
+              {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-                <span>Stage</span><span>Signal</span><span>Owner</span><span>Touch</span><span />
+                <span>Stage</span><span>Top Signal</span><span>Touch</span><span />
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35 }}>
@@ -906,26 +906,16 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
                   <span style={{ ...cell, fontSize: 11.5, color: riskColor[risk], display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />{risk}
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} /><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px' }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.owner || 'You'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d`) : '--'}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts?open=${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
-                    style={{ font: 'inherit', fontSize: 11, fontWeight: 600, width: 62, padding: '6px 0', borderRadius: 999, border: '1.5px solid transparent', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up').split(' ')[0] : 'Open'}
+                    style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open account'}
                   </button>
-                  {sigs.length > 0 && (
-                    <div style={{ gridColumn: '2/-1', display: 'flex', gap: 22, flexWrap: 'wrap', paddingTop: 10, paddingLeft: 26 }}>
-                      {sigs.slice(0, 4).map(sg => (
-                        <span key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ fontSize: 12.5, cursor: 'pointer', whiteSpace: 'nowrap', color: sg.severity === 'high' ? 'var(--critical, #c43d2b)' : sg.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>
-                          {TYPE_LABEL_SHORT[sg.signal_type || ''] || sg.title}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
               ))}
             </>
