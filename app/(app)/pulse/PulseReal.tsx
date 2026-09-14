@@ -200,6 +200,7 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
 // analyzed signals, with a click/hover popover explaining the number. Hidden
 // until at least one signal carries a confidence value - never a made-up %.
 function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; forceOpen?: boolean; onClose?: () => void }) {
+  const router = useRouter()
   const [open, setOpen] = useState(false)
   const [big, setBigRaw] = useState(false)
   const setBig = (v: boolean) => { setBigRaw(v); if (!v && onClose) onClose() }
@@ -239,77 +240,66 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
           .map(sg => ({ sg, c: (sg.ai_analysis as { confidence?: number } | null)?.confidence }))
           .filter((x): x is { sg: Signal; c: number } => typeof x.c === 'number')
           .sort((a, b) => a.c - b.c)
-        const shown = scored.slice(0, 8)
-        const clrOf = (c: number) => c >= 80 ? 'var(--ok)' : c >= 60 ? 'var(--amber)' : 'var(--danger)'
-        const C2 = 2 * Math.PI * 30
-        const bigBar = (label: string, n: number, clr: string, hint: string) => (
-          <div style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--t1)' }}>{label} <span style={{ fontWeight: 600, color: 'var(--t3)' }}>· {hint}</span></span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: clr, fontFamily: "'DM Mono',monospace" }}>{n}</span>
-            </div>
-            <div style={{ height: 7, borderRadius: 5, background: 'var(--inset)', overflow: 'hidden' }}>
-              <div style={{ width: `${confs.length ? Math.round(n / confs.length * 100) : 0}%`, height: '100%', background: clr, borderRadius: 5 }}></div>
-            </div>
+        const clrOf = (c: number) => c >= 80 ? 'var(--good, #2f8f5b)' : c >= 60 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)'
+        const mlbl = (t: string) => (
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)', marginBottom: 14 }}>{t}</div>
+        )
+        const band = (label: string, n: number, color: string, hint: string) => (
+          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flex: 'none' }} />
+            <span style={{ flex: 1, fontSize: 16, color: 'var(--ink)' }}>{label} <span style={{ color: 'var(--ink-faint)' }}>· {hint}</span></span>
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 20, letterSpacing: '-.03em', color }}>{n}</span>
           </div>
         )
         return (
-          <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 950, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, maxHeight: '84vh', overflowY: 'auto', background: 'var(--bg, #FBF8F3)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.32)' }}>
-              <div style={{ padding: '22px 26px 18px', background: 'linear-gradient(135deg, rgba(34,197,94,.10) 0%, rgba(34,197,94,.04) 60%, transparent 100%)', borderBottom: '1px solid var(--border-soft, var(--border))', display: 'flex', alignItems: 'center', gap: 18, position: 'relative' }}>
-                <div style={{ position: 'absolute', top: -36, right: -36, width: 150, height: 150, borderRadius: '50%', background: 'rgba(34,197,94,.05)' }}></div>
-                <div style={{ position: 'relative', width: 78, height: 78, flexShrink: 0, filter: 'drop-shadow(0 3px 10px rgba(34,197,94,.28))' }}>
-                  <svg width="78" height="78" viewBox="0 0 78 78">
-                    <circle cx="39" cy="39" r="32" fill="var(--surface, #fff)"/>
-                    <circle cx="39" cy="39" r="32" fill="none" stroke="rgba(34,197,94,.12)" strokeWidth="5.5"/>
-                    <circle cx="39" cy="39" r="32" fill="none" stroke="#22C55E" strokeWidth="9" strokeDasharray={String(2 * Math.PI * 32)} strokeDashoffset={String(2 * Math.PI * 32 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 39 39)" opacity=".22"/>
-                    <circle cx="39" cy="39" r="32" fill="none" stroke="#22C55E" strokeWidth="5.5" strokeDasharray={String(2 * Math.PI * 32)} strokeDashoffset={String(2 * Math.PI * 32 * (1 - pct / 100))} strokeLinecap="round" transform="rotate(-90 39 39)"/>
-                  </svg>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 900, color: '#22C55E' }}>{pct}%</div>
-                </div>
-                <div style={{ flex: 1, position: 'relative' }}>
-                  <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '1.2px', textTransform: 'uppercase', color: '#22C55E', fontFamily: "'DM Mono',monospace", marginBottom: 3 }}>Detection Quality</div>
-                  <div style={{ fontSize: 18, fontWeight: 900, color: 'var(--t1)', letterSpacing: '-.4px' }}>AI Confidence</div>
-                  <div style={{ fontSize: 11.5, color: 'var(--t3)', lineHeight: 1.5, marginTop: 2 }}>Average across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'} in your workspace</div>
-                </div>
-                <button onClick={() => setBig(false)} style={{ background: 'var(--surface, #fff)', border: '1px solid var(--border)', cursor: 'pointer', color: 'var(--t3)', fontSize: 14, lineHeight: 1, width: 28, height: 28, borderRadius: '50%', flexShrink: 0, position: 'relative' }}>✕</button>
+          <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: 'var(--paper, #FBF8F3)', padding: '40px 44px 44px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)' }} />detection quality
+                </span>
+                <button onClick={() => setBig(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
               </div>
-              <div style={{ padding: '18px 26px' }}>
-                <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65, marginBottom: 16 }}>
-                  Every signal Popsicle raises carries a confidence score: how clearly the evidence in the source conversation supports the claim. A direct quote like &ldquo;the price is too high for us&rdquo; scores high; an inferred mood shift scores lower. The number here is the average across everything analyzed, so it moves as new calls and threads are processed.
-                </div>
-                <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>Distribution</div>
-                {bigBar('High ≥80%', hi, 'var(--ok)', 'act on these directly')}
-                {bigBar('Medium 60–79%', mid, 'var(--amber)', 'skim the quote first')}
-                {bigBar('Low <60%', lo, 'var(--danger)', 'verify before acting')}
-                {shown.length > 0 && (
-                  <div style={{ marginTop: 18 }}>
-                    <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 8 }}>What's driving the number</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                      {shown.map(({ sg, c }) => (
-                        <div key={sg.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 13px', background: 'var(--surface, #fff)', border: '1px solid var(--border-soft, var(--border))', borderRadius: 11, boxShadow: '0 1px 4px rgba(13,10,7,.04)' }}>
-                          <span style={{ fontSize: 10.5, fontWeight: 900, color: clrOf(c), fontFamily: "'DM Mono',monospace", background: c >= 80 ? 'rgba(42,157,92,.09)' : c >= 60 ? 'rgba(232,133,10,.09)' : 'rgba(224,62,62,.09)', padding: '3px 9px', borderRadius: 20, flexShrink: 0 }}>{c}%</span>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <div style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{sg.title}</div>
-                            {sg.account_name && <div style={{ fontSize: 10, color: 'var(--t3)', marginTop: 1 }}>{sg.account_name}</div>}
-                          </div>
-                        </div>
-                      ))}
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.035em', margin: '14px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '26px 0 28px' }} />
+
+              {mlbl('average across ' + confs.length + ' analysed signal' + (confs.length === 1 ? '' : 's'))}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
+                <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 56, letterSpacing: '-.045em', lineHeight: 1, color: clrOf(pct) }}>{pct}%</span>
+                <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
+                  <span style={{ position: 'absolute', inset: 0, width: `${pct}%`, background: clrOf(pct) }} />
+                </span>
+              </div>
+
+              <div style={{ marginTop: 34 }}>
+                {mlbl('distribution')}
+                {band('High', hi, 'var(--good, #2f8f5b)', 'act directly')}
+                {band('Medium', mid, 'var(--warn, #d38b1d)', 'skim the quote')}
+                {band('Low', lo, 'var(--critical, #c43d2b)', 'verify first')}
+              </div>
+
+              {scored.length > 0 && (
+                <div style={{ marginTop: 34 }}>
+                  {mlbl("what's driving the number")}
+                  {scored.slice(0, 6).map(({ sg, c }) => (
+                    <div key={sg.id} onClick={() => { setBig(false); router.push(`/signals?signal=${sg.id}`) }} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: clrOf(c), width: 42, flex: 'none' }}>{c}%</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 16, fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{sg.account_name ? `${sg.account_name}: ` : ''}{sg.title}</span>
+                      <span style={{ color: 'var(--accent)', fontSize: 15 }}>→</span>
                     </div>
-                    {scored.length > shown.length && <div style={{ fontSize: 10.5, color: 'var(--t4)', marginTop: 7, textAlign: 'center' }}>and {scored.length - shown.length} more</div>}
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 16, padding: '13px 15px', background: 'rgba(255,107,53,.05)', border: '1px solid rgba(255,107,53,.14)', borderRadius: 12 }}>
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0, marginTop: 1 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                  <div style={{ fontSize: 11, color: 'var(--t2)', lineHeight: 1.6 }}>
-                    Confidence improves as Popsicle sees more: transcribed calls give the clearest evidence, and removing wrong signals teaches detection what to skip. The lowest-confidence signals are listed first — worth opening each and checking its quoted evidence.
-                  </div>
+                  ))}
                 </div>
+              )}
+
+              <div style={{ marginTop: 30, paddingLeft: 16, borderLeft: `3px solid var(--accent)` }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>how it improves</div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>Transcribed calls give the clearest evidence. Removing wrong signals teaches detection what to skip.</div>
               </div>
             </div>
           </div>
         )
       })(), document.body)}
+
       {open && pos && typeof document !== 'undefined' && createPortal((() => {
         const hi = confs.filter(c => c >= 80).length
         const mid = confs.filter(c => c >= 60 && c < 80).length
@@ -749,7 +739,6 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           Revenue Pulse <span style={{ margin: '0 8px' }}>/</span> {dateCrumb}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <ConfidenceRing signals={signals} />
           <div style={{ position: 'relative' }}>
             <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'rgba(14,13,11,.05)' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
               <span style={{ position: 'relative', width: 8, height: 8, flex: 'none' }}>

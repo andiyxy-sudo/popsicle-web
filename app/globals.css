@@ -2088,7 +2088,7 @@ input, select, textarea { border-radius: var(--r-sheet); }
 [style*="position: fixed"][style*="rgba(15,12,9,.42)"] { background: rgba(14,13,11,.42) !important; backdrop-filter: blur(3px); }
 [style*="borderRadius: 18"], [style*="border-radius: 18px"],
 [style*="borderRadius: 16"], [style*="border-radius: 16px"],
-[style*="borderRadius: 14"], [style*="border-radius: 14px"] { border-radius: 4px !important; }
+[style*="borderRadius: 14"], [style*="border-radius: 14px"] { border-radius: 0 !important; }
 
 /* Primary buttons: the design's gradient pill */
 button[style*="linear-gradient(135deg, #FF6B35"], a[style*="linear-gradient(135deg, #FF6B35"] {
