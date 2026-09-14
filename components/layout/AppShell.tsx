@@ -25,12 +25,27 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
     if (typeof document !== 'undefined') document.body.dataset.demo = isDemo ? '1' : '0'
   }, [isDemo])
   useEffect(() => {
-    // Defensive: a throwing scroll call here would take the whole shell down
-    // and leave the content column blank until a client-side nav re-rendered it.
-    try {
-      if (contentRef.current) contentRef.current.scrollTop = 0
-      window.scrollTo(0, 0)
-    } catch { /* non-fatal */ }
+    // The loading skeleton renders first and the real page swaps in at a
+    // different height, so resetting once (before the swap) is not enough:
+    // reset on mount, on the next frame, and after the content settles.
+    const top = () => {
+      try {
+        if (contentRef.current) contentRef.current.scrollTop = 0
+        window.scrollTo(0, 0)
+      } catch { /* non-fatal */ }
+    }
+    top()
+    const raf = requestAnimationFrame(top)
+    const t1 = setTimeout(top, 120)
+    const t2 = setTimeout(top, 400)
+    // Any late-arriving content (client fetches) must not drag the view down.
+    const el = contentRef.current
+    const obs = el && typeof MutationObserver !== 'undefined'
+      ? new MutationObserver(() => { if (el.scrollTop < 240) el.scrollTop = 0 })
+      : null
+    if (obs && el) obs.observe(el, { childList: true, subtree: true })
+    const t3 = setTimeout(() => obs?.disconnect(), 1500)
+    return () => { cancelAnimationFrame(raf); clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); obs?.disconnect() }
   }, [pathname])
 
   const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }
@@ -47,7 +62,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v1.8</span>
+            <span>v2.0</span>
           </footer>
         </div>
       </div>

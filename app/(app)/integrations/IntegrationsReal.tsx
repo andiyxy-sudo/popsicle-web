@@ -500,36 +500,69 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
           ? <><span style={{ color: 'var(--accent)' }}>{liveCount}</span> source{liveCount === 1 ? '' : 's'} feeding your pipeline.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect more and detection gets sharper.</span></>
           : <>No sources connected yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect Gmail or Slack and signals start arriving.</span></>}
       />
-      {cats.map(cat => (
-        <div key={cat}>
-          <div className="int-cat"><span className="int-cat-label">{cat}</span></div>
-          <div className="int-grid" style={{ marginBottom: 10 }}>
-            {PROVIDERS.filter(p => p.cat === cat).map(p => {
-              const on = active.includes(p.key)
-              const live = !!p.fn
-              return (
-                <div key={p.key} className={`int-card${on ? ' connected' : ''}`} onClick={on ? () => detail(p) : undefined} style={on ? { cursor: 'pointer' } : undefined}>
-                  <div className="int-ico" style={{ background: 'var(--inset)' }}>{LOGOS[p.key] ?? <span style={{ fontWeight: 800, color: 'var(--t2)', fontSize: 13 }}>{p.name[0]}</span>}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
-                    <div style={{ fontSize: 10, color: 'var(--t3)' }}>{p.desc}</div>
-                  </div>
-                  {on ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span className="int-signal" style={{ cursor: 'pointer' }}>Connected</span>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-                    </div>
-                  ) : live ? (
-                    <button onClick={() => connect(p)} disabled={busy === p.key} style={{ padding: '4px 12px', borderRadius: 8, background: 'rgba(255,107,53,.08)', border: '1px solid rgba(255,107,53,.2)', color: 'var(--o)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit'", opacity: busy === p.key ? 0.6 : 1 }}>{busy === p.key ? 'Starting...' : 'Connect'}</button>
-                  ) : (
-                    <span style={{ padding: '4px 12px', borderRadius: 8, background: 'var(--inset)', border: '1px solid var(--border)', color: 'var(--t4)', fontSize: 11, fontWeight: 700, fontFamily: "'Outfit'", whiteSpace: 'nowrap' }}>Coming soon</span>
-                  )}
-                </div>
-              )
-            })}
+      {/* stats over the rule (design) */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', paddingTop: 4, marginBottom: 20 }}>
+        {[
+          { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--ink)' },
+          { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--ink)' },
+          { n: String(PROVIDERS.filter(x => x.fn).length), lbl: 'live integrations', color: 'var(--good, #2f8f5b)' },
+          { n: String(cats.length), lbl: 'categories', color: 'var(--ink)' },
+        ].map((st, i, arr) => (
+          <div key={i} style={{ paddingRight: 24, paddingLeft: i === 0 ? 0 : 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none' }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {/* category label column + provider rows (design) */}
+      {cats.map(cat => {
+        const inCat = PROVIDERS.filter(p => p.cat === cat)
+        const onCount = inCat.filter(p => active.includes(p.key)).length
+        return (
+          <div key={cat} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 24, marginTop: 44 }}>
+            <div>
+              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{cat}</div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>{onCount} active</div>
+            </div>
+            <div>
+              {inCat.map(p => {
+                const on = active.includes(p.key)
+                const live = !!p.fn
+                return (
+                  <div key={p.key} onClick={on ? () => detail(p) : undefined}
+                    style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
+                        {on && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />}
+                      </div>
+                      <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 3 }}>{p.desc}</div>
+                      {on && (
+                        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 5 }}>
+                          {stats[p.key]?.total ? `${stats[p.key]?.total} signals · ` : ''}{stats[p.key]?.lastSynced ? `synced ${new Date(stats[p.key]!.lastSynced!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'connected'}
+                        </div>
+                      )}
+                    </div>
+                    {on ? (
+                      <button onClick={e => { e.stopPropagation(); detail(p) }}
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 22px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
+                    ) : live ? (
+                      <button onClick={e => { e.stopPropagation(); connect(p) }} disabled={busy === p.key}
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 24px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>
+                        {busy === p.key ? 'Starting...' : 'Connect'}
+                      </button>
+                    ) : (
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>soon</span>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
+
       <A360Modal config={modal} onClose={() => setModal(null)} />
     </div>
   )

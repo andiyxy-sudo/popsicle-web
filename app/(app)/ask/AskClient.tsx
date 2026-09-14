@@ -49,7 +49,7 @@ export function AskClient() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, busy])
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 760 }}>
+    <div className="dsk-screen on" style={{ maxWidth: 760, minHeight: 'calc(100vh - 180px)' }}>
       <PageHead
         eyebrow="Ask AI"
         crumb="grounded in your data"

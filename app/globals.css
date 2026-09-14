@@ -2118,3 +2118,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 /* v1.5 — final: global rules may only flatten corners and shadows. */
 .dcard, .int-card, .kpi-hero, .kpi-support { border-radius: 0 !important; box-shadow: none !important; }
+
+/* v1.9 — the skeleton and the real page must start at the same offset so the
+   swap cannot leave the view part-scrolled. */
+.content { overflow-anchor: none !important; scroll-behavior: auto !important; }
