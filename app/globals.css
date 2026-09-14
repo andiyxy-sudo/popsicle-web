@@ -1946,3 +1946,49 @@ input, select, textarea { border-radius: var(--r-sheet); }
 
 /* Scrim tone */
 [style*="rgba(15,12,9,.5)"] { }
+
+/* ============================================================
+   PHASE 2b — DESIGN SHELL (footer, floating Ask bar, sidebar voice)
+   ============================================================ */
+.ed-footer {
+  margin-top: 96px; padding-top: 22px; border-top: 1px solid var(--hairline, #EFEAE1);
+  display: flex; justify-content: space-between; align-items: center; gap: 16px 32px; flex-wrap: wrap;
+  font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--ink-faint, #A09C97);
+}
+.ed-footer span { display: inline-flex; align-items: center; gap: 9px; white-space: nowrap; }
+.ed-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--good, #2f8f5b); display: inline-block; }
+
+.ed-askbar-wrap {
+  position: fixed; left: var(--sidebar-w, 216px); right: 0; bottom: 28px; z-index: 20;
+  display: flex; justify-content: center; pointer-events: none; padding: 0 56px;
+}
+.ed-askbar {
+  pointer-events: auto; width: clamp(320px, 52vw, 720px); max-width: 100%;
+  display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 22px; border-radius: 999px;
+  background: rgba(255,255,255,.72); backdrop-filter: blur(24px) saturate(1.4);
+  border: 1px solid rgba(14,13,11,.08);
+  box-shadow: 0 24px 60px -20px rgba(14,13,11,.25), 0 2px 8px rgba(14,13,11,.04);
+}
+.ed-askbar input {
+  flex: 1; min-width: 0; font: inherit; font-size: 15px; color: var(--ink, #0E0D0B);
+  border: 0; outline: 0; background: transparent; padding: 6px 0;
+}
+.ed-askbar button {
+  font: inherit; font-weight: 600; font-size: 13.5px; padding: 10px 18px; border-radius: 999px;
+  background: linear-gradient(135deg, #FF8A50, #FF6B35); color: #fff; border: 0; cursor: pointer;
+  box-shadow: 0 6px 18px -6px rgba(255,107,53,.5); transition: background .2s;
+}
+.ed-askbar button:hover { background: linear-gradient(135deg, #FF6B35, #E85A25); }
+.ed-askdot { position: relative; width: 8px; height: 8px; flex: none; }
+.ed-askdot span { position: absolute; inset: 0; border-radius: 50%; background: var(--accent, #E85A25); }
+.ed-askdot span:last-child { animation: ping 2s ease-out infinite; }
+
+/* content gets room for the floating bar */
+.content { padding-bottom: 120px !important; }
+
+/* sidebar: design voice (ink panel, hairline rules, dot markers) */
+.sb-section { font-family: 'DM Mono', monospace !important; font-size: 9.5px !important; letter-spacing: 1.6px !important; color: rgba(251,248,243,.35) !important; }
+.sb-item.on { color: #FBF8F3 !important; }
+.sb-user-name { font-weight: 500 !important; }
+.sb-user-role { font-size: 11.5px !important; color: rgba(251,248,243,.45) !important; }

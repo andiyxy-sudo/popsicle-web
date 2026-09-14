@@ -1,12 +1,10 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
-import { AIPanel } from '@/components/ai/AIPanel'
-import { Account360 } from '@/components/account/Account360'
-import { LiveSignals } from './LiveSignals'
 import { getInitials } from '@/lib/utils'
+import { useRouter, usePathname } from 'next/navigation'
 
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
@@ -17,35 +15,44 @@ interface AppShellProps {
 
 export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps) {
   const [aiOpen, setAiOpen] = useState(false)
-  const [aiPrefill, setAiPrefill] = useState<string | undefined>(undefined)
+  const [ask, setAsk] = useState('')
+  const router = useRouter()
+  const pathname = usePathname()
+  const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }
 
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
-  const greetingName = isDemo ? 'Andy' : (user.name || user.email.split('@')[0])
-
-  const handleOpenAI = useCallback(() => { setAiPrefill(undefined); setAiOpen(true) }, [])
-
-  useEffect(() => {
-    function onOpen(e: Event) {
-      const detail = (e as CustomEvent).detail as { prompt?: string } | undefined
-      setAiPrefill(detail?.prompt)
-      setAiOpen(true)
-    }
-    window.addEventListener('open-ai', onOpen as EventListener)
-    return () => window.removeEventListener('open-ai', onOpen as EventListener)
-  }, [])
 
   return (
     <>
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
-      <div className="main">
-        <Topbar signalCount={badges.signals ?? 0} onAskClick={handleOpenAI} initials={initials} />
-        <div className="content">
+      <div className="main" style={{ position: 'relative' }}>
+        {/* warm corner wash (design shell) */}
+        <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, width: 'min(900px,100%)', height: 900, pointerEvents: 'none', background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)', zIndex: 0 }} />
+        <Topbar signalCount={badges.signals ?? 0} onAskClick={() => setAiOpen(true)} initials={initials} />
+        <div className="content" style={{ position: 'relative', zIndex: 1 }}>
           {children}
+          <footer className="ed-footer">
+            <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
+            <span>Popsicle Labs · Revenue intelligence infrastructure</span>
+            <span>v1.0</span>
+          </footer>
         </div>
       </div>
-      <AIPanel open={aiOpen} onClose={() => setAiOpen(false)} isDemo={isDemo} greetingName={greetingName} prefill={aiPrefill} />
-      <Account360 />
-      {!isDemo && <LiveSignals userId={user.id} />}
+
+      {/* floating Ask bar (design shell) */}
+      {pathname !== '/ask' && (
+        <div className="ed-askbar-wrap">
+          <div className="ed-askbar">
+            <span className="ed-askdot"><span /><span /></span>
+            <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitAsk() }} placeholder="Ask Popsicle anything about your pipeline" />
+            <button onClick={submitAsk}>Ask</button>
+          </div>
+        </div>
+      )}
+      {/* AI panel mounts here later */}
+      {aiOpen && (
+        <div onClick={() => setAiOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
+      )}
     </>
   )
 }
