@@ -238,6 +238,7 @@ export function AskClient() {
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState(0)
   const endRef = useRef<HTMLDivElement>(null)
+  const paneRef = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
 
   // rotate the thinking line so it never looks frozen
@@ -269,24 +270,23 @@ export function AskClient() {
   }, [params])
   useEffect(() => {
     if (msgs.length === 0) return
-    const el = endRef.current
-    if (!el) return
-    // nearest keeps the shared content column from being yanked around, and
-    // leaves no leftover offset behind when navigating away.
-    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    // scroll only the conversation pane, never the page
+    const pane = paneRef.current
+    if (pane) pane.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' })
   }, [msgs, busy])
 
   const lastQuestion = [...msgs].reverse().find(m => m.role === 'user')?.content
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820 }}>
+    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
       <PageHead
         eyebrow="Ask AI"
         crumb="grounded in your data"
         title={<>Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts and correspondence.</span></>}
       />
 
+      <div ref={paneRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 }}>
       {msgs.length === 0 && !busy && (
         <div>
           <div style={{ ...label, marginBottom: 6 }}>Try asking</div>
@@ -329,8 +329,9 @@ export function AskClient() {
         </div>
       )}
       <div ref={endRef} />
+      </div>
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 34 }}>
+      <div style={{ display: 'flex', gap: 10, paddingTop: 18, borderTop: '1px solid var(--hairline, #EFEAE1)', flexShrink: 0 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
