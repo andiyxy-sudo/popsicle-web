@@ -1,69 +1,76 @@
-// Static dataset for the demo account, shaped exactly like live rows so the
-// REDESIGNED real components render it directly (one design, two data sources).
-// Ids are non-uuid on purpose: the Account360 uuid guard keeps them off the RPC.
+// Demo dataset extracted verbatim from the Popsicle prototype
+// (popsicle-desktop-v15b_33.html) so the demo account shows the canonical story.
 import type { Account, Signal } from '@/types'
 
-const d = (daysAgo: number, h = 10) => { const x = new Date(); x.setDate(x.getDate() - daysAgo); x.setHours(h, 24, 0, 0); return x.toISOString() }
-const fut = (days: number) => { const x = new Date(); x.setDate(x.getDate() + days); return x.toISOString() }
-
-const A = (id: string, name: string, domain: string, health: number, value: number, stage: string, risk: 'high' | 'medium' | 'low', lastContact: number, close: number, tags: string[]): Account => ({
-  id, name, domain, health_score: health, value, stage, owner: 'Andy G', risk_level: risk,
-  close_date: fut(close), last_contact_date: d(lastContact), tags, user_id: 'demo', created_at: d(220),
-})
+const now = Date.now()
+const iso = (h: number) => new Date(now - h * 3600000).toISOString()
+const fut = (d: number) => new Date(now + d * 86400000).toISOString()
 
 export const DEMO_ACCOUNTS: Account[] = [
-  A('demo-nexus', 'Nexus Systems', 'nexussystems.io', 34, 780_000, 'Contract Sent', 'high', 3, 6, ['Enterprise', 'Q3 close']),
-  A('demo-meridian', 'Meridian Health', 'meridianhealth.com', 41, 550_000, 'Negotiation', 'high', 5, 18, ['At risk']),
-  A('demo-acme', 'Acme Logistics', 'acmelogistics.com', 72, 1_250_000, 'Decision Maker Bought-In', 'medium', 1, 34, ['Enterprise']),
-  A('demo-brightline', 'Brightline Media', 'brightline.co', 68, 240_000, 'Proposal', 'medium', 2, 41, []),
-  A('demo-vertex', 'Vertex Manufacturing', 'vertexmfg.com', 81, 1_900_000, 'Discovery', 'low', 4, 88, ['Enterprise', 'New logo']),
-  A('demo-koa', 'Koa Financial', 'koafinancial.sg', 77, 430_000, 'Evaluation', 'low', 6, 55, []),
-  A('demo-halcyon', 'Halcyon Retail', 'halcyonretail.com', 58, 310_000, 'Proposal', 'medium', 19, 47, []),
-  A('demo-pacifica', 'Pacifica Energy', 'pacificaenergy.com', 88, 2_400_000, 'Closed Won - Expansion', 'low', 2, 120, ['Momentum']),
-  A('demo-summit', 'Summit Devices', 'summitdevices.com', 63, 175_000, 'Evaluation', 'medium', 27, 64, []),
+  { id: 'demo-acme', name: "Acme Corp", domain: "acmecorp.com", health_score: 31, value: 480000, stage: "Negotiation", owner: "Andy G", risk_level: 'high', close_date: fut(61), last_contact_date: iso(192), tags: ["Enterprise", "At risk"], user_id: 'demo', created_at: iso(4000), contact_name: "Sarah Chen \u00b7 CFO" } as Account & { contact_name: string },
+  { id: 'demo-meridian', name: "Meridian Labs", domain: "meridianlabs.com", health_score: 28, value: 850000, stage: "Renewal", owner: "Andy G", risk_level: 'high', close_date: fut(58), last_contact_date: iso(120), tags: ["Enterprise", "At risk"], user_id: 'demo', created_at: iso(4000), contact_name: "Alex Park \u00b7 CEO" } as Account & { contact_name: string },
+  { id: 'demo-axion', name: "Axion Partners", domain: "axionpartners.com", health_score: 52, value: 95000, stage: "Legal Review", owner: "Andy G", risk_level: 'medium', close_date: fut(82), last_contact_date: iso(24), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Marcus Webb \u00b7 VP Eng" } as Account & { contact_name: string },
+  { id: 'demo-techflow', name: "TechFlow Inc", domain: "techflowinc.com", health_score: 55, value: 210000, stage: "Discovery", owner: "Andy G", risk_level: 'medium', close_date: fut(85), last_contact_date: iso(72), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Lena Ford \u00b7 COO" } as Account & { contact_name: string },
+  { id: 'demo-techvault', name: "TechVault Inc", domain: "techvaultinc.com", health_score: 48, value: 210000, stage: "Discovery", owner: "Mike Ross", risk_level: 'medium', close_date: fut(78), last_contact_date: iso(72), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Jamie Torres \u00b7 VP Eng" } as Account & { contact_name: string },
+  { id: 'demo-nexus', name: "Nexus AI", domain: "nexusai.com", health_score: 88, value: 320000, stage: "Closing", owner: "Andy G", risk_level: 'low', close_date: fut(58), last_contact_date: iso(24), tags: ["Enterprise", "Momentum"], user_id: 'demo', created_at: iso(4000), contact_name: "Priya Sharma \u00b7 CTO" } as Account & { contact_name: string },
+  { id: 'demo-cobalt', name: "Cobalt Systems", domain: "cobaltsystems.com", health_score: 82, value: 150000, stage: "Closed Won", owner: "Jamie T", risk_level: 'low', close_date: fut(52), last_contact_date: iso(24), tags: ["Momentum"], user_id: 'demo', created_at: iso(4000), contact_name: "Dana Kim \u00b7 CRO" } as Account & { contact_name: string },
+  { id: 'demo-vertex', name: "Vertex Systems", domain: "vertexsystems.com", health_score: 65, value: 140000, stage: "Proposal", owner: "Mike Ross", risk_level: 'medium', close_date: fut(35), last_contact_date: iso(48), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Dana Kim \u00b7 CRO" } as Account & { contact_name: string },
 ]
 
-const S = (id: string, account: string, type: string, sev: 'high' | 'watch' | 'positive', title: string, desc: string, src: string, ageDays: number, extra: Partial<Signal> = {}): Signal => ({
-  id, account_id: null, account_name: account, signal_type: type, severity: sev, title, description: desc,
-  source_integration: src, ai_analysis: { confidence: 84 }, created_at: d(ageDays, 9 + (ageDays % 7)),
-  ...extra,
-} as Signal)
-
 export const DEMO_SIGNALS: Signal[] = [
-  S('demo-sg-1', 'Nexus Systems', 'silent_stall', 'high',
-    'CFO went quiet 3 days before signature', 'Daniel Reyes opened the contract twice but has not replied since Tuesday. Their prior reply gap on this thread averaged 6 hours.', 'gmail', 0,
-    { risk_amount: 780_000, ai_analysis: { confidence: 91, quote: 'I want to walk the numbers past our board first.', recommendation: 'offer a 20-minute board-prep call before Friday' } as Signal['ai_analysis'],
-      corroboration: { concern: 'stall', with: [{ signal_id: 'demo-sg-2', source: 'slack', at: d(1) }], reason: 'Same concern surfaced on Slack and email within 24h' } as Signal['corroboration'] }),
-  S('demo-sg-2', 'Nexus Systems', 'price_flinch', 'high',
-    'Procurement pushed back on year-two pricing', 'Their ops lead called the ramp "steeper than expected" in the shared channel and asked for the TCO sheet again.', 'slack', 1,
-    { risk_amount: 780_000, ai_analysis: { confidence: 86, quote: 'the year-two ramp is steeper than we expected', recommendation: 'resend the TCO sheet with the ramp flattened over 3 years' } as Signal['ai_analysis'] }),
-  S('demo-sg-3', 'Meridian Health', 'call_objection', 'high',
-    'Compliance named a blocking objection on the call', 'Their counsel flagged data-residency requirements as unresolved. Objection type: authority. No follow-up scheduled.', 'fireflies', 2,
-    { risk_amount: 550_000, ai_analysis: { confidence: 78, quote: 'until residency is settled, legal will not sign off', recommendation: 'send the SG-region hosting addendum today' } as Signal['ai_analysis'] }),
-  S('demo-sg-4', 'Meridian Health', 'meeting_cancelled', 'watch',
-    'Steering meeting cancelled without a re-book', 'Thursday review was cancelled by their PMO an hour before start. No new invite has appeared.', 'gcal', 1, { risk_amount: 550_000 }),
-  S('demo-sg-5', 'Acme Logistics', 'call_buying_signal', 'positive',
-    'VP Ops asked for rollout timeline in writing', 'On the Wednesday call their VP asked for a phased rollout plan and named January as the target go-live.', 'zoom', 1,
-    { ai_analysis: { confidence: 93, quote: 'send me the phased plan - January is realistic for us', recommendation: 'send the rollout one-pager while it is warm' } as Signal['ai_analysis'] }),
-  S('demo-sg-6', 'Brightline Media', 'competitor_mention', 'watch',
-    'Rival named in the eval thread', 'Their marketing lead asked how the platform compares on attribution. First competitor mention in this cycle.', 'gmail', 3,
-    { ai_analysis: { confidence: 74, recommendation: 'send the comparison one-pager before their Friday sync' } as Signal['ai_analysis'] }),
-  S('demo-sg-7', 'Halcyon Retail', 'silent_stall', 'watch',
-    'Quiet for 19 days against a weekly cadence', 'Correspondence ran weekly for two months, then stopped after the pricing email. No opens recorded this week.', 'gmail', 2, { risk_amount: 310_000 }),
-  S('demo-sg-8', 'Pacifica Energy', 'reengaged', 'positive',
-    'Champion returned asking about expansion seats', 'After the rollout, their program lead asked about adding two more regions in Q4.', 'gmail', 2,
-    { ai_analysis: { confidence: 90, recommendation: 'lock a Q4 expansion call this week' } as Signal['ai_analysis'] }),
-  S('demo-sg-9', 'Summit Devices', 'timeline_slip', 'watch',
-    'Eval end date moved for the second time', 'Their team pushed the evaluation close from Sep 12 to Sep 26 in the shared doc.', 'hubspot', 4, { risk_amount: 175_000 }),
-  S('demo-sg-10', 'Vertex Manufacturing', 'call_commitment', 'positive',
-    'They committed to intro the plant director', 'On the discovery call their COO promised an introduction to the Surabaya plant director next week.', 'meet', 5,
-    { ai_analysis: { confidence: 88 } as Signal['ai_analysis'] }),
-  S('demo-sg-11', 'Koa Financial', 'legal_loopin', 'watch',
-    'Outside counsel added to the thread', 'A partner from their external firm joined the DPA thread. Review cycles typically add 2-3 weeks.', 'gmail', 6, { risk_amount: 430_000 }),
-  S('demo-sg-12', 'Acme Logistics', 'call_summary', 'positive',
-    'Strong technical validation call', 'Their platform team confirmed the integration path and raised no blockers.', 'zoom', 7,
-    { status: 'handled', handled_action: 'Sent follow-up', ai_analysis: { confidence: 89 } as Signal['ai_analysis'] }),
-  S('demo-sg-13', 'Brightline Media', 'meeting_declined', 'watch',
-    'Kickoff invite declined by their CMO', 'Declined without comment; the rest of their team accepted.', 'gcal', 8,
-    { status: 'handled', handled_action: 'Called them' }),
+  { id: 'demo-sg-0', account_id: null, account_name: "Acme Corp", signal_type: 'silent_stall', severity: 'high', title: "Email opened 3\u00d7 without reply", description: "Email opened 3\u00d7 without reply \u2014 8 days dark", source_integration: 'gmail', risk_amount: 480000, created_at: iso(0.2), ai_analysis: { confidence: 72 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-1', account_id: null, account_name: "Acme Corp", signal_type: 'competitor_mention', severity: 'high', title: "Competitor mentioned in Slack #sales channel", description: "Competitor mentioned in Slack #sales channel", source_integration: 'slack', risk_amount: 480000, created_at: iso(2.0), ai_analysis: { confidence: 79 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-2', account_id: null, account_name: "Acme Corp", signal_type: 'price_flinch', severity: 'watch', title: "CFO requested pricing breakdown via WhatsApp", description: "CFO requested pricing breakdown via WhatsApp", source_integration: 'gmail', risk_amount: 480000, created_at: iso(24.0), ai_analysis: { confidence: 86 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-3', account_id: null, account_name: "Acme Corp", signal_type: 'call_buying_signal', severity: 'positive', title: "VP Eng confirmed technical requirements met", description: "VP Eng confirmed technical requirements met", source_integration: 'zoom', risk_amount: null, created_at: iso(72.0), ai_analysis: { confidence: 93 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-4', account_id: null, account_name: "Meridian Labs", signal_type: 'competitor_mention', severity: 'high', title: "CEO mentioned \"looking at alternatives\" in Slack", description: "CEO mentioned \"looking at alternatives\" in Slack", source_integration: 'slack', risk_amount: 850000, created_at: iso(1.0), ai_analysis: { confidence: 75 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-5', account_id: null, account_name: "Meridian Labs", signal_type: 'timeline_slip', severity: 'high', title: "Renewal timeline pushed from Q1 to Q2", description: "Renewal timeline pushed from Q1 to Q2", source_integration: 'gmail', risk_amount: 850000, created_at: iso(6.0), ai_analysis: { confidence: 82 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-6', account_id: null, account_name: "Meridian Labs", signal_type: 'call_sentiment_drop', severity: 'watch', title: "Product usage declined 18% MoM", description: "Product usage declined 18% MoM", source_integration: 'hubspot', risk_amount: 850000, created_at: iso(24.0), ai_analysis: { confidence: 89 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-7', account_id: null, account_name: "Axion Partners", signal_type: 'silent_stall', severity: 'watch', title: "Legal review stalled at day 3", description: "Legal review stalled at day 3 \u2014 no response from their team", source_integration: 'gmail', risk_amount: 95000, created_at: iso(2.0), ai_analysis: { confidence: 96 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-8', account_id: null, account_name: "Axion Partners", signal_type: 'call_buying_signal', severity: 'positive', title: "Marcus confirmed technical requirements met", description: "Marcus confirmed technical requirements met", source_integration: 'zoom', risk_amount: null, created_at: iso(24.0), ai_analysis: { confidence: 78 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-9', account_id: null, account_name: "TechFlow Inc", signal_type: 'price_flinch', severity: 'watch', title: "CFO mentioned \"need to check with finance\"", description: "CFO mentioned \"need to check with finance\"", source_integration: 'zoom', risk_amount: 210000, created_at: iso(3.0), ai_analysis: { confidence: 85 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-10', account_id: null, account_name: "TechFlow Inc", signal_type: 'timeline_slip', severity: 'watch', title: "Budget discussion deferred to next quarter review", description: "Budget discussion deferred to next quarter review", source_integration: 'gmail', risk_amount: 210000, created_at: iso(24.0), ai_analysis: { confidence: 92 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-11', account_id: null, account_name: "TechFlow Inc", signal_type: 'call_buying_signal', severity: 'positive', title: "COO expressed strong interest in integration capabilities", description: "COO expressed strong interest in integration capabilities", source_integration: 'slack', risk_amount: null, created_at: iso(48.0), ai_analysis: { confidence: 74 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-12', account_id: null, account_name: "TechVault Inc", signal_type: 'price_flinch', severity: 'watch', title: "Asked for 15% discount in follow-up email", description: "Asked for 15% discount in follow-up email", source_integration: 'gmail', risk_amount: 210000, created_at: iso(48.0), ai_analysis: { confidence: 81 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-13', account_id: null, account_name: "TechVault Inc", signal_type: 'call_buying_signal', severity: 'positive', title: "Technical POC completed successfully", description: "Technical POC completed successfully", source_integration: 'zoom', risk_amount: null, created_at: iso(120.0), ai_analysis: { confidence: 88 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-14', account_id: null, account_name: "Nexus AI", signal_type: 'legal_loopin', severity: 'positive', title: "Proposal forwarded to legal for final review", description: "Proposal forwarded to legal for final review", source_integration: 'gmail', risk_amount: null, created_at: iso(0.6), ai_analysis: { confidence: 95 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-15', account_id: null, account_name: "Nexus AI", signal_type: 'call_buying_signal', severity: 'positive', title: "All technical requirements confirmed", description: "All technical requirements confirmed", source_integration: 'slack', risk_amount: null, created_at: iso(24.0), ai_analysis: { confidence: 77 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-16', account_id: null, account_name: "Cobalt Systems", signal_type: 'call_buying_signal', severity: 'positive', title: "Contract signed", description: "Contract signed \u2014 deal closed-won", source_integration: 'hubspot', risk_amount: null, created_at: iso(2.0), ai_analysis: { confidence: 84 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-17', account_id: null, account_name: "Vertex Systems", signal_type: 'call_buying_signal', severity: 'positive', title: "Proposal delivered and confirmed received", description: "Proposal delivered and confirmed received", source_integration: 'gmail', risk_amount: null, created_at: iso(48.0), ai_analysis: { confidence: 91 }, is_dismissed: false } as unknown as Signal,
+  { id: 'demo-sg-18', account_id: null, account_name: "Vertex Systems", signal_type: 'timeline_slip', severity: 'watch', title: "Procurement flagged timeline question", description: "Procurement flagged timeline question", source_integration: 'gmail', risk_amount: 140000, created_at: iso(24.0), ai_analysis: { confidence: 73 }, is_dismissed: false } as unknown as Signal,
+]
+
+
+// Correspondence volume + baselines so Intelligence has real shape to chart.
+export const DEMO_MESSAGES = (() => {
+  const out: Array<{ id: string; account_name: string; sender: string; subject: string; content: string; integration: string; direction: string; received_at: string }> = []
+  const accts = ["Acme Corp", "Meridian Labs", "Axion Partners", "TechFlow Inc", "TechVault Inc", "Nexus AI", "Cobalt Systems", "Vertex Systems"]
+  const subjects = ["Re: pricing review", "Contract redlines", "Rollout plan", "Security questionnaire", "Re: next steps", "Legal review status", "Renewal terms", "Technical eval"]
+  let n = 0
+  for (let week = 7; week >= 0; week--) {
+    const volume = 7 + (7 - week) * 2
+    for (let i = 0; i < volume; i++) {
+      const a = accts[(n + i) % accts.length]
+      out.push({
+        id: `demo-msg-${n++}`, account_name: a,
+        sender: i % 3 === 0 ? 'andy@popsicle-labs.app' : `contact@${a.toLowerCase().replace(/[^a-z]/g, '')}.com`,
+        subject: subjects[(n + i) % subjects.length],
+        content: 'Thanks for the note - circling back with the team and will confirm this week.',
+        integration: ['gmail', 'gmail', 'slack', 'gmail', 'zoom'][(n + i) % 5],
+        direction: i % 3 === 0 ? 'outbound' : 'inbound',
+        received_at: iso((week * 7 + (i % 7)) * 24),
+      })
+    }
+  }
+  return out
+})()
+
+export const DEMO_BASELINES = [
+  { account_name: "Acme Corp", total_messages: 148, total_reply_pairs: 41, our_median_reply_hours: 3, their_median_reply_hours: 26, last_message_at: iso(192), avg_interval_hours: 30 },
+  { account_name: "Meridian Labs", total_messages: 126, total_reply_pairs: 38, our_median_reply_hours: 2, their_median_reply_hours: 31, last_message_at: iso(120), avg_interval_hours: 28 },
+  { account_name: "Nexus AI", total_messages: 97, total_reply_pairs: 30, our_median_reply_hours: 2, their_median_reply_hours: 5, last_message_at: iso(1), avg_interval_hours: 20 },
+  { account_name: "TechFlow Inc", total_messages: 84, total_reply_pairs: 22, our_median_reply_hours: 3, their_median_reply_hours: 14, last_message_at: iso(72), avg_interval_hours: 40 },
+  { account_name: "Axion Partners", total_messages: 61, total_reply_pairs: 15, our_median_reply_hours: 4, their_median_reply_hours: 19, last_message_at: iso(24), avg_interval_hours: 52 },
+  { account_name: "TechVault Inc", total_messages: 44, total_reply_pairs: 11, our_median_reply_hours: 5, their_median_reply_hours: 22, last_message_at: iso(72), avg_interval_hours: 60 },
+  { account_name: "Cobalt Systems", total_messages: 38, total_reply_pairs: 12, our_median_reply_hours: 3, their_median_reply_hours: 6, last_message_at: iso(2), avg_interval_hours: 36 },
+  { account_name: "Vertex Systems", total_messages: 29, total_reply_pairs: 7, our_median_reply_hours: 6, their_median_reply_hours: 28, last_message_at: iso(48), avg_interval_hours: 72 },
 ]

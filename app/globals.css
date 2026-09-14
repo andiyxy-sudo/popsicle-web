@@ -371,11 +371,6 @@ button { font-family:'Outfit',sans-serif; }
   border-bottom:1px solid rgba(74,60,50,.08);
   background:var(--surface); position:sticky; top:0; z-index:1;
 }
-.dtable td {
-  padding:13px 14px; font-size:13px;
-  border-bottom:1px solid rgba(74,60,50,.06);
-  vertical-align:middle; transition:background .12s;
-}
 .dtable tr { cursor:pointer; }
 
 /* Row risk tinting — background, not just left border */
@@ -537,10 +532,6 @@ button { font-family:'Outfit',sans-serif; }
 
 /* ════ INTEGRATIONS ════ */
 .int-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
-.int-cat { display:flex; align-items:center; gap:10px; padding:8px 14px; background:rgba(255,107,53,.05); border:1px solid rgba(255,107,53,.1); border-radius:10px; margin-bottom:6px; cursor:pointer; }
-.int-cat-ico { width:32px; height:32px; border-radius:9px; background:rgba(255,107,53,.08); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.int-cat-label { font-size:13px; font-weight:700; color:var(--t1); flex:1; }
-.int-cat-count { font-size:11px; font-weight:700; color:var(--o); }
 .int-signal { font-size:9px; font-weight:800; background:rgba(42,157,92,.1); color:var(--ok); border:1px solid rgba(42,157,92,.2); padding:3px 8px; border-radius:20px; font-family:'DM Mono',monospace; display:flex; align-items:center; gap:3px; }
 .int-card {
   background:var(--surface); border:1px solid var(--border-soft);
@@ -1698,7 +1689,6 @@ button:active, .sig-filter:active, .fc-tab:active {
 
 /* Table cells — tighter hierarchy */
 .dtable th { font-size: var(--text-xs) !important; font-weight: var(--fw-bold) !important; }
-.dtable td { font-size: var(--text-sm) !important; }
 
 /* Pipeline step */
 .pipeline-step-label { font-size: var(--text-sm) !important; }
@@ -1918,17 +1908,6 @@ button:active, .sig-filter:active, .fc-tab:active {
 .dcard [style*="uppercase"] { letter-spacing: 1.4px; }
 
 /* Tables — editorial: strong 1px opening rule, hairline rows, quiet cells */
-.dtable thead th {
-  font-family: 'DM Mono', monospace !important;
-  font-size: 10px !important;
-  letter-spacing: 1.6px !important;
-  text-transform: uppercase !important;
-  color: var(--ink-faint) !important;
-  font-weight: 400 !important;
-  border-bottom: 1px solid var(--rule-strong) !important;
-  padding-bottom: 10px !important;
-}
-.dtable td { border-bottom: 1px solid var(--hairline) !important; font-size: 13px !important; }
 .dtable tbody tr { transition: background var(--t-fast) var(--ease); }
 .dtable tbody tr:hover { background: var(--wash) !important; }
 
@@ -2033,69 +2012,6 @@ input, select, textarea { border-radius: var(--r-sheet); }
 .dsk-screen { max-width: 1080px; }
 
 /* ============================================================
-   PHASE 3 SWEEP — editorial language across all remaining screens
-   Pure cascade: no markup or behavior changes.
-   ============================================================ */
-
-/* Every page header reads as an editorial title block */
-.page-hdr { border-bottom: 1px solid var(--rule-strong, #0E0D0B); padding-bottom: 20px; }
-.page-hdr h1 { margin-bottom: 6px !important; }
-
-/* Cards: only corners and shadows are ours. Never touch background, padding,
-   or text colour - components own those (dark gradient heroes, tinted panels). */
-.dcard { border-radius: 0 !important; box-shadow: none !important; }
-
-
-
-.sig-row:hover, .signal-card:hover, .list-row:hover { background: rgba(14,13,11,.02) !important; }
-
-/* Pills and chips: mono uppercase, square, quiet */
-
-/* Health cell: numeral, not a badge */
-
-/* Modals / sheets: sharp editorial sheets on the ink scrim */
-[style*="position: fixed"][style*="rgba(15,12,9,.45)"],
-[style*="position: fixed"][style*="rgba(15,12,9,.5)"],
-[style*="position: fixed"][style*="rgba(15,12,9,.42)"] { background: rgba(14,13,11,.42) !important; backdrop-filter: blur(3px); }
-[style*="borderRadius: 18"], [style*="border-radius: 18px"],
-[style*="borderRadius: 16"], [style*="border-radius: 16px"],
-[style*="borderRadius: 14"], [style*="border-radius: 14px"] { border-radius: 0 !important; }
-
-/* Primary buttons: the design's gradient pill */
-button[style*="linear-gradient(135deg, #FF6B35"], a[style*="linear-gradient(135deg, #FF6B35"] {
-  border-radius: 999px !important;
-  background: linear-gradient(135deg, #FF8A50, #FF6B35) !important;
-  box-shadow: 0 6px 18px -6px rgba(255,107,53,.5) !important;
-}
-
-/* Secondary buttons: square hairline */
-button[style*="1px solid var(--border)"] { border-radius: 0 !important; }
-
-/* Inputs: square, hairline, paper */
-input, select, textarea {
-  border-radius: 0 !important; border-color: var(--hairline, #EFEAE1) !important;
-}
-input:focus, textarea:focus, select:focus { border-color: var(--ink, #0E0D0B) !important; }
-
-/* KPI grid (any screen still using it) reads as naked stats */
-.kpi-support, .kpi-hero { border-radius: 0 !important; box-shadow: none !important; }
-
-
-/* Integration tiles keep structure but lose gloss */
-.int-card { border-radius: 0 !important; box-shadow: none !important; border-color: var(--hairline) !important; }
-
-/* tables in the editorial language (design spec) */
-.dtable { width: 100%; border-collapse: collapse; }
-.dtable thead th {
-  font-family: 'DM Mono', monospace !important; font-size: 10px !important; letter-spacing: 1.6px !important;
-  text-transform: uppercase !important; color: var(--ink-faint) !important; font-weight: 400 !important;
-  text-align: left; padding: 0 16px 12px 0 !important; border-bottom: 1px solid var(--rule-strong, #0E0D0B) !important;
-}
-.dtable td { padding: 18px 16px 18px 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important; vertical-align: middle; }
-.dtable tbody tr:hover { background: rgba(14,13,11,.02) !important; }
-.dtable tbody tr.row-hi, .dtable tbody tr.row-md, .dtable tbody tr.row-ok { background: transparent !important; }
-
-/* ============================================================
    BASE TYPOGRAPHY — design spec (html/body + weights)
    ============================================================ */
 html, body {
@@ -2144,13 +2060,8 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
 
 .int-card { border-radius: 0 !important; box-shadow: none !important; }
 .int-card:hover { background: rgba(14,13,11,.02) !important; }
-.int-cat-label {
-  font-family: 'DM Mono', monospace !important; font-size: 10px !important;
-  letter-spacing: 1.6px !important; text-transform: uppercase !important; color: var(--ink-faint) !important;
-}
 
 /* Account 360 slide-over: square editorial sheet */
-[style*="width: 'min(680px"] { background: var(--paper, #FBF8F3) !important; }
 
 /* Forecast / Team / any remaining card grid */
 
@@ -2203,3 +2114,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 .content, .content > *, .content * { opacity: 1 !important; }
 .content *, .content *::before, .content *::after { animation: none !important; }
 .dcard, .kpi-hero, .kpi-support, .fade-in, [class*="fade-in"] { opacity: 1 !important; animation: none !important; }
+
+
+/* v1.5 — final: global rules may only flatten corners and shadows. */
+.dcard, .int-card, .kpi-hero, .kpi-support { border-radius: 0 !important; box-shadow: none !important; }

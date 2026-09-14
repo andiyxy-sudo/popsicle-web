@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_SIGNALS } from '@/lib/demo-dataset'
+import { DEMO_SIGNALS, DEMO_MESSAGES, DEMO_BASELINES } from '@/lib/demo-dataset'
 import { IntelligenceReal } from './IntelligenceReal'
 
 export default async function IntelligencePage() {
@@ -11,7 +11,7 @@ export default async function IntelligencePage() {
   const userId = data.claims.sub as string
 
   if (email === DEMO_EMAIL) {
-    return <IntelligenceReal signals={DEMO_SIGNALS as never} messages={[]} baselines={[]} />
+    return <IntelligenceReal signals={DEMO_SIGNALS as never} messages={DEMO_MESSAGES as never} baselines={DEMO_BASELINES as never} />
   }
 
   const since = new Date(Date.now() - 56 * 86400000).toISOString()
