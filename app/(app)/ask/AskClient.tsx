@@ -120,6 +120,23 @@ function parseAnswer(text: string) {
     if (inPlay) { play = (play + ' ' + l).trim(); return }
     body.push(l)
   })
+  // Fallbacks: if the model ignored the shape, derive what we can from the text.
+  const flat = [title, ...body].join(' ')
+  if (!title && body.length) {
+    const first = body.find(Boolean) || ''
+    title = first.length > 70 ? first.slice(0, 64).replace(/[,.;:]\s*\S*$/, '') : first.replace(/[.:]$/, '')
+    const idx = body.indexOf(first); if (idx > -1 && body[idx].length <= 70) body.splice(idx, 1)
+  }
+  if (!tags.length) {
+    const t: string[] = []
+    if (/\bcritical\b/i.test(flat)) t.push('Critical')
+    else if (/\bat risk\b|\brisk\b/i.test(flat)) t.push('At risk')
+    else if (/\bwatch\b|\bquiet\b|\bstall/i.test(flat)) t.push('Watch')
+    else if (/\bhealthy\b|\bpositive\b|\bmomentum\b/i.test(flat)) t.push('Healthy')
+    const money = flat.match(/\$[\d.,]+[KMB]?/)
+    if (money) t.push(`${money[0]} in play`)
+    tags = t
+  }
   return { title, tags, body, play, sources, stats }
 }
 
@@ -133,7 +150,7 @@ function AnswerCard({ text }: { text: string }) {
   let buf: string[] = []
   const flush = (k: number) => {
     if (!buf.length) return
-    paras.push(<p key={`p${k}`} style={{ margin: '0 0 14px', fontSize: 15.5, lineHeight: 1.65, color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
+    paras.push(<p key={`p${k}`} style={{ margin: '0 0 13px', fontSize: 15.5, lineHeight: 1.68, color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
     buf = []
   }
   body.forEach((l, i) => {
@@ -141,9 +158,15 @@ function AnswerCard({ text }: { text: string }) {
     if (/^([-*•]|\d+[.)])\s/.test(l)) {
       flush(i)
       paras.push(
-        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '12px 1fr', gap: 11, padding: '6px 0', fontSize: 15, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '12px 1fr', gap: 12, padding: '7px 0', fontSize: 15, lineHeight: 1.62, color: 'var(--ink-muted)' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
-          <div>{inline(l.replace(/^([-*•]|\d+[.)])\s/, ''), i)}</div>
+          <div>{(() => {
+            const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
+            const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
+            return m2 && !t.startsWith('**')
+              ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
+              : inline(t, i)
+          })()}</div>
         </div>
       )
       return
@@ -162,7 +185,7 @@ function AnswerCard({ text }: { text: string }) {
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
       </div>
       <div style={{ padding: '18px 20px 20px' }}>
-        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginBottom: 10 }}>{title}</div>}
+        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 19.5, letterSpacing: '-.025em', color: 'var(--ink)', marginBottom: 11, lineHeight: 1.25 }}>{title}</div>}
         {tags.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {tags.map((t, i) => (
