@@ -192,10 +192,11 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35 }}>
+                <div key={a.id} onClick={() => openA360(a)}
+                  style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35, cursor: 'pointer' }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 21, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
-                    <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
+                    <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
@@ -208,7 +209,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
-                  <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : openA360(a)}
+                  <button onClick={e => { e.stopPropagation(); if (top) router.push(`/signals?signal=${top.id}&action=reply`); else openA360(a) }}
                     style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>
