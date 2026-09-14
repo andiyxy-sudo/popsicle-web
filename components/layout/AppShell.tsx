@@ -21,8 +21,12 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // a few pixels down on first paint.
   const contentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    contentRef.current?.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
-    window.scrollTo(0, 0)
+    // Defensive: a throwing scroll call here would take the whole shell down
+    // and leave the content column blank until a client-side nav re-rendered it.
+    try {
+      if (contentRef.current) contentRef.current.scrollTop = 0
+      window.scrollTo(0, 0)
+    } catch { /* non-fatal */ }
   }, [pathname])
 
   const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }

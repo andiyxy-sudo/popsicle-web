@@ -1891,9 +1891,10 @@ button:active, .sig-filter:active, .fc-tab:active {
    ============================================================ */
 
 /* Screen entrance — the redesign's signature motion */
-.dsk-screen.on { animation: fadeUp .6s var(--ease) both; }
-.dsk-screen.on .dcard:nth-of-type(1) { animation: fadeUp .6s var(--ease) .1s both; }
-.dsk-screen.on .dcard:nth-of-type(2) { animation: fadeUp .6s var(--ease) .2s both; }
+.dsk-screen, .dsk-screen.on { opacity: 1; }
+.dsk-screen.on { animation: fadeUp .6s var(--ease) forwards; }
+.dsk-screen.on .dcard:nth-of-type(1) { animation: fadeUp .5s var(--ease) .05s forwards; }
+.dsk-screen.on .dcard:nth-of-type(2) { animation: fadeUp .5s var(--ease) .1s forwards; }
 
 /* Page titles — editorial scale, tight tracking */
 .page-hdr h1 {
@@ -2226,3 +2227,23 @@ html { scroll-behavior: auto; }
   border-radius: 0 !important;
   box-shadow: 0 40px 90px -30px rgba(14,13,11,.5) !important;
 }
+
+
+/* Content must be visible even if an animation never runs (reduced motion,
+   interrupted hydration, or a stylesheet that loads late). */
+.dsk-screen { opacity: 1 !important; }
+@media (prefers-reduced-motion: reduce) {
+  .dsk-screen.on, .dsk-screen.on .dcard { animation: none !important; }
+}
+
+/* Ask bar + text fields: no accent ring on focus (design keeps them clean).
+   Keyboard focus stays visible on buttons/links only. */
+.ed-askbar:focus-within {
+  border-color: rgba(14,13,11,.14);
+  box-shadow: 0 24px 60px -20px rgba(14,13,11,.25), 0 2px 8px rgba(14,13,11,.04);
+}
+.ed-askbar input:focus, .ed-askbar input:focus-visible { outline: none !important; box-shadow: none !important; border: 0 !important; }
+.ai-input-row:focus-within { border-color: var(--hairline, #EFEAE1) !important; box-shadow: none !important; }
+input:focus, textarea:focus, select:focus { outline: none !important; box-shadow: none !important; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none !important; box-shadow: none !important; }
+.dsk-screen input:focus, .dsk-screen textarea:focus { border-color: var(--ink, #0E0D0B) !important; }
