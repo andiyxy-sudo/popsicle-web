@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
+import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import type { Account, Signal } from '@/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
 
@@ -578,6 +579,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
   const isDemoData = accounts.some(a => String(a.id).startsWith('demo-')) || signals.some(s => String(s.id).startsWith('demo-'))
   // Accounts with a meeting inside 48h (attention-formula factor).
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
+  const [flag, setFlag] = useState<RiskFlag | null>(null)
   useEffect(() => {
     let dead = false
     if (isDemoData) return
@@ -878,6 +880,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
 
       {/* Accounts needing attention — design AccountTable grid (no <table>,
           never scrolls sideways; text tracks truncate before the action button) */}
+      <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       <div style={{ marginTop: 80 }}>
         {(() => {
           const COLS = '30px minmax(90px,1.5fr) minmax(52px,.62fr) minmax(50px,.58fr) minmax(56px,.8fr) minmax(70px,1.2fr) minmax(44px,.5fr) 104px'
@@ -919,7 +922,8 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start',
+                  <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start', cursor: 'pointer',
                     padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>

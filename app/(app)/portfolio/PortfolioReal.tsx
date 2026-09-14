@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
+import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 import { buildA360 } from '@/lib/demo-accounts'
 
@@ -67,6 +68,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
   useEffect(() => { setMounted(true) }, [])
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
+  const [flag, setFlag] = useState<RiskFlag | null>(null)
   useEffect(() => {
     let dead = false
     if (demoSignals) {
@@ -167,6 +169,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by attention</span>
       </div>
+      <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
         const COLS = '30px minmax(90px,1.5fr) minmax(52px,.62fr) minmax(50px,.58fr) minmax(56px,.8fr) minmax(70px,1.2fr) minmax(44px,.5fr) 104px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
@@ -195,7 +198,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                     <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
-                  <span onClick={e => { e.stopPropagation(); openA360(a) }} title="Open account"
+                  <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'start',
                       padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
