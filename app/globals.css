@@ -2211,3 +2211,18 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
 
 /* Forecast / Team / any remaining card grid */
 .dcard-grid { gap: 44px !important; }
+
+/* First-paint alignment: no scroll anchoring drift, and the entrance
+   animation must not create scrollable overflow. */
+.content { overflow-anchor: none; scroll-padding-top: 0; }
+.dsk-screen, .content { overflow-x: hidden; }
+.dsk-screen.on { will-change: opacity; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+html { scroll-behavior: auto; }
+
+/* All overlay sheets share the design's paper-sheet language */
+[style*="position: fixed"][style*="rgba(14,13,11,.42)"] > div {
+  background: var(--paper, #FBF8F3) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 40px 90px -30px rgba(14,13,11,.5) !important;
+}

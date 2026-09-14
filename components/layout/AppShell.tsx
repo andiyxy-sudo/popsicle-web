@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -16,6 +16,15 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const [ask, setAsk] = useState('')
   const router = useRouter()
   const pathname = usePathname()
+  // Every route lands at the top: the scrollable column is .content, and
+  // browser scroll anchoring + the entrance animation can otherwise leave it
+  // a few pixels down on first paint.
+  const contentRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior })
+    window.scrollTo(0, 0)
+  }, [pathname])
+
   const submitAsk = () => { const q = ask.trim(); if (!q) return; setAsk(''); router.push(`/ask?q=${encodeURIComponent(q)}`) }
 
 
@@ -25,7 +34,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <div className="main" style={{ position: 'relative' }}>
         {/* warm corner wash (design shell) */}
         <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, width: 'min(900px,100%)', height: 900, pointerEvents: 'none', background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)', zIndex: 0 }} />
-        <div className="content" style={{ position: 'relative', zIndex: 1 }}>
+        <div className="content" ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {children}
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>

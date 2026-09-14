@@ -669,6 +669,290 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
       )}
 
       {draftFor && (
+        <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 620, background: 'var(--paper, #FBF8F3)', padding: '40px 44px 44px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
+            {/* eyebrow + close */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>ai-drafted · draft email</span>
+              <button onClick={() => setDraftFor(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
+            </div>
+            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.035em', margin: '12px 0 0', color: 'var(--ink)' }}>{draftFor.account_name || 'Draft reply'}</h2>
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 0 0' }} />
+
+            {draftState === 'loading' && (
+              <div style={{ padding: '56px 0', textAlign: 'center' }}>
+                <div style={{ display: 'inline-flex', gap: 5 }}>
+                  {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', opacity: .5, animation: 'ping 1.4s ease-out infinite', animationDelay: `${i * .18}s` }} />)}
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 16 }}>{draftSlow ? 'Still writing, checking every fact against the thread...' : 'Writing a draft from the thread and the signal...'}</div>
+              </div>
+            )}
+
+            {draftState === 'error' && (
+              <div style={{ padding: '44px 0', textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>No draft was written</div>
+                <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, maxWidth: 420, margin: '0 auto 20px' }}>{draftErr || 'Give it another try in a moment.'}</div>
+                <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer' }}>Try again</button>
+              </div>
+            )}
+
+            {draftState === 'ready' && draft && (
+              <>
+                {/* recipient row */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
+                    <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>To</span>
+                    <input value={draft.to || ''} onChange={e => setDraft({ ...draft, to: e.target.value })} placeholder="recipient@company.com"
+                      style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 15, fontWeight: 500, color: 'var(--ink)', border: 0, outline: 0, background: 'transparent', padding: 0 }} />
+                  </span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+                    via {draftFor.source_integration === 'gmail' && draftFor.source_message_id ? 'gmail · thread' : 'gmail · new'}
+                  </span>
+                </div>
+
+                {contacts.filter(c => c !== (draft.to || '').toLowerCase()).length > 0 && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', flexWrap: 'wrap' }}>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>known</span>
+                    {contacts.filter(c => c !== (draft.to || '').toLowerCase()).slice(0, 4).map(c => (
+                      <span key={c} onClick={() => setDraft(d => d ? (!d.to ? { ...d, to: c } : { ...d, cc: d.cc ? `${d.cc}, ${c}` : c }) : d)}
+                        style={{ fontSize: 12.5, color: 'var(--accent)', cursor: 'pointer' }}>{c}</span>
+                    ))}
+                  </div>
+                )}
+
+                <input value={draft.cc || ''} onChange={e => setDraft({ ...draft, cc: e.target.value })} placeholder="Cc (optional)"
+                  style={{ width: '100%', font: 'inherit', fontSize: 13, color: 'var(--ink-muted)', border: 0, borderBottom: '1px solid var(--hairline, #EFEAE1)', outline: 0, background: 'transparent', padding: '12px 0' }} />
+
+                {/* subject as the statement line */}
+                <input value={draft.subject} onChange={e => setDraft({ ...draft, subject: e.target.value })}
+                  style={{ width: '100%', font: 'inherit', fontSize: 19, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', border: 0, outline: 0, background: 'transparent', padding: '24px 0 16px' }} />
+
+                {/* body */}
+                <textarea value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} rows={11}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '22px 26px', fontSize: 15.5, lineHeight: 1.75, color: 'var(--ink)', background: '#FFFDFA', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", display: 'block' }} />
+
+                {draft.provenance && (
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 12 }}>
+                    grounded in {draft.provenance.grounded_in.join(' + ')}{draft.provenance.thread_messages ? ` · ${draft.provenance.thread_messages} messages` : ''} · facts checked
+                  </div>
+                )}
+
+                {/* actions */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
+                  {sendState === 'needs_scope' ? (
+                    <button onClick={() => { setDraftFor(null); router.push('/integrations') }} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)' }}>Reconnect Gmail</button>
+                  ) : (
+                    <button onClick={sendNow} disabled={sendState === 'sending' || sendState === 'sent' || !draft.to}
+                      style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 999, border: 0, cursor: sendState === 'sending' ? 'default' : 'pointer', color: '#fff',
+                        background: sendState === 'sent' ? 'var(--good, #2f8f5b)' : 'linear-gradient(135deg,#FF8A50,#FF6B35)',
+                        boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)', opacity: sendState === 'sending' ? .75 : 1 }}>
+                      {sendState === 'sending' ? 'Sending...' : sendState === 'sent' ? 'Sent' : 'Send now'}
+                    </button>
+                  )}
+                  <button onClick={copyDraft} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 30px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>{copied ? 'Copied' : 'Copy'}</button>
+                  <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 15, fontWeight: 500, padding: '15px 30px', borderRadius: 999, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Rewrite</button>
+                  {sendState === 'error' && <span style={{ fontSize: 13, color: 'var(--critical, #c43d2b)' }}>{sendErr}</span>}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Signal detail (deep-linked or opened): full analysis breakdown */}
+      {detailFor && (() => {
+        const d = detailFor
+        const sev = d.severity === 'high' ? 'HIGH' : d.severity === 'positive' ? 'POSITIVE' : 'WATCH'
+        const sevColor = d.severity === 'high' ? 'var(--danger)' : d.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
+        const ai = (d.ai_analysis ?? {}) as Record<string, unknown>
+        // Only show analysis fields that read well to a human, with proper labels.
+        const FACT_LABELS: Record<string, string> = {
+          sentiment: 'Sentiment', confidence: 'Confidence', days_silent: 'Days silent',
+          days: 'Slipped by', old_date: 'Previous close', new_date: 'New close',
+          old_stage: 'Previous stage', new_stage: 'New stage', meeting_at: 'Meeting',
+          email: 'Contact', last_meeting_at: 'Last meeting', start: 'Scheduled',
+        }
+        const fmtFact = (k: string, v: unknown): string => {
+          if ((k === 'meeting_at' || k === 'last_meeting_at' || k === 'start') && typeof v === 'string') {
+            const t = new Date(v); if (!isNaN(t.getTime())) return t.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          }
+          if (k === 'confidence' && typeof v === 'number') return `${v}%`
+          if (k === 'days' || k === 'days_silent') return `${v}d`
+          return String(v)
+        }
+        const aiRows = Object.entries(ai)
+          .filter(([k, v]) => FACT_LABELS[k] && v != null && v !== '' && typeof v !== 'boolean' && typeof v !== 'object')
+          .slice(0, 6)
+        const quote = typeof ai.quote === 'string' && ai.quote.trim() ? ai.quote.trim() : null
+        const reason = typeof ai.reason === 'string' && ai.reason.trim() ? ai.reason.trim() : null
+        const unmapped = !d.account_name || /\(unmapped\)/i.test(d.account_name)
+        const cleanAccount = d.account_name ? d.account_name.replace(/\s*\(unmapped\)\s*/i, '').trim() : null
+        const topicRaw = typeof ai.topic === 'string' ? ai.topic : ''
+        const topic = topicRaw.replace(/^(Zoom|Meet|Fireflies):\s*/i, '').trim()
+        const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
+        const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
+        const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
+        const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.status === 'snoozed' ? 'snoozed' : null
+        const row = (label: string, val: React.ReactNode) => (
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
+            <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
+            <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 700, textAlign: 'right', fontFamily: "'DM Mono',monospace" }}>{val}</span>
+          </div>
+        )
+        return (
+          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>
+              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: sevColor, padding: '2px 8px', borderRadius: 20, letterSpacing: '.5px' }}>{sev}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{TYPE_LABELS[d.signal_type || ''] || 'Signal'}</span>
+                    {inactive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{inactive}</span>}
+                  </div>
+                  <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 3 }}>{headerTitle}</div>
+                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', lineHeight: 1.3, letterSpacing: '-.3px' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</div>
+                </div>
+                <button onClick={() => setDetailFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
+              </div>
+              <div style={{ padding: 20, maxHeight: '62vh', overflowY: 'auto' }}>
+                {descText && !descDuplicatesTitle ? (
+                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{descText}</div>
+                ) : null}
+                {quote && (
+                  <div style={{ borderLeft: '3px solid var(--o)', background: 'rgba(255,107,53,.05)', borderRadius: '0 10px 10px 0', padding: '10px 14px', marginBottom: 12 }}>
+                    <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.6, fontStyle: 'italic' }}>&ldquo;{quote}&rdquo;</div>
+                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4, fontWeight: 600 }}>From the call</div>
+                  </div>
+                )}
+                {reason && (
+                  <div style={{ marginBottom: 14 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 5 }}>Why this signal</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6 }}>{reason}</div>
+                  </div>
+                )}
+                {typeof ai.recommendation === 'string' && ai.recommendation && (
+                  <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, background: 'rgba(255,107,53,.06)', border: '1px solid rgba(255,107,53,.18)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+                    <span style={{ fontWeight: 800, color: 'var(--o)' }}>Recommended: </span>{ai.recommendation}
+                  </div>
+                )}
+                <div style={{ marginBottom: 4 }}>
+                  {cleanAccount && !unmapped ? row('Account', cleanAccount) : null}
+                  {unmapped && cleanAccount ? row('Account', `${cleanAccount} (not linked yet)`) : null}
+                  {d.risk_amount ? row('At risk', fmtMoney(d.risk_amount)) : null}
+                  {d.source_integration ? row('Source', d.source_integration.charAt(0).toUpperCase() + d.source_integration.slice(1)) : null}
+                  {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
+                  {aiRows.map(([k, v]) => row(FACT_LABELS[k], fmtFact(k, v)))}
+                </div>
+                {inactive === 'snoozed' && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t3)', background: 'var(--inset, #F4EFE7)', border: '1px solid var(--border)', borderRadius: 10, padding: '9px 14px', marginBottom: 12 }}>
+                    Snoozed{d.snoozed_until ? ` until ${new Date(d.snoozed_until).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : ''} · wakes automatically
+                  </div>
+                )}
+                {inactive === 'handled' && (
+                  <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ok)', background: 'rgba(42,157,92,.08)', border: '1px solid rgba(42,157,92,.2)', borderRadius: 10, padding: '9px 14px', marginBottom: 12 }}>
+                    ✓ Handled{d.handled_action ? `: ${d.handled_action}` : ''}{d.handled_at ? ` · ${new Date(d.handled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}
+                  </div>
+                )}
+
+                {modalMode === 'handle' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>What did you do?</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 8 }}>
+                      {['Sent follow-up', 'Called them', 'Scheduled meeting', 'Updated CRM'].map(a => (
+                        <button key={a} onClick={() => setHandleText(a)} style={{ fontSize: 10.5, fontWeight: 700, padding: '4px 10px', borderRadius: 20, border: handleText === a ? '1.5px solid var(--o)' : '1px solid var(--border)', background: handleText === a ? 'rgba(255,107,53,.08)' : 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{a}</button>
+                      ))}
+                    </div>
+                    <input value={handleText} onChange={e => setHandleText(e.target.value)} placeholder="Or type what you did" style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, background: 'var(--surface)', color: 'var(--t1)', outline: 'none', marginBottom: 8 }} />
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {actionBtn('Confirm handled', () => markHandled(d, handleText.trim() || 'Handled'), true)}
+                      {actionBtn('Cancel', () => setModalMode('view'))}
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'snooze' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Snooze until</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {actionBtn('2 hours', () => snooze(d, new Date(Date.now() + 2 * 3600_000)))}
+                      {actionBtn('Tomorrow 9am', () => snooze(d, tomorrow9()))}
+                      {actionBtn('Next week', () => snooze(d, nextWeek9()))}
+                      {actionBtn('Cancel', () => setModalMode('view'))}
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'remove' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Why remove this? It trains detection.</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      {[['not_a_signal', 'Not a signal'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
+                        <button key={k} onClick={() => removeSignal(d, k)} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{lbl}</button>
+                      ))}
+                      <button onClick={() => setModalMode('view')} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--t4)', cursor: 'pointer' }}>Cancel</button>
+                    </div>
+                  </div>
+                )}
+
+                {modalMode === 'assign' && (
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Assign this signal to an account</div>
+                    {!acctOptions ? (
+                      <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>Loading accounts...</div>
+                    ) : (
+                      <div>
+                        <select value={assignPick} onChange={e => setAssignPick(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 12, background: 'var(--surface)', color: 'var(--t1)', marginBottom: 8 }}>
+                          <option value="">Choose an account</option>
+                          {acctOptions.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        </select>
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          {actionBtn('Assign', () => { const a = acctOptions.find(x => x.id === assignPick); if (a) { assignAccount(d, a.id, a.name); setModalMode('view') } }, true)}
+                          {actionBtn('Cancel', () => setModalMode('view'))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {modalMode === 'view' && (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
+                    {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
+                    {!inactive && actionBtn('Mark handled', () => setModalMode('handle'))}
+                    {d.signal_type?.startsWith('call') && d.source_message_id && actionBtn('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
+                    {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
+                    {unmapped && !inactive && actionBtn('Assign to account', () => {
+                      setModalMode('assign')
+                      if (!acctOptions) {
+                        createClient().from('accounts').select('id, name').order('name').limit(300)
+                          .then(({ data }) => setAcctOptions((data as Array<{ id: string; name: string }>) ?? []))
+                      }
+                    })}
+                    {!inactive && actionBtn('Snooze', () => setModalMode('snooze'))}
+                    {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
+                    {!inactive && actionBtn('Remove', () => setModalMode('remove'))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Deep link pointed at a signal that does not exist for this user */}
+      {deepNotFound && (
+        <div onClick={() => setDeepNotFound(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', padding: '32px 28px', textAlign: 'center' }}>
+            <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            </div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', marginBottom: 6 }}>Signal not found</div>
+            <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 18 }}>This link points to a signal that does not exist or belongs to a different account. It may have been deleted, or you may be signed in as a different user.</div>
+            <button onClick={() => setDeepNotFound(false)} style={{ padding: '9px 22px', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit'" }}>Got it</button>
+          </div>
+        </div>
+      )}
+
+      {draftFor && (
         <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 580, background: 'var(--bg, #FBF8F3)', borderRadius: 18, boxShadow: '0 28px 72px rgba(15,12,9,.32)', overflow: 'hidden' }}>
             <div style={{ padding: '18px 22px 16px', background: 'linear-gradient(135deg, #FF6B35 0%, #FF8F5C 55%, #FFB088 100%)', position: 'relative' }}>
