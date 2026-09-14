@@ -57,7 +57,7 @@ export function AskClient() {
         right={<span onClick={() => router.back()} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>back</span>}
       />
 
-      <div style={{ paddingBottom: 16, minHeight: 220 }}>
+      <div style={{ paddingBottom: 8 }}>
         {msgs.length === 0 && !busy && (
           <div style={{ marginTop: 8 }}>
             <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 10 }}>Try asking</div>
@@ -81,7 +81,7 @@ export function AskClient() {
         <div ref={endRef} />
       </div>
 
-      <div style={{ display: 'flex', gap: 9, padding: '18px 0 8px', borderTop: '1px solid var(--hairline, #EFEAE1)', marginTop: 24, position: 'sticky', bottom: 0, background: 'var(--paper, #FBF8F3)' }}>
+      <div style={{ display: 'flex', gap: 9, paddingTop: 18, borderTop: '1px solid var(--hairline, #EFEAE1)', marginTop: 24 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}

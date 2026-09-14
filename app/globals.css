@@ -1891,10 +1891,8 @@ button:active, .sig-filter:active, .fc-tab:active {
    ============================================================ */
 
 /* Screen entrance — the redesign's signature motion */
-.dsk-screen, .dsk-screen.on { opacity: 1; }
-.dsk-screen.on { animation: fadeUp .6s var(--ease) forwards; }
-.dsk-screen.on .dcard:nth-of-type(1) { animation: fadeUp .5s var(--ease) .05s forwards; }
-.dsk-screen.on .dcard:nth-of-type(2) { animation: fadeUp .5s var(--ease) .1s forwards; }
+.dsk-screen, .dsk-screen.on { opacity: 1 !important; animation: none !important; }
+.dsk-screen .dcard, .dsk-screen.on .dcard { animation: none !important; opacity: 1 !important; }
 
 /* Page titles — editorial scale, tight tracking */
 .page-hdr h1 {
@@ -1915,7 +1913,6 @@ button:active, .sig-filter:active, .fc-tab:active {
   border-radius: var(--r-block) !important;
   background: var(--surface) !important;
 }
-.dcard:hover { box-shadow: none !important; }
 
 /* Section eyebrows inside cards — the accent mono voice */
 .dcard [style*="uppercase"] { letter-spacing: 1.4px; }
@@ -2044,42 +2041,17 @@ input, select, textarea { border-radius: var(--r-sheet); }
 .page-hdr { border-bottom: 1px solid var(--rule-strong, #0E0D0B); padding-bottom: 20px; }
 .page-hdr h1 { margin-bottom: 6px !important; }
 
-/* Cards: square, hairline, flat - but they keep their structure and padding. */
-.dcard {
-  border: 1px solid var(--hairline, #EFEAE1) !important;
-  border-radius: 0 !important;
-  background: var(--raised, #FFFDFA) !important;
-  box-shadow: none !important;
-  margin-bottom: 20px !important;
-}
-/* inner card headers become rule-headed section heads */
-.dcard > div:first-child[style*="border-bottom"] {
-  border-bottom: 1px solid var(--rule-strong, #0E0D0B) !important;
-  padding: 0 0 14px !important; margin-bottom: 4px;
-}
-.dcard > div:first-child[style*="border-bottom"] span[style*="uppercase"] {
-  font-size: 12px !important; letter-spacing: 1.5px !important;
-}
+/* Cards: only corners and shadows are ours. Never touch background, padding,
+   or text colour - components own those (dark gradient heroes, tinted panels). */
+.dcard { border-radius: 0 !important; box-shadow: none !important; }
 
-.dcard table { margin-top: 4px; }
 
 
 .sig-row:hover, .signal-card:hover, .list-row:hover { background: rgba(14,13,11,.02) !important; }
 
 /* Pills and chips: mono uppercase, square, quiet */
-.rp, .port-tag, .badge-chip {
-  border-radius: 0 !important; font-family: 'DM Mono', monospace !important;
-  font-size: 9.5px !important; letter-spacing: 1.2px !important; text-transform: uppercase !important;
-  font-weight: 400 !important; padding: 3px 8px !important;
-}
 
 /* Health cell: numeral, not a badge */
-.port-health {
-  background: transparent !important; border-radius: 0 !important;
-  font-family: 'Outfit', sans-serif !important; font-weight: 700 !important;
-  font-size: 19px !important; letter-spacing: -.03em !important;
-  width: auto !important; height: auto !important;
-}
 
 /* Modals / sheets: sharp editorial sheets on the ink scrim */
 [style*="position: fixed"][style*="rgba(15,12,9,.45)"],
@@ -2106,17 +2078,8 @@ input, select, textarea {
 input:focus, textarea:focus, select:focus { border-color: var(--ink, #0E0D0B) !important; }
 
 /* KPI grid (any screen still using it) reads as naked stats */
-.kpi-grid { gap: 28px 32px !important; }
 .kpi-support, .kpi-hero { border-radius: 0 !important; box-shadow: none !important; }
 
-.kpi-hero-lbl, .dcard-title { font-family: 'DM Mono', monospace !important; font-size: 10.5px !important; letter-spacing: 1.5px !important; text-transform: uppercase !important; color: var(--ink-faint) !important; }
-.kpi-hero-val, .dcard-val {
-  font-family: 'Outfit', sans-serif !important; font-weight: 700 !important;
-  letter-spacing: -.045em !important; font-size: 40px !important; line-height: 1 !important;
-  color: var(--ink) !important; font-variant-numeric: tabular-nums;
-}
-.kpi-hero-stat strong { color: var(--ink) !important; }
-.dcard-sub { color: var(--ink-muted) !important; font-size: 13.5px !important; }
 
 /* Integration tiles keep structure but lose gloss */
 .int-card { border-radius: 0 !important; box-shadow: none !important; border-color: var(--hairline) !important; }
@@ -2178,33 +2141,18 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
 
 /* Settings & any label/value row lists read as hairline rows */
 /* settings sections keep their own layout; only corners and shadows change */
-.set-row, .settings-row {
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  padding: 18px 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1) !important;
-  border-radius: 0 !important; background: transparent !important; border-left: 0 !important; border-right: 0 !important; border-top: 0 !important;
-}
-.set-label, .settings-label { font-size: 15px !important; color: var(--ink) !important; font-weight: 500 !important; }
-.set-value, .settings-value { font-size: 14px !important; color: var(--ink-muted) !important; }
 
-/* Integration tiles keep their grid; square and flat only */
-.int-card {
-  border: 1px solid var(--hairline, #EFEAE1) !important;
-  border-radius: 0 !important; box-shadow: none !important;
-  background: var(--raised, #FFFDFA) !important;
-}
+.int-card { border-radius: 0 !important; box-shadow: none !important; }
 .int-card:hover { background: rgba(14,13,11,.02) !important; }
-.int-cat { border-bottom: 1px solid var(--rule-strong, #0E0D0B) !important; padding: 0 0 12px !important; margin-top: 44px !important; }
 .int-cat-label {
   font-family: 'DM Mono', monospace !important; font-size: 10px !important;
   letter-spacing: 1.6px !important; text-transform: uppercase !important; color: var(--ink-faint) !important;
 }
-.int-ico { border-radius: 0 !important; background: var(--wash, #F4F0E8) !important; }
 
 /* Account 360 slide-over: square editorial sheet */
 [style*="width: 'min(680px"] { background: var(--paper, #FBF8F3) !important; }
 
 /* Forecast / Team / any remaining card grid */
-.dcard-grid { gap: 44px !important; }
 
 /* First-paint alignment: no scroll anchoring drift, and the entrance
    animation must not create scrollable overflow. */
@@ -2240,3 +2188,9 @@ html { scroll-behavior: auto; }
 input:focus, textarea:focus, select:focus { outline: none !important; box-shadow: none !important; }
 input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none !important; box-shadow: none !important; }
 .dsk-screen input:focus, .dsk-screen textarea:focus { border-color: var(--ink, #0E0D0B) !important; }
+
+
+/* Belt and braces: nothing in the content column may start invisible. */
+.content, .content * { animation-name: none; }
+.content [style*="animation"] { opacity: 1 !important; }
+.fade-in, .fade-in-2, .fade-in-3, .fade-in-4, .fade-in-5 { opacity: 1 !important; animation: none !important; }
