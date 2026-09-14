@@ -506,45 +506,45 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
         const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.status === 'snoozed' ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '7px 0', borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontSize: 11, color: 'var(--t3)', fontWeight: 600, whiteSpace: 'nowrap' }}>{label}</span>
-            <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 700, textAlign: 'right', fontFamily: "'DM Mono',monospace" }}>{val}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+            <span style={{ fontSize: 14, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{label}</span>
+            <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{val}</span>
           </div>
         )
         return (
-          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', overflow: 'hidden' }}>
-              <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: sevColor, padding: '2px 8px', borderRadius: 20, letterSpacing: '.5px' }}>{sev}</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.5px' }}>{TYPE_LABELS[d.signal_type || ''] || 'Signal'}</span>
-                    {inactive && <span style={{ fontSize: 9, fontWeight: 700, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{inactive}</span>}
+          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', zIndex: 810, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 'min(470px,100%)', maxHeight: '84vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+              <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}
                   </div>
-                  <div style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 3 }}>{headerTitle}</div>
-                  <div style={{ fontSize: 17, fontWeight: 900, color: 'var(--t1)', lineHeight: 1.3, letterSpacing: '-.3px' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</div>
+                  <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</h2>
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle}{inactive ? ` · ${inactive}` : ''}</div>
                 </div>
-                <button onClick={() => setDetailFor(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--t3)', fontSize: 18, lineHeight: 1 }}>✕</button>
+                <button onClick={() => setDetailFor(null)} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)', flex: 'none', paddingTop: 4 }}>close</button>
               </div>
-              <div style={{ padding: 20, maxHeight: '62vh', overflowY: 'auto' }}>
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
+              <div style={{ padding: '22px 30px 30px' }}>
                 {descText && !descDuplicatesTitle ? (
-                  <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 14 }}>{descText}</div>
+                  <div style={{ fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.65, marginBottom: 18 }}>{descText}</div>
                 ) : null}
                 {quote && (
-                  <div style={{ borderLeft: '3px solid var(--o)', background: 'rgba(255,107,53,.05)', borderRadius: '0 10px 10px 0', padding: '10px 14px', marginBottom: 12 }}>
-                    <div style={{ fontSize: 12.5, color: 'var(--t1)', lineHeight: 1.6, fontStyle: 'italic' }}>&ldquo;{quote}&rdquo;</div>
-                    <div style={{ fontSize: 10, color: 'var(--t4)', marginTop: 4, fontWeight: 600 }}>From the call</div>
+                  <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, marginBottom: 20 }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words</div>
+                    <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 8 }}>&ldquo;{quote}&rdquo;</div>
                   </div>
                 )}
                 {reason && (
                   <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.7px', marginBottom: 5 }}>Why this signal</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.6 }}>{reason}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Why this was raised</div>
+                    <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 11 }}>{reason}</div>
                   </div>
                 )}
                 {typeof ai.recommendation === 'string' && ai.recommendation && (
-                  <div style={{ fontSize: 12, color: 'var(--t2)', lineHeight: 1.55, background: 'rgba(255,107,53,.06)', border: '1px solid rgba(255,107,53,.18)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
-                    <span style={{ fontWeight: 800, color: 'var(--o)' }}>Recommended: </span>{ai.recommendation}
+                  <div style={{ paddingLeft: 16, borderLeft: '2px solid var(--accent)', margin: '20px 0' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)' }}>Recommended play</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginTop: 8 }}>{ai.recommendation}</div>
                   </div>
                 )}
                 <div style={{ marginBottom: 4 }}>
