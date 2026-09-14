@@ -186,7 +186,7 @@ button { font-family:'Outfit',sans-serif; }
 .sb-user-role { font-size:10px; color:rgba(255,255,255,.3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 /* ════ MAIN ════ */
-.main { margin-left:var(--sidebar-w); height:100vh; display:flex; flex-direction:column; }
+.main { margin-left:var(--sidebar-w); height:100vh; display:flex; flex-direction:column; background:var(--bg); position:relative; }
 
 /* ════ TOPBAR ════ */
 .topbar {
@@ -267,7 +267,9 @@ button { font-family:'Outfit',sans-serif; }
 .content {
   flex:1; overflow-y:auto; overflow-x:hidden;
   padding:32px 36px 56px;
-  background:var(--bg);
+  /* transparent so the warm corner wash behind it shows through;
+     the paper colour lives on .main */
+  background:transparent;
   /* must be auto: smooth turns every programmatic reset into an animation
      that can be interrupted, leaving the page part-scrolled on load. */
   scroll-behavior:auto;
@@ -2128,3 +2130,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 /* v1.9 — the skeleton and the real page must start at the same offset so the
    swap cannot leave the view part-scrolled. */
 .content { overflow-anchor: none !important; scroll-behavior: auto !important; }
+
+
+/* v2.6 — the wash must sit above the paper but below content, and must not
+   scroll away with the column. */
+.ed-wash { position: fixed; top: 0; right: 0; width: min(900px, calc(100vw - var(--sidebar-w, 216px))); height: 900px; pointer-events: none; z-index: 0; }
