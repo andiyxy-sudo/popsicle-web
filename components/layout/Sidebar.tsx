@@ -62,13 +62,8 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   return (
     <nav className="sidebar ed-sidebar">
       <div className="ed-sb-logo" onClick={() => router.push('/pulse')}>
-        <svg width="34" height="60" viewBox="4 0 40 80" fill="none">
-          <defs><linearGradient id="lg-sb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#FF8A50"/><stop offset="100%" stopColor="#E85A25"/></linearGradient></defs>
-          <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="url(#lg-sb)"/>
-          <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#C94A1D"/>
-          <path d="M25 16L17 34h6l-4 14 12-18h-6l4-14z" fill="white" fillOpacity=".95"/>
-        </svg>
-        <div className="ed-sb-word"><span>popsicle</span><span>labs</span></div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/brand/logo-dark-smallmark.svg" alt="Popsicle Labs" />
       </div>
 
       <div className="ed-sb-nav">
