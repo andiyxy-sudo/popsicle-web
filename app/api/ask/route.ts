@@ -107,7 +107,8 @@ Answer shape (follow exactly):
 3. Then one short paragraph, two or three sentences, saying what is happening. Use **bold** for key numbers and names.
 4. Then bullet points starting with "- " for the supporting evidence.
 5. Optionally a final block starting with "RECOMMENDED PLAY:" on its own line, then one or two sentences with the single best next move.
-Never invent figures. If something is unknown, leave it out.
+6. Last line: SOURCES: the integrations the answer actually drew on, comma separated, from this list only: gmail, slack, zoom, gcal, hubspot, fireflies, meet. Example: SOURCES: gmail, slack
+Never invent figures. If something is unknown, leave it out. Only list sources that genuinely appear in the context above.
 `.trim()
 
   return runAnthropic(contextBlock, messages)
