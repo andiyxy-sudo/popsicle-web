@@ -154,7 +154,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
                 { n: String(dark.length), lbl: 'gone quiet · 14d+', color: 'var(--warn, #d38b1d)' },
                 { n: String(accounts.length), lbl: 'accounts tracked', color: 'var(--ink)' },
               ].map((st, i, arr) => (
-                <div key={i} style={{ paddingRight: 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none', paddingLeft: i === 0 ? 0 : 24 }}>
+                <div key={i} style={{ paddingRight: 32 }}>
                   <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
                   <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
                 </div>

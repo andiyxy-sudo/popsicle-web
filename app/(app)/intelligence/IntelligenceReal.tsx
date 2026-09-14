@@ -169,7 +169,7 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
           { n: String(activeAccounts), lbl: 'accounts active · 14 days', color: 'var(--ink)', d: null },
           { n: ourAvg != null ? `${Math.round(ourAvg)}h` : '--', lbl: 'our median reply', color: 'var(--accent)', d: null },
         ].map((st, i, arr) => (
-          <div key={i} style={{ paddingRight: 24, paddingLeft: i === 0 ? 0 : 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none' }}>
+          <div key={i} style={{ paddingRight: 32 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
               <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</span>
               {st.d && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{st.d}</span>}

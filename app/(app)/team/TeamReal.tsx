@@ -65,7 +65,7 @@ export function TeamReal({ accounts, signals, me, integrations }: { accounts: Ac
           { n: String(handled.length), lbl: 'signals handled', color: 'var(--good, #2f8f5b)' },
           { n: coverage != null ? `${coverage}%` : '--', lbl: 'handled rate', color: 'var(--ink)' },
         ].map((st, i, arr) => (
-          <div key={i} style={{ paddingRight: 24, paddingLeft: i === 0 ? 0 : 24, borderRight: i < arr.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none' }}>
+          <div key={i} style={{ paddingRight: 32 }}>
             <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
             <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
           </div>
