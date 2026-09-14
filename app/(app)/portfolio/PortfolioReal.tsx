@@ -62,11 +62,22 @@ function agoDays(iso?: string | null): string {
   return d <= 0 ? 'today' : `${d}d ago`
 }
 
-export function PortfolioReal({ accounts }: { accounts: Account[] }) {
+export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; demoSignals?: unknown[] }) {
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
   useEffect(() => {
     let dead = false
+    if (demoSignals) {
+      const m = new Map<string, SigLite[]>()
+      for (const raw of demoSignals) {
+        const sg = raw as unknown as SigLite
+        if (!sg.account_name || (sg.status && sg.status !== 'open') ) continue
+        const arr = m.get(sg.account_name) ?? []
+        arr.push(sg); m.set(sg.account_name, arr)
+      }
+      setSigMap(m)
+      return () => { dead = true }
+    }
     const supa = createClient()
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return
@@ -90,7 +101,8 @@ export function PortfolioReal({ accounts }: { accounts: Account[] }) {
         })
     })
     return () => { dead = true }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demoSignals])
 
   const router = useRouter()
   function openA360(a: Account) {

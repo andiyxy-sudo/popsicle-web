@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { PulseShowcase } from './PulseShowcase'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS } from '@/lib/demo-dataset'
 import { PulseReal } from './PulseReal'
 
 export default async function PulsePage() {
@@ -10,7 +10,8 @@ export default async function PulsePage() {
 
   const isDemo = user.email === DEMO_EMAIL
   if (isDemo) {
-    return <PulseShowcase />
+    // Demo showcases the SAME redesigned screen, fed by the static dataset.
+    return <PulseReal name="Andy" accounts={DEMO_ACCOUNTS} signals={DEMO_SIGNALS} integrationCount={7} />
   }
 
   // Real user: fetch live data
