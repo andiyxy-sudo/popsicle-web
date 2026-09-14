@@ -395,7 +395,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
       const sigs = byAcct.get(a.name) ?? []
       const top = sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open') && sg.severity === 'high') ?? sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
       return { a, dark, top, score: attentionScore(sigs, dark, soonAccts.has(a.name)) }
-    }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 5)
+    }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 3)
   })()
 
   if (!loaded) return null
@@ -711,10 +711,10 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
     }
     const rows: Array<{ pre: string; strong: string }> = []
     for (const sg of highs.slice(0, 3)) rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) })
-    if (positives[0]) rows.push({ pre: `${positives[0].account_name ? positives[0].account_name + ': ' : ''}${positives[0].title} — `, strong: actFor(positives[0]) })
-    const watch = open.filter(sg => sg.severity === 'watch').slice(0, 5 - rows.length)
+    if (rows.length < 3 && positives[0]) rows.push({ pre: `${positives[0].account_name ? positives[0].account_name + ': ' : ''}${positives[0].title} — `, strong: actFor(positives[0]) })
+    const watch = open.filter(sg => sg.severity === 'watch').slice(0, Math.max(0, 3 - rows.length))
     for (const sg of watch) { if (rows.length >= 5) break; rows.push({ pre: `${sg.account_name ? sg.account_name + ': ' : ''}${sg.title} — `, strong: actFor(sg) }) }
-    return rows
+    return rows.slice(0, 3)
   })()
 
   const loopRows = (() => {
@@ -728,7 +728,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
     ]
   })()
 
-  const activityRows = signals.filter(sg => !sg.is_dismissed && sg.status !== 'deleted').slice(0, 6)
+  const activityRows = signals.filter(sg => !sg.is_dismissed && sg.status !== 'deleted').slice(0, 4)
   const ago = (iso?: string | null) => {
     if (!iso || !mounted) return ''
     const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
