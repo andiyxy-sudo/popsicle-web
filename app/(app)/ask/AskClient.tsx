@@ -150,7 +150,7 @@ function AnswerCard({ text }: { text: string }) {
   let buf: string[] = []
   const flush = (k: number) => {
     if (!buf.length) return
-    paras.push(<p key={`p${k}`} style={{ margin: '0 0 13px', fontSize: 15.5, lineHeight: 1.68, color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
+    paras.push(<p key={`p${k}`} style={{ margin: '0 0 15px', fontSize: 16, lineHeight: 1.72, letterSpacing: '-.004em', color: 'var(--ink)', maxWidth: '62ch' }}>{inline(buf.join(' '), k)}</p>)
     buf = []
   }
   body.forEach((l, i) => {
@@ -158,7 +158,7 @@ function AnswerCard({ text }: { text: string }) {
     if (/^([-*•]|\d+[.)])\s/.test(l)) {
       flush(i)
       paras.push(
-        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '12px 1fr', gap: 12, padding: '7px 0', fontSize: 15, lineHeight: 1.62, color: 'var(--ink-muted)' }}>
+        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{(() => {
             const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
@@ -184,8 +184,8 @@ function AnswerCard({ text }: { text: string }) {
         </span>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
       </div>
-      <div style={{ padding: '18px 20px 20px' }}>
-        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 19.5, letterSpacing: '-.025em', color: 'var(--ink)', marginBottom: 11, lineHeight: 1.25 }}>{title}</div>}
+      <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
+        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.22 }}>{title}</div>}
         {tags.length > 0 && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {tags.map((t, i) => (
@@ -209,7 +209,7 @@ function AnswerCard({ text }: { text: string }) {
         {play && (
           <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
-            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.6 }}>{inline(play, 0)}</div>
+            <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.7, letterSpacing: '-.004em' }}>{inline(play, 0)}</div>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 12.5, color: 'var(--ink-faint)' }}>

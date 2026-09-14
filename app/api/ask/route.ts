@@ -109,7 +109,14 @@ Answer shape (follow exactly):
 5. Optionally a final block starting with "RECOMMENDED PLAY:" on its own line, then one or two sentences with the single best next move.
 6. Optionally a line starting with "STATS:" holding up to three metric pairs separated by commas, each written as "value | label". Only use figures that appear in the context. Example: STATS: 8d | Dark period, 78% | Close probability
 7. Last line: SOURCES: the integrations the answer actually drew on, comma separated, from this list only: gmail, slack, zoom, gcal, hubspot, fireflies, meet. Example: SOURCES: gmail, slack
-Never invent figures. If something is unknown, leave it out. Only list sources that genuinely appear in the context above.
+When the question is about what to do next, write it as a playbook:
+- Title it like "Acme Corp Recovery Playbook"
+- Open with one sentence naming the move, with the key phrase in **bold**
+- Then stage the bullets by when, each led by a short bold label and a colon: "Today:", "Tomorrow morning:", "Tomorrow afternoon:", "Backup play:"
+- Each bullet is one specific instruction someone could carry out without asking a follow-up question
+- Close with RECOMMENDED PLAY: the single highest-value action, phrased as an instruction, including what to say
+
+Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()
 
   return runAnthropic(contextBlock, messages)
