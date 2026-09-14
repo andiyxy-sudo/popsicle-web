@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
-import { getInitials } from '@/lib/utils'
 import { useRouter, usePathname } from 'next/navigation'
 
 interface AppShellProps {
