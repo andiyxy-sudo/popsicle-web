@@ -2138,9 +2138,9 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 /* v2.7 — short pages must not leave the footer floating mid-screen:
    the content column fills the viewport and the footer is pushed to the end. */
-.content { display: flex; flex-direction: column; min-height: 100%; }
-.content > .dsk-screen { flex: 1 0 auto; }
-.ed-footer { margin-top: auto !important; padding-top: 40px; }
+/* keep the column simple: flex layouts here were fragile on first paint */
+.content > .dsk-screen { min-height: calc(100vh - 230px); }
+.ed-footer { margin-top: 72px; padding-top: 24px; }
 
 /* nav items are links now: keep the row styling */
 a.ed-sb-item, a.ed-sb-item:hover { text-decoration: none; }

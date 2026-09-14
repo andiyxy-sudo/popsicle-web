@@ -49,7 +49,8 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
     return pts.map((v, i) => `${(i / 6) * 120},${34 - (v / 100) * 28}`).join(' L')
   }, [health, open])
 
-  const flags = open.slice(0, 3).map(s => ({
+  const flags = open.slice(0, 4).map(s => ({
+    sig: s,
     label: TYPE_LABELS[s.signal_type || ''] || s.title || 'Signal',
     color: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)',
   }))
@@ -136,7 +137,9 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
           <div>
             <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginBottom: 26 }}>
               {flags.map((f, i) => (
-                <span key={i} style={{ fontSize: 13.5, color: f.color, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                <span key={i} onClick={() => setFlag(buildFlag(accountName, [f.sig], risk, href => router.push(href)))}
+                  title="Why this flag"
+                  style={{ fontSize: 13.5, color: f.color, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', borderBottom: `1px solid ${f.color}33`, paddingBottom: 2 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: f.color }} />{f.label}
                 </span>
               ))}
