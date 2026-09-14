@@ -21,7 +21,7 @@ export default async function SignalsPage() {
     .eq('user_id', userId)
     .eq('is_dismissed', false)
         .or('status.is.null,status.eq.open,status.eq.handled')
-    .order('surfaced_at', { ascending: false })
+    .order('surfaced_at', { ascending: false }).limit(200)
 
   return <SignalsReal signals={signals ?? []} />
 }

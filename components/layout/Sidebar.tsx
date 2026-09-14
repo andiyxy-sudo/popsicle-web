@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
@@ -128,20 +129,20 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               const active = pathname === item.href
               const badgeVal = item.badgeKey ? badges[item.badgeKey] : undefined
               return (
-                <div key={item.id} className={`ed-sb-item${active ? ' on' : ''}`} onClick={() => router.push(item.href)} id={`nav-${item.id}`}>
+                <Link key={item.id} href={item.href} prefetch className={`ed-sb-item${active ? ' on' : ''}`} id={`nav-${item.id}`}>
                   <span className="ed-sb-dot" style={{ background: active ? '#E85A25' : 'transparent' }} />
                   <span className="ed-sb-label">{item.label}</span>
                   {badgeVal != null && badgeVal > 0 && <span className="ed-sb-count">{badgeVal}</span>}
-                </div>
+                </Link>
               )
             })}
           </div>
         ))}
         <div className="ed-sb-rule" style={{ background: 'rgba(251,248,243,.12)', margin: '20px 26px 18px' }} />
-        <div className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`} onClick={() => router.push('/ask')}>
+        <Link href="/ask" prefetch className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`}>
           <span className="ed-sb-dot" style={{ background: pathname === '/ask' ? '#E85A25' : 'transparent' }} />
           <span className="ed-sb-label">Ask AI</span>
-        </div>
+        </Link>
       </div>
 
       <div className="ed-sb-user" onClick={() => setProfileOpen(true)} title="Profile">

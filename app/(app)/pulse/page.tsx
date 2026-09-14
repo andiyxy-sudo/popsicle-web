@@ -17,7 +17,7 @@ export default async function PulsePage() {
   // Real user: fetch live data
   const [accountsRes, signalsRes, integrationsRes] = await Promise.all([
     supabase.from('accounts').select('*').eq('user_id', user.id).order('health_score', { ascending: true }),
-    supabase.from('signals').select('*').eq('user_id', user.id).eq('is_dismissed', false).or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }),
+    supabase.from('signals').select('*').eq('user_id', user.id).eq('is_dismissed', false).or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }).limit(150),
     supabase.from('integrations').select('provider, is_active').eq('user_id', user.id).eq('is_active', true),
   ])
 

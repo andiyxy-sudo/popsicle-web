@@ -2141,3 +2141,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 .content { display: flex; flex-direction: column; min-height: 100%; }
 .content > .dsk-screen { flex: 1 0 auto; }
 .ed-footer { margin-top: auto !important; padding-top: 40px; }
+
+/* nav items are links now: keep the row styling */
+a.ed-sb-item, a.ed-sb-item:hover { text-decoration: none; }
+a.ed-sb-item { color: rgba(251,248,243,.62); }
+a.ed-sb-item.on, a.ed-sb-item:hover { color: #FBF8F3; }
