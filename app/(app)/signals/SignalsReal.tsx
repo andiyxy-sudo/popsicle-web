@@ -133,13 +133,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const totalRisk = high.concat(watch).reduce((sum, s) => sum + (s.risk_amount || 0), 0)
 
   function open360(s: DBSignal) {
-    if (!s.account_name) return
-    window.dispatchEvent(new CustomEvent('open-a360', { detail: {
-      name: s.account_name, contact: '', stage: 'Active', arr: fmtMoney(s.risk_amount) || '--',
-      health: 50, signals: 1, daysDark: '--', risk: (s.severity || 'watch').toUpperCase(),
-      rep: 'You', lastTouch: s.title || 'Signal detected',
-      _needsLoad: true,
-    } }))
+    if (s.account_name) router.push(`/account/${encodeURIComponent(s.account_name)}`)
   }
 
   // Optimistic: remove from the list immediately, write in the background,
