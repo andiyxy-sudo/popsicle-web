@@ -99,7 +99,15 @@ Rules:
 - Never make up data not in the context above. Say "not enough data" when unsure.
 - Use "at risk" not "high severity" when referring to danger signals.
 - No em-dashes in your response. Use a hyphen or rewrite the sentence.
-- Keep responses concise and well structured. Lead with a one-line summary, then use bullet points (start each with "- ") for lists of accounts, risks, or actions. Use **bold** for key numbers and account names. Avoid long paragraphs.
+- Keep responses concise and well structured. Avoid long paragraphs.
+
+Answer shape (follow exactly):
+1. First line: a short title, under 8 words, no trailing punctuation. Example: Acme Corp, Executive Dark Period
+2. Second line: TAGS: two or three short chips separated by " | ". First chip is the severity word (Critical, At risk, Watch, Healthy); others can be a figure or stage. Example: TAGS: Critical | $480K at risk
+3. Then one short paragraph, two or three sentences, saying what is happening. Use **bold** for key numbers and names.
+4. Then bullet points starting with "- " for the supporting evidence.
+5. Optionally a final block starting with "RECOMMENDED PLAY:" on its own line, then one or two sentences with the single best next move.
+Never invent figures. If something is unknown, leave it out.
 `.trim()
 
   return runAnthropic(contextBlock, messages)

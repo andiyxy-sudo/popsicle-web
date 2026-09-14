@@ -17,7 +17,7 @@ const SUGGESTIONS = [
   'What did we last hear from Acme Corp?',
   'What should I send before the week closes?',
 ]
-const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Writing it up']
+const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
 
 // ---- markdown-lite renderer -------------------------------------------------
 function inline(text: string, key: number) {
@@ -72,6 +72,96 @@ function Answer({ text }: { text: string }) {
   })
   flush(9999)
   return <div>{out}</div>
+}
+
+
+// Parse the model's answer into the card shape the mobile app uses:
+// title, tag chips, lead paragraph, evidence bullets, recommended play.
+function parseAnswer(text: string) {
+  const lines = text.split('\n')
+  let title = ''
+  let tags: string[] = []
+  const body: string[] = []
+  let play = ''
+  let inPlay = false
+  lines.forEach((raw, i) => {
+    const l = raw.trim()
+    if (!l) { if (!inPlay) body.push(''); return }
+    if (i === 0 && l.length < 70 && !/^[-*•]/.test(l)) { title = l.replace(/[.:]$/, ''); return }
+    if (/^tags:/i.test(l)) { tags = l.replace(/^tags:/i, '').split('|').map(t => t.trim()).filter(Boolean); return }
+    if (/^(recommended play|counter-play|next move)\s*:?/i.test(l)) {
+      inPlay = true
+      play = l.replace(/^(recommended play|counter-play|next move)\s*:?/i, '').trim()
+      return
+    }
+    if (inPlay) { play = (play + ' ' + l).trim(); return }
+    body.push(l)
+  })
+  return { title, tags, body, play }
+}
+
+function AnswerCard({ text }: { text: string }) {
+  const { title, tags, body, play } = parseAnswer(text)
+  const sev = (tags[0] || '').toLowerCase()
+  const sevColor = sev.includes('critical') || sev.includes('risk') ? 'var(--critical, #c43d2b)'
+    : sev.includes('watch') ? 'var(--warn, #d38b1d)'
+    : sev.includes('health') ? 'var(--good, #2f8f5b)' : 'var(--ink-muted)'
+  const paras: React.ReactNode[] = []
+  let buf: string[] = []
+  const flush = (k: number) => {
+    if (!buf.length) return
+    paras.push(<p key={`p${k}`} style={{ margin: '0 0 14px', fontSize: 15.5, lineHeight: 1.65, color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
+    buf = []
+  }
+  body.forEach((l, i) => {
+    if (!l) { flush(i); return }
+    if (/^([-*•]|\d+[.)])\s/.test(l)) {
+      flush(i)
+      paras.push(
+        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '12px 1fr', gap: 11, padding: '6px 0', fontSize: 15, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
+          <div>{inline(l.replace(/^([-*•]|\d+[.)])\s/, ''), i)}</div>
+        </div>
+      )
+      return
+    }
+    buf.push(l)
+  })
+  flush(999)
+
+  return (
+    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', boxShadow: '0 2px 12px rgba(14,13,11,.04)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
+          Popsicle AI
+        </span>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
+      </div>
+      <div style={{ padding: '18px 20px 20px' }}>
+        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginBottom: 10 }}>{title}</div>}
+        {tags.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+            {tags.map((t, i) => (
+              <span key={i} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
+                color: i === 0 ? sevColor : 'var(--ink-muted)',
+                background: i === 0 ? (sevColor === 'var(--critical, #c43d2b)' ? 'rgba(196,61,43,.08)' : sevColor === 'var(--warn, #d38b1d)' ? 'rgba(211,139,29,.1)' : 'rgba(47,143,91,.08)') : 'var(--inset, #F0EDE7)' }}>{t}</span>
+            ))}
+          </div>
+        )}
+        {paras}
+        {play && (
+          <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
+            <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.6 }}>{inline(play, 0)}</div>
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 18, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 12.5, color: 'var(--ink-faint)' }}>
+          <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 700 }}>✓</span> Generated by Popsicle AI
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function AskClient() {
@@ -144,37 +234,31 @@ export function AskClient() {
       )}
 
       {msgs.map((m, i) => m.role === 'user' ? (
-        <div key={i} style={{ marginTop: i === 0 ? 0 : 46 }}>
-          <div style={label}>You asked</div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(22px,2.6vw,30px)', letterSpacing: '-.035em', lineHeight: 1.18, marginTop: 10, color: 'var(--ink)' }}>{m.content}</div>
+        <div key={i} style={{ display: 'flex', justifyContent: 'flex-end', marginTop: i === 0 ? 8 : 26 }}>
+          <div style={{ maxWidth: '78%', padding: '12px 18px', borderRadius: '18px 18px 4px 18px', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', fontSize: 15.5, fontWeight: 500, lineHeight: 1.5, boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
+            {m.content}
+          </div>
         </div>
       ) : (
-        <div key={i} style={{ marginTop: 26 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
-            <span style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-.02em', display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--ink)' }}>
-              <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />Popsicle AI
-            </span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>grounded in your workspace</span>
-          </div>
-          <div style={{ marginTop: 22 }}><Answer text={m.content} /></div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 22, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
-            <span>Generated by Popsicle AI · signals, accounts, correspondence</span>
-            <button onClick={() => { setMsgs([]); setInput('') }}
-              style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '7px 16px', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>New question</button>
-          </div>
+        <div key={i} style={{ marginTop: 16 }}>
+          <AnswerCard text={m.content} />
         </div>
       ))}
 
       {busy && (
-        <div style={{ alignSelf: 'flex-start', display: 'flex', flexDirection: 'column', gap: 12, padding: '16px 20px', background: 'rgba(14,13,11,.035)', maxWidth: 460, marginTop: 26 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, fontSize: 14.5, color: 'var(--ink-muted)' }}>
-            <span style={{ display: 'inline-flex', gap: 5 }}>
+        <div style={{ marginTop: 16, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', padding: '16px 20px', maxWidth: 430 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <span style={{ display: 'inline-flex', gap: 6, padding: '8px 14px', borderRadius: 999, background: 'var(--inset, #F0EDE7)' }}>
               {[0, 1, 2].map(i => (
-                <span key={i} className="ask-dot" style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', animationDelay: `${i * 0.18}s` }} />
+                <span key={i} className="ask-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animationDelay: `${i * 0.18}s` }} />
               ))}
             </span>
-            {THINKING[phase]}
-            {lastQuestion ? '' : ''}
+            <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{THINKING[phase]}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
+            {['Signals', 'Accounts', 'Email', 'Calls'].map(x => (
+              <span key={x} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink-faint)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 999, padding: '4px 12px' }}>{x}</span>
+            ))}
           </div>
         </div>
       )}
