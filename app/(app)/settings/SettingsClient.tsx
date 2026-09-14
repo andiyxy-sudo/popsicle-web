@@ -88,7 +88,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   )
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 900 }}>
+    <div className="dsk-screen on">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Settings <span style={{ margin: '0 8px' }}>/</span> Popsicle Labs

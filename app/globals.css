@@ -2146,3 +2146,8 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 a.ed-sb-item, a.ed-sb-item:hover { text-decoration: none; }
 a.ed-sb-item { color: rgba(251,248,243,.62); }
 a.ed-sb-item.on, a.ed-sb-item:hover { color: #FBF8F3; }
+
+
+/* v3.0 — footer matches the width of the screen content above it */
+.ed-footer { width: 100%; max-width: 1080px; margin-left: 0; margin-right: auto; box-sizing: border-box; }
+.dsk-screen { max-width: 1080px; width: 100%; }
