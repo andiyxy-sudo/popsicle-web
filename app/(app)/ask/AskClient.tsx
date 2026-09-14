@@ -111,7 +111,14 @@ export function AskClient() {
     if (q && !fired.current) { fired.current = true; send(q) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params])
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [msgs, busy])
+  useEffect(() => {
+    if (msgs.length === 0) return
+    const el = endRef.current
+    if (!el) return
+    // nearest keeps the shared content column from being yanked around, and
+    // leaves no leftover offset behind when navigating away.
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [msgs, busy])
 
   const lastQuestion = [...msgs].reverse().find(m => m.role === 'user')?.content
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }

@@ -42,12 +42,12 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
     // Any late-arriving content (client fetches) must not drag the view down.
     const el = contentRef.current
     const obs = el && typeof MutationObserver !== 'undefined'
-      ? new MutationObserver(() => { if (el.scrollTop < 240) el.scrollTop = 0 })
+      ? new MutationObserver(() => { el.scrollTop = 0 })
       : null
     if (obs && el) obs.observe(el, { childList: true, subtree: true })
     // Content growing (data arriving) must not push the view down either.
     const ro = el && typeof ResizeObserver !== 'undefined'
-      ? new ResizeObserver(() => { if (el.scrollTop > 0 && el.scrollTop < 240) el.scrollTop = 0 })
+      ? new ResizeObserver(() => { if (el.scrollTop > 0) el.scrollTop = 0 })
       : null
     if (ro && el) ro.observe(el)
     const t3 = setTimeout(() => { obs?.disconnect(); ro?.disconnect() }, 2000)
@@ -68,7 +68,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v4.7</span>
+            <span>v4.8</span>
           </footer>
         </div>
       </div>
