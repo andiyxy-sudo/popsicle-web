@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS } from '@/lib/demo-dataset'
+import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -26,6 +27,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
   const router = useRouter()
   const [tab, setTab] = useState<'overview' | 'comms' | 'people' | 'timeline' | 'contracts'>('overview')
   const acct = account
+  const [flag, setFlag] = useState<RiskFlag | null>(null)
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
 
@@ -76,14 +78,16 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
 
   return (
     <div className="dsk-screen on">
+      <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {/* breadcrumb */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: 36, gap: 16 }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           <span onClick={() => router.push('/portfolio')} style={{ color: 'var(--accent)', cursor: 'pointer' }}>← Portfolio</span>
           <span style={{ margin: '0 8px' }}>/</span>Account 360
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: riskColor, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: riskColor }} />{risk} risk
+        <div onClick={() => setFlag(buildFlag(accountName, open, risk, href => router.push(href)))} title="Why this risk"
+          style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: riskColor, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: riskColor }} />{risk} risk →
         </div>
       </div>
 
@@ -192,38 +196,50 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
           if (dd.getTime() === y.getTime()) return 'Yesterday'
           return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
         }
+        const initials = (n: string) => n.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
         let lastDay = ''
         return (
-          <div style={{ marginTop: 26 }}>
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-faint)', marginBottom: 8 }}>
+              {sorted.length} message{sorted.length === 1 ? '' : 's'} · newest first · {sorted.filter(m => (m.direction || '').toLowerCase() === 'outbound').length} sent by you
+            </div>
             {sorted.map(m => {
               const day = mounted ? dayLabel(m.received_at!) : ''
               const showDay = !!day && day !== lastDay
               if (showDay) lastDay = day
               const out = (m.direction || '').toLowerCase() === 'outbound'
-              const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].trim() || 'Them')
+              const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
               return (
                 <div key={m.id}>
                   {showDay && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '30px 0 14px' }}>
                       <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{day}</span>
                       <span style={{ flex: 1, height: 1, background: 'var(--hairline, #EFEAE1)' }} />
                     </div>
                   )}
-                  <div style={{ display: 'grid', gridTemplateColumns: '76px minmax(0,1fr) auto', gap: 16, alignItems: 'baseline', padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: out ? 'var(--accent)' : 'var(--ink-faint)' }}>
-                      {out ? 'sent' : 'received'}
+                  <div style={{ display: 'flex', gap: 14, padding: '14px 0' }}>
+                    <span style={{ width: 32, height: 32, borderRadius: '50%', flex: 'none', display: 'grid', placeItems: 'center',
+                      fontSize: 11, fontWeight: 700, letterSpacing: '.02em',
+                      background: out ? 'var(--accent, #E85A25)' : 'var(--inset, #F0EDE7)', color: out ? '#fff' : 'var(--ink-muted)' }}>
+                      {initials(who)}
                     </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{who}</span>
-                        {m.subject && <span style={{ fontSize: 14, color: 'var(--ink)' }}>{m.subject}</span>}
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{m.integration}</span>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)', textTransform: 'capitalize' }}>{who}</span>
+                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: out ? 'var(--accent)' : 'var(--ink-faint)' }}>
+                          {out ? 'sent' : 'received'} · {m.integration}
+                        </span>
+                        <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+                          {mounted && m.received_at ? new Date(m.received_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
+                        </span>
                       </div>
-                      {m.content && <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5 }}>{m.content}</div>}
+                      {m.subject && <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginTop: 4 }}>{m.subject}</div>}
+                      {m.content && (
+                        <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.7, marginTop: 5, paddingLeft: 14, borderLeft: `2px solid ${out ? 'rgba(232,90,37,.28)' : 'var(--hairline, #EFEAE1)'}` }}>
+                          {m.content}
+                        </div>
+                      )}
                     </div>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
-                      {mounted && m.received_at ? new Date(m.received_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
-                    </span>
                   </div>
                 </div>
               )
@@ -231,87 +247,57 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
           </div>
         )
       })()}
-
-      {/* PEOPLE */}
-      {tab === 'people' && (
-        <div style={{ marginTop: 26 }}>
-          {people.length === 0 && <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No contact roles recorded for this account.</div>}
-          {people.map(p => (
-            <div key={p.name} style={{ padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{p.role}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', color: p.badge === 'CHAMPION' ? 'var(--good, #2f8f5b)' : p.badge === 'INFLUENCER' ? 'var(--blue, #2f6f9f)' : 'var(--critical, #c43d2b)' }}>{p.badge}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{p.last}</span>
-              </div>
-              <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 6 }}>{p.desc}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10 }}>
-                <span style={{ width: 200, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
-                  <span style={{ position: 'absolute', inset: 0, width: `${p.eng}%`, background: p.eng >= 70 ? 'var(--good, #2f8f5b)' : p.eng >= 40 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)' }} />
-                </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{p.eng}% engaged · {p.status}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {/* TIMELINE */}
       {tab === 'timeline' && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
         if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
+        const monthOf = (iso?: string | null) => iso && mounted ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''
+        let lastMonth = ''
         return (
-          <div style={{ marginTop: 30, position: 'relative', paddingLeft: 26 }}>
-            <span style={{ position: 'absolute', left: 4, top: 6, bottom: 6, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+          <div style={{ marginTop: 20 }}>
+            <div style={{ fontSize: 13.5, color: 'var(--ink-faint)', marginBottom: 6 }}>
+              {sorted.length} signal{sorted.length === 1 ? '' : 's'} · {sorted.filter(x => x.status === 'handled').length} handled · newest first
+            </div>
             {sorted.map(sg => {
               const c = sg.severity === 'high' ? 'var(--critical, #c43d2b)' : sg.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
               const handled = sg.status === 'handled'
+              const mth = monthOf(sg.created_at)
+              const showMonth = !!mth && mth !== lastMonth
+              if (showMonth) lastMonth = mth
               return (
-                <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)}
-                  style={{ position: 'relative', padding: '0 0 28px', cursor: 'pointer', opacity: handled ? .62 : 1 }}>
-                  <span style={{ position: 'absolute', left: -26, top: 5, width: 9, height: 9, borderRadius: '50%', background: handled ? 'var(--paper, #FBF8F3)' : c, border: `2px solid ${c}` }} />
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: c }}>
-                      {TYPE_LABELS[sg.signal_type || ''] || 'signal'}
-                    </span>
+                <div key={sg.id}>
+                  {showMonth && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '28px 0 10px' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{mth}</span>
+                      <span style={{ flex: 1, height: 1, background: 'var(--hairline, #EFEAE1)' }} />
+                    </div>
+                  )}
+                  <div onClick={() => router.push(`/signals?signal=${sg.id}`)}
+                    style={{ display: 'grid', gridTemplateColumns: '58px 14px minmax(0,1fr) auto', gap: 12, alignItems: 'baseline', padding: '15px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', opacity: handled ? .6 : 1 }}>
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
                       {mounted && sg.created_at ? new Date(sg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-                      {sg.source_integration ? ` · ${sg.source_integration}` : ''}
                     </span>
-                    {handled && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--good, #2f8f5b)' }}>handled</span>}
-                    {sg.risk_amount ? <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: c }}>{money(sg.risk_amount)}</span> : null}
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: handled ? 'transparent' : c, border: `2px solid ${c}`, alignSelf: 'center' }} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4 }}>
+                        {handled && <span style={{ color: 'var(--good, #2f8f5b)' }}>✓ </span>}{sg.title}
+                      </div>
+                      {sg.description && sg.description !== sg.title && (
+                        <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 4 }}>{sg.description}</div>
+                      )}
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 6 }}>
+                        {TYPE_LABELS[sg.signal_type || ''] || 'signal'} · {sg.source_integration || 'unknown'}
+                      </div>
+                    </div>
+                    {sg.risk_amount ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: c, whiteSpace: 'nowrap' }}>{money(sg.risk_amount)}</span> : <span />}
                   </div>
-                  <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', marginTop: 6, lineHeight: 1.4 }}>{sg.title}</div>
-                  {sg.description && sg.description !== sg.title && (
-                    <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 5 }}>{sg.description}</div>
-                  )}
                 </div>
               )
             })}
           </div>
         )
       })()}
-
-      {/* CONTRACTS */}
-      {tab === 'contracts' && (
-        <div style={{ marginTop: 26 }}>
-          {contracts.length === 0 && <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No contracts on file for this account.</div>}
-          {contracts.map(c => (
-            <div key={c.name} style={{ padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{c.name}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', color: c.status.includes('DUE') || c.status.includes('PENDING') || c.status.includes('NEGOTIATION') || c.status.includes('REVIEW') ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)' }}>{c.status}</span>
-                <span style={{ marginLeft: 'auto', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: 'var(--ink)' }}>{c.value}</span>
-              </div>
-              <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{c.type}</div>
-              <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginTop: 10, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
-                <span>{c.po}</span><span>{c.start} → {c.end}</span>
-              </div>
-              <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{c.invoice}</div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
