@@ -68,7 +68,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v3.0</span>
+            <span>v3.1</span>
           </footer>
         </div>
       </div>
@@ -79,10 +79,12 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       {/* floating Ask bar (design shell) */}
       {pathname !== '/ask' && (
         <div className="ed-askbar-wrap">
+          <div className="ed-askbar-measure">
           <div className="ed-askbar">
             <span className="ed-askdot"><span /><span /></span>
             <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitAsk() }} placeholder="Ask Popsicle anything about your pipeline" />
             <button onClick={submitAsk}>Ask</button>
+          </div>
           </div>
         </div>
       )}

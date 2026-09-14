@@ -2151,3 +2151,16 @@ a.ed-sb-item.on, a.ed-sb-item:hover { color: #FBF8F3; }
 /* v3.0 — footer matches the width of the screen content above it */
 .ed-footer { width: 100%; max-width: 1080px; margin-left: 0; margin-right: auto; box-sizing: border-box; }
 .dsk-screen { max-width: 1080px; width: 100%; }
+
+
+/* v3.1 — the Ask bar centres on the CONTENT measure (same 1080px column the
+   pages use, left-aligned under the sidebar), not on the whole viewport. */
+.ed-askbar-wrap {
+  left: var(--sidebar-w, 216px) !important; right: 0 !important;
+  padding: 0 36px !important; justify-content: flex-start !important;
+}
+.ed-askbar-measure {
+  width: 100%; max-width: 1080px; margin-right: auto;
+  display: flex; justify-content: center; pointer-events: none;
+}
+.ed-askbar { pointer-events: auto; }
