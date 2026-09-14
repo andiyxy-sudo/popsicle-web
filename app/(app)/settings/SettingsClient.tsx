@@ -22,6 +22,13 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [tz, setTz] = useState('')
   const [integrations, setIntegrations] = useState<string[]>([])
   const [counts, setCounts] = useState<{ signals: number; accounts: number } | null>(null)
+  const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true })
+
+  async function toggleNotif(k: string) {
+    const next = { ...notifs, [k]: !notifs[k] }
+    setNotifs(next)
+    await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
+  }
 
   useEffect(() => {
     try { setTz(Intl.DateTimeFormat().resolvedOptions().timeZone || '') } catch { setTz('') }
@@ -82,11 +89,25 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
   return (
     <div className="dsk-screen on" style={{ maxWidth: 900 }}>
-      <PageHead
-        eyebrow="Settings"
-        crumb={user.email}
-        title={<>Your account.{' '}<span style={{ color: 'var(--ink-muted)' }}>Profile, workspace, and how Popsicle behaves.</span></>}
-      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Settings <span style={{ margin: '0 8px' }}>/</span> Popsicle Labs
+        </div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>all changes save automatically</div>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 22 }}>
+        <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: 'none' }}>
+          {(user.email[0] || 'A').toUpperCase()}
+        </span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', color: 'var(--ink)' }}>{user.email.split('@')[0]}</div>
+          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 2 }}>{user.email}{tz ? ` · ${tz}` : ''}</div>
+        </div>
+        <button onClick={() => { const el = document.querySelector('.ed-sb-user') as HTMLElement | null; el?.click() }}
+          style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1.5px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Edit profile</button>
+      </div>
+      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
       <Section title="Account" sub="Who you are and where your data lives.">
         <Row label="Work email" value={user.email} />
@@ -100,6 +121,24 @@ export function SettingsClient({ user }: SettingsClientProps) {
           value={`${integrations.length} live`} onClick={() => router.push('/integrations')} />
         <Row label="Resolution broadcasts" sub="Slack ✓ and HubSpot notes when you mark a signal handled"
           value="Manage" onClick={() => router.push('/integrations')} />
+      </Section>
+
+      <Section title="Notifications" sub="What Popsicle should interrupt you for.">
+        {([['risk', 'Risk alerts', 'Critical signals, as they are detected'],
+           ['digest', 'Weekly summary', 'Mondays, on the Pulse screen'],
+           ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings']] as const).map(([k, label, sub]) => (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div>
+              <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
+            </div>
+            <button onClick={() => toggleNotif(k)} aria-label={label}
+              style={{ width: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: 'none',
+                background: notifs[k] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
+              <span style={{ position: 'absolute', top: 3, left: notifs[k] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
+            </button>
+          </div>
+        ))}
       </Section>
 
       <Section title="Security" sub="Access to this account.">

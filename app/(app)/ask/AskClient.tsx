@@ -49,7 +49,7 @@ export function AskClient() {
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [msgs, busy])
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 760, minHeight: 'calc(100vh - 180px)' }}>
+    <div className="dsk-screen on" style={{ maxWidth: 760, minHeight: 'calc(100vh - 150px)', display: 'flex', flexDirection: 'column' }}>
       <PageHead
         eyebrow="Ask AI"
         crumb="grounded in your data"
@@ -82,7 +82,7 @@ export function AskClient() {
       )}
       <div ref={endRef} />
 
-      <div style={{ display: 'flex', gap: 10, marginTop: 28 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 'auto', paddingTop: 28 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}

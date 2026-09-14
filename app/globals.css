@@ -52,7 +52,7 @@
 
   /* Sidebar */
   --sidebar-bg:#0E0D0B;
-  --sidebar-w:220px;
+  --sidebar-w:216px;  /* matches the design's 216px ink panel */
 
   /* Spacing base — 8px grid */
   --s1:8px; --s2:16px; --s3:24px; --s4:32px;
@@ -1941,8 +1941,11 @@ input, select, textarea { border-radius: var(--r-sheet); }
 
 .ed-askbar-wrap {
   position: fixed; left: var(--sidebar-w, 216px); right: 0; bottom: 28px; z-index: 20;
-  display: flex; justify-content: center; pointer-events: none; padding: 0 56px;
+  display: flex; justify-content: center; align-items: center;
+  pointer-events: none; padding: 0 56px; box-sizing: border-box;
 }
+/* the bar tracks the centre of the content area, not the window */
+.ed-askbar { margin: 0 auto; }
 .ed-askbar {
   pointer-events: auto; width: clamp(320px, 52vw, 720px); max-width: 100%;
   display: flex; align-items: center; gap: 14px; padding: 10px 10px 10px 22px; border-radius: 999px;
