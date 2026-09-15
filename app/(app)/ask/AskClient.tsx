@@ -177,7 +177,7 @@ function ClarifyCard({ line, onAsk }: { line: string; onAsk: (q: string) => void
   const question = parts[0] || 'Which did you mean?'
   const options = parts.slice(1)
   return (
-    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid rgba(232,90,37,.22)', borderRadius: 16, padding: '18px 22px 20px', boxShadow: '0 4px 20px -8px rgba(14,13,11,.1)' }}>
+    <div style={{ maxWidth: 700, background: 'var(--raised, #FFFDFA)', border: '1px solid rgba(232,90,37,.22)', borderRadius: 16, padding: '18px 22px 20px', boxShadow: '0 4px 20px -8px rgba(14,13,11,.1)' }}>
       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 9 }}>One quick thing</div>
       <div style={{ fontSize: 16.5, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginBottom: 14 }}>{question}</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -212,7 +212,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
   let buf: string[] = []
   const flush = (k: number) => {
     if (!buf.length) return
-    paras.push(<p key={`p${k}`} style={{ margin: '0 0 15px', fontSize: 16, lineHeight: 1.72, letterSpacing: '-.004em', color: 'var(--ink)', maxWidth: '62ch' }}>{inline(buf.join(' '), k)}</p>)
+    paras.push(<p key={`p${k}`} style={{ margin: '0 0 15px', fontSize: 16, lineHeight: 1.72, letterSpacing: '-.004em', color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
     buf = []
   }
   body.forEach((l, i) => {
@@ -230,7 +230,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
               <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em' }}>{piped[0]}</span>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999 }}>{piped[1]}</span>
             </div>
-            <div style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink-muted)', maxWidth: '62ch' }}>{inline(piped.slice(2).join(' · '), i)}</div>
+            <div style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink-muted)' }}>{inline(piped.slice(2).join(' · '), i)}</div>
           </div>
         )
         return
@@ -238,7 +238,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
       // otherwise a normal bullet, with any "Label:" lead-in set in ink
       const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
       paras.push(
-        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '8px 0 8px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '8px 0 8px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{m2 && !t.startsWith('**')
             ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
@@ -252,7 +252,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
   flush(999)
 
   return (
-    <div className="ask-answer" style={{ position: 'relative', background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
+    <div className="ask-answer" style={{ position: 'relative', maxWidth: 700, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
       {streaming && <div className="ans-rail" aria-hidden />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
@@ -270,7 +270,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
           </span>
         </span>
       </div>
-      <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
+      <div style={{ padding: '20px 24px 22px' }}>
         {title && <div className="ans-in" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
         {tags.length > 0 && (
           <div className="ans-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
