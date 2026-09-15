@@ -388,10 +388,8 @@ export function AskClient() {
       {busy && (
         <div style={{ marginTop: 16, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, padding: '16px 20px', maxWidth: 430, boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span style={{ display: 'inline-flex', gap: 6, padding: '8px 14px', borderRadius: 999, background: 'var(--inset, #F0EDE7)' }}>
-              {[0, 1, 2].map(i => (
-                <span key={i} className="ask-dot" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animationDelay: `${i * 0.18}s` }} />
-              ))}
+            <span className="ask-orbit" aria-hidden>
+              <span className="ask-orbit-halo" />
             </span>
             <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{THINKING[phase]}</span>
           </div>

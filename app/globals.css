@@ -2233,3 +2233,51 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 .ask-copy { opacity: 0; transition: opacity .16s ease, color .16s ease; }
 .ask-answer:hover .ask-copy { opacity: 1; }
 .ask-copy:hover { color: var(--accent, #E85A25) !important; }
+
+/* ============================================================
+   v7.1 — Ask AI thinking mark
+   A comet ring: a conic sweep masked into a hairline ring, orbiting a core
+   that breathes. Abstract, brand-coloured, and crisp at any size because
+   nothing is scaled up from a small raster.
+   ============================================================ */
+.ask-orbit { position: relative; width: 26px; height: 26px; flex: none; }
+
+/* the sweep */
+.ask-orbit::before {
+  content: ''; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    rgba(255,107,53,0) 0deg,
+    rgba(255,107,53,.10) 140deg,
+    rgba(255,138,80,.55) 280deg,
+    #FF6B35 342deg,
+    rgba(255,107,53,0) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2.5px));
+  animation: orbitSweep 1.15s cubic-bezier(.5,.15,.35,.9) infinite;
+}
+/* the core */
+.ask-orbit::after {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%;
+  background: linear-gradient(135deg, #FF8A50, #E85A25);
+  animation: orbitCore 1.9s cubic-bezier(.45,.05,.35,1) infinite;
+}
+@keyframes orbitSweep { to { transform: rotate(360deg); } }
+@keyframes orbitCore {
+  0%, 100% { transform: scale(.72); opacity: .55; }
+  45%      { transform: scale(1.18); opacity: 1; }
+}
+
+/* a second, slower ring for depth */
+.ask-orbit-halo {
+  position: absolute; inset: -6px; border-radius: 50%;
+  border: 1px solid rgba(232,90,37,.16);
+  animation: orbitHalo 2.6s ease-in-out infinite;
+}
+@keyframes orbitHalo {
+  0%, 100% { transform: scale(.88); opacity: .25; }
+  50%      { transform: scale(1.06); opacity: .7; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ask-orbit::before, .ask-orbit::after, .ask-orbit-halo { animation-duration: 3s; }
+}
