@@ -2350,3 +2350,41 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
    provenance (source marks in the card footer), and the utility row under
    the input reports the live source count. Every row costs chat height here. */
 .content:has(.ask-screen) .ed-footer { display: none !important; }
+
+/* ============================================================
+   v8.3 - answers arrive as structure, not as typing.
+   Each block settles in; a hairline rail shows work in progress;
+   a soft caret marks where the writing is.
+   ============================================================ */
+@keyframes ansIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.ans-in { animation: ansIn .34s cubic-bezier(.22,.61,.36,1) both; }
+
+/* progress rail across the top edge of the card */
+@keyframes ansRail { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.ans-rail {
+  position: absolute; top: 0; left: 0; right: 0; height: 2px; overflow: hidden;
+  background: rgba(232,90,37,.10);
+}
+.ans-rail::after {
+  content: ''; position: absolute; inset: 0; width: 45%;
+  background: linear-gradient(90deg, rgba(255,138,80,0), #FF6B35, rgba(255,138,80,0));
+  animation: ansRail 1.25s cubic-bezier(.45,.05,.35,1) infinite;
+}
+
+/* the caret that marks where the answer is still being written */
+@keyframes ansCaret { 0%, 100% { opacity: .25; transform: scaleY(.7); } 50% { opacity: 1; transform: scaleY(1); } }
+.ans-caret {
+  display: inline-block; width: 3px; height: 17px; border-radius: 2px; vertical-align: -3px;
+  background: linear-gradient(180deg, #FF8A50, #E85A25);
+  animation: ansCaret .9s ease-in-out infinite;
+}
+
+/* shape before the first words land */
+.ans-skeleton { display: flex; flex-direction: column; gap: 11px; padding: 2px 0 6px; }
+.ans-skeleton span {
+  height: 13px; border-radius: 7px;
+  background: linear-gradient(90deg, var(--inset, #F0EDE7) 25%, rgba(232,90,37,.08) 45%, var(--inset, #F0EDE7) 65%);
+  background-size: 260% 100%;
+  animation: ansShimmer 1.4s ease-in-out infinite;
+}
+@keyframes ansShimmer { 0% { background-position: 130% 0; } 100% { background-position: -130% 0; } }

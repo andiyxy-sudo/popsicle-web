@@ -61,7 +61,7 @@ function Answer({ text }: { text: string }) {
       flush(i)
       const body = l.replace(/^([-*•]|\d+[.)])\s/, '')
       out.push(
-        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 10, padding: '7px 0', fontSize: 15.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 10, padding: '7px 0', fontSize: 15.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{inline(body, i)}</div>
         </div>
@@ -190,9 +190,20 @@ function ClarifyCard({ line, onAsk }: { line: string; onAsk: (q: string) => void
   )
 }
 
-function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: (q: string) => void; onInspect: (src: string) => void; onDraft: (acct: string | null, play: string) => void }) {
+function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { text: string; streaming?: boolean; onAsk: (q: string) => void; onInspect: (src: string) => void; onDraft: (acct: string | null, play: string) => void }) {
   const [copied, setCopied] = useState(false)
-  const { title, tags, body, play, sources, stats } = parseAnswer(text)
+  // While the answer is still arriving, drop the final partial line and any
+  // control line that has not finished yet. Structure appears as it settles,
+  // so the reader never sees raw markup or a half-typed word.
+  const safeText = streaming
+    ? (() => {
+        const lines = text.split('\n')
+        if (lines.length > 1) lines.pop()
+        else if (!/[.!?:]\s*$/.test(lines[0] || '')) return ''
+        return lines.filter(l => !/^(tags|stats|sources|clarify):/i.test(l.trim()) || /\n/.test(l)).join('\n')
+      })()
+    : text
+  const { title, tags, body, play, sources, stats } = parseAnswer(safeText)
   const sev = (tags[0] || '').toLowerCase()
   const sevColor = sev.includes('critical') || sev.includes('risk') ? 'var(--critical, #c43d2b)'
     : sev.includes('watch') ? 'var(--warn, #d38b1d)'
@@ -209,7 +220,7 @@ function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: 
     if (/^([-*•]|\d+[.)])\s/.test(l)) {
       flush(i)
       paras.push(
-        <div key={`b${i}`} style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{(() => {
             const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
@@ -227,7 +238,8 @@ function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: 
   flush(999)
 
   return (
-    <div className="ask-answer" style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
+    <div className="ask-answer" style={{ position: 'relative', background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
+      {streaming && <div className="ans-rail" aria-hidden />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
@@ -242,9 +254,9 @@ function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: 
         </span>
       </div>
       <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
-        {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
+        {title && <div className="ans-in" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
         {tags.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div className="ans-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
             {tags.map((t, i) => (
               <span key={i} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
                 color: i === 0 ? sevColor : 'var(--ink-muted)',
@@ -253,7 +265,7 @@ function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: 
           </div>
         )}
         {stats.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(stats.length, 3)}, 1fr)`, gap: 10, margin: '4px 0 16px' }}>
+          <div className="ans-in" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(stats.length, 3)}, 1fr)`, gap: 10, margin: '4px 0 16px' }}>
             {stats.slice(0, 3).map((st, i) => (
               <div key={i} style={{ background: 'var(--inset, #F0EDE7)', borderRadius: 12, padding: '14px 10px', textAlign: 'center' }}>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: i === 0 ? sevColor : 'var(--good, #2f8f5b)' }}>{st.v}</div>
@@ -263,6 +275,12 @@ function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: 
           </div>
         )}
         {paras}
+        {streaming && paras.length === 0 && (
+          <div className="ans-skeleton" aria-hidden>
+            <span style={{ width: '54%' }} /><span style={{ width: '92%' }} /><span style={{ width: '78%' }} />
+          </div>
+        )}
+        {streaming && paras.length > 0 && <span className="ans-caret" aria-hidden />}
         {play && (
           <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
@@ -312,6 +330,7 @@ export function AskClient() {
   type Hist = { id: string; question: string; answer: string; pinned: boolean; created_at: string }
   const [history, setHistory] = useState<Hist[]>([])
   const [sourceCount, setSourceCount] = useState<number | null>(null)
+  const [streamingIdx, setStreamingIdx] = useState<number | null>(null)
   const [opener, setOpener] = useState<{ q: string; line: string } | null>(null)
   const [inspect, setInspect] = useState<string | null>(null)
   const [inspectRows, setInspectRows] = useState<Array<{ id: string; title: string; sub: string; at: string | null }> | null>(null)
@@ -449,6 +468,7 @@ export function AskClient() {
         const reader = r.body.getReader()
         const dec = new TextDecoder()
         setMsgs([...next, { role: 'assistant', content: '' }])
+        setStreamingIdx(next.length)
         setBusy(false)
         for (;;) {
           const { done, value } = await reader.read()
@@ -461,6 +481,7 @@ export function AskClient() {
         answer = j.content || j.error || 'No answer came back. Try rephrasing the question.'
         setMsgs([...next, { role: 'assistant', content: answer }])
       }
+      setStreamingIdx(null)
       const j = { content: answer }
       // keep the exchange so it can be found again later
       if (j.content && !(typeof document !== 'undefined' && document.body.dataset.demo === '1')) {
@@ -471,6 +492,7 @@ export function AskClient() {
         })
       }
     } catch {
+      setStreamingIdx(null)
       setMsgs([...next, { role: 'assistant', content: 'Could not reach the co-pilot. Try again in a moment.' }])
     }
     setBusy(false)
@@ -590,7 +612,7 @@ export function AskClient() {
         <div key={i} style={{ marginTop: 16 }}>
           {/^clarify:/i.test(m.content.trim())
             ? <ClarifyCard line={m.content.trim()} onAsk={send} />
-            : <AnswerCard text={m.content} onAsk={send} onInspect={setInspect} onDraft={draftFromPlay} />}
+            : <AnswerCard text={m.content} streaming={streamingIdx === i} onAsk={send} onInspect={setInspect} onDraft={draftFromPlay} />}
         </div>
       ))}
 
