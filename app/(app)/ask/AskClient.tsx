@@ -362,7 +362,7 @@ export function AskClient() {
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
+    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 150px)' : 'auto' }}>
       <div style={{ flexShrink: 0 }}>
         {/* the headline earns its space only before the first question */}
         <div style={{
@@ -382,14 +382,15 @@ export function AskClient() {
           setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60)
         }}
         style={{
-          flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingTop: started ? 4 : 18,
+          flex: started ? 1 : '0 0 auto', minHeight: 0, overflowY: started ? 'auto' : 'visible', paddingRight: 4, paddingTop: started ? 4 : 18,
           // content dissolves at the edges instead of being cut by the boundary
-          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
-          maskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+          ...(started ? {
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+          } : {}),
         }}>
       {msgs.length === 0 && !busy && (
         <div>
-          <div style={{ ...label, marginBottom: 6 }}>Try asking</div>
           {history.length > 0 && (
             <div style={{ marginBottom: 34 }}>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
@@ -482,7 +483,7 @@ export function AskClient() {
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: 10, paddingTop: 18, borderTop: '1px solid var(--hairline, #EFEAE1)', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: started ? 0 : 26, paddingTop: 18, borderTop: started ? '1px solid var(--hairline, #EFEAE1)' : 'none', flexShrink: 0 }}>
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
