@@ -11,12 +11,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { messages } = await req.json()
+  const { messages, stream: wantStream = false } = await req.json()
 
   // Demo account: answer from the showcase context block (no DB round-trip), so the
   // co-pilot's answers match exactly what is on screen.
   if (user.email === DEMO_EMAIL) {
-    return runAnthropic(DEMO_AI_CONTEXT, messages)
+    return runAnthropic(DEMO_AI_CONTEXT, messages, wantStream)
   }
 
   // Fetch context: recent signals + at-risk accounts
@@ -116,14 +116,18 @@ When the question is about what to do next, write it as a playbook:
 - Each bullet is one specific instruction someone could carry out without asking a follow-up question
 - Close with RECOMMENDED PLAY: the single highest-value action, phrased as an instruction, including what to say
 
+If the question is genuinely ambiguous and a single detail would change the answer materially, do not guess. Reply with exactly one line:
+CLARIFY: your one question | option one | option two | option three
+Use two or three short options the person can pick. Only do this when it really matters; otherwise answer.
+
 Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()
 
-  return runAnthropic(contextBlock, messages)
+  return runAnthropic(contextBlock, messages, wantStream)
 }
 
 // Shared Anthropic call used by both the demo and real-user paths.
-async function runAnthropic(system: string, messages: { role: string; content: string }[]) {
+async function runAnthropic(system: string, messages: { role: string; content: string }[], stream = false) {
   // Explicit check so we get a clear message instead of a silent failure
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: 'AI is not configured. Add ANTHROPIC_API_KEY in Vercel environment variables.' }, { status: 500 })
@@ -141,9 +145,49 @@ async function runAnthropic(system: string, messages: { role: string; content: s
         model: 'claude-opus-4-8',
         max_tokens: 1024,
         system,
+        stream,
         messages: messages.map((m) => ({ role: m.role, content: m.content })),
       }),
     })
+
+    if (stream) {
+      if (!res.ok || !res.body) {
+        const err = await res.json().catch(() => ({}))
+        return NextResponse.json({ error: err?.error?.message ?? `API error (${res.status})` }, { status: 200 })
+      }
+      // Forward only the text deltas, so the client can append as they arrive.
+      const decoder = new TextDecoder()
+      const out = new ReadableStream<Uint8Array>({
+        async start(controller) {
+          const reader = res.body!.getReader()
+          let buf = ''
+          try {
+            for (;;) {
+              const { done, value } = await reader.read()
+              if (done) break
+              buf += decoder.decode(value, { stream: true })
+              const lines = buf.split('\n')
+              buf = lines.pop() ?? ''
+              for (const line of lines) {
+                if (!line.startsWith('data:')) continue
+                const payload = line.slice(5).trim()
+                if (!payload || payload === '[DONE]') continue
+                try {
+                  const evt = JSON.parse(payload)
+                  const text = evt?.delta?.text
+                  if (typeof text === 'string' && text) {
+                    controller.enqueue(new TextEncoder().encode(text.replace(/[—–]/g, '-')))
+                  }
+                } catch { /* partial frame */ }
+              }
+            }
+          } finally {
+            controller.close()
+          }
+        },
+      })
+      return new Response(out, { headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-cache' } })
+    }
 
     const data = await res.json()
 

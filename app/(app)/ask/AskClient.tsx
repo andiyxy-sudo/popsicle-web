@@ -147,12 +147,17 @@ function parseAnswer(text: string) {
 
 // Follow-ups drawn from what the answer actually mentions, so they are useful
 // rather than decorative.
+// Pull the account an answer is about, used by the draft and source actions.
+function accountOf(text: string): string | null {
+  const m = text.replace(/\*\*/g, '').match(/\b([A-Z][a-zA-Z0-9.&-]+(?: [A-Z][a-zA-Z0-9.&-]+){0,2})\b/g) || []
+  const stop = new Set(['Today', 'Tomorrow', 'Recommended', 'Play', 'Critical', 'Backup', 'The', 'This', 'Your', 'No', 'Email', 'Slack', 'Gmail', 'Sources', 'Stats', 'Tags'])
+  return m.map(x => x.trim()).find(x => x.includes(' ') && !stop.has(x.split(' ')[0])) ?? null
+}
+
 function followUps(text: string): string[] {
   // Pull a likely account name straight out of the answer: two or three
   // capitalised words, which is how accounts are written throughout.
-  const m = text.replace(/\*\*/g, '').match(/\b([A-Z][a-zA-Z0-9.&-]+(?: [A-Z][a-zA-Z0-9.&-]+){0,2})\b/g) || []
-  const stop = new Set(['Today', 'Tomorrow', 'Recommended', 'Play', 'Critical', 'Backup', 'The', 'This', 'Your', 'No', 'Email', 'Slack', 'Gmail'])
-  const acct = m.map(x => x.trim()).find(x => x.includes(' ') && !stop.has(x.split(' ')[0]))
+  const acct = accountOf(text)
   const out: string[] = []
   if (acct) {
     out.push(`Draft a follow-up to ${acct}`)
@@ -166,7 +171,26 @@ function followUps(text: string): string[] {
   return out.slice(0, 3)
 }
 
-function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void }) {
+// A clarifying question renders as its own compact card with pickable options.
+function ClarifyCard({ line, onAsk }: { line: string; onAsk: (q: string) => void }) {
+  const parts = line.replace(/^clarify:\s*/i, '').split('|').map(x => x.trim()).filter(Boolean)
+  const question = parts[0] || 'Which did you mean?'
+  const options = parts.slice(1)
+  return (
+    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid rgba(232,90,37,.22)', borderRadius: 16, padding: '18px 22px 20px', boxShadow: '0 4px 20px -8px rgba(14,13,11,.1)' }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 9 }}>One quick thing</div>
+      <div style={{ fontSize: 16.5, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginBottom: 14 }}>{question}</div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        {options.map(o => (
+          <button key={o} onClick={() => onAsk(o)} className="ask-chip"
+            style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '9px 16px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{o}</button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function AnswerCard({ text, onAsk, onInspect, onDraft }: { text: string; onAsk: (q: string) => void; onInspect: (src: string) => void; onDraft: (acct: string | null, play: string) => void }) {
   const [copied, setCopied] = useState(false)
   const { title, tags, body, play, sources, stats } = parseAnswer(text)
   const sev = (tags[0] || '').toLowerCase()
@@ -243,6 +267,10 @@ function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void 
           <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
             <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.7, letterSpacing: '-.004em' }}>{inline(play, 0)}</div>
+            <button onClick={() => onDraft(accountOf(text), play)}
+              style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
+              Draft this email
+            </button>
           </div>
         )}
         <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -262,7 +290,8 @@ function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void 
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase' }}>from</span>
               {sources.filter(x => SRC_MARK[x]).map(x => (
-                <span key={x} title={SRC_NAME[x]} style={{ display: 'inline-flex', alignItems: 'center' }}>{SRC_MARK[x]}</span>
+                <button key={x} title={`See what was read from ${SRC_NAME[x]}`} onClick={() => onInspect(x)} className="ask-ghost"
+                  style={{ background: 'none', border: 0, padding: 0, cursor: 'pointer', display: 'inline-flex', alignItems: 'center' }}>{SRC_MARK[x]}</button>
               ))}
             </span>
           )}
@@ -283,6 +312,55 @@ export function AskClient() {
   type Hist = { id: string; question: string; answer: string; pinned: boolean; created_at: string }
   const [history, setHistory] = useState<Hist[]>([])
   const [sourceCount, setSourceCount] = useState<number | null>(null)
+  const [opener, setOpener] = useState<{ q: string; line: string } | null>(null)
+  const [inspect, setInspect] = useState<string | null>(null)
+  const [inspectRows, setInspectRows] = useState<Array<{ id: string; title: string; sub: string; at: string | null }> | null>(null)
+
+  // (1) turn a recommended play into a real draft: open the composer on the
+  // account's live signal, which is where the send pipeline already lives.
+  async function draftFromPlay(acct: string | null, _play: string) {
+    if (!acct) { router.push('/signals'); return }
+    const supa = createClient()
+    const { data: { user } } = await supa.auth.getUser()
+    if (!user) { router.push('/signals'); return }
+    const { data } = await supa.from('signals').select('id, severity')
+      .eq('user_id', user.id).eq('account_name', acct).eq('is_dismissed', false)
+      .or('status.is.null,status.eq.open').order('created_at', { ascending: false }).limit(10)
+    const rows = (data ?? []) as Array<{ id: string; severity: string | null }>
+    const top = rows.find(r => r.severity === 'high') ?? rows[0]
+    if (top) router.push(`/signals?signal=${top.id}&action=reply`)
+    else router.push(`/accounts/${encodeURIComponent(acct)}`)
+  }
+
+  // (2) show what was actually read from a source, for the account in question
+  useEffect(() => {
+    if (!inspect) { setInspectRows(null); return }
+    let dead = false
+    const acct = accountOf([...msgs].reverse().find(m => m.role === 'assistant')?.content || '')
+    ;(async () => {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user) { if (!dead) setInspectRows([]); return }
+      const msgQ = supa.from('messages').select('id, sender, subject, content, received_at')
+        .eq('user_id', user.id).eq('integration', inspect)
+        .order('received_at', { ascending: false }).limit(6)
+      if (acct) msgQ.eq('account_name', acct)
+      const sigQ = supa.from('signals').select('id, title, description, created_at')
+        .eq('user_id', user.id).eq('source_integration', inspect)
+        .order('created_at', { ascending: false }).limit(6)
+      if (acct) sigQ.eq('account_name', acct)
+      const [m1, s1] = await Promise.all([msgQ, sigQ])
+      if (dead) return
+      const rows = [
+        ...((m1.data ?? []) as Array<{ id: string; sender: string | null; subject: string | null; content: string | null; received_at: string | null }>)
+          .map(m => ({ id: `m${m.id}`, title: m.subject || (m.sender || 'Message'), sub: String(m.content || '').slice(0, 160), at: m.received_at })),
+        ...((s1.data ?? []) as Array<{ id: string; title: string | null; description: string | null; created_at: string | null }>)
+          .map(x => ({ id: `s${x.id}`, title: x.title || 'Signal', sub: String(x.description || '').slice(0, 160), at: x.created_at })),
+      ].sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8)
+      setInspectRows(rows)
+    })()
+    return () => { dead = true }
+  }, [inspect, msgs])
   const [mountedHist, setMountedHist] = useState(false)
   useEffect(() => {
     setMountedHist(true)
@@ -311,6 +389,28 @@ export function AskClient() {
   }
   useEffect(() => { loadHistory() }, [])
 
+  // (5) open with the thing that actually changed, not a generic prompt
+  useEffect(() => {
+    let dead = false
+    ;(async () => {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user || dead) return
+      const { data } = await supa.from('signals')
+        .select('account_name, title, severity, created_at')
+        .eq('user_id', user.id).eq('is_dismissed', false).eq('severity', 'high')
+        .or('status.is.null,status.eq.open')
+        .order('created_at', { ascending: false }).limit(1)
+      const top = (data ?? [])[0] as { account_name: string | null; title: string | null } | undefined
+      if (!top?.account_name || dead) return
+      setOpener({
+        q: `What should I do about ${top.account_name}?`,
+        line: `${top.account_name}: ${top.title}`,
+      })
+    })()
+    return () => { dead = true }
+  }, [])
+
   async function togglePin(h: Hist) {
     setHistory(prev => prev.map(x => x.id === h.id ? { ...x, pinned: !x.pinned } : x))
     await createClient().from('ask_history').update({ pinned: !h.pinned }).eq('id', h.id)
@@ -338,10 +438,30 @@ export function AskClient() {
     const next: Msg[] = [...msgs, { role: 'user', content: question }]
     setMsgs(next); setInput(''); setBusy(true)
     try {
-      const r = await fetch('/api/ask', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: next }) })
-      const j = await r.json().catch(() => ({}))
-      const answer = j.content || j.error || 'No answer came back. Try rephrasing the question.'
-      setMsgs([...next, { role: 'assistant', content: answer }])
+      const r = await fetch('/api/ask', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ messages: next, stream: true }),
+      })
+      let answer = ''
+      const ct = r.headers.get('content-type') || ''
+      if (r.body && ct.includes('text/plain')) {
+        // append deltas as they arrive so reading can start immediately
+        const reader = r.body.getReader()
+        const dec = new TextDecoder()
+        setMsgs([...next, { role: 'assistant', content: '' }])
+        setBusy(false)
+        for (;;) {
+          const { done, value } = await reader.read()
+          if (done) break
+          answer += dec.decode(value, { stream: true })
+          setMsgs([...next, { role: 'assistant', content: answer }])
+        }
+      } else {
+        const j = await r.json().catch(() => ({}))
+        answer = j.content || j.error || 'No answer came back. Try rephrasing the question.'
+        setMsgs([...next, { role: 'assistant', content: answer }])
+      }
+      const j = { content: answer }
       // keep the exchange so it can be found again later
       if (j.content && !(typeof document !== 'undefined' && document.body.dataset.demo === '1')) {
         const supa = createClient()
@@ -412,6 +532,19 @@ export function AskClient() {
         }}>
       {msgs.length === 0 && !busy && (
         <div>
+          {opener && (
+            <div onClick={() => send(opener.q)} className="ask-suggest"
+              style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px', marginBottom: 26, cursor: 'pointer',
+                background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.18)', borderRadius: 14 }}>
+              <span className="sig-pulse" style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', flex: 'none' }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 4 }}>Since you were last here</div>
+                <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.45 }}>{opener.line}</div>
+              </div>
+              <span className="ask-suggest-arrow" style={{ color: 'var(--accent)', fontSize: 15, flex: 'none' }}>→</span>
+            </div>
+          )}
+
           {history.length > 0 && (
             <div style={{ marginBottom: 34 }}>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
@@ -455,7 +588,9 @@ export function AskClient() {
         </div>
       ) : (
         <div key={i} style={{ marginTop: 16 }}>
-          <AnswerCard text={m.content} onAsk={send} />
+          {/^clarify:/i.test(m.content.trim())
+            ? <ClarifyCard line={m.content.trim()} onAsk={send} />
+            : <AnswerCard text={m.content} onAsk={send} onInspect={setInspect} onDraft={draftFromPlay} />}
         </div>
       ))}
 
@@ -517,6 +652,32 @@ export function AskClient() {
           {busy ? 'Thinking' : 'Ask'}
         </button>
       </div>
+
+      {inspect && (
+        <div onClick={() => setInspect(null)} style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(520px,100%)', maxHeight: '80vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '26px 28px 28px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--accent)' }}>read from {inspect}</span>
+              <button onClick={() => setInspect(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer' }}>close</button>
+            </div>
+            <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>What this answer drew on</h2>
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '18px 0 4px' }} />
+            {inspectRows === null && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Looking…</div>}
+            {inspectRows?.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing recorded from this source for that account.</div>}
+            {inspectRows?.map(r => (
+              <div key={r.id} style={{ padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'baseline' }}>
+                  <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>{r.title}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', flex: 'none' }}>
+                    {mountedHist && r.at ? new Date(r.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                  </span>
+                </div>
+                {r.sub && <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 4 }}>{r.sub}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* once a conversation exists the chat owns the top, so this row moves here */}
       {started && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, flexShrink: 0,
