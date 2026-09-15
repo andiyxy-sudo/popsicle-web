@@ -7,7 +7,6 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PageHead } from '@/components/layout/PageHead'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -272,6 +271,8 @@ export function AskClient() {
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState(0)
+  const [atBottom, setAtBottom] = useState(true)
+  const started = msgs.length > 0 || busy
 
   const endRef = useRef<HTMLDivElement>(null)
   const paneRef = useRef<HTMLDivElement>(null)
@@ -306,23 +307,50 @@ export function AskClient() {
   }, [params])
   useEffect(() => {
     if (msgs.length === 0) return
-    // scroll only the conversation pane, never the page
+    // scroll only the conversation pane, and only if the reader is already
+    // following along - never yank them away from something they scrolled to
     const pane = paneRef.current
-    if (pane) pane.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' })
+    if (pane && atBottom) pane.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' })
   }, [msgs, busy])
 
   const lastQuestion = [...msgs].reverse().find(m => m.role === 'user')?.content
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
-      <PageHead
-        eyebrow="Ask AI"
-        crumb="grounded in your data"
-        title={<>Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts and correspondence.</span></>}
-      />
+    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 132px)' }}>
+      <div style={{ flexShrink: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            Ask AI <span style={{ margin: '0 8px' }}>/</span> grounded in your data
+          </div>
+          {started && (
+            <button onClick={() => { setMsgs([]); setInput('') }}
+              style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>new question</button>
+          )}
+        </div>
+        {/* the headline earns its space only before the first question */}
+        <div style={{
+          maxHeight: started ? 0 : 260, opacity: started ? 0 : 1, overflow: 'hidden',
+          transition: 'max-height .45s cubic-bezier(.22,.61,.36,1), opacity .25s ease',
+        }}>
+          <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
+            Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts and correspondence.</span>
+          </h1>
+          <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '32px 0 0' }} />
+        </div>
+      </div>
 
-      <div ref={paneRef} style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4 }}>
+      <div ref={paneRef}
+        onScroll={e => {
+          const el = e.currentTarget
+          setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60)
+        }}
+        style={{
+          flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingTop: started ? 18 : 24,
+          // content dissolves at the edges instead of being cut by the boundary
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+          maskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+        }}>
       {msgs.length === 0 && !busy && (
         <div>
           <div style={{ ...label, marginBottom: 6 }}>Try asking</div>
@@ -366,6 +394,17 @@ export function AskClient() {
       )}
       <div ref={endRef} />
       </div>
+
+      {started && !atBottom && (
+        <div style={{ position: 'relative', height: 0 }}>
+          <button onClick={() => { const pane = paneRef.current; pane?.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' }); setAtBottom(true) }}
+            style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', font: 'inherit', fontSize: 12.5, fontWeight: 600,
+              padding: '8px 16px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink-muted)',
+              cursor: 'pointer', boxShadow: '0 8px 22px -10px rgba(14,13,11,.3)', whiteSpace: 'nowrap', zIndex: 5 }}>
+            ↓ Latest answer
+          </button>
+        </div>
+      )}
 
       <div style={{ display: 'flex', gap: 10, paddingTop: 18, borderTop: '1px solid var(--hairline, #EFEAE1)', flexShrink: 0 }}>
         <input
