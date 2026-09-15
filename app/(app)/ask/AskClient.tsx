@@ -364,6 +364,15 @@ export function AskClient() {
   return (
     <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 150px)' : 'auto' }}>
       <div style={{ flexShrink: 0 }}>
+        {/* the page header holds the top until a question is asked, then the
+            conversation takes over and the utility row moves under the input */}
+        {!started && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              Ask AI <span style={{ margin: '0 8px' }}>/</span> grounded in your data
+            </div>
+          </div>
+        )}
         {/* the headline earns its space only before the first question */}
         <div style={{
           maxHeight: started ? 0 : 260, opacity: started ? 0 : 1, overflow: 'hidden',
@@ -497,8 +506,8 @@ export function AskClient() {
         </button>
       </div>
 
-      {/* utility row lives under the input so the chat owns the top of the page */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, flexShrink: 0,
+      {/* once a conversation exists the chat owns the top, so this row moves here */}
+      {started && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, flexShrink: 0,
         fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <button onClick={() => router.back()} className="ask-ghost"
           style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>← back</button>
@@ -507,7 +516,7 @@ export function AskClient() {
           <button onClick={() => { setMsgs([]); setInput('') }} className="ask-ghost"
             style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>new question</button>
         ) : <span style={{ opacity: 0 }}>new question</span>}
-      </div>
+      </div>}
     </div>
   )
 }
