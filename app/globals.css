@@ -2281,3 +2281,49 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .ask-orbit::before, .ask-orbit::after, .ask-orbit-halo { animation-duration: 3s; }
 }
+
+/* ============================================================
+   v7.2 — Ask AI thinking mark: the Popsicle bolt, charging.
+   The bolt draws itself, fills, and releases a pulse, inside the
+   popsicle silhouette. Brand-specific, and crisp at any size.
+   ============================================================ */
+.bolt-mark { position: relative; width: 30px; height: 30px; flex: none; }
+.bolt-mark svg { display: block; overflow: visible; }
+
+.bolt-body { animation: boltBody 2.1s ease-in-out infinite; transform-origin: center; }
+@keyframes boltBody {
+  0%, 100% { opacity: .18; }
+  50%      { opacity: .42; }
+}
+
+.bolt-stroke {
+  stroke-dasharray: 96;
+  stroke-dashoffset: 96;
+  animation: boltDraw 2.1s cubic-bezier(.5,.05,.3,1) infinite;
+}
+@keyframes boltDraw {
+  0%   { stroke-dashoffset: 96; opacity: .35; }
+  35%  { stroke-dashoffset: 0;  opacity: 1; }
+  70%  { stroke-dashoffset: 0;  opacity: 1; }
+  100% { stroke-dashoffset: -96; opacity: .35; }
+}
+
+.bolt-fill { opacity: 0; animation: boltFill 2.1s ease-in-out infinite; }
+@keyframes boltFill {
+  0%, 28%  { opacity: 0; }
+  42%, 66% { opacity: 1; }
+  100%     { opacity: 0; }
+}
+
+.bolt-halo {
+  position: absolute; inset: -5px; border-radius: 40%;
+  background: radial-gradient(circle, rgba(255,107,53,.22), rgba(255,107,53,0) 68%);
+  animation: boltHalo 2.1s ease-in-out infinite;
+}
+@keyframes boltHalo {
+  0%, 25%, 100% { transform: scale(.7); opacity: 0; }
+  48%           { transform: scale(1.15); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bolt-stroke, .bolt-fill, .bolt-halo, .bolt-body { animation-duration: 4s; }
+}

@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -279,6 +280,34 @@ export function AskClient() {
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState(0)
   const [atBottom, setAtBottom] = useState(true)
+  type Hist = { id: string; question: string; answer: string; pinned: boolean; created_at: string }
+  const [history, setHistory] = useState<Hist[]>([])
+  const [mountedHist, setMountedHist] = useState(false)
+  useEffect(() => { setMountedHist(true) }, [])
+
+  async function loadHistory() {
+    if (typeof document !== 'undefined' && document.body.dataset.demo === '1') return
+    const supa = createClient()
+    const { data: { user } } = await supa.auth.getUser()
+    if (!user) return
+    const { data } = await supa.from('ask_history')
+      .select('id, question, answer, pinned, created_at')
+      .eq('user_id', user.id)
+      .order('pinned', { ascending: false })
+      .order('created_at', { ascending: false })
+      .limit(12)
+    setHistory((data as Hist[]) ?? [])
+  }
+  useEffect(() => { loadHistory() }, [])
+
+  async function togglePin(h: Hist) {
+    setHistory(prev => prev.map(x => x.id === h.id ? { ...x, pinned: !x.pinned } : x))
+    await createClient().from('ask_history').update({ pinned: !h.pinned }).eq('id', h.id)
+    loadHistory()
+  }
+  function reopen(h: Hist) {
+    setMsgs([{ role: 'user', content: h.question }, { role: 'assistant', content: h.answer }])
+  }
   const started = msgs.length > 0 || busy
 
   const endRef = useRef<HTMLDivElement>(null)
@@ -300,7 +329,16 @@ export function AskClient() {
     try {
       const r = await fetch('/api/ask', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ messages: next }) })
       const j = await r.json().catch(() => ({}))
-      setMsgs([...next, { role: 'assistant', content: j.content || j.error || 'No answer came back. Try rephrasing the question.' }])
+      const answer = j.content || j.error || 'No answer came back. Try rephrasing the question.'
+      setMsgs([...next, { role: 'assistant', content: answer }])
+      // keep the exchange so it can be found again later
+      if (j.content && !(typeof document !== 'undefined' && document.body.dataset.demo === '1')) {
+        const supa = createClient()
+        supa.auth.getUser().then(({ data: { user } }) => {
+          if (!user) return
+          supa.from('ask_history').insert({ user_id: user.id, question, answer }).then(() => loadHistory(), () => {})
+        })
+      }
     } catch {
       setMsgs([...next, { role: 'assistant', content: 'Could not reach the co-pilot. Try again in a moment.' }])
     }
@@ -364,6 +402,32 @@ export function AskClient() {
       {msgs.length === 0 && !busy && (
         <div>
           <div style={{ ...label, marginBottom: 6 }}>Try asking</div>
+          {history.length > 0 && (
+            <div style={{ marginBottom: 34 }}>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+                {history.some(h => h.pinned) ? 'Saved and recent' : 'Recent questions'}
+              </div>
+              {history.map(h => (
+                <div key={h.id} className="ask-suggest"
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}
+                  onClick={() => reopen(h)}>
+                  <button onClick={e => { e.stopPropagation(); togglePin(h) }} title={h.pinned ? 'Unsave' : 'Save this answer'}
+                    className="ask-ghost"
+                    style={{ background: 'none', border: 0, cursor: 'pointer', padding: 0, lineHeight: 1, color: h.pinned ? 'var(--accent)' : 'var(--ink-faint)', flex: 'none' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill={h.pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinejoin="round">
+                      <path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z" />
+                    </svg>
+                  </button>
+                  <span style={{ flex: 1, minWidth: 0, fontSize: 15, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.question}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', flex: 'none' }}>
+                    {mountedHist ? new Date(h.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Try asking</div>
           {SUGGESTIONS.map(sg => (
             <div key={sg} onClick={() => send(sg)} className="ask-suggest"
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 16, color: 'var(--ink)' }}>
@@ -388,8 +452,23 @@ export function AskClient() {
       {busy && (
         <div style={{ marginTop: 16, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, padding: '16px 20px', maxWidth: 430, boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <span className="ask-orbit" aria-hidden>
-              <span className="ask-orbit-halo" />
+            <span className="bolt-mark" aria-hidden>
+              <span className="bolt-halo" />
+              <svg width="30" height="30" viewBox="0 0 48 60" fill="none">
+                {/* popsicle silhouette, breathing quietly behind the bolt */}
+                <path className="bolt-body" d="M4 18C4 8.6 12.1 1 22 1h4c9.9 0 18 7.6 18 17v24c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V18z" fill="var(--accent, #E85A25)" />
+                <path className="bolt-body" d="M18 46h12v9a4 4 0 01-4 4h-4a4 4 0 01-4-4v-9z" fill="var(--accent, #E85A25)" />
+                {/* the bolt: drawn, then filled */}
+                <path className="bolt-fill" d="M26 12L16 30h7l-3 13 12-18h-7l3-13z" fill="url(#boltGrad)" />
+                <path className="bolt-stroke" d="M26 12L16 30h7l-3 13 12-18h-7l3-13z"
+                  stroke="url(#boltGrad)" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+                <defs>
+                  <linearGradient id="boltGrad" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stopColor="#FF8A50" />
+                    <stop offset="100%" stopColor="#E85A25" />
+                  </linearGradient>
+                </defs>
+              </svg>
             </span>
             <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{THINKING[phase]}</span>
           </div>
