@@ -2328,8 +2328,20 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
   .bolt-stroke, .bolt-fill, .bolt-halo, .bolt-body { animation-duration: 4s; }
 }
 
-/* v7.8 - the Ask page is a self-contained column: trim the page padding,
-   min-height filler and footer gap that the scrolling screens need. */
-.content:has(.ask-screen) { padding-bottom: 20px !important; }
-.content > .ask-screen { min-height: 0 !important; }
-.content:has(.ask-screen) .ed-footer { margin-top: 14px; padding-top: 14px; }
+/* v7.9 - the Ask page measures itself instead of assuming heights.
+   The column becomes a flex parent and the screen simply takes the space
+   that is left, so it stays exact at any viewport, zoom level or wrap. */
+.content:has(.ask-screen) {
+  display: flex; flex-direction: column;
+  padding-bottom: 20px !important;
+  overflow: hidden;              /* the conversation pane does the scrolling */
+}
+.content > .ask-screen {
+  flex: 1 1 auto; min-height: 0 !important; height: auto !important;
+}
+.content:has(.ask-screen) .ed-footer { margin-top: 14px; padding-top: 14px; flex: none; }
+
+/* Browsers without :has() keep a sane, if slightly looser, layout. */
+@supports not selector(:has(*)) {
+  .ask-screen { height: calc(100vh - 150px); }
+}
