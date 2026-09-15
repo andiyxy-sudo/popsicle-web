@@ -362,7 +362,7 @@ export function AskClient() {
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 116px)' : 'auto' }}>
+    <div className="dsk-screen on ask-screen" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 116px)' : 'auto' }}>
       <div style={{ flexShrink: 0 }}>
         {/* the page header holds the top until a question is asked, then the
             conversation takes over and the utility row moves under the input */}

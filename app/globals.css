@@ -2327,3 +2327,9 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 @media (prefers-reduced-motion: reduce) {
   .bolt-stroke, .bolt-fill, .bolt-halo, .bolt-body { animation-duration: 4s; }
 }
+
+/* v7.8 - the Ask page is a self-contained column: trim the page padding,
+   min-height filler and footer gap that the scrolling screens need. */
+.content:has(.ask-screen) { padding-bottom: 20px !important; }
+.content > .ask-screen { min-height: 0 !important; }
+.content:has(.ask-screen) .ed-footer { margin-top: 14px; padding-top: 14px; }
