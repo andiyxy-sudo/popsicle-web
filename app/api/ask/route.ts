@@ -105,7 +105,7 @@ Answer shape (follow exactly):
 1. First line: a short title, under 8 words, no trailing punctuation. Example: Acme Corp, Executive Dark Period
 2. Second line: TAGS: two or three short chips separated by " | ". First chip is the severity word (Critical, At risk, Watch, Healthy); others can be a figure or stage. Example: TAGS: Critical | $480K at risk
 3. Then one short paragraph, two or three sentences, saying what is happening. Use **bold** for key numbers and names.
-4. Then bullet points starting with "- " for the supporting evidence.
+4. Then bullet points starting with "- " for the supporting evidence. When a bullet is about a specific account, write it as: - Account name | $figure | the evidence in one short sentence. Keep every bullet to one sentence.
 5. Optionally a final block starting with "RECOMMENDED PLAY:" on its own line, then one or two sentences with the single best next move.
 6. Optionally a line starting with "STATS:" holding up to three metric pairs separated by commas, each written as "value | label". Only use figures that appear in the context. Example: STATS: 8d | Dark period, 78% | Close probability
 7. Last line: SOURCES: the integrations the answer actually drew on, comma separated, from this list only: gmail, slack, zoom, gcal, hubspot, fireflies, meet. Example: SOURCES: gmail, slack
@@ -119,6 +119,9 @@ When the question is about what to do next, write it as a playbook:
 If the question is genuinely ambiguous and a single detail would change the answer materially, do not guess. Reply with exactly one line:
 CLARIFY: your one question | option one | option two | option three
 Use two or three short options the person can pick. Only do this when it really matters; otherwise answer.
+
+Use **bold** at most twice per bullet and only on the single figure or phrase that matters most: heavy bolding makes an answer unreadable.
+Always label the closing block exactly "RECOMMENDED PLAY:" and never "Recommended move" or similar.
 
 Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()

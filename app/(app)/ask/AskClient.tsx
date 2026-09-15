@@ -26,7 +26,7 @@ function inline(text: string, key: number) {
     <span key={key}>
       {parts.map((p, i) =>
         p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
+          ? <strong key={i} style={{ fontWeight: 550, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
           : <span key={i}>{p}</span>)}
     </span>
   )
@@ -112,9 +112,9 @@ function parseAnswer(text: string) {
       return
     }
     if (/^sources:/i.test(l)) { sources = l.replace(/^sources:/i, '').split(',').map(t => t.trim().toLowerCase()).filter(Boolean); inPlay = false; return }
-    if (/^(recommended play|counter-play|next move)\s*:?/i.test(l)) {
+    if (/^(recommended play|recommended move|recommended|counter-play|next move|the move)\s*:?/i.test(l)) {
       inPlay = true
-      play = l.replace(/^(recommended play|counter-play|next move)\s*:?/i, '').trim()
+      play = l.replace(/^(recommended play|recommended move|recommended|counter-play|next move|the move)\s*:?/i, '').trim()
       return
     }
     if (inPlay) { play = (play + ' ' + l).trim(); return }
@@ -219,16 +219,30 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
     if (!l) { flush(i); return }
     if (/^([-*•]|\d+[.)])\s/.test(l)) {
       flush(i)
+      const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
+      const clean = t.replace(/\*\*/g, '')
+      // "Account | $850K | detail" becomes a titled row: name, figure, detail.
+      const piped = clean.split('|').map(x => x.trim())
+      if (piped.length >= 3 && piped[0].length <= 34 && /[$\d]/.test(piped[1])) {
+        paras.push(
+          <div key={`b${i}`} className="ans-in" style={{ padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
+              <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em' }}>{piped[0]}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999 }}>{piped[1]}</span>
+            </div>
+            <div style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink-muted)', maxWidth: '62ch' }}>{inline(piped.slice(2).join(' · '), i)}</div>
+          </div>
+        )
+        return
+      }
+      // otherwise a normal bullet, with any "Label:" lead-in set in ink
+      const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
       paras.push(
-        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '8px 0 8px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)', maxWidth: '62ch' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
-          <div>{(() => {
-            const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
-            const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
-            return m2 && !t.startsWith('**')
-              ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
-              : inline(t, i)
-          })()}</div>
+          <div>{m2 && !t.startsWith('**')
+            ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
+            : inline(t, i)}</div>
         </div>
       )
       return
