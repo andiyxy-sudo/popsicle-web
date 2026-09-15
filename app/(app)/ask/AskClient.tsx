@@ -264,7 +264,10 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
             style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer' }}>
             {copied ? 'copied' : 'copy'}
           </button>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            <span className={streaming ? 'live-dot writing' : 'live-dot'} />
+            {streaming ? 'writing' : 'live'}
+          </span>
         </span>
       </div>
       <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
