@@ -225,12 +225,12 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
       const piped = clean.split('|').map(x => x.trim())
       if (piped.length >= 3 && piped[0].length <= 34 && /[$\d]/.test(piped[1])) {
         paras.push(
-          <div key={`b${i}`} className="ans-in" style={{ padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div key={`b${i}`} className="ans-in" style={{ padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
-              <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em' }}>{piped[0]}</span>
+              <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.015em' }}>{piped[0]}</span>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999 }}>{piped[1]}</span>
             </div>
-            <div style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink-muted)' }}>{inline(piped.slice(2).join(' · '), i)}</div>
+            <div style={{ fontSize: 14.5, lineHeight: 1.68, color: 'var(--ink-muted)' }}>{inline(piped.slice(2).join(' · '), i)}</div>
           </div>
         )
         return
@@ -238,7 +238,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
       // otherwise a normal bullet, with any "Label:" lead-in set in ink
       const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
       paras.push(
-        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '8px 0 8px 4px', fontSize: 15.5, lineHeight: 1.68, letterSpacing: '-.004em', color: 'var(--ink-muted)' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 2px', fontSize: 15, lineHeight: 1.7, letterSpacing: '-.002em', color: 'var(--ink-muted)' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{m2 && !t.startsWith('**')
             ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
@@ -270,10 +270,10 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
           </span>
         </span>
       </div>
-      <div style={{ padding: '20px 24px 22px' }}>
-        {title && <div className="ans-in" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
+      <div style={{ padding: '22px 26px 24px', fontVariantNumeric: 'tabular-nums' }}>
+        {title && <div className="ans-in" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 10, lineHeight: 1.2, overflowWrap: 'anywhere' }}>{title}</div>}
         {tags.length > 0 && (
-          <div className="ans-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          <div className="ans-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
             {tags.map((t, i) => (
               <span key={i} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
                 color: i === 0 ? sevColor : 'var(--ink-muted)',
@@ -300,8 +300,8 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
         {streaming && paras.length > 0 && <span className="ans-caret" aria-hidden />}
         {play && (
           <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 7 }}>Recommended play</div>
-            <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.7, letterSpacing: '-.004em' }}>{inline(play, 0)}</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 9 }}>Recommended play</div>
+            <div style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.62, letterSpacing: '-.012em', fontWeight: 450 }}>{inline(play, 0)}</div>
             <button onClick={() => onDraft(accountOf(text), play)}
               style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
               Draft this email
