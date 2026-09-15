@@ -166,6 +166,7 @@ function followUps(text: string): string[] {
 }
 
 function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void }) {
+  const [copied, setCopied] = useState(false)
   const { title, tags, body, play, sources, stats } = parseAnswer(text)
   const sev = (tags[0] || '').toLowerCase()
   const sevColor = sev.includes('critical') || sev.includes('risk') ? 'var(--critical, #c43d2b)'
@@ -201,13 +202,19 @@ function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void 
   flush(999)
 
   return (
-    <div style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
+    <div className="ask-answer" style={{ background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
           Popsicle AI
         </span>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+          <button className="ask-copy" onClick={() => { navigator.clipboard?.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+            style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer' }}>
+            {copied ? 'copied' : 'copy'}
+          </button>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', color: 'var(--good, #2f8f5b)', border: '1px solid rgba(47,143,91,.3)', borderRadius: 999, padding: '2px 10px' }}>live</span>
+        </span>
       </div>
       <div style={{ padding: '20px 24px 22px', maxWidth: 640 }}>
         {title && <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)', marginBottom: 12, lineHeight: 1.25, overflowWrap: 'anywhere' }}>{title}</div>}
@@ -241,7 +248,7 @@ function AnswerCard({ text, onAsk }: { text: string; onAsk: (q: string) => void 
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 9 }}>Ask next</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {followUps(text).map(q => (
-              <button key={q} onClick={() => onAsk(q)}
+              <button key={q} onClick={() => onAsk(q)} className="ask-chip"
                 style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 14px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{q}</button>
             ))}
           </div>
@@ -320,8 +327,11 @@ export function AskClient() {
     <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 132px)' }}>
       <div style={{ flexShrink: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-            Ask AI <span style={{ margin: '0 8px' }}>/</span> grounded in your data
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+            <button onClick={() => router.back()} className="ask-ghost" title="Back"
+              style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--accent)', cursor: 'pointer', padding: 0 }}>← back</button>
+            <span style={{ opacity: .5 }}>/</span>
+            Ask AI <span style={{ margin: '0 4px' }}>/</span> grounded in your data
           </div>
           {started && (
             <button onClick={() => { setMsgs([]); setInput('') }}
@@ -355,9 +365,9 @@ export function AskClient() {
         <div>
           <div style={{ ...label, marginBottom: 6 }}>Try asking</div>
           {SUGGESTIONS.map(sg => (
-            <div key={sg} onClick={() => send(sg)}
+            <div key={sg} onClick={() => send(sg)} className="ask-suggest"
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 16, color: 'var(--ink)' }}>
-              <span>{sg}</span><span style={{ color: 'var(--accent)' }}>→</span>
+              <span>{sg}</span><span className="ask-suggest-arrow" style={{ color: 'var(--accent)', paddingRight: 4 }}>→</span>
             </div>
           ))}
         </div>

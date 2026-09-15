@@ -2207,3 +2207,29 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
   animation: pulseRing 2s cubic-bezier(.22,.61,.36,1) infinite;
   will-change: box-shadow;
 }
+
+/* ============================================================
+   v7.0 — Ask AI interaction states
+   ============================================================ */
+.ask-chip {
+  transition: border-color .16s ease, background .16s ease, color .16s ease, transform .16s ease;
+}
+.ask-chip:hover {
+  border-color: rgba(232,90,37,.45) !important;
+  background: rgba(232,90,37,.06) !important;
+  color: var(--accent, #E85A25) !important;
+  transform: translateY(-1px);
+}
+.ask-chip:active { transform: translateY(0); }
+
+.ask-suggest { transition: background .16s ease, padding-left .16s ease; }
+.ask-suggest:hover { background: rgba(232,90,37,.04); padding-left: 10px; }
+.ask-suggest:hover .ask-suggest-arrow { transform: translateX(3px); }
+.ask-suggest-arrow { transition: transform .16s ease; display: inline-block; }
+
+.ask-ghost { transition: color .16s ease, background .16s ease; }
+.ask-ghost:hover { color: var(--accent, #E85A25) !important; }
+
+.ask-copy { opacity: 0; transition: opacity .16s ease, color .16s ease; }
+.ask-answer:hover .ask-copy { opacity: 1; }
+.ask-copy:hover { color: var(--accent, #E85A25) !important; }
