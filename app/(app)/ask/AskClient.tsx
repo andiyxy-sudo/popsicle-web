@@ -282,8 +282,19 @@ export function AskClient() {
   const [atBottom, setAtBottom] = useState(true)
   type Hist = { id: string; question: string; answer: string; pinned: boolean; created_at: string }
   const [history, setHistory] = useState<Hist[]>([])
+  const [sourceCount, setSourceCount] = useState<number | null>(null)
   const [mountedHist, setMountedHist] = useState(false)
-  useEffect(() => { setMountedHist(true) }, [])
+  useEffect(() => {
+    setMountedHist(true)
+    if (typeof document !== 'undefined' && document.body.dataset.demo === '1') { setSourceCount(7); return }
+    const supa = createClient()
+    supa.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return
+      supa.from('integrations').select('provider', { count: 'exact', head: true })
+        .eq('user_id', user.id).eq('is_active', true)
+        .then(({ count }) => setSourceCount(count ?? 0))
+    })
+  }, [])
 
   async function loadHistory() {
     if (typeof document !== 'undefined' && document.body.dataset.demo === '1') return
@@ -512,7 +523,10 @@ export function AskClient() {
         fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <button onClick={() => router.back()} className="ask-ghost"
           style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>← back</button>
-        <span style={{ opacity: .8 }}>Ask AI · grounded in your data</span>
+        <span style={{ opacity: .8, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
+          <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--good, #2f8f5b)', display: 'inline-block' }} />
+          {sourceCount != null ? `${sourceCount} sources live` : 'grounded in your data'}
+        </span>
         {started ? (
           <button onClick={() => { setMsgs([]); setInput('') }} className="ask-ghost"
             style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>new question</button>

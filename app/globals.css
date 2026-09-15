@@ -2346,7 +2346,7 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
   .ask-screen { height: calc(100vh - 150px); }
 }
 
-/* v8.0 - on the Ask page the status footer takes the conversation's own
-   measure (820px) rather than the page's wider default, so its rule lines
-   up with the input above it. */
-.content:has(.ask-screen) .ed-footer { max-width: 820px; }
+/* v8.1 - Ask hides the global status row: the answer carries its own
+   provenance (source marks in the card footer), and the utility row under
+   the input reports the live source count. Every row costs chat height here. */
+.content:has(.ask-screen) .ed-footer { display: none !important; }
