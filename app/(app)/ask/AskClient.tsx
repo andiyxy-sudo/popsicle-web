@@ -447,9 +447,10 @@ export function AskClient() {
                 <path className="bolt-body" d="M4 18C4 8.6 12.1 1 22 1h4c9.9 0 18 7.6 18 17v24c0 2.2-1.8 4-4 4H8c-2.2 0-4-1.8-4-4V18z" fill="var(--accent, #E85A25)" />
                 <path className="bolt-body" d="M18 46h12v9a4 4 0 01-4 4h-4a4 4 0 01-4-4v-9z" fill="var(--accent, #E85A25)" />
                 {/* the bolt: drawn, then filled */}
-                <path className="bolt-fill" d="M26 12L16 30h7l-3 13 12-18h-7l3-13z" fill="url(#boltGrad)" />
+                <path className="bolt-fill" d="M26 12L16 30h7l-3 13 12-18h-7l3-13z" fill="url(#boltGrad)" transform="translate(24 27.5) scale(.82) translate(-24 -27.5)" />
                 <path className="bolt-stroke" d="M26 12L16 30h7l-3 13 12-18h-7l3-13z"
-                  stroke="url(#boltGrad)" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" fill="none" />
+                  stroke="url(#boltGrad)" strokeWidth="2.7" strokeLinejoin="round" strokeLinecap="round" fill="none"
+                  transform="translate(24 27.5) scale(.82) translate(-24 -27.5)" />
                 <defs>
                   <linearGradient id="boltGrad" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="#FF8A50" />

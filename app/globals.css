@@ -2297,15 +2297,15 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 }
 
 .bolt-stroke {
-  stroke-dasharray: 96;
-  stroke-dashoffset: 96;
+  stroke-dasharray: 79;
+  stroke-dashoffset: 79;
   animation: boltDraw 2.1s cubic-bezier(.5,.05,.3,1) infinite;
 }
 @keyframes boltDraw {
-  0%   { stroke-dashoffset: 96; opacity: .35; }
+  0%   { stroke-dashoffset: 79; opacity: .35; }
   35%  { stroke-dashoffset: 0;  opacity: 1; }
   70%  { stroke-dashoffset: 0;  opacity: 1; }
-  100% { stroke-dashoffset: -96; opacity: .35; }
+  100% { stroke-dashoffset: -79; opacity: .35; }
 }
 
 .bolt-fill { opacity: 0; animation: boltFill 2.1s ease-in-out infinite; }
