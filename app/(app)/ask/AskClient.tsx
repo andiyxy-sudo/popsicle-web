@@ -362,7 +362,7 @@ export function AskClient() {
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 150px)' : 'auto' }}>
+    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: started ? 'calc(100vh - 116px)' : 'auto' }}>
       <div style={{ flexShrink: 0 }}>
         {/* the page header holds the top until a question is asked, then the
             conversation takes over and the utility row moves under the input */}
@@ -391,11 +391,12 @@ export function AskClient() {
           setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60)
         }}
         style={{
-          flex: started ? 1 : '0 0 auto', minHeight: 0, overflowY: started ? 'auto' : 'visible', paddingRight: 4, paddingTop: started ? 4 : 18,
+          flex: started ? 1 : '0 0 auto', minHeight: 0, overflowY: started ? 'auto' : 'visible', paddingRight: 4,
+          paddingTop: started ? 12 : 18, marginTop: started ? -34 : 0,
           // content dissolves at the edges instead of being cut by the boundary
           ...(started ? {
-            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
-            maskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
+            WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%)',
+            maskImage: 'linear-gradient(to bottom, transparent 0, #000 12px, #000 calc(100% - 18px), transparent 100%)',
           } : {}),
         }}>
       {msgs.length === 0 && !busy && (
