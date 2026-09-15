@@ -362,20 +362,8 @@ export function AskClient() {
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
   return (
-    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 132px)' }}>
+    <div className="dsk-screen on" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', height: 'calc(100vh - 150px)' }}>
       <div style={{ flexShrink: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            <button onClick={() => router.back()} className="ask-ghost" title="Back"
-              style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--accent)', cursor: 'pointer', padding: 0 }}>← back</button>
-            <span style={{ opacity: .5 }}>/</span>
-            Ask AI <span style={{ margin: '0 4px' }}>/</span> grounded in your data
-          </div>
-          {started && (
-            <button onClick={() => { setMsgs([]); setInput('') }}
-              style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>new question</button>
-          )}
-        </div>
         {/* the headline earns its space only before the first question */}
         <div style={{
           maxHeight: started ? 0 : 260, opacity: started ? 0 : 1, overflow: 'hidden',
@@ -394,7 +382,7 @@ export function AskClient() {
           setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < 60)
         }}
         style={{
-          flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingTop: started ? 18 : 24,
+          flex: 1, minHeight: 0, overflowY: 'auto', paddingRight: 4, paddingTop: started ? 4 : 18,
           // content dissolves at the edges instead of being cut by the boundary
           WebkitMaskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
           maskImage: 'linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 22px), transparent 100%)',
@@ -505,6 +493,18 @@ export function AskClient() {
           style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', border: 0, borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", opacity: busy || !input.trim() ? .55 : 1, boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)' }}>
           {busy ? 'Thinking' : 'Ask'}
         </button>
+      </div>
+
+      {/* utility row lives under the input so the chat owns the top of the page */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, paddingTop: 12, flexShrink: 0,
+        fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <button onClick={() => router.back()} className="ask-ghost"
+          style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>← back</button>
+        <span style={{ opacity: .8 }}>Ask AI · grounded in your data</span>
+        {started ? (
+          <button onClick={() => { setMsgs([]); setInput('') }} className="ask-ghost"
+            style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>new question</button>
+        ) : <span style={{ opacity: 0 }}>new question</span>}
       </div>
     </div>
   )
