@@ -2411,3 +2411,18 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
   55%  { box-shadow: 0 0 0 6px rgba(232,90,37,0); transform: scale(1.1); }
   100% { box-shadow: 0 0 0 0 rgba(232,90,37,0); transform: scale(.85); }
 }
+
+
+/* v8.8 - the recommended play earns attention through colour and space,
+   not weight: a warm field, an accent rule, and roomy type. */
+.ans-play {
+  position: relative;
+  background: linear-gradient(180deg, rgba(232,90,37,.055), rgba(232,90,37,.025));
+  border: 1px solid rgba(232,90,37,.14);
+  border-radius: 12px;
+  padding: 16px 18px 17px 20px;
+}
+.ans-play::before {
+  content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 2px;
+  border-radius: 2px; background: linear-gradient(180deg, #FF8A50, #E85A25);
+}

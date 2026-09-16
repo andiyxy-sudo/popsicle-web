@@ -26,7 +26,7 @@ function inline(text: string, key: number) {
     <span key={key}>
       {parts.map((p, i) =>
         p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} style={{ fontWeight: 550, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
+          ? <strong key={i} style={{ fontWeight: 500, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
           : <span key={i}>{p}</span>)}
     </span>
   )
@@ -299,9 +299,9 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
         )}
         {streaming && paras.length > 0 && <span className="ans-caret" aria-hidden />}
         {play && (
-          <div style={{ marginTop: 16, padding: '14px 16px', background: 'rgba(232,90,37,.05)', border: '1px solid rgba(232,90,37,.16)', borderRadius: 12 }}>
+          <div className="ans-play" style={{ marginTop: 18 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 9 }}>Recommended play</div>
-            <div style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.62, letterSpacing: '-.012em', fontWeight: 450 }}>{inline(play, 0)}</div>
+            <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.72, letterSpacing: '-.004em', fontWeight: 400 }}>{inline(play, 0)}</div>
             <button onClick={() => onDraft(accountOf(text), play)}
               style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
               Draft this email
