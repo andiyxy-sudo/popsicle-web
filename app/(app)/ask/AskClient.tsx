@@ -301,7 +301,25 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
         {play && (
           <div className="ans-play" style={{ marginTop: 18 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 9 }}>Recommended play</div>
-            <div style={{ fontSize: 15.5, color: 'var(--ink)', lineHeight: 1.72, letterSpacing: '-.004em', fontWeight: 400 }}>{inline(play, 0)}</div>
+            {(() => {
+              const parts = play.split(/(?<=[.!?])\s+(?=[A-Z"'])/).map(x => x.trim()).filter(Boolean)
+              const [action, ...notes] = parts
+              return (
+                <>
+                  <div style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.55, letterSpacing: '-.01em' }}>{inline(action, 0)}</div>
+                  {notes.length > 0 && (
+                    <div style={{ marginTop: 10, display: 'grid', gap: 7 }}>
+                      {notes.map((n, i) => (
+                        <div key={i} style={{ display: 'grid', gridTemplateColumns: '11px 1fr', gap: 10, alignItems: 'baseline' }}>
+                          <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(232,90,37,.5)', marginTop: 8 }} />
+                          <span style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.62 }}>{inline(n, i + 1)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )
+            })()}
             <button onClick={() => onDraft(accountOf(text), play)}
               style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
               Draft this email
