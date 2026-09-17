@@ -352,3 +352,115 @@ export const DEMO_RISK_LINES: Record<string, Array<{ tone: 'high' | 'watch' | 'p
     { tone: 'high', text: 'No exec engagement yet on a deal this size. Risk of losing to do-nothing.' },
   ],
 }
+
+// ---------- Team (transcribed from the mobile Team screen, v11.9) ----------
+// Fixed figures so the demo reads exactly like the design. Live mode builds
+// the same shape from accounts + signals inside TeamReal.
+export type TeamRep = {
+  name: string; title: string; color: string
+  accounts: string[]; arr: number
+  signals: number; saved: number; protectedValue: number
+  avgResp: number; saveRate: number; churnDelta: number; performance: number
+  badge?: string; badgeTone?: 'accent' | 'blue' | 'warn'
+  trend: 'improving' | 'steady' | 'needs coaching'
+  spark: number[]            // 7 points, Mon..Sun, response hours
+  activity: number[][]       // 5 rows (8-10 .. 4-6) x 7 cols (Mo..Su), 0..4
+  ownership: 'active' | 'stale'; ownershipNote?: string
+  followThrough: number; closure: number
+}
+export type TeamQueueItem = { account: string; sev: 'critical' | 'high' | 'medium'; summary: string; age: string; rep: string; signalId?: string }
+export type TeamModel = {
+  protectedTotal: number; protectedDeltaPct: number
+  waitingCount: number; waitingValue: number; criticalWithOneRep: boolean
+  bullets: Array<{ tone: string; text: string }>
+  arr: number; accountCount: number
+  split: Array<{ k: string; color: string; value: number; accts: number }>
+  timeToAction: number; timeToActionDelta: number
+  coveragePct: number; covered: number
+  signalsThisWeek: number; actioned: number; autoDeployedPct: number
+  reps: TeamRep[]
+  queue: TeamQueueItem[]; unresolvedPct: number
+  newCritical: number; stabilized: number; actionsTaken: number; signalsPerDay: number; signalsPerDayDelta: number
+  criticalOwned: string; activeFollowUp: string
+  followThrough: number; loopClosure: number
+}
+
+export const DEMO_TEAM: TeamModel = {
+  protectedTotal: 560_000, protectedDeltaPct: 38,
+  waitingCount: 7, waitingValue: 2_170_000, criticalWithOneRep: true,
+  bullets: [
+    { tone: '#2f8f5b', text: 'Exec calls have 83% success rate vs 74% for email, the highest-impact intervention by far.' },
+    { tone: '#E85A25', text: "Andy G's 1.2h avg response is 45% faster than team average, strongest signal coverage." },
+    { tone: '#d38b1d', text: "Jamie Torres' 3.1h response correlates with lower save rate, coaching on urgency recommended." },
+    { tone: '#0E0D0B', text: 'Mike Ross closed 2 deals with zero escalation, replicate his re-engagement sequence across the team.' },
+  ],
+  arr: 2_640_000, accountCount: 9,
+  split: [
+    { k: 'Critical', color: '#c43d2b', value: 1_330_000, accts: 2 },
+    { k: 'Watching', color: '#d38b1d', value: 655_000, accts: 4 },
+    { k: 'Healthy', color: '#2f8f5b', value: 650_000, accts: 3 },
+  ],
+  timeToAction: 2.2, timeToActionDelta: -1.8,
+  coveragePct: 89, covered: 8,
+  signalsThisWeek: 47, actioned: 40, autoDeployedPct: 62,
+  reps: [
+    {
+      name: 'Andy G', title: 'VP of Sales', color: '#FF6B35',
+      accounts: ['Acme', 'Techflow', 'Axion', 'Meridian'], arr: 1_640_000,
+      signals: 24, saved: 4, protectedValue: 284_000, avgResp: 1.2, saveRate: 89, churnDelta: -19, performance: 88,
+      badge: 'Top performer', badgeTone: 'accent', trend: 'improving',
+      spark: [2.0, 1.6, 2.3, 1.4, 1.7, 1.3, 1.1],
+      activity: [
+        [0, 3, 4, 4, 3, 1, 0],
+        [3, 3, 3, 3, 2, 0, 0],
+        [2, 2, 2, 2, 1, 0, 0],
+        [2, 3, 3, 3, 2, 0, 0],
+        [1, 2, 4, 3, 1, 0, 0],
+      ],
+      ownership: 'active', followThrough: 88, closure: 82,
+    },
+    {
+      name: 'Mike Ross', title: 'AE Senior', color: '#2f6f9f',
+      accounts: ['Nexus', 'Cobalt', 'Brightwave'], arr: 650_000,
+      signals: 14, saved: 2, protectedValue: 176_000, avgResp: 2.4, saveRate: 78, churnDelta: -14, performance: 78,
+      badge: 'Most closes', badgeTone: 'blue', trend: 'steady',
+      spark: [2.4, 2.3, 2.5, 2.2, 2.4, 2.3, 2.4],
+      activity: [
+        [0, 1, 3, 3, 3, 0, 0],
+        [2, 2, 2, 2, 2, 0, 0],
+        [1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 1, 1, 1, 0, 0],
+        [0, 0, 2, 0, 0, 0, 0],
+      ],
+      ownership: 'stale', ownershipNote: 'Stale 3d', followThrough: 74, closure: 71,
+    },
+    {
+      name: 'Jamie Torres', title: 'AE', color: '#7C5CFC',
+      accounts: ['Techvault', 'Vertex'], arr: 350_000,
+      signals: 9, saved: 1, protectedValue: 100_000, avgResp: 3.1, saveRate: 65, churnDelta: -11, performance: 66,
+      badge: 'Improving', badgeTone: 'warn', trend: 'needs coaching',
+      spark: [2.6, 2.9, 3.0, 2.9, 3.4, 3.2, 3.5],
+      activity: [
+        [0, 1, 2, 3, 1, 1, 0],
+        [1, 2, 2, 2, 1, 0, 0],
+        [1, 1, 2, 1, 1, 0, 0],
+        [1, 1, 1, 1, 2, 0, 0],
+        [0, 0, 1, 0, 0, 0, 0],
+      ],
+      ownership: 'active', followThrough: 64, closure: 58,
+    },
+  ],
+  queue: [
+    { account: 'Acme Corp', sev: 'critical', summary: 'CFO silent 8 days · 3 emails opened, 0 replies', age: '8d', rep: 'Andy G' },
+    { account: 'Meridian Labs', sev: 'critical', summary: 'Gong POC confirmed by CEO · competitor active', age: '5d', rep: 'Andy G' },
+    { account: 'TechFlow Inc', sev: 'high', summary: 'COO budget concern on Zoom · "need to check finance"', age: '3h', rep: 'Andy G' },
+    { account: 'Axion Partners', sev: 'high', summary: 'Legal stall day 3 · redline not sent yet', age: '3d', rep: 'Andy G' },
+    { account: 'TechVault Inc', sev: 'high', summary: 'VP Eng WhatsApp: price concern · no follow-up', age: '2d', rep: 'Jamie Torres' },
+    { account: 'Vertex Systems', sev: 'medium', summary: 'Proposal opened 5× · no next step set', age: '4d', rep: 'Jamie Torres' },
+    { account: 'Brightwave', sev: 'medium', summary: 'Re-engagement email opened · no reply sent', age: '1d', rep: 'Mike Ross' },
+  ],
+  unresolvedPct: 15,
+  newCritical: 2, stabilized: 3, actionsTaken: 40, signalsPerDay: 6.7, signalsPerDayDelta: 2.1,
+  criticalOwned: '9/9', activeFollowUp: '6/9',
+  followThrough: 75, loopClosure: 71,
+}

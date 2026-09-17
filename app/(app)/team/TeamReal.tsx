@@ -1,282 +1,358 @@
 'use client'
 
-// Team intelligence, built to the design: a narrative headline, coverage
-// figures, the saves leaderboard, per-rep breakdowns with response trend and
-// activity, the unactioned queue, and the execution summary. Every number is
-// computed from the accounts each person owns and the signals raised on them.
+// Team intelligence, built to the mobile Team screen: narrative headline,
+// four takeaways, three coverage figures, the saves leaderboard, per-rep
+// breakdowns (response trend + activity heatmap + accounts), the unactioned
+// queue, and the execution summary.
+//
+// One design, two data sources: demo mode passes a fixed TeamModel
+// (DEMO_TEAM), live mode builds the same shape from accounts + signals.
 
-import { useState, useEffect } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Account, Signal } from '@/types'
 import { formatCurrency } from '@/lib/utils'
+import type { TeamModel, TeamRep, TeamQueueItem } from '@/lib/demo-dataset'
 
 const MONO = { fontFamily: "'DM Mono',monospace", letterSpacing: '1.5px', textTransform: 'uppercase' as const }
-const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
-const hue = (n: string) => ['#E85A25', '#2f6f9f', '#7C5CFC', '#2f8f5b', '#d38b1d'][n.length % 5]
+const MONO_NUM = { fontFamily: "'DM Mono',monospace", fontVariantNumeric: 'tabular-nums' as const }
+const OUTFIT = "'Outfit',sans-serif"
+const RED = 'var(--critical, #c43d2b)'
+const AMBER = 'var(--warn, #d38b1d)'
+const GREEN = 'var(--good, #2f8f5b)'
+const INK = 'var(--ink, #0E0D0B)'
+const MUTED = 'var(--ink-muted, #5C5855)'
+const FAINT = 'var(--ink-faint, #A09C97)'
+const HAIR = 'var(--hairline, #EFEAE1)'
+const RULE = 'var(--rule-strong, #0E0D0B)'
+const ACCENT = 'var(--accent, #E85A25)'
 
-export function TeamReal({ accounts, signals, me }: { accounts: Account[]; signals: Signal[]; me: string; integrations?: string[] }) {
+const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
+const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+const word = (n: number) => (n >= 0 && n <= 10 ? WORDS[n] : String(n))
+const fmtH = (h: number) => `${h.toFixed(1)}h`
+
+// ---------------------------------------------------------------- live model
+function buildLiveModel(accounts: Account[], signals: Signal[], me: string): TeamModel {
+  const live = signals.filter(s => !s.is_dismissed && s.status !== 'deleted')
+  const open = live.filter(s => !s.status || s.status === 'open')
+  const handled = live.filter(s => s.status === 'handled')
+  const amt = (s: Signal) => Number(s.risk_amount) || 0
+  const hoursTo = (s: Signal) => {
+    const h = (s as unknown as { handled_at?: string }).handled_at
+    return s.created_at && h ? (new Date(h).getTime() - new Date(s.created_at).getTime()) / 3600000 : null
+  }
+  const median = (xs: number[]) => { const a = xs.filter(x => x >= 0).sort((p, q) => p - q); return a.length ? a[Math.floor(a.length / 2)] : null }
+
+  type R = { name: string; accounts: Account[]; open: Signal[]; handled: Signal[]; value: number; protectedValue: number }
+  const byRep = new Map<string, R>()
+  const repOf = (a: Account) => a.owner || me
+  for (const a of accounts) {
+    const k = repOf(a)
+    const r = byRep.get(k) ?? { name: k, accounts: [], open: [], handled: [], value: 0, protectedValue: 0 }
+    r.accounts.push(a); r.value += Number(a.value) || 0; byRep.set(k, r)
+  }
+  const ownerFor = (n?: string | null) => { const a = accounts.find(x => x.name === n); return a ? repOf(a) : me }
+  for (const s of live) {
+    const r = byRep.get(ownerFor(s.account_name)); if (!r) continue
+    if (s.status === 'handled') { r.handled.push(s); r.protectedValue += amt(s) } else if (!s.status || s.status === 'open') r.open.push(s)
+  }
+  const colors = ['#FF6B35', '#2f6f9f', '#7C5CFC', '#2f8f5b', '#d38b1d']
+  const teamT2A = median(handled.map(hoursTo).filter((x): x is number => x != null))
+  const reps: TeamRep[] = Array.from(byRep.values()).sort((a, b) => b.protectedValue - a.protectedValue || b.value - a.value).map((r, i) => {
+    const total = r.open.length + r.handled.length
+    const rate = total ? Math.round((r.handled.length / total) * 100) : 0
+    const t = median(r.handled.map(hoursTo).filter((x): x is number => x != null)) ?? 0
+    const lastTouch = Math.max(0, ...r.accounts.map(a => a.last_contact_date ? new Date(a.last_contact_date).getTime() : 0))
+    const staleDays = lastTouch ? Math.floor((Date.now() - lastTouch) / 86400000) : 0
+    return {
+      name: r.name, title: i === 0 && r.name === me ? 'Owner' : 'Rep', color: colors[i % colors.length],
+      accounts: r.accounts.map(a => a.name), arr: r.value,
+      signals: total, saved: r.handled.length, protectedValue: r.protectedValue, avgResp: t, saveRate: rate,
+      churnDelta: 0, performance: rate,
+      trend: teamT2A != null && t <= teamT2A ? 'improving' : t > (teamT2A ?? 0) + 1 ? 'needs coaching' : 'steady',
+      spark: Array(7).fill(t || 1), activity: Array.from({ length: 5 }, () => Array(7).fill(0)),
+      ownership: staleDays >= 3 ? 'stale' : 'active', ownershipNote: staleDays >= 3 ? `Stale ${staleDays}d` : undefined,
+      followThrough: rate, closure: rate,
+    }
+  })
+  const critical = Array.from(new Set(open.filter(s => s.severity === 'high').map(s => s.account_name).filter(Boolean)))
+  const covered = accounts.filter(a => live.some(s => s.account_name === a.name)).length
+  const split = [
+    { k: 'Critical', color: '#c43d2b', sigs: open.filter(s => s.severity === 'high') },
+    { k: 'Watching', color: '#d38b1d', sigs: open.filter(s => s.severity === 'watch') },
+    { k: 'Healthy', color: '#2f8f5b', sigs: open.filter(s => s.severity === 'positive') },
+  ].map(x => ({ k: x.k, color: x.color, value: x.sigs.reduce((a, s) => a + amt(s), 0), accts: new Set(x.sigs.map(s => s.account_name)).size }))
+  const age = (iso?: string | null) => { if (!iso) return ''; const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000); return h < 24 ? `${Math.max(1, h)}h` : `${Math.floor(h / 24)}d` }
+  const queue: TeamQueueItem[] = open.sort((a, b) => amt(b) - amt(a)).slice(0, 8).map(s => ({
+    account: s.account_name || '', sev: s.severity === 'high' ? 'critical' : s.severity === 'watch' ? 'high' : 'medium',
+    summary: s.title, age: age(s.created_at), rep: ownerFor(s.account_name), signalId: s.id,
+  }))
+  const critOwners = new Set(critical.map(n => ownerFor(n)))
+  const followRate = live.length ? Math.round((handled.length / live.length) * 100) : 0
+  const bullets = [
+    critical.length ? { tone: '#c43d2b', text: `${critical.length} critical account${critical.length === 1 ? '' : 's'}: ${critical.slice(0, 3).join(', ')}.` } : null,
+    reps[0] ? { tone: '#2f8f5b', text: `${reps[0].name} leads on saves, ${formatCurrency(reps[0].protectedValue)} protected across ${reps[0].accounts.length} account${reps[0].accounts.length === 1 ? '' : 's'}.` } : null,
+    teamT2A != null ? { tone: '#d38b1d', text: `${fmtH(teamT2A)} median response from signal raised to handled.` } : null,
+    { tone: '#0E0D0B', text: `Coverage: ${covered} of ${accounts.length} accounts have live signal.` },
+  ].filter(Boolean) as TeamModel['bullets']
+  return {
+    protectedTotal: handled.reduce((a, s) => a + amt(s), 0), protectedDeltaPct: 0,
+    waitingCount: open.length, waitingValue: open.reduce((a, s) => a + amt(s), 0), criticalWithOneRep: critical.length > 1 && critOwners.size === 1,
+    bullets, arr: accounts.reduce((a, x) => a + (Number(x.value) || 0), 0), accountCount: accounts.length, split,
+    timeToAction: teamT2A ?? 0, timeToActionDelta: 0,
+    coveragePct: accounts.length ? Math.round((covered / accounts.length) * 100) : 0, covered,
+    signalsThisWeek: live.length, actioned: handled.length, autoDeployedPct: 0,
+    reps, queue, unresolvedPct: live.length ? Math.round((open.length / live.length) * 100) : 0,
+    newCritical: critical.length, stabilized: new Set(handled.map(s => s.account_name)).size, actionsTaken: handled.length,
+    signalsPerDay: Math.round((live.length / 7) * 10) / 10, signalsPerDayDelta: 0,
+    criticalOwned: `${critical.length}/${critical.length}`, activeFollowUp: `${reps.filter(r => r.ownership === 'active').length}/${reps.length}`,
+    followThrough: followRate, loopClosure: followRate,
+  }
+}
+
+// ---------------------------------------------------------------- pieces
+function Avatar({ rep, size = 32 }: { rep: Pick<TeamRep, 'name' | 'color'>; size?: number }) {
+  return (
+    <span style={{ width: size, height: size, borderRadius: '50%', background: rep.color, color: '#fff', display: 'grid', placeItems: 'center', fontSize: Math.round(size * 0.34), fontWeight: 700, flex: 'none', fontFamily: OUTFIT }}>
+      {initials(rep.name)}
+    </span>
+  )
+}
+
+function Spark({ pts, color }: { pts: number[]; color: string }) {
+  const W = 100, H = 40, p = 4
+  const min = Math.min(...pts), max = Math.max(...pts), span = max - min || 1
+  const xy = pts.map((v, i) => [(i / (pts.length - 1)) * (W - p * 2) + p, H - p - ((v - min) / span) * (H - p * 2)])
+  const d = xy.map(([x, y], i) => `${i ? 'L' : 'M'}${x},${y}`).join(' ')
+  const [ex, ey] = xy[xy.length - 1]
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={56} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+      <path d={d} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={ex} cy={ey} r="2.2" fill={color} vectorEffect="non-scaling-stroke" />
+    </svg>
+  )
+}
+
+const HEAT_ROWS = ['8-10', '10-12', '12-2', '2-4', '4-6']
+const HEAT_COLS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
+function Heat({ grid }: { grid: number[][] }) {
+  const cell = (lvl: number) => lvl <= 0 ? 'var(--inset, #F4F0E8)' : `rgba(255,107,53,${0.18 + lvl * 0.2})`
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '36px repeat(7, 1fr)', gap: 3, alignItems: 'center' }}>
+      <span />
+      {HEAT_COLS.map(c => <span key={c} style={{ ...MONO, letterSpacing: '.5px', fontSize: 9.5, color: FAINT, textAlign: 'center', textTransform: 'none' }}>{c}</span>)}
+      {grid.map((row, r) => (
+        <Fragment key={r}>
+          <span style={{ ...MONO, letterSpacing: '.5px', fontSize: 9.5, color: FAINT, textTransform: 'none' }}>{HEAT_ROWS[r]}</span>
+          {row.map((lvl, c) => <span key={c} style={{ height: 16, borderRadius: 2, background: cell(lvl) }} />)}
+        </Fragment>
+      ))}
+    </div>
+  )
+}
+
+function H2({ title, right, top = 64 }: { title: string; right?: React.ReactNode; top?: number }) {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingBottom: 14, borderBottom: `1px solid ${RULE}`, marginTop: top }}>
+      <h2 style={{ margin: 0, fontFamily: OUTFIT, fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: INK }}>{title}</h2>
+      {right}
+    </div>
+  )
+}
+
+const Row = ({ children, pad = '11px 0' }: { children: React.ReactNode; pad?: string }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: pad, borderBottom: `1px solid ${HAIR}`, fontSize: 14, color: INK }}>{children}</div>
+)
+
+// ---------------------------------------------------------------- screen
+export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[]; signals: Signal[]; me: string; integrations?: string[]; demo?: TeamModel }) {
   const [mounted, setMounted] = useState(false)
   const [queueRep, setQueueRep] = useState<string>('All')
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
 
-  const live = signals.filter(s => !s.is_dismissed && s.status !== 'deleted')
-  const open = live.filter(s => !s.status || s.status === 'open')
-  const handled = live.filter(s => s.status === 'handled')
-
-  // ---------- coverage by owner ----------
-  type Rep = { name: string; accounts: Account[]; open: Signal[]; handled: Signal[]; value: number; risk: number; protectedValue: number }
-  const byRep = new Map<string, Rep>()
-  const repOf = (a: Account) => a.owner || me
-  for (const a of accounts) {
-    const k = repOf(a)
-    const r = byRep.get(k) ?? { name: k, accounts: [], open: [], handled: [], value: 0, risk: 0, protectedValue: 0 }
-    r.accounts.push(a)
-    r.value += Number(a.value) || 0
-    byRep.set(k, r)
+  const m = demo ?? buildLiveModel(accounts, signals, me)
+  const repBy = (n: string) => m.reps.find(r => r.name === n) ?? { name: n, color: '#A09C97' }
+  const respColor = (h: number) => {
+    const best = Math.min(...m.reps.map(r => r.avgResp))
+    return h <= best ? GREEN : h > m.timeToAction + 0.5 ? AMBER : INK
   }
-  const ownerFor = (accountName?: string | null) => {
-    const a = accounts.find(x => x.name === accountName)
-    return a ? repOf(a) : me
-  }
-  for (const s of live) {
-    const r = byRep.get(ownerFor(s.account_name))
-    if (!r) continue
-    if (s.status === 'handled') { r.handled.push(s); r.protectedValue += Number(s.risk_amount) || 0 }
-    else if (!s.status || s.status === 'open') { r.open.push(s); r.risk += Number(s.risk_amount) || 0 }
-  }
-  const reps = Array.from(byRep.values()).sort((a, b) => b.protectedValue - a.protectedValue || b.value - a.value)
+  const trendMeta = { improving: { c: GREEN, t: '↓ improving' }, steady: { c: AMBER, t: '→ steady' }, 'needs coaching': { c: RED, t: '↑ needs coaching' } } as const
+  const sevMeta = { critical: { c: RED, t: 'critical' }, high: { c: AMBER, t: 'high' }, medium: { c: FAINT, t: 'medium' } } as const
+  const queue = m.queue.filter(q => queueRep === 'All' || q.rep === queueRep)
+  const splitTotal = m.split.reduce((a, x) => a + x.value, 0) || 1
+  const crit = m.split.find(x => x.k === 'Critical')?.accts ?? 0
 
-  // ---------- headline figures ----------
-  const totalValue = accounts.reduce((a, x) => a + (Number(x.value) || 0), 0)
-  const protectedTotal = handled.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)
-  const waitingValue = open.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)
-  const criticalAccounts = Array.from(new Set(open.filter(s => s.severity === 'high').map(s => s.account_name).filter(Boolean))) as string[]
-  const coveredAccounts = accounts.filter(a => live.some(s => s.account_name === a.name)).length
-  const coverage = accounts.length ? Math.round((coveredAccounts / accounts.length) * 100) : 0
-  const actionRate = live.length ? Math.round((handled.length / live.length) * 100) : 0
-
-  // median hours a signal waits before being handled
-  const timeToAction = (() => {
-    const hrs = handled
-      .map(s => { const h = (s as unknown as { handled_at?: string }).handled_at; return s.created_at && h ? (new Date(h).getTime() - new Date(s.created_at).getTime()) / 3600000 : null })
-      .filter((x): x is number => typeof x === 'number' && x >= 0)
-      .sort((a, b) => a - b)
-    if (!hrs.length) return null
-    return hrs[Math.floor(hrs.length / 2)]
-  })()
-  const repResponse = (r: Rep) => {
-    const hrs = r.handled
-      .map(s => { const h = (s as unknown as { handled_at?: string }).handled_at; return s.created_at && h ? (new Date(h).getTime() - new Date(s.created_at).getTime()) / 3600000 : null })
-      .filter((x): x is number => typeof x === 'number' && x >= 0)
-      .sort((a, b) => a - b)
-    return hrs.length ? hrs[Math.floor(hrs.length / 2)] : null
-  }
-
-  const sevSplit = [
-    { k: 'Critical', color: 'var(--critical, #c43d2b)', sigs: open.filter(s => s.severity === 'high') },
-    { k: 'Watching', color: 'var(--warn, #d38b1d)', sigs: open.filter(s => s.severity === 'watch') },
-    { k: 'Healthy', color: 'var(--good, #2f8f5b)', sigs: open.filter(s => s.severity === 'positive') },
-  ].map(x => ({
-    ...x,
-    value: x.sigs.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0),
-    accts: new Set(x.sigs.map(s => s.account_name).filter(Boolean)).size,
-  }))
-
-  const bullets = [
-    criticalAccounts.length ? { tone: 'var(--critical, #c43d2b)', lead: `${criticalAccounts.length} critical account${criticalAccounts.length === 1 ? '' : 's'}`, rest: `: ${criticalAccounts.slice(0, 3).join(', ')}.` } : null,
-    reps[0] ? { tone: 'var(--good, #2f8f5b)', lead: `${reps[0].name} leads on saves`, rest: `, ${formatCurrency(reps[0].protectedValue)} protected across ${reps[0].accounts.length} account${reps[0].accounts.length === 1 ? '' : 's'}.` } : null,
-    timeToAction != null ? { tone: 'var(--warn, #d38b1d)', lead: `${timeToAction.toFixed(1)}h median response`, rest: ' from signal raised to handled.' } : null,
-    { tone: 'var(--ink)', lead: 'Coverage', rest: `: ${coveredAccounts} of ${accounts.length} accounts have live signal.` },
-  ].filter(Boolean) as Array<{ tone: string; lead: string; rest: string }>
-
-  // ---------- unactioned queue ----------
-  const queue = open
-    .filter(s => queueRep === 'All' || ownerFor(s.account_name) === queueRep)
-    .sort((a, b) => (Number(b.risk_amount) || 0) - (Number(a.risk_amount) || 0))
-    .slice(0, 8)
-  const ageOf = (iso?: string | null) => {
-    if (!iso || !mounted) return ''
-    const h = Math.floor((Date.now() - new Date(iso).getTime()) / 3600000)
-    return h < 24 ? `${Math.max(1, h)}h` : `${Math.floor(h / 24)}d`
-  }
-
-  const sec = (title: string, right?: React.ReactNode) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 52 }}>
-      <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{title}</h2>
-      {right}
-    </div>
-  )
+  const openQueueItem = (q: TeamQueueItem) => router.push(q.signalId ? `/signals?signal=${q.signalId}` : `/accounts/${encodeURIComponent(q.account)}`)
 
   return (
     <div className="dsk-screen on">
-      {/* header */}
+      {/* header row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36, flexWrap: 'wrap' }}>
-        <div style={{ ...MONO, fontSize: 11, color: 'var(--ink-faint)' }}>
-          Team intelligence <span style={{ margin: '0 8px' }}>/</span> {reps.length} owner{reps.length === 1 ? '' : 's'}
-        </div>
-        <div style={{ ...MONO, fontSize: 10.5, color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          action rate {actionRate}% <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />
+        <div style={{ ...MONO, fontSize: 11, color: FAINT }}>Team intelligence <span style={{ margin: '0 8px' }}>/</span> {m.reps.length} reps</div>
+        <div style={{ ...MONO, fontSize: 10.5, color: FAINT, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          {m.actioned} / {m.signalsThisWeek} actioned <span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />
         </div>
       </div>
 
       {/* narrative */}
-      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(26px,3vw,36px)', letterSpacing: '-.035em', lineHeight: 1.2, margin: '18px 0 0', color: 'var(--ink)' }}>
-        The team protected <span style={{ color: 'var(--accent)' }}>{formatCurrency(protectedTotal)}</span>
-        {reps.length > 1 ? <> across {reps.length} reps.</> : ' this quarter.'}{' '}
-        <span style={{ color: 'var(--ink-muted)' }}>
-          {open.length > 0 ? <>{open.length} signal{open.length === 1 ? '' : 's'} worth <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(waitingValue)}</span> are still waiting for a response.</> : <>Nothing is waiting for a response.</>}
+      <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
+        The team protected <span style={{ color: ACCENT }}>{formatCurrency(m.protectedTotal)}</span> this quarter{m.protectedDeltaPct ? <>, up {m.protectedDeltaPct}% on Q3</> : null}.{' '}
+        <span style={{ color: MUTED }}>
+          {m.waitingCount > 0
+            ? <>{word(m.waitingCount)} signal{m.waitingCount === 1 ? '' : 's'} worth <span style={{ color: RED }}>{formatCurrency(m.waitingValue)}</span> {m.waitingCount === 1 ? 'is' : 'are'} still waiting for a response{m.criticalWithOneRep && crit === 2 ? ', and both critical accounts sit with one rep' : m.criticalWithOneRep ? `, and all ${crit} critical accounts sit with one rep` : ''}.</>
+            : <>Nothing is waiting for a response.</>}
         </span>
       </h1>
 
-      {bullets.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(205px,1fr))', gap: 26, marginTop: 24 }}>
-          {bullets.map((b, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 10, fontSize: 13.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
+      {/* takeaways */}
+      {m.bullets.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 34 }}>
+          {m.bullets.map((b, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 12, fontSize: 13.5, lineHeight: 1.55, color: MUTED }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.tone, marginTop: 7 }} />
-              <div><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{b.lead}</strong>{b.rest}</div>
+              <div>{b.text}</div>
             </div>
           ))}
         </div>
       )}
 
-      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '32px 0 26px' }} />
+      <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
 
-      {/* three coverage figures, each with its own breakdown */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48 }}>
+      {/* three figures */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
+        {/* ARR */}
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>ARR under management</div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.6vw,44px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 9, color: 'var(--critical, #c43d2b)' }}>
-            {formatCurrency(totalValue)}
+          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>ARR under management</div>
+          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.arr)}</div>
+          <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>across {m.accountCount} accounts</div>
+          <div style={{ display: 'flex', gap: 3, height: 3, marginTop: 22 }}>
+            {m.split.map(x => <span key={x.k} style={{ flex: x.value / splitTotal, background: x.color }} />)}
           </div>
-          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 7 }}>across {accounts.length} account{accounts.length === 1 ? '' : 's'}</div>
-          <div style={{ marginTop: 16 }}>
-            {sevSplit.map(x => (
-              <div key={x.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5 }}>
-                <span style={{ color: 'var(--ink)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: x.color }} />{x.k}
-                </span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: x.color }}>
-                  {x.value > 0 ? formatCurrency(x.value) : '--'} · {x.accts} acct{x.accts === 1 ? '' : 's'}
-                </span>
-              </div>
+          <div>
+            {m.split.map(x => (
+              <Row key={x.k}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: x.color }} />{x.k}</span>
+                <span style={{ ...MONO_NUM, fontSize: 12.5, color: x.color }}>{x.value > 0 ? formatCurrency(x.value) : '--'} · {x.accts} accts</span>
+              </Row>
             ))}
           </div>
         </div>
 
+        {/* Time to action */}
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>Time to action</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginTop: 9 }}>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.6vw,44px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--ink)' }}>
-              {timeToAction != null ? timeToAction.toFixed(1) : '--'}
-            </span>
-            <span style={{ fontSize: 16, color: 'var(--ink-muted)' }}>h</span>
+          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Time to action</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginTop: 14 }}>
+            <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, color: INK }}>{m.timeToAction ? m.timeToAction.toFixed(1) : '--'}</span>
+            <span style={{ fontFamily: OUTFIT, fontSize: 22, color: MUTED }}>h</span>
           </div>
-          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 7 }}>median, signal raised to handled</div>
-          <div style={{ marginTop: 16 }}>
-            {reps.map(r => {
-              const t = repResponse(r)
-              return (
-                <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5 }}>
-                  <span style={{ color: 'var(--ink)' }}>{r.name}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: t != null && timeToAction != null && t <= timeToAction ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>
-                    {t != null ? `${t.toFixed(1)}h` : '--'}
-                  </span>
-                </div>
-              )
-            })}
+          <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>
+            {m.timeToActionDelta
+              ? <><span style={{ color: m.timeToActionDelta < 0 ? GREEN : RED, fontWeight: 600 }}>{m.timeToActionDelta < 0 ? '▼' : '▲'} {fmtH(Math.abs(m.timeToActionDelta))}</span> vs last month</>
+              : 'median, signal raised to handled'}
+          </div>
+          <div style={{ marginTop: 25 }}>
+            {m.reps.map(r => (
+              <Row key={r.name}>
+                <span>{r.name}</span>
+                <span style={{ ...MONO_NUM, fontSize: 12.5, color: respColor(r.avgResp) }}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
+              </Row>
+            ))}
           </div>
         </div>
 
+        {/* Coverage */}
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>Signal coverage</div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.6vw,44px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 9, color: 'var(--good, #2f8f5b)' }}>
-            {coverage}%
-          </div>
-          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 7 }}>{coveredAccounts} of {accounts.length} accounts covered</div>
-          <div style={{ marginTop: 16 }}>
-            {[
-              { k: 'Signals this period', v: String(live.length), c: 'var(--ink)' },
-              { k: 'Actioned', v: `${handled.length} / ${live.length}`, c: 'var(--good, #2f8f5b)' },
-              { k: 'Still open', v: String(open.length), c: open.length ? 'var(--critical, #c43d2b)' : 'var(--ink)' },
-            ].map(x => (
-              <div key={x.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '9px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5 }}>
-                <span style={{ color: 'var(--ink)' }}>{x.k}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: x.c }}>{x.v}</span>
-              </div>
-            ))}
+          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Signal coverage</div>
+          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: GREEN }}>{m.coveragePct}%</div>
+          <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>{m.covered} of {m.accountCount} accounts covered</div>
+          <div style={{ marginTop: 25 }}>
+            <Row><span>Signals this week</span><span style={{ ...MONO_NUM, fontSize: 12.5 }}>{m.signalsThisWeek}</span></Row>
+            <Row><span>Actioned</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: GREEN }}>{m.actioned} / {m.signalsThisWeek}</span></Row>
+            <Row><span>Auto-deployed without edit</span><span style={{ ...MONO_NUM, fontSize: 12.5 }}>{m.autoDeployedPct ? `${m.autoDeployedPct}%` : '--'}</span></Row>
           </div>
         </div>
       </div>
 
       {/* leaderboard */}
-      {sec('Popsicle saves leaderboard', <span style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>team total {formatCurrency(protectedTotal)}</span>)}
-      <div style={{ display: 'grid', gridTemplateColumns: '28px minmax(120px,1.5fr) minmax(56px,.5fr) minmax(56px,.5fr) minmax(70px,.7fr) minmax(56px,.5fr) minmax(60px,.6fr)', columnGap: 12, padding: '14px 0 8px', ...MONO, fontSize: 9.5, color: 'var(--ink-faint)' }}>
-        <span>#</span><span>Rep</span><span>Signals</span><span>Saved</span><span>Protected</span><span>Resp</span><span>Save rate</span>
-      </div>
-      {reps.map((r, i) => {
-        const rate = r.open.length + r.handled.length > 0 ? Math.round((r.handled.length / (r.open.length + r.handled.length)) * 100) : 0
-        const t = repResponse(r)
+      <H2 title="Popsicle Saves leaderboard" right={
+        <span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
+          team total {formatCurrency(m.protectedTotal)}{m.protectedDeltaPct ? <> · <span style={{ color: GREEN }}>▲</span> +{m.protectedDeltaPct}% vs Q3</> : null}
+        </span>
+      } />
+      {(() => {
+        const cols = '28px minmax(180px,1.7fr) .6fr .6fr .8fr .7fr .7fr .7fr 1.2fr'
+        const num = { ...MONO_NUM, fontSize: 13 }
+        const badgeColor = { accent: ACCENT, blue: 'var(--blue, #2f6f9f)', warn: AMBER } as const
         return (
-          <div key={r.name} style={{ display: 'grid', gridTemplateColumns: '28px minmax(120px,1.5fr) minmax(56px,.5fr) minmax(56px,.5fr) minmax(70px,.7fr) minmax(56px,.5fr) minmax(60px,.6fr)', columnGap: 12, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5 }}>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, color: i === 0 ? 'var(--accent)' : 'var(--ink-faint)' }}>{i + 1}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-              <span style={{ width: 28, height: 28, borderRadius: '50%', background: hue(r.name), color: '#fff', display: 'grid', placeItems: 'center', fontSize: 10.5, fontWeight: 700, flex: 'none' }}>{initials(r.name)}</span>
-              <span style={{ minWidth: 0 }}>
-                <span style={{ display: 'block', fontWeight: 600, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-                <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-faint)' }}>{r.accounts.length} account{r.accounts.length === 1 ? '' : 's'}</span>
-              </span>
-            </span>
-            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{r.open.length + r.handled.length}</span>
-            <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--good, #2f8f5b)' }}>{r.handled.length}</span>
-            <span style={{ fontVariantNumeric: 'tabular-nums' }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-muted)' }}>{t != null ? `${t.toFixed(1)}h` : '--'}</span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative', minWidth: 24 }}>
-                <span style={{ position: 'absolute', inset: 0, width: `${rate}%`, background: rate >= 70 ? 'var(--good, #2f8f5b)' : 'var(--accent)' }} />
-              </span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12 }}>{rate}%</span>
-            </span>
-          </div>
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 9.5, color: FAINT }}>
+              <span>#</span><span>Rep</span><span>Signals</span><span>Saved</span><span>Protected</span><span>Avg resp</span><span>Save rate</span><span>Churn Δ</span><span>Performance</span>
+            </div>
+            {m.reps.map((r, i) => (
+              <div key={r.name} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
+                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: i === 0 ? ACCENT : INK }}>{i + 1}</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                  <Avatar rep={r} size={36} />
+                  <span style={{ minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontWeight: 600, fontSize: 15, color: INK }}>{r.name}</span>
+                      {r.badge && <span style={{ ...MONO, fontSize: 9.5, fontWeight: 600, color: badgeColor[r.badgeTone ?? 'accent'] }}>{r.badge}</span>}
+                    </span>
+                    <span style={{ display: 'block', fontSize: 12, color: FAINT, marginTop: 2 }}>{r.title} · {r.accounts.length} accounts</span>
+                  </span>
+                </span>
+                <span style={num}>{r.signals}</span>
+                <span style={{ ...num, color: GREEN }}>{r.saved}</span>
+                <span style={{ ...num, color: GREEN }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</span>
+                <span style={num}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
+                <span style={{ ...num, color: r.saveRate >= 70 ? GREEN : AMBER }}>{r.saveRate}%</span>
+                <span style={{ ...num, color: r.churnDelta < 0 ? GREEN : r.churnDelta > 0 ? RED : INK }}>{r.churnDelta ? `${r.churnDelta}%` : '--'}</span>
+                <span style={{ height: 3, background: HAIR, position: 'relative' }}>
+                  <span style={{ position: 'absolute', inset: 0, width: `${r.performance}%`, background: 'linear-gradient(90deg, var(--accent-light, #FF8A50), var(--accent, #E85A25))' }} />
+                </span>
+              </div>
+            ))}
+          </>
         )
-      })}
+      })()}
 
       {/* individual breakdown */}
-      {sec('Individual breakdown', <span style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>accounts owned</span>)}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(250px,1fr))', gap: 40, marginTop: 24 }}>
-        {reps.map(r => {
-          const t = repResponse(r)
-          const trend = r.accounts.slice(0, 7).map(a => Number(a.health_score) || 50)
-          const pts = trend.length > 1 ? trend : [50, 50]
-          const maxT = Math.max(...pts, 1)
-          const d = pts.map((v, i) => `${(i / (pts.length - 1)) * 100},${34 - (v / maxT) * 28}`).join(' L')
-          const good = t != null && timeToAction != null && t <= timeToAction
+      <H2 title="Individual breakdown" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>response time · last 7 days</span>} />
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, m.reps.length))}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
+        {m.reps.map(r => {
+          const t = trendMeta[r.trend]
           return (
             <div key={r.name}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                <span style={{ width: 32, height: 32, borderRadius: '50%', background: hue(r.name), color: '#fff', display: 'grid', placeItems: 'center', fontSize: 11.5, fontWeight: 700, flex: 'none' }}>{initials(r.name)}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Avatar rep={r} size={40} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{r.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-faint)' }}>{r.accounts.length} account{r.accounts.length === 1 ? '' : 's'}</div>
+                  <div style={{ fontSize: 16, fontWeight: 600, color: INK }}>{r.name}</div>
+                  <div style={{ fontSize: 12, color: FAINT, marginTop: 2 }}>{r.title} · {r.accounts.length} accounts</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 19, letterSpacing: '-.04em', color: 'var(--good, #2f8f5b)' }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>protected</div>
+                  <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</div>
+                  <div style={{ fontSize: 11.5, color: FAINT, marginTop: 4 }}>protected</div>
                 </div>
               </div>
 
-              <div style={{ ...MONO, fontSize: 9.5, color: 'var(--ink-faint)', marginTop: 18, display: 'flex', justifyContent: 'space-between' }}>
-                <span>account health</span>
-                <span style={{ color: good ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>{good ? 'responsive' : 'needs coaching'}</span>
+              <div style={{ ...MONO, fontSize: 9.5, color: FAINT, marginTop: 30, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span>Response time</span>
+                <span style={{ color: t.c, textTransform: 'none', letterSpacing: '.2px', fontSize: 11 }}>{t.t}</span>
               </div>
-              <svg viewBox="0 0 100 36" width="100%" height={40} preserveAspectRatio="none" style={{ marginTop: 8, display: 'block' }}>
-                <path d={`M${d}`} fill="none" stroke={good ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'} strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <div style={{ marginTop: 16 }}><Spark pts={r.spark} color={t.c} /></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', ...MONO, fontSize: 9.5, color: FAINT, marginTop: 8, padding: '0 1px' }}>
+                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => <span key={i}>{d}</span>)}
+              </div>
 
-              <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginTop: 14 }}>
-                {r.accounts.slice(0, 5).map(a => (
-                  <span key={a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)}
-                    style={{ fontSize: 11.5, color: 'var(--ink-muted)', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: '4px 11px', cursor: 'pointer' }}>{a.name}</span>
+              <div style={{ ...MONO, fontSize: 9.5, color: FAINT, marginTop: 26, marginBottom: 12 }}>Activity · by time of day</div>
+              <Heat grid={r.activity} />
+
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 22 }}>
+                {r.accounts.map(a => (
+                  <span key={a} onClick={() => router.push(`/accounts/${encodeURIComponent(a)}`)}
+                    style={{ fontSize: 12.5, color: MUTED, background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: '6px 13px', cursor: 'pointer' }}>{a}</span>
                 ))}
               </div>
             </div>
@@ -285,101 +361,107 @@ export function TeamReal({ accounts, signals, me }: { accounts: Account[]; signa
       </div>
 
       {/* unactioned queue */}
-      {sec('Unactioned signal queue', <span style={{ ...MONO, fontSize: 10, color: 'var(--critical, #c43d2b)' }}>{formatCurrency(waitingValue)} waiting</span>)}
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '16px 0 4px' }}>
-        {['All', ...reps.map(r => r.name)].map(k => (
-          <button key={k} onClick={() => setQueueRep(k)}
-            style={{ font: 'inherit', fontSize: 12.5, fontWeight: queueRep === k ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
-              background: queueRep === k ? 'var(--ink, #0E0D0B)' : 'var(--inset, #F0EDE7)', color: queueRep === k ? '#fff' : 'var(--ink-muted)' }}>
-            {k === 'All' ? `All · ${open.length}` : `${k.split(' ')[0]} · ${byRep.get(k)?.open.length ?? 0}`}
-          </button>
-        ))}
+      <H2 title="Unactioned signal queue" top={72} right={
+        <span style={{ ...MONO, fontSize: 10.5, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
+          <span style={{ color: RED }}>{m.queue.length} unactioned</span> · of {m.signalsThisWeek} this week · {m.unresolvedPct}% unresolved
+        </span>
+      } />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, margin: '18px 0 4px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999 }}>
+          {['All', ...m.reps.map(r => r.name)].map(k => {
+            const on = queueRep === k
+            const n = k === 'All' ? m.queue.length : m.queue.filter(q => q.rep === k).length
+            return (
+              <button key={k} onClick={() => setQueueRep(k)}
+                style={{ font: 'inherit', fontSize: 12.5, fontWeight: on ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer',
+                  background: on ? INK : 'transparent', color: on ? '#fff' : MUTED, fontFamily: on ? undefined : "'DM Mono',monospace" }}>
+                {k === 'All' ? `All · ${n}` : `${initials(k)} · ${n}`}
+              </button>
+            )
+          })}
+        </div>
+        <span style={{ fontSize: 14, fontWeight: 600, color: RED }}>{formatCurrency(m.waitingValue)} ARR waiting</span>
       </div>
-      {queue.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing is waiting. Everything raised has been handled.</div>}
-      {queue.map(s => {
-        const c = s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
-        const owner = ownerFor(s.account_name)
+      {queue.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: FAINT }}>Nothing is waiting. Everything raised has been handled.</div>}
+      {queue.map((q, i) => {
+        const s = sevMeta[q.sev]
+        const rep = repBy(q.rep)
         return (
-          <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
-            style={{ display: 'grid', gridTemplateColumns: '3px minmax(0,1fr) auto auto', gap: 16, alignItems: 'center', padding: '15px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-            <span style={{ width: 3, alignSelf: 'stretch', background: c }} />
+          <div key={i} onClick={() => openQueueItem(q)}
+            style={{ display: 'grid', gridTemplateColumns: '3px minmax(0,1fr) auto 32px', gap: 16, alignItems: 'center', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
+            <span style={{ width: 3, height: 34, background: s.c }} />
             <div style={{ minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>{s.account_name}</span>
-                <span style={{ ...MONO, fontSize: 9.5, color: c }}>{s.severity === 'high' ? 'critical' : s.severity === 'positive' ? 'positive' : 'watch'}</span>
+                <span style={{ fontSize: 15, fontWeight: 600, color: INK }}>{q.account}</span>
+                <span style={{ ...MONO, fontSize: 9.5, color: s.c }}>{s.t}</span>
               </div>
-              <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 3 }}>{s.title}</div>
+              <div style={{ fontSize: 13.5, color: MUTED, marginTop: 4 }}>{q.summary}</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: c }}>{ageOf(s.created_at)}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>unactioned</div>
+              <div style={{ ...MONO_NUM, fontSize: 13, color: q.sev === 'medium' ? MUTED : s.c }}>{mounted ? q.age : ''}</div>
+              <div style={{ fontSize: 11, color: FAINT, marginTop: 2 }}>unactioned</div>
             </div>
-            <span title={owner} style={{ width: 26, height: 26, borderRadius: '50%', background: hue(owner), color: '#fff', display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700 }}>{initials(owner)}</span>
+            <Avatar rep={rep} size={32} />
           </div>
         )
       })}
       <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned signals should the team prioritise?')}`)}
-        style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--accent)', marginTop: 16, cursor: 'pointer' }}>Ask AI to prioritise →</div>
+        style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask AI to prioritise →</div>
+
+      <div style={{ height: 1, background: RULE, margin: '72px 0 30px' }} />
 
       {/* execution summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 48, marginTop: 52 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Revenue movement</div>
-          {[
-            { k: 'New critical accounts', v: `+${criticalAccounts.length}`, c: criticalAccounts.length ? 'var(--critical, #c43d2b)' : 'var(--ink)' },
-            { k: 'Accounts stabilized', v: `+${new Set(handled.map(s => s.account_name)).size}`, c: 'var(--good, #2f8f5b)' },
-            { k: 'Actions taken', v: String(handled.length), c: 'var(--ink)' },
-            { k: 'Open exposure', v: formatCurrency(waitingValue), c: 'var(--critical, #c43d2b)' },
-          ].map(r => (
-            <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 14 }}>
-              <span style={{ color: 'var(--ink)' }}>{r.k}</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: r.c }}>{r.v}</span>
-            </div>
-          ))}
+          <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Revenue movement · this week</div>
+          <Row pad="14px 0"><span>New critical accounts</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: m.newCritical ? RED : INK }}>+{m.newCritical}</span></Row>
+          <Row pad="14px 0"><span>Accounts stabilized</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: GREEN }}>+{m.stabilized}</span></Row>
+          <Row pad="14px 0"><span>Actions taken</span><span style={{ ...MONO_NUM, fontSize: 12.5 }}>{m.actionsTaken}</span></Row>
+          <Row pad="14px 0"><span>Signals per day</span><span style={{ ...MONO_NUM, fontSize: 12.5 }}>{m.signalsPerDay}{m.signalsPerDayDelta ? <span style={{ color: GREEN }}> ▲ {m.signalsPerDayDelta}</span> : null}</span></Row>
         </div>
 
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Coverage & ownership</div>
-          {reps.map(r => (
-            <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-              <span style={{ width: 24, height: 24, borderRadius: '50%', background: hue(r.name), color: '#fff', display: 'grid', placeItems: 'center', fontSize: 9.5, fontWeight: 700, flex: 'none' }}>{initials(r.name)}</span>
-              <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink)' }}>{r.name}</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>
-                {r.accounts.length} · {formatCurrency(r.value)}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
+            <span style={{ ...MONO, fontSize: 10, color: FAINT }}>Coverage & ownership</span>
+            <span style={{ ...MONO, fontSize: 10, color: RED, textTransform: 'none', letterSpacing: '.3px' }}>all {m.accountCount} accounts owned</span>
+          </div>
+          <div style={{ fontSize: 13.5, color: MUTED, margin: '12px 0 6px' }}>Critical coverage <strong style={{ color: INK, fontWeight: 600 }}>{m.criticalOwned} owned</strong> · {m.activeFollowUp} with active follow-up</div>
+          {m.reps.map(r => (
+            <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: `1px solid ${HAIR}` }}>
+              <Avatar rep={r} size={26} />
+              <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: INK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <span style={{ fontWeight: 600 }}>{r.name}</span> <span style={{ color: MUTED }}>{r.accounts.length} accounts · {formatCurrency(r.arr)}</span>
               </span>
+              <span style={{ ...MONO, fontSize: 10, color: r.ownership === 'active' ? GREEN : AMBER, whiteSpace: 'nowrap' }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
             </div>
           ))}
         </div>
 
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Execution quality</div>
-          <div style={{ display: 'flex', gap: 30, marginTop: 16 }}>
-            <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: 'var(--ink)' }}>{timeToAction != null ? `${timeToAction.toFixed(1)}h` : '--'}</div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 4 }}>time to action</div>
-            </div>
-            <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: actionRate >= 70 ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>{actionRate}%</div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 4 }}>follow-through</div>
-            </div>
-            <div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: 'var(--ink)' }}>{coverage}%</div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 4 }}>coverage</div>
-            </div>
+          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Execution quality</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16, marginTop: 14 }}>
+            {[
+              { v: m.timeToAction ? fmtH(m.timeToAction) : '--', k: 'time to action', c: INK },
+              { v: `${m.followThrough}%`, k: 'follow-through', c: m.followThrough >= 70 ? GREEN : AMBER },
+              { v: `${m.loopClosure}%`, k: 'loop closure', c: m.loopClosure >= 70 ? GREEN : AMBER },
+            ].map(x => (
+              <div key={x.k}>
+                <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 27, letterSpacing: '-.04em', color: x.c, lineHeight: 1 }}>{x.v}</div>
+                <div style={{ fontSize: 11.5, color: FAINT, marginTop: 6 }}>{x.k}</div>
+              </div>
+            ))}
           </div>
-          <div style={{ marginTop: 20 }}>
-            {reps.map(r => {
-              const rate = r.open.length + r.handled.length > 0 ? Math.round((r.handled.length / (r.open.length + r.handled.length)) * 100) : 0
-              const t = repResponse(r)
-              return (
-                <div key={r.name} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 48px 44px', gap: 10, padding: '10px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5 }}>
-                  <span style={{ color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-muted)', textAlign: 'right' }}>{t != null ? `${t.toFixed(1)}h` : '--'}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: rate >= 70 ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)', textAlign: 'right' }}>{rate}%</span>
-                </div>
-              )
-            })}
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 52px 48px 60px', gap: 10, ...MONO, fontSize: 9.5, color: FAINT, marginTop: 26, paddingBottom: 8 }}>
+            <span>Rep</span><span style={{ textAlign: 'right' }}>T2A</span><span style={{ textAlign: 'right' }}>F/T</span><span style={{ textAlign: 'right' }}>Closure</span>
           </div>
+          {m.reps.map(r => (
+            <div key={r.name} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 52px 48px 60px', gap: 10, padding: '12px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
+              <span style={{ color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+              <span style={{ ...MONO_NUM, fontSize: 12.5, color: respColor(r.avgResp), textAlign: 'right' }}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
+              <span style={{ ...MONO_NUM, fontSize: 12.5, color: r.followThrough >= 70 ? GREEN : AMBER, textAlign: 'right' }}>{r.followThrough}%</span>
+              <span style={{ ...MONO_NUM, fontSize: 12.5, color: r.closure >= 70 ? GREEN : AMBER, textAlign: 'right' }}>{r.closure}%</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_TEAM } from '@/lib/demo-dataset'
 import { TeamReal } from './TeamReal'
 
 export default async function TeamPage() {
@@ -9,7 +9,7 @@ export default async function TeamPage() {
   if (!user) return null
 
   if (user.email === DEMO_EMAIL) {
-    return <TeamReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} me="Andy G" integrations={['gmail', 'gcal', 'slack', 'zoom', 'hubspot', 'fireflies', 'meet']} />
+    return <TeamReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} me="Andy G" demo={DEMO_TEAM} integrations={['gmail', 'gcal', 'slack', 'zoom', 'hubspot', 'fireflies', 'meet']} />
   }
 
   const [acc, sig, integ] = await Promise.all([

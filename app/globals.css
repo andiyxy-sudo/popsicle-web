@@ -2133,7 +2133,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 /* v2.6 — the wash must sit above the paper but below content, and must not
    scroll away with the column. */
-.ed-wash { position: fixed; top: 0; right: 0; left: var(--sidebar-w, 216px); height: 1100px; pointer-events: none; z-index: 0; }
+.ed-wash { position: absolute; top: 0; right: 0; left: 0; height: 1100px; pointer-events: none; z-index: 0; }
 
 /* v2.7 — short pages must not leave the footer floating mid-screen:
    the content column fills the viewport and the footer is pushed to the end. */
@@ -2491,9 +2491,12 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 body { background: var(--bg) !important; }
 .main { background: transparent !important; }
 .content { background: transparent !important; }
+/* v11.9: the wash sits inside .content (the scroll column), absolutely
+   positioned at the top of the page, so it scrolls away instead of
+   following the viewport. */
 .ed-wash {
-  position: fixed !important; top: 0 !important; right: 0 !important;
-  left: var(--sidebar-w, 216px) !important; height: 1200px !important;
+  position: absolute !important; top: 0 !important; right: 0 !important;
+  left: 0 !important; height: 1200px !important;
   pointer-events: none !important; z-index: 0 !important;
 }
 .dsk-screen { position: relative; z-index: 1; }
