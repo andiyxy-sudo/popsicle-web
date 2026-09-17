@@ -6,6 +6,8 @@
 
 import { useEffect } from 'react'
 
+export type ConfirmKind = 'success' | 'escalate' | 'connect'
+
 export interface ModalConfig {
   title: string
   body: React.ReactNode
@@ -31,7 +33,7 @@ export function ModalBtn({ primary, onClick, children }: { primary?: boolean; on
 }
 
 export function ActionConfirmBody({ kind, title, desc, rows }: {
-  kind: 'success' | 'escalate' | 'connect'
+  kind: ConfirmKind
   title: string
   desc?: string
   rows?: string[]

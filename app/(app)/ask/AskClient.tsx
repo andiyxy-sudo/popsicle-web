@@ -11,11 +11,33 @@ import { createClient } from '@/lib/supabase/client'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
-const SUGGESTIONS = [
-  'Which account needs my attention most right now?',
-  'Summarise the risk across my pipeline',
-  'What did we last hear from Acme Corp?',
-  'What should I send before the week closes?',
+// Quick actions answer "what do I do now". Deep dive answers "what is going on".
+const QUICK = [
+  { label: 'Top risks', sub: "This week's critical signals", q: 'What are my top risks this week and what should I do about each?' },
+  { label: 'Interventions', sub: 'Accounts needing help now', q: 'Which accounts need intervention right now, ranked by exposure?' },
+  { label: "Today's actions", sub: 'Priority queue, ranked', q: 'What should I do today, in priority order?' },
+  { label: 'Gone quiet', sub: 'Accounts past their cadence', q: 'Which accounts have gone quiet past their normal reply cadence?' },
+]
+
+const DEEP: Array<{ group: string; items: string[] }> = [
+  { group: 'Risk analysis', items: [
+    'Where is executive engagement declining?',
+    'Which deals show accelerating churn signals?',
+    'How much revenue is exposed to delays right now?',
+    'Which accounts are at risk of losing to do-nothing?',
+  ] },
+  { group: 'Revenue intelligence', items: [
+    'Forecast versus actual, month to date',
+    'Where does the risk sit by stage?',
+    'Which competitor keeps appearing in my deals?',
+    'What is my win rate trend this quarter?',
+  ] },
+  { group: 'Actions and follow-ups', items: [
+    'Which commitments have I not kept?',
+    'What is unactioned by rep?',
+    'Who is waiting on something from me?',
+    'Which drafts should I send before the week closes?',
+  ] },
 ]
 const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
 
@@ -659,13 +681,39 @@ export function AskClient() {
             </div>
           )}
 
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Try asking</div>
-          {SUGGESTIONS.map(sg => (
-            <div key={sg} onClick={() => send(sg)} className="ask-suggest"
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 16, color: 'var(--ink)' }}>
-              <span>{sg}</span><span className="ask-suggest-arrow" style={{ color: 'var(--accent)', paddingRight: 4 }}>→</span>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 48, marginTop: 4 }}>
+            {/* what do I do now */}
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Quick actions</div>
+              {QUICK.map(a => (
+                <div key={a.label} onClick={() => send(a.q)} className="ask-suggest"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{a.label}</div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 3 }}>{a.sub}</div>
+                  </div>
+                  <span className="ask-suggest-arrow" style={{ color: 'var(--accent)', flex: 'none' }}>→</span>
+                </div>
+              ))}
             </div>
-          ))}
+
+            {/* what is going on */}
+            <div>
+              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Deep dive</div>
+              {DEEP.map(sec => (
+                <div key={sec.group} style={{ marginTop: 22 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>{sec.group}</div>
+                  {sec.items.map(q => (
+                    <div key={q} onClick={() => send(q)} className="ask-suggest"
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14.5, color: 'var(--ink)' }}>
+                      <span style={{ minWidth: 0 }}>{q}</span>
+                      <span className="ask-suggest-arrow" style={{ color: 'var(--ink-faint)', flex: 'none' }}>›</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

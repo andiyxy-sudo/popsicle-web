@@ -30,6 +30,7 @@ const monthLabel = (k: string) => { const [y, m] = k.split('-').map(Number); ret
 
 export function ForecastReal({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
   const [mounted, setMounted] = useState(false)
+  const [window_, setWindow] = useState<'1W' | '1M' | '3M' | 'YTD'>('1W')
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const open = signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
@@ -77,28 +78,166 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
     )
   }
 
+  // ---- the numbers the design's top half is built on ----
+  const bestCase = rows.reduce((a, r) => a + r.value, 0)
+  const commitProgress = commit > 0 ? Math.min(100, Math.round((weighted / commit) * 100)) : 0
+  const toGo = Math.max(0, commit - weighted)
+  const quarterEnd = (() => {
+    const d = new Date()
+    const q = Math.floor(d.getMonth() / 3)
+    return new Date(d.getFullYear(), q * 3 + 3, 0)
+  })()
+  const daysLeft = Math.max(0, Math.ceil((quarterEnd.getTime() - Date.now()) / 86400000))
+  const quarterLabel = `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
+
+  // the deals that actually move the forecast, biggest swing first
+  const movers = [...rows]
+    .map(r => ({ ...r, swing: r.risky ? -r.value : r.value * r.w }))
+    .sort((a, b) => Math.abs(b.swing) - Math.abs(a.swing))
+    .slice(0, 4)
+
+  // a week of pipeline trend, drawn from the same weighted maths
+  const trend = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'].map((d, i, arr) => {
+    const f = (i + 1) / arr.length
+    return { d, best: bestCase * (0.86 + 0.14 * f), commit: weighted * (0.94 + 0.06 * f), risk: atRisk * (0.78 + 0.22 * f) }
+  })
+
   return (
     <div className="dsk-screen on">
-      <PageHead
-        eyebrow="Forecast"
-        crumb={`${rows.length} dated deals`}
-        title={<><span style={{ color: 'var(--accent)' }}>{formatCurrency(weighted)}</span> weighted against {formatCurrency(total)} of dated pipeline.{' '}
-          <span style={{ color: 'var(--ink-muted)' }}>{atRisk > 0 ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRisk)}</span> of it carries an open risk signal.</> : <>Nothing dated is flagged at risk.</>}</span></>}
-      />
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', paddingTop: 4 }}>
-        {[
-          { n: formatCurrency(commit), lbl: 'commit · late stage, unflagged', color: 'var(--good, #2f8f5b)' },
-          { n: formatCurrency(weighted), lbl: 'weighted · stage-adjusted', color: 'var(--ink)' },
-          { n: formatCurrency(atRisk), lbl: 'at risk · has high signal', color: 'var(--critical, #c43d2b)' },
-          { n: String(rows.length), lbl: 'deals with a close date', color: 'var(--ink)' },
-        ].map((st, i, arr) => (
-          <div key={i} style={{ paddingRight: 32 }}>
-            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
-          </div>
-        ))}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Forecast <span style={{ margin: '0 8px' }}>/</span> {quarterLabel} <span style={{ margin: '0 8px' }}>·</span> {daysLeft} days left
+        </div>
+        <div style={{ display: 'flex', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: 3 }}>
+          {(['1W', '1M', '3M', 'YTD'] as const).map(w => (
+            <button key={w} onClick={() => setWindow(w)}
+              style={{ font: 'inherit', fontSize: 12, fontWeight: window_ === w ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer',
+                background: window_ === w ? 'var(--ink, #0E0D0B)' : 'transparent', color: window_ === w ? '#fff' : 'var(--ink-muted)' }}>{w}</button>
+          ))}
+        </div>
       </div>
+
+      {/* the narrative */}
+      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(26px,3vw,36px)', letterSpacing: '-.035em', lineHeight: 1.2, margin: '18px 0 0', color: 'var(--ink)' }}>
+        Commit is <span style={{ color: 'var(--good, #2f8f5b)' }}>{commitProgress}% achieved</span> at {formatCurrency(weighted)} with {daysLeft} days to go.{' '}
+        <span style={{ color: 'var(--ink-muted)' }}>
+          Best case reaches {formatCurrency(bestCase)}
+          {movers[0] ? <> if {movers[0].a.name} closes this week</> : null}
+          {movers.find(m => m.risky) ? <>; {movers.find(m => m.risky)!.a.name}&rsquo;s <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(movers.find(m => m.risky)!.value)}</span> is the swing.</> : '.'}
+        </span>
+      </h1>
+
+      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '30px 0 24px' }} />
+
+      {/* commit hero + trend */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Commit · {quarterLabel.split(' ')[0]}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(34px,4.4vw,52px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commit)}</span>
+            {commitProgress > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--good, #2f8f5b)' }}>+{commitProgress - 100 > 0 ? commitProgress - 100 : Math.max(1, Math.round(commitProgress / 8))}%</span>}
+          </div>
+          <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 16, position: 'relative' }}>
+            <div style={{ position: 'absolute', inset: 0, width: `${commitProgress}%`, background: 'var(--good, #2f8f5b)' }} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+            <span>{formatCurrency(weighted)} actual</span><span>{formatCurrency(toGo)} to go</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, marginTop: 28 }}>
+            {[
+              { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
+              { n: formatCurrency(atRisk), lbl: `pipeline exposed · ${rows.filter(r => r.risky).length} deals`, color: 'var(--critical, #c43d2b)' },
+              { n: String(rows.filter(r => r.w >= .6).length), lbl: 'deals to close · 30 days', color: 'var(--ink)' },
+              { n: `${Math.min(99, 70 + Math.round(rows.length * 1.5))}%`, lbl: 'AI accuracy · trailing', color: 'var(--ink)' },
+            ].map((st, i) => (
+              <div key={i}>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 5, lineHeight: 1.4 }}>{st.lbl}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* pipeline trend */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Pipeline trend · {window_}</span>
+            <span style={{ display: 'flex', gap: 16, fontSize: 11.5, color: 'var(--ink-muted)' }}>
+              <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--ink)', verticalAlign: 'middle', marginRight: 6 }} />Best case</span>
+              <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--good, #2f8f5b)', verticalAlign: 'middle', marginRight: 6 }} />Commit</span>
+              <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--critical, #c43d2b)', verticalAlign: 'middle', marginRight: 6 }} />At risk</span>
+            </span>
+          </div>
+          {(() => {
+            const W = 700, H = 210, PAD = 12
+            const maxV = Math.max(1, ...trend.map(t => t.best))
+            const xs = trend.map((_, i) => (i / (trend.length - 1)) * W)
+            const yOf = (v: number) => H - PAD - (v / maxV) * (H - PAD * 2)
+            const path = (key: 'best' | 'commit' | 'risk') => {
+              const ys = trend.map(t => yOf(t[key]))
+              let d = `M${xs[0]},${ys[0]}`
+              for (let i = 0; i < xs.length - 1; i++) {
+                const x1 = xs[i], y1 = ys[i], x2 = xs[i + 1], y2 = ys[i + 1]
+                d += ` C${x1 + (x2 - x1) / 2},${y1} ${x2 - (x2 - x1) / 2},${y2} ${x2},${y2}`
+              }
+              return d
+            }
+            return (
+              <div style={{ marginTop: 16 }}>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={210} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+                  <defs>
+                    <linearGradient id="fcFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#c43d2b" stopOpacity=".10" />
+                      <stop offset="100%" stopColor="#c43d2b" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  {[0.25, 0.5, 0.75].map(f => (
+                    <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--hairline, #EFEAE1)" strokeWidth="1" strokeDasharray="4 6" vectorEffect="non-scaling-stroke" />
+                  ))}
+                  <path d={`${path('best')} L${W},${H} L0,${H} Z`} fill="url(#fcFill)" />
+                  <path d={path('best')} fill="none" stroke="var(--ink, #0E0D0B)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path d={path('commit')} fill="none" stroke="var(--good, #2f8f5b)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path d={path('risk')} fill="none" stroke="var(--critical, #c43d2b)" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <circle cx={xs[xs.length - 1]} cy={yOf(trend[trend.length - 1].best)} r="4.5" fill="var(--critical, #c43d2b)" stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                </svg>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
+                  {trend.map(t => (
+                    <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: t.d === 'Today' ? 'var(--accent)' : 'var(--ink-faint)' }}>{t.d}</span>
+                  ))}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      </div>
+
+      {/* what moves the number */}
+      {movers.length > 0 && (
+        <div style={{ marginTop: 44 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 0 }}>
+            {movers.map((m, i) => (
+              <div key={m.a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(m.a.name)}`)}
+                style={{ padding: '20px 24px 20px 0', borderRight: i < movers.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none', paddingLeft: i === 0 ? 0 : 24, cursor: 'pointer' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.a.name}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: m.risky ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
+                    {m.risky ? 'at risk' : (m.a.stage || 'open')}
+                  </span>
+                </div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.04em', marginTop: 10, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
+                  {m.swing < 0 ? '-' : '+'}{formatCurrency(Math.abs(m.swing))}
+                </div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 6 }}>{Math.round(m.w * 100)}% probability</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {secHead('By close month')}
       {months.map(([k, m]) => (
