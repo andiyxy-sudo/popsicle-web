@@ -538,3 +538,19 @@ export const DEMO_INTELLIGENCE: IntelModel = {
     { account: 'Cobalt Systems', days: 88, value: 150_000, status: 'on track' },
   ],
 }
+
+// ---------- Portfolio head (transcribed from the mobile Portfolio screen, v11.12) ----------
+export type PortfolioHead = {
+  stats: Array<{ n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean }>
+}
+export const DEMO_PORTFOLIO: PortfolioHead = {
+  stats: [
+    { n: '2', lbl: 'high risk · $1.33M at risk', tone: 'critical' },
+    { n: '4', lbl: 'medium · $655K exposure', tone: 'warn' },
+    { n: '2', lbl: 'closing or won · $470K', tone: 'good' },
+    { n: '58', lbl: 'avg health · ▲ 4 this week', tone: 'ink', strong: true },
+  ],
+}
+export const DEMO_PORTFOLIO_HEADLINE = {
+  highCount: 2, highValue: 1_330_000, darkHours: 48, closingName: 'Nexus', healthyCount: 2,
+}

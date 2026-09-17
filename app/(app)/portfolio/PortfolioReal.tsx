@@ -58,13 +58,19 @@ function topSignalOf(sigs: SigLite[]): SigLite | null {
   const rank = (sv: string | null) => sv === 'high' ? 0 : sv === 'watch' ? 1 : 2
   return [...sigs].sort((x, y) => rank(x.severity) - rank(y.severity) || String(y.created_at).localeCompare(String(x.created_at)))[0] ?? null
 }
+type HeadStat = { n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean }
+type DemoHeadline = { highCount: number; highValue: number; darkHours: number; closingName: string; healthyCount: number }
+const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink, #0E0D0B)' } as const
+const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+const numWord = (n: number) => (n >= 0 && n <= 10 ? NUMWORD[n] : String(n))
+
 function agoDays(iso?: string | null): string {
   if (!iso) return '--'
   const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
   return d <= 0 ? 'today' : `${d}d ago`
 }
 
-export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; demoSignals?: unknown[] }) {
+export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: Account[]; demoSignals?: unknown[]; demoHead?: { headline: DemoHeadline; stats: HeadStat[] } }) {
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
@@ -138,28 +144,54 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
         Portfolio <span style={{ margin: '0 8px' }}>/</span> {accounts.length} accounts
       </div>
       {(() => {
-        const totalVal = accounts.reduce((a, x) => a + (Number(x.value) || 0), 0)
-        const atRisk = accounts.filter(x => (x.risk_level || '') === 'high')
-        const riskVal = atRisk.reduce((a, x) => a + (Number(x.value) || 0), 0)
-        const dark = accounts.filter(x => x.last_contact_date && (Date.now() - new Date(x.last_contact_date).getTime()) / 86400000 > 14)
+        const RED = TONE.critical, GREEN = TONE.good
+        const high = accounts.filter(x => (x.risk_level || '') === 'high')
+        const highVal = high.reduce((a, x) => a + (Number(x.value) || 0), 0)
+        const medium = accounts.filter(x => (x.risk_level || '') === 'medium')
+        const mediumVal = medium.reduce((a, x) => a + (Number(x.value) || 0), 0)
+        const closing = accounts.filter(x => /clos/i.test(x.stage || ''))
+        const closingVal = closing.reduce((a, x) => a + (Number(x.value) || 0), 0)
+        const healthy = accounts.filter(x => (x.risk_level || '') === 'low' && !/clos/i.test(x.stage || ''))
+        const scored = accounts.filter(x => x.health_score != null)
+        const avgHealth = scored.length ? Math.round(scored.reduce((a, x) => a + (Number(x.health_score) || 0), 0) / scored.length) : null
+        const darkHrs = (x: Account) => x.last_contact_date ? (Date.now() - new Date(x.last_contact_date).getTime()) / 3600000 : 0
+        const allDark = high.length > 0 && high.every(x => darkHrs(x) > 48)
+        const closingNow = closing.find(x => !/won/i.test(x.stage || ''))
+
+        const h = demoHead?.headline
+        const headline = h ? (
+          <>
+            {numWord(h.highCount)} account{h.highCount === 1 ? '' : 's'} carr{h.highCount === 1 ? 'ies' : 'y'} <span style={{ color: RED }}>{fmtVal(h.highValue)}</span> of high risk, both dark for over {h.darkHours} hours.{' '}
+            <span style={{ color: 'var(--ink-muted)' }}>{h.closingName} is <span style={{ color: GREEN }}>closing this week</span> and {numWord(h.healthyCount).toLowerCase()} more are healthy.</span>
+          </>
+        ) : (
+          <>
+            {high.length > 0
+              ? <>{numWord(high.length)} account{high.length === 1 ? '' : 's'} carr{high.length === 1 ? 'ies' : 'y'} <span style={{ color: RED }}>{fmtVal(highVal)}</span> of high risk{allDark ? `, ${high.length === 1 ? '' : high.length === 2 ? 'both ' : 'all '}dark for over 48 hours` : ''}.{' '}</>
+              : <>Nothing is flagged high risk right now.{' '}</>}
+            <span style={{ color: 'var(--ink-muted)' }}>
+              {closingNow ? <>{closingNow.name.split(' ')[0]} is <span style={{ color: GREEN }}>closing this week</span>{healthy.length ? <> and {numWord(healthy.length).toLowerCase()} more are healthy</> : null}.</>
+                : healthy.length ? <>{numWord(healthy.length)} account{healthy.length === 1 ? ' is' : 's are'} healthy.</> : null}
+            </span>
+          </>
+        )
+        const stats: HeadStat[] = demoHead?.stats ?? [
+          { n: String(high.length), lbl: `high risk · ${fmtVal(highVal)} at risk`, tone: 'critical' },
+          { n: String(medium.length), lbl: `medium · ${fmtVal(mediumVal)} exposure`, tone: 'warn' },
+          { n: String(closing.length), lbl: `closing or won · ${fmtVal(closingVal)}`, tone: 'good' },
+          { n: avgHealth != null ? String(avgHealth) : '--', lbl: 'avg health', tone: 'ink', strong: true },
+        ]
         return (
           <>
             <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
-              {fmtVal(totalVal)} across {accounts.length} account{accounts.length === 1 ? '' : 's'}.{' '}
-              <span style={{ color: 'var(--ink-muted)' }}>
-                {atRisk.length > 0 ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtVal(riskVal)}</span> sits in {atRisk.length} at-risk account{atRisk.length === 1 ? '' : 's'}{dark.length ? `, and ${dark.length} have gone quiet` : ''}.</> : <>Nothing flagged high risk right now.</>}
-              </span>
+              {headline}
             </h1>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', marginTop: 40, paddingTop: 26, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
-              {[
-                { n: fmtVal(totalVal), lbl: 'pipeline value', color: 'var(--ink)' },
-                { n: fmtVal(riskVal), lbl: `at risk · ${atRisk.length} accounts`, color: 'var(--critical, #c43d2b)' },
-                { n: String(dark.length), lbl: 'gone quiet · 14d+', color: 'var(--warn, #d38b1d)' },
-                { n: String(accounts.length), lbl: 'accounts tracked', color: 'var(--ink)' },
-              ].map((st, i, arr) => (
-                <div key={i} style={{ paddingRight: 32 }}>
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
-                  <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+              {stats.map((st, i) => (
+                <div key={i} style={{ paddingTop: 22, paddingBottom: 18, borderBottom: `1px solid ${st.strong ? 'var(--rule-strong, #0E0D0B)' : 'var(--hairline, #EFEAE1)'}` }}>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
               ))}
             </div>
