@@ -500,6 +500,48 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const topic = topicRaw.replace(/^(Zoom|Meet|Fireflies):\s*/i, '').trim()
         const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
         const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
+        const conf = typeof ai.confidence === 'number' ? ai.confidence : null
+
+        // What the detector actually saw. Prefer the model's own evidence list,
+        // fall back to the labelled facts, and never invent a bullet.
+        const evidence: string[] = (() => {
+          const out: string[] = []
+          const ev = ai.evidence
+          if (Array.isArray(ev)) for (const e of ev) { if (typeof e === 'string' && e.trim()) out.push(e.trim()) }
+          else if (typeof ev === 'string' && ev.trim()) out.push(ev.trim())
+          if (quote) out.push(`They said: "${quote}"`)
+          for (const [k, v] of aiRows) {
+            const label = FACT_LABELS[k]
+            if (label && !out.some(x => x.toLowerCase().startsWith(label.toLowerCase()))) out.push(`${label}: ${fmtFact(k, v)}`)
+          }
+          return out.slice(0, 5)
+        })()
+
+        // Why this pattern matters, stated plainly per signal type.
+        const PATTERNS: Record<string, string> = {
+          silent_stall: 'Accounts that go quiet past their own reply cadence stall far more often than they close.',
+          competitor_mention: 'A named competitor in the thread usually means an evaluation is already running.',
+          price_flinch: 'Pricing pushback this late typically adds a finance loop and weeks to the close.',
+          legal_loopin: 'Once outside counsel joins, review cycles historically add two to three weeks.',
+          timeline_slip: 'A second date change is the strongest single predictor of a slipped quarter.',
+          deal_stage_backward: 'Stage regressions rarely recover without an executive conversation.',
+          meeting_cancelled: 'Cancelled reviews without a rebook are where momentum quietly dies.',
+          meeting_declined: 'A declined invite from the decision maker is worth more attention than a quiet week.',
+          champion_change: 'A champion change resets the buying case; the new contact has not heard it yet.',
+          call_objection: 'Objections raised on a call and left unanswered tend to resurface at signature.',
+          call_sentiment_drop: 'A sentiment drop mid-cycle usually precedes a slower reply cadence.',
+          call_buying_signal: 'Explicit buying language is the cheapest moment to ask for the next step.',
+          reengaged: 'Re-engagement after silence is a short window; it closes again quickly.',
+          commitment_overdue: 'Overdue promises are the most common reason a deal quietly loses trust.',
+        }
+        const pattern = PATTERNS[d.signal_type || ''] || null
+        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+        const actionRow = (text: string, go: () => void) => (
+          <div onClick={go} key={text}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '13px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>
+            <span>{text}</span><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: sevColor }}>→</span>
+          </div>
+        )
         const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
         const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.status === 'snoozed' ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
@@ -523,6 +565,19 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               </div>
               <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
               <div style={{ padding: '22px 30px 30px' }}>
+                {conf != null && (
+                  <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
+                    <div>
+                      <div style={mlab}>AI confidence</div>
+                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', marginTop: 7, color: sevColor }}>{conf}%</div>
+                    </div>
+                    <div style={{ flex: 1, maxWidth: 160, paddingBottom: 8 }}>
+                      <div style={{ height: 2, background: 'var(--hairline, #EFEAE1)' }}>
+                        <div style={{ width: `${conf}%`, height: '100%', background: sevColor }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
                 {descText && !descDuplicatesTitle ? (
                   <div className="read-prose read-prose-ink" style={{ marginBottom: 18 }}>{descText}</div>
                 ) : null}
@@ -624,21 +679,27 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 )}
 
                 {modalMode === 'view' && (
-                  <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-                    {!inactive && actionBtn('Draft follow-up', () => { setDetailFor(null); openDraft(d) }, true)}
-                    {!inactive && actionBtn('Mark handled', () => setModalMode('handle'))}
-                    {d.signal_type?.startsWith('call') && d.source_message_id && actionBtn('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
-                    {d.account_name && !unmapped && actionBtn('Open account', () => { setDetailFor(null); open360(d) })}
-                    {unmapped && !inactive && actionBtn('Assign to account', () => {
+                  <div style={{ marginTop: 22 }}>
+                    <div style={mlab}>Suggested actions</div>
+                    {!inactive && actionRow('Draft a follow-up email', () => { setDetailFor(null); openDraft(d) })}
+                    {!inactive && actionRow('Mark as handled', () => setModalMode('handle'))}
+                    {d.signal_type?.startsWith('call') && d.source_message_id && actionRow('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
+                    {d.account_name && !unmapped && actionRow('Open Account 360', () => { setDetailFor(null); open360(d) })}
+                    {unmapped && !inactive && actionRow('Assign to an account', () => {
                       setModalMode('assign')
                       if (!acctOptions) {
                         createClient().from('accounts').select('id, name').order('name').limit(300)
                           .then(({ data }) => setAcctOptions((data as Array<{ id: string; name: string }>) ?? []))
                       }
                     })}
-                    {!inactive && actionBtn('Snooze', () => setModalMode('snooze'))}
-                    {!inactive && actionBtn('Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') })}
-                    {!inactive && actionBtn('Remove', () => setModalMode('remove'))}
+                    {!inactive && (
+                      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                        {[['Snooze', () => setModalMode('snooze')], ['Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') }], ['Remove', () => setModalMode('remove')]].map(([lbl, fn]) => (
+                          <button key={String(lbl)} onClick={fn as () => void}
+                            style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.3px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>{String(lbl)}</button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
