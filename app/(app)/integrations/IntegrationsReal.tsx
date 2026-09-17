@@ -523,7 +523,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
         const onCount = inCat.filter(p => active.includes(p.key)).length
         return (
           <div key={cat} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 24, marginTop: 44 }}>
-            <div>
+            {/* rows carry 18px of top padding, so the label matches it */}
+            <div style={{ paddingTop: 18 }}>
               <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{cat}</div>
               <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>{onCount} active</div>
             </div>

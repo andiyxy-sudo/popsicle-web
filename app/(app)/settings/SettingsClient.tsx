@@ -96,7 +96,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
   const Section = ({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) => (
     <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingRight: 8 }}>
-      <div>
+      {/* rows carry 16px of top padding, so the label matches it */}
+      <div style={{ paddingTop: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
         <div className="read-prose" style={{ color: 'var(--ink-faint)', marginTop: 4, fontSize: 'inherit' }}>{sub}</div>
       </div>
