@@ -578,7 +578,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}{d.source_integration ? ` · via ${d.source_integration}` : ''}
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}
                   </div>
                   <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</h2>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle}{inactive ? ` · ${inactive}` : ''}</div>
@@ -593,8 +593,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                       <div style={mlab}>AI confidence</div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em', marginTop: 6, color: sevColor }}>{conf}%</div>
                     </div>
-                    <div style={{ flex: 1, maxWidth: 160, paddingBottom: 8 }}>
-                      <div style={{ height: 2, background: 'var(--hairline, #EFEAE1)' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, paddingBottom: 7 }}>
+                      {d.source_integration && (
+                        <span style={{ ...mlab, color: 'var(--ink-faint)' }}>via {d.source_integration}</span>
+                      )}
+                      <div style={{ width: '100%', maxWidth: 160, height: 2, background: 'var(--hairline, #EFEAE1)' }}>
                         <div style={{ width: `${conf}%`, height: '100%', background: sevColor }} />
                       </div>
                     </div>
