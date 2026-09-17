@@ -190,6 +190,27 @@ function ClarifyCard({ line, onAsk }: { line: string; onAsk: (q: string) => void
   )
 }
 
+
+// Any quoted passage the answer offers as something to send - a draft email,
+// an opening line, a message - is lifted into its own block with its own copy
+// action, so the words can be taken without the commentary around them.
+function Quotable({ text }: { text: string }) {
+  const [done, setDone] = useState(false)
+  return (
+    <div className="ans-in" style={{ position: 'relative', margin: '14px 0 16px', padding: '16px 18px 16px 20px', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 9 }}>
+        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready to send</span>
+        <button onClick={() => { navigator.clipboard?.writeText(text); setDone(true); setTimeout(() => setDone(false), 1600) }}
+          className="ask-ghost"
+          style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.4px', textTransform: 'uppercase', background: 'none', border: 0, color: done ? 'var(--good, #2f8f5b)' : 'var(--accent)', cursor: 'pointer', padding: 0 }}>
+          {done ? 'copied' : 'copy'}
+        </button>
+      </div>
+      <div style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink)', whiteSpace: 'pre-wrap' }}>{text}</div>
+    </div>
+  )
+}
+
 function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { text: string; streaming?: boolean; onAsk: (q: string) => void; onInspect: (src: string) => void; onDraft: (acct: string | null, play: string) => void }) {
   const [copied, setCopied] = useState(false)
   // While the answer is still arriving, drop the final partial line and any
@@ -217,6 +238,14 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
   }
   body.forEach((l, i) => {
     if (!l) { flush(i); return }
+    // a line that is mostly a quotation, or is marked as a draft, is content
+    // to be sent rather than prose to be read
+    const q = l.match(/^(?:draft|subject|send|message|say)?\s*:?\s*["“](.+)["”]\.?$/i)
+    if (q && q[1].length > 24) {
+      flush(i)
+      paras.push(<Quotable key={`q${i}`} text={q[1]} />)
+      return
+    }
     if (/^([-*•]|\d+[.)])\s/.test(l)) {
       flush(i)
       const t = l.replace(/^([-*•]|\d+[.)])\s/, '')
@@ -307,9 +336,12 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
               return (
                 <>
                   <div style={{ fontSize: 16, color: 'var(--ink)', lineHeight: 1.55, letterSpacing: '-.01em' }}>{inline(action, 0)}</div>
-                  {notes.length > 0 && (
+                  {notes.filter(n => /^["“].+["”]\.?$/.test(n)).map((n, i) => (
+                    <Quotable key={`pq${i}`} text={n.replace(/^["“]|["”]\.?$/g, '')} />
+                  ))}
+                  {notes.filter(n => !/^["“].+["”]\.?$/.test(n)).length > 0 && (
                     <div style={{ marginTop: 10, display: 'grid', gap: 7 }}>
-                      {notes.map((n, i) => (
+                      {notes.filter(n => !/^["“].+["”]\.?$/.test(n)).map((n, i) => (
                         <div key={i} style={{ display: 'grid', gridTemplateColumns: '11px 1fr', gap: 10, alignItems: 'baseline' }}>
                           <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'rgba(232,90,37,.5)', marginTop: 8 }} />
                           <span style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.62 }}>{inline(n, i + 1)}</span>

@@ -123,6 +123,7 @@ Use two or three short options the person can pick. Only do this when it really 
 Use **bold** at most twice per bullet and only on the single figure or phrase that matters most: heavy bolding makes an answer unreadable.
 Always label the closing block exactly "RECOMMENDED PLAY:" and never "Recommended move" or similar.
 Write the play as one instruction sentence first, then at most two short supporting sentences: what to say, and when. Never pack several instructions into a single sentence.
+When you suggest exact wording to send - an opening line, a subject, a short message - put that wording on its own line wrapped in double quotes and nothing else on that line, so it can be copied cleanly.
 
 Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()
