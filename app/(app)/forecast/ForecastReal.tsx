@@ -62,7 +62,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
 
   const secHead = (title: string, right?: React.ReactNode) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 64 }}>
-      <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{title}</h2>
+      <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{title}</h2>
       {right}
     </div>
   )
@@ -148,7 +148,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       </div>
 
       {/* the narrative */}
-      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(26px,3vw,36px)', letterSpacing: '-.035em', lineHeight: 1.2, margin: '18px 0 0', color: 'var(--ink)' }}>
+      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: 'var(--ink)' }}>
         Commit is <span style={{ color: 'var(--good, #2f8f5b)' }}>{commitProgress}% achieved</span> at {formatCurrency(weighted)} with {daysLeft} days to go.{' '}
         <span style={{ color: 'var(--ink-muted)' }}>
           Best case reaches {formatCurrency(bestCase)}
@@ -157,24 +157,24 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
         </span>
       </h1>
 
-      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '30px 0 24px' }} />
+      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 30px' }} />
 
       {/* commit hero + trend */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Commit · {quarterLabel.split(' ')[0]}</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(34px,4.4vw,52px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commit)}</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 12 }}>
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commit)}</span>
             {commitProgress > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--good, #2f8f5b)' }}>+{commitProgress - 100 > 0 ? commitProgress - 100 : Math.max(1, Math.round(commitProgress / 8))}%</span>}
           </div>
-          <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 16, position: 'relative' }}>
+          <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 22, position: 'relative' }}>
             <div style={{ position: 'absolute', inset: 0, width: `${commitProgress}%`, background: 'var(--good, #2f8f5b)' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)' }}>
             <span>{formatCurrency(weighted)} actual</span><span>{formatCurrency(toGo)} to go</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 22, marginTop: 28 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px 22px', marginTop: 34 }}>
             {[
               { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
               { n: formatCurrency(atRisk), lbl: `pipeline exposed · ${rows.filter(r => r.risky).length} deals`, color: 'var(--critical, #c43d2b)' },
@@ -182,8 +182,8 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
               { n: `${Math.min(99, 70 + Math.round(rows.length * 1.5))}%`, lbl: 'AI accuracy · trailing', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
-                <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 5, lineHeight: 1.4 }}>{st.lbl}</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 8, lineHeight: 1.4 }}>{st.lbl}</div>
               </div>
             ))}
           </div>
@@ -193,7 +193,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Pipeline trend · {window_}</span>
-            <span style={{ display: 'flex', gap: 16, fontSize: 11.5, color: 'var(--ink-muted)' }}>
+            <span style={{ display: 'flex', gap: 16, fontSize: 12.5, color: 'var(--ink-muted)' }}>
               <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--ink)', verticalAlign: 'middle', marginRight: 6 }} />Best case</span>
               <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--good, #2f8f5b)', verticalAlign: 'middle', marginRight: 6 }} />Commit</span>
               <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--critical, #c43d2b)', verticalAlign: 'middle', marginRight: 6 }} />At risk</span>
@@ -223,7 +223,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
                   ))}
                 </div>
                 <div>
-                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={210} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={260} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
                   <defs>
                     <linearGradient id="fcFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#c43d2b" stopOpacity=".10" />
@@ -241,7 +241,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
                 </svg>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
                   {trend.map(t => (
-                    <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: t.d === 'Today' ? 'var(--accent)' : 'var(--ink-faint)' }}>{t.d}</span>
+                    <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: t.d === 'Today' ? 'var(--ink)' : 'var(--ink-faint)' }}>{t.d}</span>
                   ))}
                 </div>
                 </div>
@@ -255,7 +255,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       {movers.length > 0 && (
         <div style={{ marginTop: 44 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
-            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
+            <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 0 }}>
