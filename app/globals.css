@@ -2435,7 +2435,7 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 
    TO REVERT: set --reading-type: 0 on :root below. Nothing else to undo.
    ============================================================ */
-:root { --reading-type: 1; }
+:root { --reading-type: 0; }  /* reverted: set back to 1 to re-enable */
 
 @supports (color: rgb(0 0 0)) {
   /* each rule is gated on the switch, so one value turns the whole set off */
