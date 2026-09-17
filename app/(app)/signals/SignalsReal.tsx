@@ -496,8 +496,10 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           if (k === 'days' || k === 'days_silent') return `${v}d`
           return String(v)
         }
+        // rows only carry what is not already stated above: no account name,
+        // no repeated confidence, no source (now a note in the eyebrow)
         const aiRows = Object.entries(ai)
-          .filter(([k, v]) => FACT_LABELS[k] && v != null && v !== '' && typeof v !== 'boolean' && typeof v !== 'object')
+          .filter(([k, v]) => FACT_LABELS[k] && k !== 'confidence' && v != null && v !== '' && typeof v !== 'boolean' && typeof v !== 'object')
           .slice(0, 4)
         const quote = typeof ai.quote === 'string' && ai.quote.trim() ? ai.quote.trim() : null
         const reason = typeof ai.reason === 'string' && ai.reason.trim() ? ai.reason.trim() : null
@@ -563,7 +565,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}{d.source_integration ? ` · via ${d.source_integration}` : ''}
                   </div>
                   <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</h2>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle}{inactive ? ` · ${inactive}` : ''}</div>
@@ -606,11 +608,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginTop: 8 }}>{ai.recommendation}</div>
                   </div>
                 )}
+                {/* the account, source and confidence are already stated above,
+                    so the rows carry only what is new */}
                 <div style={{ marginBottom: 4 }}>
-                  {cleanAccount && !unmapped ? row('Account', cleanAccount) : null}
                   {unmapped && cleanAccount ? row('Account', `${cleanAccount} (not linked yet)`) : null}
                   {d.risk_amount ? row('At risk', fmtMoney(d.risk_amount)) : null}
-                  {d.source_integration ? row('Source', d.source_integration.charAt(0).toUpperCase() + d.source_integration.slice(1)) : null}
                   {d.created_at ? row('Detected', new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })) : null}
                   {aiRows.map(([k, v]) => row(FACT_LABELS[k], fmtFact(k, v)))}
                 </div>
