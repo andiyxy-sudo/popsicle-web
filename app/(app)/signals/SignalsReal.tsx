@@ -88,6 +88,13 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     setModalMode('view'); setHandleText(''); setAssignPick('')
   }, [detailFor?.id])
 
+  // hide the floating Ask bar while a sheet is open
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    document.body.dataset.modal = (detailFor || draftFor) ? '1' : '0'
+    return () => { document.body.dataset.modal = '0' }
+  }, [detailFor, draftFor])
+
   // Handle /signals?signal=<id> deep links (Slack "Open in Popsicle" etc).
   // If the signal is in the visible list: scroll to it, flash it, open detail.
   // If not (dismissed, snoozed, or older): fetch it directly (RLS keeps this
@@ -491,7 +498,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         }
         const aiRows = Object.entries(ai)
           .filter(([k, v]) => FACT_LABELS[k] && v != null && v !== '' && typeof v !== 'boolean' && typeof v !== 'object')
-          .slice(0, 6)
+          .slice(0, 4)
         const quote = typeof ai.quote === 'string' && ai.quote.trim() ? ai.quote.trim() : null
         const reason = typeof ai.reason === 'string' && ai.reason.trim() ? ai.reason.trim() : null
         const unmapped = !d.account_name || /\(unmapped\)/i.test(d.account_name)
@@ -514,7 +521,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
             const label = FACT_LABELS[k]
             if (label && !out.some(x => x.toLowerCase().startsWith(label.toLowerCase()))) out.push(`${label}: ${fmtFact(k, v)}`)
           }
-          return out.slice(0, 5)
+          return out.slice(0, 3)
         })()
 
         // Why this pattern matters, stated plainly per signal type.
@@ -538,21 +545,21 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const actionRow = (text: string, go: () => void) => (
           <div onClick={go} key={text}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '13px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14.5, fontWeight: 600, color: 'var(--ink)' }}>
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>
             <span>{text}</span><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: sevColor }}>→</span>
           </div>
         )
         const descDuplicatesTitle = !!topic && descText.toLowerCase().includes(topic.toLowerCase())
         const inactive = d.status === 'deleted' ? 'removed' : d.status === 'handled' ? 'handled' : d.is_dismissed ? 'dismissed' : d.status === 'snoozed' ? 'snoozed' : null
         const row = (label: string, val: React.ReactNode) => (
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '12px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
-            <span style={{ fontSize: 14, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{label}</span>
-            <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{val}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, padding: '10px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+            <span style={{ fontSize: 13.5, color: 'var(--ink)', whiteSpace: 'nowrap' }}>{label}</span>
+            <span style={{ fontSize: 13.5, color: 'var(--ink-muted)', textAlign: 'right' }}>{val}</span>
           </div>
         )
         return (
           <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', zIndex: 810, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: 'min(470px,100%)', maxHeight: '84vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 'min(470px,100%)', maxHeight: '86vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -564,12 +571,12 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 <button onClick={() => setDetailFor(null)} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)', flex: 'none', paddingTop: 4 }}>close</button>
               </div>
               <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
-              <div style={{ padding: '22px 30px 30px' }}>
+              <div style={{ padding: '20px 28px 24px' }}>
                 {conf != null && (
                   <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
                     <div>
                       <div style={mlab}>AI confidence</div>
-                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', marginTop: 7, color: sevColor }}>{conf}%</div>
+                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em', marginTop: 6, color: sevColor }}>{conf}%</div>
                     </div>
                     <div style={{ flex: 1, maxWidth: 160, paddingBottom: 8 }}>
                       <div style={{ height: 2, background: 'var(--hairline, #EFEAE1)' }}>
@@ -579,9 +586,9 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                   </div>
                 )}
                 {descText && !descDuplicatesTitle ? (
-                  <div className="read-prose read-prose-ink" style={{ marginBottom: 18 }}>{descText}</div>
+                  <div className="read-prose read-prose-ink" style={{ marginBottom: 16 }}>{descText}</div>
                 ) : null}
-                {quote && (
+                {quote && evidence.length === 0 && (
                   <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, marginBottom: 20 }}>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words</div>
                     <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 8 }}>&ldquo;{quote}&rdquo;</div>
@@ -679,8 +686,8 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 )}
 
                 {modalMode === 'view' && (
-                  <div style={{ marginTop: 22 }}>
-                    <div style={mlab}>Suggested actions</div>
+                  <div style={{ marginTop: 18 }}>
+                    <div style={{ ...mlab, marginBottom: 2 }}>Suggested actions</div>
                     {!inactive && actionRow('Draft a follow-up email', () => { setDetailFor(null); openDraft(d) })}
                     {!inactive && actionRow('Mark as handled', () => setModalMode('handle'))}
                     {d.signal_type?.startsWith('call') && d.source_message_id && actionRow('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
