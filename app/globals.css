@@ -2476,9 +2476,7 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 
 /* v10.8 - a light warmth on the two quietest pages: rows glow faintly on
    hover, connected sources carry a warm tint, outlined pills warm up. */
-.int-row, .set-row { transition: background .16s ease, box-shadow .16s ease; }
-.int-row:hover, .set-row:hover { background: rgba(232,90,37,.035); }
-.int-row.on { background: linear-gradient(90deg, rgba(232,90,37,.045), rgba(232,90,37,0) 62%); }
-.int-row.on:hover { background: linear-gradient(90deg, rgba(232,90,37,.08), rgba(232,90,37,.01) 62%); }
+.set-row { transition: background .16s ease; }
+.set-row:hover { background: rgba(232,90,37,.035); }
 .warm-pill { transition: background .16s ease, border-color .16s ease, color .16s ease; }
 .warm-pill:hover { background: rgba(232,90,37,.1) !important; border-color: rgba(232,90,37,.55) !important; color: var(--accent, #E85A25) !important; }

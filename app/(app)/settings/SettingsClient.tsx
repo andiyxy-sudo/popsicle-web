@@ -261,7 +261,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
            ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings'],
            ['push', 'Push notifications', typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Allowed in this browser' : 'Needs browser permission'],
            ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled']] as const).map(([k, label, sub]) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
             <div>
               <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
@@ -280,7 +280,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Tone" sub="Applies to every draft it prepares" value={voice.Tone} onClick={() => setSheet('Tone')} />
         <Row label="Length" sub="How long a first draft should run" value={voice.Length} onClick={() => setSheet('Length')} />
         <Row label="Sign-off" sub="The closing line on your emails" value={voice['Sign-off']} onClick={() => setSheet('Sign-off')} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
           <div>
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Send without asking</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Off means every draft waits for your approval</div>

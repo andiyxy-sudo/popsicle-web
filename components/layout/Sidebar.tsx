@@ -184,6 +184,12 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 <input value={draftName} onChange={e => setDraftName(e.target.value)}
                   style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
               </label>
+
+              <label style={{ display: 'block' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Job title</span>
+                <input value={draftRole} onChange={e => setDraftRole(e.target.value)} placeholder="VP Sales"
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+              </label>
               <label style={{ display: 'block' }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Work email</span>
                 <input value={user.email} readOnly title="Email changes go through account recovery"
@@ -197,12 +203,6 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
             </div>
 
             <div style={{ padding: '26px 32px 0' }}>
-              <label style={{ display: 'block' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Job title</span>
-                <input value={draftRole} onChange={e => setDraftRole(e.target.value)} placeholder="VP Sales"
-                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
-              </label>
-
               <div style={{ marginTop: 22 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Signature name</span>
                 <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 6, lineHeight: 1.55 }}>
