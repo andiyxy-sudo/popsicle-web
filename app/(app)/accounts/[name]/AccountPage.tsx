@@ -151,7 +151,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
               <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
                 style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
-                <div style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--ink)' }}>{s.description || s.title}</div>
+                <div className="read-prose read-prose-ink">{s.description || s.title}</div>
               </div>
             ))}
           </div>

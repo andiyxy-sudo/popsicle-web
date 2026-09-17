@@ -98,7 +98,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingRight: 8 }}>
       <div>
         <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
-        <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 4, lineHeight: 1.5 }}>{sub}</div>
+        <div className="read-prose" style={{ color: 'var(--ink-faint)', marginTop: 4, fontSize: 'inherit' }}>{sub}</div>
       </div>
       <div>{children}</div>
     </div>

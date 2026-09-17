@@ -58,7 +58,7 @@ export function RiskFlagSheet({ flag, onClose }: { flag: RiskFlag | null; onClos
 
         <div style={{ ...label, color: 'var(--ink-faint)', marginTop: 26 }}>Signals detected</div>
         {flag.signals.map((t, i) => (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '6px minmax(0,1fr)', gap: 12, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.45, color: 'var(--ink)' }}>
+          <div key={i} className="read-prose read-prose-ink" style={{ display: 'grid', gridTemplateColumns: '6px minmax(0,1fr)', gap: 12, padding: '12px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: c, marginTop: 7 }} />
             <span>{t}</span>
           </div>
@@ -66,7 +66,7 @@ export function RiskFlagSheet({ flag, onClose }: { flag: RiskFlag | null; onClos
 
         <div style={{ marginTop: 24, paddingLeft: 16, borderLeft: `2px solid ${c}` }}>
           <div style={{ ...label, color: c }}>Pattern match</div>
-          <div style={{ fontWeight: 600, fontSize: 15, letterSpacing: '-.015em', lineHeight: 1.42, marginTop: 8, color: 'var(--ink)' }}>{flag.pattern}</div>
+          <div className="read-prose read-prose-ink" style={{ marginTop: 8 }}>{flag.pattern}</div>
         </div>
 
         <div style={{ ...label, color: 'var(--ink-faint)', marginTop: 28 }}>Suggested actions</div>

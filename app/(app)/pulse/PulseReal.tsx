@@ -844,7 +844,7 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
           {briefRows.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 16, lineHeight: 1.5 }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', paddingTop: 6 }}>{String(i + 1).padStart(2, '0')}</span>
-              <div style={{ color: 'var(--ink)' }}>{b.pre}<strong style={{ fontWeight: 600 }}>{b.strong}</strong></div>
+              <div className="read-prose read-prose-ink">{b.pre}<strong style={{ fontWeight: 550 }}>{b.strong}</strong></div>
             </div>
           ))}
           <span onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>

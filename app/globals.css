@@ -2426,3 +2426,26 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
   content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 2px;
   border-radius: 2px; background: linear-gradient(180deg, #FF8A50, #E85A25);
 }
+
+/* ============================================================
+   v9.0 — READING TYPE (reversible)
+   Prose surfaces only: sheets, the Pulse brief, account overview text,
+   settings descriptions. Tables, chips, mono labels and timestamps are
+   deliberately untouched, so the contrast the design lives on survives.
+
+   TO REVERT: set --reading-type: 0 on :root below. Nothing else to undo.
+   ============================================================ */
+:root { --reading-type: 1; }
+
+@supports (color: rgb(0 0 0)) {
+  /* each rule is gated on the switch, so one value turns the whole set off */
+  .read-prose {
+    font-size: calc(13.5px + var(--reading-type) * 2px) !important;
+    line-height: calc(1.5 + var(--reading-type) * 0.15) !important;
+    letter-spacing: calc(var(--reading-type) * -0.002em) !important;
+    max-width: calc(62ch + (1 - var(--reading-type)) * 20ch);
+  }
+  .read-prose-ink {
+    color: color-mix(in srgb, var(--ink) calc(var(--reading-type) * 100%), var(--ink-muted)) !important;
+  }
+}

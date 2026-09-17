@@ -524,7 +524,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
               <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
               <div style={{ padding: '22px 30px 30px' }}>
                 {descText && !descDuplicatesTitle ? (
-                  <div style={{ fontSize: 14.5, color: 'var(--ink)', lineHeight: 1.65, marginBottom: 18 }}>{descText}</div>
+                  <div className="read-prose read-prose-ink" style={{ marginBottom: 18 }}>{descText}</div>
                 ) : null}
                 {quote && (
                   <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, marginBottom: 20 }}>
@@ -535,7 +535,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                 {reason && (
                   <div style={{ marginBottom: 14 }}>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Why this was raised</div>
-                    <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 11 }}>{reason}</div>
+                    <div className="read-prose" style={{ color: 'var(--ink-muted)', marginTop: 11 }}>{reason}</div>
                   </div>
                 )}
                 {typeof ai.recommendation === 'string' && ai.recommendation && (
