@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
@@ -55,7 +55,8 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
     color: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)',
   }))
 
-  const breakdown = [
+  const extra = DEMO_EXTRA[accountName]
+  const breakdown = extra ? extra.breakdown.map(b => ({ k: b.k, v: b.v })) : [
     { k: 'Engagement', v: Math.max(5, Math.min(100, health - open.filter(s => s.signal_type === 'silent_stall').length * 18)) },
     { k: 'Product fit', v: Math.max(20, Math.min(100, 60 + open.filter(s => s.severity === 'positive').length * 12)) },
     { k: 'Legal', v: Math.max(10, Math.min(100, 80 - open.filter(s => s.signal_type === 'legal_loopin').length * 40)) },
@@ -116,7 +117,8 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
             <path d={`M${spark}`} fill="none" stroke={riskColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </>, open.length ? `${open.length} open signal${open.length === 1 ? '' : 's'}` : 'no open signals')}
-        {stat('Renewal', acct.close_date && mounted ? new Date(acct.close_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--', acct.stage || '')}
+        {stat('Renewal', extra?.expiry ?? (acct.close_date && mounted ? new Date(acct.close_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--'), acct.stage || '')}
+        {extra && stat('Trend', extra.trend, `rep score ${extra.repScore}`, extra.trend.startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)')}
         {stat('Exposure', money(open.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)), `${open.filter(s => s.severity === 'high').length} critical`, riskColor)}
         {stat('Last touch', daysDark != null ? (daysDark === 0 ? 'today' : `${daysDark}d ago`) : '--', acct.owner ? `owner ${acct.owner}` : '')}
       </div>
@@ -146,8 +148,17 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
               {flags.length === 0 && <span style={{ fontSize: 13.5, color: 'var(--ink-faint)' }}>No open flags.</span>}
             </div>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk signals</div>
-            {open.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing open on this account.</div>}
-            {open.map(s => (
+            {DEMO_RISK_LINES[accountName]?.map((r, i) => {
+              const c = r.tone === 'high' ? 'var(--critical, #c43d2b)' : r.tone === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
+              return (
+                <div key={`rl${i}`} style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: c }} />
+                  <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)' }}>{r.text}</div>
+                </div>
+              )
+            })}
+            {!DEMO_RISK_LINES[accountName] && open.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing open on this account.</div>}
+            {!DEMO_RISK_LINES[accountName] && open.map(s => (
               <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
                 style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
@@ -188,7 +199,28 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
       )}
 
       {/* COMMS */}
-      {tab === 'comms' && (() => {
+      {tab === 'comms' && DEMO_COMMS[accountName] && (
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>Recent communications</div>
+          {DEMO_COMMS[accountName].map((c, i) => {
+            const tone = c.tone === 'positive' ? 'var(--good, #2f8f5b)' : c.tone === 'negative' ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)'
+            return (
+              <div key={i} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{c.who}</span>
+                  <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{c.role} · via {c.via}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{c.when}</span>
+                </div>
+                <div style={{ marginTop: 9, paddingLeft: 14, borderLeft: `2px solid ${tone}`, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>&ldquo;{c.quote}&rdquo;</div>
+                <div style={{ fontSize: 12.5, color: tone, marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: tone }} />{c.tone} signal
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {tab === 'comms' && !DEMO_COMMS[accountName] && (() => {
         const sorted = [...messages].filter(m => m.received_at).sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))
         if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No correspondence recorded for this account.</div>
         const dayLabel = (iso: string) => {
@@ -252,7 +284,32 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
       })()}
 
       {/* TIMELINE */}
-      {tab === 'timeline' && (() => {
+      {tab === 'timeline' && DEMO_TIMELINE[accountName] && (
+        <div style={{ marginTop: 22 }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Deal timeline</div>
+          {DEMO_TIMELINE[accountName].map((t, i) => {
+            const c = t.kind === 'negative' ? 'var(--critical, #c43d2b)' : t.kind === 'watch' ? 'var(--warn, #d38b1d)' : t.kind === 'call' ? 'var(--blue, #2f6f9f)' : 'var(--good, #2f8f5b)'
+            return (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${c}`, alignSelf: 'center' }} />
+                <div>
+                  <div style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{t.title}</div>
+                  <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.62, marginTop: 4 }}>{t.body}</div>
+                  {t.tags && (
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 9 }}>
+                      {t.tags.map(tag => (
+                        <span key={tag} style={{ fontSize: 11.5, color: 'var(--ink-muted)', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: '3px 10px' }}>{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{t.when}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {tab === 'timeline' && !DEMO_TIMELINE[accountName] && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
         if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
         const monthOf = (iso?: string | null) => iso && mounted ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''

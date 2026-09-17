@@ -1,50 +1,287 @@
-// Demo dataset extracted verbatim from the Popsicle prototype
-// (popsicle-desktop-v15b_33.html) so the demo account shows the canonical story.
+// Demo dataset, transcribed from the Popsicle mobile app so the web demo tells
+// exactly the same story. Figures, names, quotes and dates are verbatim.
 import type { Account, Signal } from '@/types'
 
 const now = Date.now()
 const iso = (h: number) => new Date(now - h * 3600000).toISOString()
-const fut = (d: number) => new Date(now + d * 86400000).toISOString()
+const at = (m: number, d: number) => new Date(2026, m - 1, d).toISOString()
+
+// ---------------------------------------------------------------- accounts
+type Extra = {
+  contact_name: string
+  trend: string
+  repScore: number
+  expiry: string
+  flags: string[]
+  breakdown: Array<{ k: string; v: number }>
+  statusNote?: string
+}
+export const DEMO_EXTRA: Record<string, Extra> = {
+  'Acme Corp': {
+    contact_name: 'Sarah Chen', trend: '+12%', repScore: 74, expiry: 'Dec 31',
+    flags: ['Exec Unresponsive', '8d Dark', 'Champion at Risk'],
+    breakdown: [{ k: 'Engagement', v: 32 }, { k: 'Product Fit', v: 88 }, { k: 'Legal', v: 45 }, { k: 'Financial', v: 58 }],
+  },
+  'Nexus AI': {
+    contact_name: 'Marcus Webb', trend: '+8%', repScore: 91, expiry: 'Jan 15',
+    flags: ['Legal Clearing', 'PO Expected'], statusNote: 'On track',
+    breakdown: [{ k: 'Engagement', v: 91 }, { k: 'Product Fit', v: 95 }, { k: 'Legal', v: 72 }, { k: 'Financial', v: 96 }],
+  },
+  'TechFlow Inc': {
+    contact_name: 'Jamie Torres', trend: '-3%', repScore: 61, expiry: 'Feb 01',
+    flags: ['Price Flinch', 'Finance Review'],
+    breakdown: [{ k: 'Engagement', v: 48 }, { k: 'Product Fit', v: 72 }, { k: 'Legal', v: 30 }, { k: 'Financial', v: 55 }],
+  },
+  'Meridian Labs': {
+    contact_name: 'Alex Park', trend: '+22%', repScore: 68, expiry: 'Mar 30',
+    flags: ['Timeline Slip'],
+    breakdown: [{ k: 'Engagement', v: 55 }, { k: 'Product Fit', v: 82 }, { k: 'Legal', v: 15 }, { k: 'Financial', v: 78 }],
+  },
+  'Brightwave': {
+    contact_name: 'Andy G', trend: '+9%', repScore: 84, expiry: 'Feb 10',
+    flags: ['Buyer Active', 'Onboarding Interest'], statusNote: 'Re-engaged',
+    breakdown: [{ k: 'Engagement', v: 86 }, { k: 'Product Fit', v: 90 }, { k: 'Legal', v: 78 }, { k: 'Financial', v: 88 }],
+  },
+  'Axion Partners': {
+    contact_name: 'Andy G', trend: '-9%', repScore: 41, expiry: 'Feb 28',
+    flags: ['Legal Blocker', '+3-5 Weeks'],
+    breakdown: [{ k: 'Engagement', v: 40 }, { k: 'Product Fit', v: 74 }, { k: 'Legal', v: 40 }, { k: 'Financial', v: 62 }],
+  },
+  'TechVault Inc': {
+    contact_name: 'Mike Ross', trend: '-2%', repScore: 58, expiry: 'Mar 15',
+    flags: ['Budget Concern', 'Finance Review'],
+    breakdown: [{ k: 'Engagement', v: 48 }, { k: 'Product Fit', v: 76 }, { k: 'Legal', v: 70 }, { k: 'Financial', v: 44 }],
+  },
+  'Cobalt Health': {
+    contact_name: 'Jamie Torres', trend: '+14%', repScore: 95, expiry: 'Closed Dec 20',
+    flags: ['Contract Signed', 'Onboarding Started'], statusNote: 'Onboarding',
+    breakdown: [{ k: 'Engagement', v: 94 }, { k: 'Product Fit', v: 96 }, { k: 'Legal', v: 100 }, { k: 'Financial', v: 100 }],
+  },
+}
+
+const A = (id: string, name: string, domain: string, value: number, stage: string, owner: string,
+  risk: 'high' | 'medium' | 'low', health: number, close: string, lastContactHours: number, tags: string[]): Account =>
+  ({ id, name, domain, health_score: health, value, stage, owner, risk_level: risk,
+     close_date: close, last_contact_date: iso(lastContactHours), tags, user_id: 'demo', created_at: iso(4000) }) as Account
 
 export const DEMO_ACCOUNTS: Account[] = [
-  { id: 'demo-acme', name: "Acme Corp", domain: "acmecorp.com", health_score: 31, value: 480000, stage: "Negotiation", owner: "Andy G", risk_level: 'high', close_date: fut(61), last_contact_date: iso(192), tags: ["Enterprise", "At risk"], user_id: 'demo', created_at: iso(4000), contact_name: "Sarah Chen \u00b7 CFO" } as Account & { contact_name: string },
-  { id: 'demo-meridian', name: "Meridian Labs", domain: "meridianlabs.com", health_score: 28, value: 850000, stage: "Renewal", owner: "Andy G", risk_level: 'high', close_date: fut(58), last_contact_date: iso(120), tags: ["Enterprise", "At risk"], user_id: 'demo', created_at: iso(4000), contact_name: "Alex Park \u00b7 CEO" } as Account & { contact_name: string },
-  { id: 'demo-axion', name: "Axion Partners", domain: "axionpartners.com", health_score: 52, value: 95000, stage: "Legal Review", owner: "Andy G", risk_level: 'medium', close_date: fut(82), last_contact_date: iso(24), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Marcus Webb \u00b7 VP Eng" } as Account & { contact_name: string },
-  { id: 'demo-techflow', name: "TechFlow Inc", domain: "techflowinc.com", health_score: 55, value: 210000, stage: "Discovery", owner: "Andy G", risk_level: 'medium', close_date: fut(85), last_contact_date: iso(72), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Lena Ford \u00b7 COO" } as Account & { contact_name: string },
-  { id: 'demo-techvault', name: "TechVault Inc", domain: "techvaultinc.com", health_score: 48, value: 210000, stage: "Discovery", owner: "Mike Ross", risk_level: 'medium', close_date: fut(78), last_contact_date: iso(72), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Jamie Torres \u00b7 VP Eng" } as Account & { contact_name: string },
-  { id: 'demo-nexus', name: "Nexus AI", domain: "nexusai.com", health_score: 88, value: 320000, stage: "Closing", owner: "Andy G", risk_level: 'low', close_date: fut(58), last_contact_date: iso(24), tags: ["Enterprise", "Momentum"], user_id: 'demo', created_at: iso(4000), contact_name: "Priya Sharma \u00b7 CTO" } as Account & { contact_name: string },
-  { id: 'demo-cobalt', name: "Cobalt Systems", domain: "cobaltsystems.com", health_score: 82, value: 150000, stage: "Closed Won", owner: "Jamie T", risk_level: 'low', close_date: fut(52), last_contact_date: iso(24), tags: ["Momentum"], user_id: 'demo', created_at: iso(4000), contact_name: "Dana Kim \u00b7 CRO" } as Account & { contact_name: string },
-  { id: 'demo-vertex', name: "Vertex Systems", domain: "vertexsystems.com", health_score: 65, value: 140000, stage: "Proposal", owner: "Mike Ross", risk_level: 'medium', close_date: fut(35), last_contact_date: iso(48), tags: [], user_id: 'demo', created_at: iso(4000), contact_name: "Dana Kim \u00b7 CRO" } as Account & { contact_name: string },
+  A('demo-acme', 'Acme Corp', 'acmecorp.com', 480000, 'Negotiation', 'Sarah Chen', 'high', 74, at(12, 31), 192, ['Exec Unresponsive', '8d Dark', 'Champion at Risk']),
+  A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 68, at(3, 30), 120, ['Timeline Slip']),
+  A('demo-nexus', 'Nexus AI', 'nexus.ai', 320000, 'Closing', 'Marcus Webb', 'low', 91, at(1, 15), 20, ['Legal Clearing', 'PO Expected']),
+  A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jamie Torres', 'medium', 61, at(2, 1), 72, ['Price Flinch', 'Finance Review']),
+  A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Andy G', 'low', 84, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
+  A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Andy G', 'high', 41, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
+  A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Mike Ross', 'medium', 58, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
+  A('demo-cobalt', 'Cobalt Health', 'cobalthealth.com', 150000, 'Closed Won', 'Jamie Torres', 'low', 95, at(12, 20), 48, ['Contract Signed', 'Onboarding Started']),
 ]
+
+// ---------------------------------------------------------------- signals
+const S = (id: string, account: string, type: string, sev: 'high' | 'watch' | 'positive',
+  title: string, description: string, src: string, hours: number, risk: number | null,
+  conf: number, quote?: string, rec?: string): Signal =>
+  ({ id, account_id: null, account_name: account, signal_type: type, severity: sev, title, description,
+     source_integration: src, risk_amount: risk, created_at: iso(hours), is_dismissed: false,
+     ai_analysis: { confidence: conf, ...(quote ? { quote } : {}), ...(rec ? { recommendation: rec } : {}) } }) as unknown as Signal
 
 export const DEMO_SIGNALS: Signal[] = [
-  { id: 'demo-sg-0', account_id: null, account_name: "Acme Corp", signal_type: 'silent_stall', severity: 'high', title: "Email opened 3\u00d7 without reply", description: "Email opened 3\u00d7 without reply , 8 days dark", source_integration: 'gmail', risk_amount: 480000, created_at: iso(0.2), ai_analysis: { confidence: 72 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-1', account_id: null, account_name: "Acme Corp", signal_type: 'competitor_mention', severity: 'high', title: "Competitor mentioned in Slack #sales channel", description: "Competitor mentioned in Slack #sales channel", source_integration: 'slack', risk_amount: 480000, created_at: iso(2.0), ai_analysis: { confidence: 79 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-2', account_id: null, account_name: "Acme Corp", signal_type: 'price_flinch', severity: 'watch', title: "CFO requested pricing breakdown via WhatsApp", description: "CFO requested pricing breakdown via WhatsApp", source_integration: 'gmail', risk_amount: 480000, created_at: iso(24.0), ai_analysis: { confidence: 86 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-3', account_id: null, account_name: "Acme Corp", signal_type: 'call_buying_signal', severity: 'positive', title: "VP Eng confirmed technical requirements met", description: "VP Eng confirmed technical requirements met", source_integration: 'zoom', risk_amount: null, created_at: iso(72.0), ai_analysis: { confidence: 93 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-4', account_id: null, account_name: "Meridian Labs", signal_type: 'competitor_mention', severity: 'high', title: "CEO mentioned \"looking at alternatives\" in Slack", description: "CEO mentioned \"looking at alternatives\" in Slack", source_integration: 'slack', risk_amount: 850000, created_at: iso(1.0), ai_analysis: { confidence: 75 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-5', account_id: null, account_name: "Meridian Labs", signal_type: 'timeline_slip', severity: 'high', title: "Renewal timeline pushed from Q1 to Q2", description: "Renewal timeline pushed from Q1 to Q2", source_integration: 'gmail', risk_amount: 850000, created_at: iso(6.0), ai_analysis: { confidence: 82 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-6', account_id: null, account_name: "Meridian Labs", signal_type: 'call_sentiment_drop', severity: 'watch', title: "Product usage declined 18% MoM", description: "Product usage declined 18% MoM", source_integration: 'hubspot', risk_amount: 850000, created_at: iso(24.0), ai_analysis: { confidence: 89 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-7', account_id: null, account_name: "Axion Partners", signal_type: 'silent_stall', severity: 'watch', title: "Legal review stalled at day 3", description: "Legal review stalled at day 3 , no response from their team", source_integration: 'gmail', risk_amount: 95000, created_at: iso(2.0), ai_analysis: { confidence: 96 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-8', account_id: null, account_name: "Axion Partners", signal_type: 'call_buying_signal', severity: 'positive', title: "Marcus confirmed technical requirements met", description: "Marcus confirmed technical requirements met", source_integration: 'zoom', risk_amount: null, created_at: iso(24.0), ai_analysis: { confidence: 78 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-9', account_id: null, account_name: "TechFlow Inc", signal_type: 'price_flinch', severity: 'watch', title: "CFO mentioned \"need to check with finance\"", description: "CFO mentioned \"need to check with finance\"", source_integration: 'zoom', risk_amount: 210000, created_at: iso(3.0), ai_analysis: { confidence: 85 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-10', account_id: null, account_name: "TechFlow Inc", signal_type: 'timeline_slip', severity: 'watch', title: "Budget discussion deferred to next quarter review", description: "Budget discussion deferred to next quarter review", source_integration: 'gmail', risk_amount: 210000, created_at: iso(24.0), ai_analysis: { confidence: 92 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-11', account_id: null, account_name: "TechFlow Inc", signal_type: 'call_buying_signal', severity: 'positive', title: "COO expressed strong interest in integration capabilities", description: "COO expressed strong interest in integration capabilities", source_integration: 'slack', risk_amount: null, created_at: iso(48.0), ai_analysis: { confidence: 74 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-12', account_id: null, account_name: "TechVault Inc", signal_type: 'price_flinch', severity: 'watch', title: "Asked for 15% discount in follow-up email", description: "Asked for 15% discount in follow-up email", source_integration: 'gmail', risk_amount: 210000, created_at: iso(48.0), ai_analysis: { confidence: 81 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-13', account_id: null, account_name: "TechVault Inc", signal_type: 'call_buying_signal', severity: 'positive', title: "Technical POC completed successfully", description: "Technical POC completed successfully", source_integration: 'zoom', risk_amount: null, created_at: iso(120.0), ai_analysis: { confidence: 88 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-14', account_id: null, account_name: "Nexus AI", signal_type: 'legal_loopin', severity: 'positive', title: "Proposal forwarded to legal for final review", description: "Proposal forwarded to legal for final review", source_integration: 'gmail', risk_amount: null, created_at: iso(0.6), ai_analysis: { confidence: 95 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-15', account_id: null, account_name: "Nexus AI", signal_type: 'call_buying_signal', severity: 'positive', title: "All technical requirements confirmed", description: "All technical requirements confirmed", source_integration: 'slack', risk_amount: null, created_at: iso(24.0), ai_analysis: { confidence: 77 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-16', account_id: null, account_name: "Cobalt Systems", signal_type: 'call_buying_signal', severity: 'positive', title: "Contract signed", description: "Contract signed , deal closed-won", source_integration: 'hubspot', risk_amount: null, created_at: iso(2.0), ai_analysis: { confidence: 84 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-17', account_id: null, account_name: "Vertex Systems", signal_type: 'call_buying_signal', severity: 'positive', title: "Proposal delivered and confirmed received", description: "Proposal delivered and confirmed received", source_integration: 'gmail', risk_amount: null, created_at: iso(48.0), ai_analysis: { confidence: 91 }, is_dismissed: false } as unknown as Signal,
-  { id: 'demo-sg-18', account_id: null, account_name: "Vertex Systems", signal_type: 'timeline_slip', severity: 'watch', title: "Procurement flagged timeline question", description: "Procurement flagged timeline question", source_integration: 'gmail', risk_amount: 140000, created_at: iso(24.0), ai_analysis: { confidence: 73 }, is_dismissed: false } as unknown as Signal,
+  S('demo-sg-1', 'Acme Corp', 'silent_stall', 'high', 'Exec gone dark 8 days',
+    'Sarah Chen (CFO) stopped responding to all outreach. Last email opened but no reply. Escalation risk rising.',
+    'gmail', 4, 480000, 91, undefined, 'Switch channel: record a short video for the CRO before Friday'),
+  S('demo-sg-2', 'Acme Corp', 'price_flinch', 'high', 'CFO flagged pricing concern',
+    'CFO flagged pricing concern in the last call. Finance loop-in may add 3-4 weeks.',
+    'gmail', 48, 480000, 87, 'We need to discuss the new pricing structure before we can commit to renewal. Finance team has concerns.',
+    'Send the side-by-side comparison against their current Gong contract'),
+  S('demo-sg-3', 'Acme Corp', 'legal_loopin', 'watch', 'Legal review requested',
+    'Contract redlines sent, awaiting response since Nov 14.', 'gmail', 96, 480000, 78, undefined,
+    'Chase Rachel Kim directly, escalate through Sarah Chen if no reply by Thursday'),
+  S('demo-sg-4', 'Acme Corp', 'champion_change', 'high', 'Champion at risk',
+    'Internal champion removed from latest email thread. Possible loss of internal backing.',
+    'gmail', 96, 480000, 83, undefined, 'Re-engage James Park directly and confirm he is still sponsoring'),
+  S('demo-sg-5', 'Acme Corp', 'call_buying_signal', 'positive', 'VP Eng confirmed technical fit',
+    'VP Eng confirmed technical fit. Integration team standing by.', 'slack', 100, null, 92,
+    'Technical integration looks solid. My team is ready to proceed once legal signs off.', undefined),
+  S('demo-sg-6', 'Nexus AI', 'reengaged', 'positive', 'Champion re-engaged after break',
+    'Champion re-engaged after holiday break. Strong buying intent signals across 3 channels.',
+    'gmail', 20, null, 94, 'We are very close to signing. Just waiting on legal to clear the last two redlines.',
+    'Lock the signature date this week'),
+  S('demo-sg-7', 'Nexus AI', 'call_commitment', 'positive', 'Procurement confirmed budget approved',
+    'Procurement confirmed budget approved. PO expected this week.', 'hubspot', 26, null, 90, undefined, undefined),
+  S('demo-sg-8', 'Nexus AI', 'legal_loopin', 'watch', 'Legal review the only blocker',
+    'Legal review is the only remaining blocker. Standard NDA redlines outstanding.', 'gmail', 30, null, 81,
+    'Two clauses outstanding - data residency and liability cap. We will have edits by Thursday.', undefined),
+  S('demo-sg-9', 'Meridian Labs', 'timeline_slip', 'watch', 'Renewal timeline pushed from Q1 to Q2',
+    'Renewal timeline pushed from Q1 to Q2.', 'gmail', 8, 850000, 84, undefined,
+    'Confirm the real date with Alex Park before forecasting it'),
+  S('demo-sg-10', 'Meridian Labs', 'competitor_mention', 'high', 'CEO mentioned looking at alternatives',
+    'CEO mentioned "looking at alternatives" in Slack.', 'slack', 10, 850000, 88,
+    'looking at alternatives', 'Send the comparison one-pager and book an exec call'),
+  S('demo-sg-11', 'Meridian Labs', 'call_sentiment_drop', 'watch', 'Product usage declined 18% MoM',
+    'Product usage declined 18% month over month.', 'hubspot', 30, 850000, 79, undefined, 'Book an exec call'),
+  S('demo-sg-12', 'TechFlow Inc', 'price_flinch', 'watch', 'CFO mentioned need to check with finance',
+    'CFO mentioned "need to check with finance" on the Zoom discovery call.', 'zoom', 6, 210000, 86,
+    'need to check with finance', 'Share the ROI sheet before their finance review'),
+  S('demo-sg-13', 'Axion Partners', 'silent_stall', 'watch', 'Legal review stalled at day 3',
+    'Legal review stalled at day 3. Auto-escalation triggers at day 5.', 'gmail', 12, 95000, 80, undefined,
+    'Escalate now rather than waiting for day 5'),
+  S('demo-sg-14', 'TechVault Inc', 'price_flinch', 'watch', 'Price flinch on WhatsApp',
+    'Buyer raised budget concern on WhatsApp, 48h with no reply since.', 'gmail', 40, 140000, 77, undefined,
+    'Share the ROI sheet'),
+  S('demo-sg-15', 'Brightwave', 'reengaged', 'positive', 'Buyer active again after silence',
+    'Buyer re-engaged and asked about onboarding timelines.', 'gmail', 30, null, 89, undefined, 'Lock the next step today'),
+  S('demo-sg-16', 'Cobalt Health', 'call_commitment', 'positive', 'Contract signed, onboarding started',
+    'Contract signed. Onboarding kickoff scheduled.', 'hubspot', 48, null, 96, undefined, undefined),
 ]
 
+// ---------------------------------------------------------------- people
+export const DEMO_PEOPLE: Record<string, Array<{ name: string; role: string; badge: string; status: string; last: string; eng: number; desc: string }>> = {
+  'Acme Corp': [
+    { name: 'Sarah Chen', role: 'CFO', badge: 'DECISION MAKER', status: 'Disengaged', last: '2d ago', eng: 32,
+      desc: 'Primary blocker. Raised pricing objection on Nov 12 call. Needs exec-to-exec engagement to unblock.' },
+    { name: 'James Park', role: 'VP Engineering', badge: 'CHAMPION', status: 'Active', last: '4d ago', eng: 88,
+      desc: 'Strong internal advocate. Confirmed technical requirements met. Ready to push forward once legal clears.' },
+    { name: 'Mike Torres', role: 'Procurement', badge: 'INFLUENCER', status: 'Active', last: '6d ago', eng: 55,
+      desc: 'Controls vendor approval process. Waiting on legal redlines. Key to getting PO issued quickly.' },
+    { name: 'Rachel Kim', role: 'Legal Counsel', badge: 'BLOCKER', status: 'Quiet', last: '9d ago', eng: 20,
+      desc: 'Reviewing contract redlines. No response since Nov 14. May need escalation through Sarah Chen.' },
+  ],
+  'Nexus AI': [
+    { name: 'Marcus Webb', role: 'CEO', badge: 'DECISION MAKER', status: 'Active', last: '1d ago', eng: 91,
+      desc: 'Highly engaged. Verbally committed. Pushing internally to close before Q1.' },
+    { name: 'Priya Shah', role: 'CTO', badge: 'CHAMPION', status: 'Active', last: '2d ago', eng: 88,
+      desc: 'Technical champion. Completed POC review and signed off. Advocating strongly with Marcus.' },
+    { name: 'Tom Nguyen', role: 'Legal', badge: 'INFLUENCER', status: 'Active', last: '3d ago', eng: 65,
+      desc: 'Standard legal review in progress. Two clauses outstanding. On track to resolve this week.' },
+  ],
+  'TechFlow Inc': [
+    { name: 'Jamie Torres', role: 'VP Sales Ops', badge: 'DECISION MAKER', status: 'Slipping', last: '5d ago', eng: 48,
+      desc: 'Primary contact but engagement slipping. Price sensitivity flagged. Needs ROI-focused re-engagement.' },
+    { name: 'Lena Ford', role: 'IT Director', badge: 'INFLUENCER', status: 'Active', last: '7d ago', eng: 72,
+      desc: 'Technically interested. Comparing API capabilities vs competitors. Could be a strong internal ally.' },
+    { name: 'Brian Miles', role: 'CFO', badge: 'UNKNOWN', status: 'Never contacted', last: 'never', eng: 0,
+      desc: 'Budget holder not yet engaged. Likely the reason for finance delay. Consider exec outreach.' },
+  ],
+}
 
-// Correspondence volume + baselines so Intelligence has real shape to chart.
+// ---------------------------------------------------------------- comms
+export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: string; quote: string; tone: 'positive' | 'negative' | 'neutral'; when: string }>> = {
+  'Acme Corp': [
+    { who: 'Sarah Chen', role: 'CFO', via: 'Gmail', tone: 'negative', when: '2d ago',
+      quote: 'We need to discuss the new pricing structure before we can commit to renewal. Finance team has concerns.' },
+    { who: 'James Park', role: 'VP Engineering', via: 'Slack', tone: 'positive', when: '4d ago',
+      quote: 'Technical integration looks solid. My team is ready to proceed once legal signs off.' },
+    { who: 'Mike Torres', role: 'Procurement', via: 'WhatsApp', tone: 'neutral', when: '6d ago',
+      quote: 'Still waiting on legal review. Should have an update by end of week.' },
+    { who: 'Sarah Chen', role: 'CFO', via: 'Gmail', tone: 'negative', when: '8d ago',
+      quote: 'Can we schedule a call to go over the contract terms? A few things need clarification.' },
+  ],
+  'TechFlow Inc': [
+    { who: 'Jamie Torres', role: 'VP Sales Ops', via: 'WhatsApp', tone: 'negative', when: '5d ago',
+      quote: 'Looks interesting but I need to check with finance first before we go any further on pricing.' },
+    { who: 'Lena Ford', role: 'IT Director', via: 'Gmail', tone: 'neutral', when: '7d ago',
+      quote: 'Your API docs look solid. How does the integration compare to Gong\'s offering?' },
+    { who: 'Jamie Torres', role: 'VP Sales Ops', via: 'Gmail', tone: 'neutral', when: '10d ago',
+      quote: 'Can you send over the formal proposal and pricing options? We are evaluating 2-3 vendors.' },
+  ],
+  'Meridian Labs': [
+    { who: 'Alex Park', role: 'Head of Revenue Ops', via: 'Gmail', tone: 'negative', when: '5d ago',
+      quote: 'We have pushed the evaluation to Q2 now. Internal restructuring has slowed things down. Let us reconnect in Jan.' },
+    { who: 'Dana Wu', role: 'Product Lead', via: 'Slack', tone: 'neutral', when: '8d ago',
+      quote: 'Still very interested in the platform. Just needs exec sign-off which is a Q2 thing now.' },
+    { who: 'Alex Park', role: 'Head of Revenue Ops', via: 'Gmail', tone: 'positive', when: '14d ago',
+      quote: 'The demo went well. Team is aligned on fit. Budget is confirmed for next cycle.' },
+  ],
+  'Nexus AI': [
+    { who: 'Marcus Webb', role: 'CEO', via: 'Gmail', tone: 'positive', when: '1d ago',
+      quote: 'We are very close to signing. Just waiting on legal to clear the last two redlines. Should be done by Friday.' },
+    { who: 'Priya Shah', role: 'CTO', via: 'Slack', tone: 'positive', when: '2d ago',
+      quote: 'The API integration passed all our security tests. Ready on our end.' },
+    { who: 'Tom Nguyen', role: 'Legal', via: 'Gmail', tone: 'neutral', when: '3d ago',
+      quote: 'Two clauses outstanding - data residency and liability cap. We will have edits by Thursday.' },
+  ],
+}
+
+// ---------------------------------------------------------------- timeline
+export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; when: string; kind: string; tags?: string[] }>> = {
+  'Nexus AI': [
+    { title: 'Final Contract Sent', kind: 'positive', when: '1d ago',
+      body: 'Executed agreement sent to Marcus Webb for e-signature. Close expected Jan 15.' },
+    { title: 'PO Expected Signal', kind: 'positive', when: '3d ago',
+      body: 'Procurement team confirmed budget allocation. Purchase order in drafting stage.' },
+    { title: 'Security Audit Passed', kind: 'positive', when: '5d ago',
+      body: 'SOC2 compliance verified. No blockers from InfoSec team.' },
+    { title: 'Legal Review Initiated', kind: 'watch', when: '8d ago',
+      body: 'Nexus legal team requested contract redlines. Standard 2-week review window.' },
+    { title: 'Technical Evaluation Complete', kind: 'call', when: '12d ago',
+      body: 'Marcus Webb confirmed product-market fit. Integration team greenlit deployment.' },
+  ],
+  'TechFlow Inc': [
+    { title: 'Phased Pricing Proposal Sent', kind: 'action', when: '7h ago',
+      body: 'Popsicle generated 60/40 phased pricing option. CFO ROI calculator attached.' },
+    { title: 'Follow-up Call Completed', kind: 'call', when: '3d ago',
+      body: 'Product demo for finance stakeholders. ROI model presented showing 3.1x return.' },
+    { title: 'Price Sensitivity Detected', kind: 'watch', when: '5d ago',
+      body: 'Multiple references to budget constraints in Slack messages. Finance review in progress.' },
+    { title: 'Budget Concern Flagged', kind: 'watch', when: '7d ago',
+      body: '"Check with finance first" - Jamie Torres deferred pricing decision to CFO.' },
+    { title: 'Proposal Delivered', kind: 'call', when: '10d ago',
+      body: 'Full pricing proposal sent to Jamie Torres. Three-tier option with annual commitment discount.' },
+  ],
+  'Acme Corp': [
+    { title: 'Popsicle Deployed Response', kind: 'action', when: '4h ago',
+      body: 'Re-engagement email auto-sent to Sarah Chen. ROI value summary attached. Escalation brief prepared for CRO.' },
+    { title: 'CFO Flagged Pricing', kind: 'negative', when: '2d ago',
+      body: '"We need to discuss the new pricing before committing." Finance team concerns raised.' },
+    { title: 'Zoom Call · Discovery', kind: 'call', when: '3d ago',
+      body: '42 min call with Sarah Chen & team. AI detected 2 objections, 1 commitment, 3 next steps.',
+      tags: ['Gong transcript', '2 objections', '1 commitment'] },
+    { title: 'Champion at Risk Detected', kind: 'watch', when: '4d ago',
+      body: 'Internal champion removed from latest email thread. Possible loss of internal backing.' },
+    { title: 'Email Opened 3x, No Reply', kind: 'negative', when: '6d ago',
+      body: 'Renewal pricing email opened by Sarah Chen three times. Zero response - high-intent ghosting pattern.' },
+    { title: 'Exec Gone Dark', kind: 'negative', when: '8d ago',
+      body: 'Sarah Chen (CFO) stopped responding to all outreach. Last email opened but no reply.' },
+  ],
+}
+
+// ---------------------------------------------------------------- transcript
+export const DEMO_TRANSCRIPT = {
+  account: 'Acme Corp',
+  title: 'Zoom Discovery Call',
+  duration: 42,
+  when: '3 days ago',
+  analyser: 'Gong analyzed',
+  summary: 'Sarah expressed interest in the platform but raised concerns about pricing vs current Gong contract. Her team wants a side-by-side comparison before committing budget. James (IT) confirmed technical readiness. Strong buying signals but finance is the blocker.',
+  moments: [
+    { t: '2:14', who: 'Sarah Chen', tag: null, text: 'Tell me more about how you detect signals compared to what we currently have with Gong.' },
+    { t: '5:32', who: 'Andy G', tag: null, text: 'The key difference is we analyze across email, WhatsApp, and Slack in real-time - not just call recordings after the fact.' },
+    { t: '12:08', who: 'Sarah Chen', tag: 'OBJECTION', text: 'The pricing feels high for what we need. We are paying $180K for Gong already and the board will not approve two overlapping tools.' },
+    { t: '14:45', who: 'Andy G', tag: null, text: 'That is exactly why we built the migration path. You can phase out Gong as Popsicle ramps - most teams see full ROI within 60 days.' },
+    { t: '22:30', who: 'Sarah Chen', tag: 'COMMITMENT', text: 'OK, I think we can work with that. Send me the comparison doc and I will take it to our CFO review next Tuesday.' },
+    { t: '31:15', who: 'James (IT)', tag: 'OBJECTION', text: 'What about SSO integration? We need SAML 2.0 with Okta - that is a dealbreaker for our security team.' },
+    { t: '32:40', who: 'Andy G', tag: null, text: 'Fully supported out of the box. We have 14 enterprise customers on Okta SAML today. I will send the security whitepaper.' },
+    { t: '38:50', who: 'Sarah Chen', tag: 'NEXT STEP', text: 'Let us reconvene after the CFO review. Can you have the comparison doc and security whitepaper over by Thursday?' },
+  ],
+}
+
+// ---------------------------------------------------------------- pulse
+export const DEMO_PULSE = {
+  health: 74, delta: '+6 pts this week', aiConfidence: 91,
+  deals: 9, dealsDelta: '+2 wk', risk: 3, riskDelta: '+1 today',
+  forecast: 1200000, forecastDelta: '+12%',
+  loop: { signals: 12, cases: 5, actions: 4, impact: 560000 },
+  brief: [
+    { tone: 'high', pre: "Acme's CRO hasn't opened your last 3 emails, ", strong: 'switch to video before Friday' },
+    { tone: 'positive', pre: 'Win rate ', strong: 'up 12% this quarter', post: ' - Nexus & Cobalt driving momentum' },
+    { tone: 'watch', pre: 'Axion legal enters ', strong: 'day 4 tomorrow', post: ' - auto-escalation triggers at day 5' },
+  ],
+  listening: 47,
+}
+
+// ---------------------------------------------------------------- correspondence volume + baselines
 export const DEMO_MESSAGES = (() => {
   const out: Array<{ id: string; account_name: string; sender: string; subject: string; content: string; integration: string; direction: string; received_at: string }> = []
-  const accts = ["Acme Corp", "Meridian Labs", "Axion Partners", "TechFlow Inc", "TechVault Inc", "Nexus AI", "Cobalt Systems", "Vertex Systems"]
-  const subjects = ["Re: pricing review", "Contract redlines", "Rollout plan", "Security questionnaire", "Re: next steps", "Legal review status", "Renewal terms", "Technical eval"]
+  const accts = DEMO_ACCOUNTS.map(a => a.name)
+  const subjects = ['Re: pricing review', 'Contract redlines', 'Rollout plan', 'Security questionnaire', 'Re: next steps', 'Legal review status', 'Renewal terms', 'Technical eval']
   let n = 0
   for (let week = 7; week >= 0; week--) {
     const volume = 7 + (7 - week) * 2
@@ -65,17 +302,53 @@ export const DEMO_MESSAGES = (() => {
 })()
 
 export const DEMO_BASELINES = [
-  { account_name: "Acme Corp", total_messages: 148, total_reply_pairs: 41, our_median_reply_hours: 3, their_median_reply_hours: 26, last_message_at: iso(192), avg_interval_hours: 30 },
-  { account_name: "Meridian Labs", total_messages: 126, total_reply_pairs: 38, our_median_reply_hours: 2, their_median_reply_hours: 31, last_message_at: iso(120), avg_interval_hours: 28 },
-  { account_name: "Nexus AI", total_messages: 97, total_reply_pairs: 30, our_median_reply_hours: 2, their_median_reply_hours: 5, last_message_at: iso(1), avg_interval_hours: 20 },
-  { account_name: "TechFlow Inc", total_messages: 84, total_reply_pairs: 22, our_median_reply_hours: 3, their_median_reply_hours: 14, last_message_at: iso(72), avg_interval_hours: 40 },
-  { account_name: "Axion Partners", total_messages: 61, total_reply_pairs: 15, our_median_reply_hours: 4, their_median_reply_hours: 19, last_message_at: iso(24), avg_interval_hours: 52 },
-  { account_name: "TechVault Inc", total_messages: 44, total_reply_pairs: 11, our_median_reply_hours: 5, their_median_reply_hours: 22, last_message_at: iso(72), avg_interval_hours: 60 },
-  { account_name: "Cobalt Systems", total_messages: 38, total_reply_pairs: 12, our_median_reply_hours: 3, their_median_reply_hours: 6, last_message_at: iso(2), avg_interval_hours: 36 },
-  { account_name: "Vertex Systems", total_messages: 29, total_reply_pairs: 7, our_median_reply_hours: 6, their_median_reply_hours: 28, last_message_at: iso(48), avg_interval_hours: 72 },
+  { account_name: 'Acme Corp', total_messages: 148, total_reply_pairs: 41, our_median_reply_hours: 3, their_median_reply_hours: 26, last_message_at: iso(192), avg_interval_hours: 30 },
+  { account_name: 'Meridian Labs', total_messages: 126, total_reply_pairs: 38, our_median_reply_hours: 2, their_median_reply_hours: 31, last_message_at: iso(120), avg_interval_hours: 28 },
+  { account_name: 'Nexus AI', total_messages: 97, total_reply_pairs: 30, our_median_reply_hours: 2, their_median_reply_hours: 5, last_message_at: iso(20), avg_interval_hours: 20 },
+  { account_name: 'TechFlow Inc', total_messages: 84, total_reply_pairs: 22, our_median_reply_hours: 3, their_median_reply_hours: 14, last_message_at: iso(72), avg_interval_hours: 40 },
+  { account_name: 'Axion Partners', total_messages: 61, total_reply_pairs: 15, our_median_reply_hours: 4, their_median_reply_hours: 19, last_message_at: iso(24), avg_interval_hours: 52 },
+  { account_name: 'TechVault Inc', total_messages: 44, total_reply_pairs: 11, our_median_reply_hours: 5, their_median_reply_hours: 22, last_message_at: iso(72), avg_interval_hours: 60 },
+  { account_name: 'Brightwave', total_messages: 38, total_reply_pairs: 12, our_median_reply_hours: 3, their_median_reply_hours: 6, last_message_at: iso(30), avg_interval_hours: 36 },
+  { account_name: 'Cobalt Health', total_messages: 52, total_reply_pairs: 18, our_median_reply_hours: 3, their_median_reply_hours: 7, last_message_at: iso(48), avg_interval_hours: 34 },
 ]
 
-// People and contracts per account, extracted from the prototype.
-export const DEMO_PEOPLE: Record<string, Array<{ name: string; role: string; badge: string; status: string; last: string; eng: number; desc: string }>> = { "Acme Corp": [ { "name": "Sarah Chen", "role": "CFO", "badge": "DECISION MAKER", "status": "Disengaged", "last": "8d ago", "eng": 32, "desc": "Primary blocker. Raised pricing objection. Needs exec-to-exec engagement." }, { "name": "Marcus Rivera", "role": "VP Eng", "badge": "CHAMPION", "status": "Active", "last": "5d ago", "eng": 88, "desc": "Strong internal advocate. Confirmed technical fit. Ready to push forward." }, { "name": "James Yeo", "role": "CTO", "badge": "INFLUENCER", "status": "Neutral", "last": "12d ago", "eng": 55, "desc": "Controls vendor approval. Waiting on legal redlines." }, { "name": "Rachel Kim", "role": "Legal Counsel", "badge": "BLOCKER", "status": "Silent", "last": "9d ago", "eng": 20, "desc": "Reviewing contract redlines. No response since Nov 14." } ], "Meridian Labs": [ { "name": "Alex Park", "role": "CEO", "badge": "DECISION MAKER", "status": "Cautious", "last": "5d ago", "eng": 38, "desc": "Exploring alternatives. Needs direct executive engagement to rebuild trust." }, { "name": "Dana Wu", "role": "VP Product", "badge": "CHAMPION", "status": "Neutral", "last": "10d ago", "eng": 42, "desc": "Product usage declining. May not be advocating internally." } ], "Axion Partners": [ { "name": "Marcus Webb", "role": "VP Eng", "badge": "CHAMPION", "status": "Active", "last": "1d ago", "eng": 82, "desc": "Driving deal forward. Waiting on legal clearance." }, { "name": "Lisa Chen", "role": "Legal Counsel", "badge": "BLOCKER", "status": "Slow", "last": "3d ago", "eng": 30, "desc": "Reviewing redlines. No response in 3 days." } ], "TechFlow Inc": [ { "name": "Lena Ford", "role": "COO", "badge": "CHAMPION", "status": "Positive", "last": "3d ago", "eng": 76, "desc": "Strong operational interest. Actively pushing for adoption." }, { "name": "James Yeo", "role": "CFO", "badge": "DECISION MAKER", "status": "Cautious", "last": "3d ago", "eng": 40, "desc": "Budget authority. \"Check with finance\" indicates procurement hurdle." } ], "TechVault Inc": [ { "name": "Jamie Torres", "role": "VP Eng", "badge": "CHAMPION", "status": "Active", "last": "3d ago", "eng": 68, "desc": "Technically sold. Pushing for better pricing to justify to board." } ], "Nexus AI": [ { "name": "Priya Sharma", "role": "CTO", "badge": "CHAMPION", "status": "Champion", "last": "34m ago", "eng": 95, "desc": "Highly engaged. Forwarding proposals to legal. Driving fast-track." }, { "name": "Tom Nguyen", "role": "Head Eng", "badge": "INFLUENCER", "status": "Active", "last": "1d ago", "eng": 88, "desc": "Technical requirements confirmed. Integration team standing by." } ], "Cobalt Systems": [ { "name": "Dana Kim", "role": "CRO", "badge": "CHAMPION", "status": "Champion", "last": "2h ago", "eng": 92, "desc": "Contract signed today. Excited about onboarding." } ], "Vertex Systems": [ { "name": "Dana Kim", "role": "CRO", "badge": "DECISION MAKER", "status": "Active", "last": "2d ago", "eng": 65, "desc": "Proposal received. Coordinating with procurement." }, { "name": "Chris Lee", "role": "RevOps", "badge": "INFLUENCER", "status": "Neutral", "last": "5d ago", "eng": 50, "desc": "Technical evaluation complete. Waiting on procurement." } ] }
+// contracts kept from the earlier extraction
+export const DEMO_CONTRACTS: Record<string, Array<{ name: string; type: string; status: string; value: string; po: string; start: string; end: string; invoice: string }>> = {
+  'Acme Corp': [
+    { name: 'Enterprise License', type: 'Annual subscription', status: 'RENEWAL DUE', value: '$480K', po: 'PO-2026-0418', start: 'Jan 1, 2026', end: 'Dec 31, 2026', invoice: 'Last invoice paid Nov 2, 2026' },
+  ],
+  'Nexus AI': [
+    { name: 'Platform Agreement', type: 'Annual subscription', status: 'IN LEGAL', value: '$320K', po: 'Pending', start: 'Feb 1, 2027', end: 'Jan 31, 2028', invoice: 'Not yet invoiced' },
+  ],
+  'Cobalt Health': [
+    { name: 'Enterprise License', type: 'Annual subscription', status: 'SIGNED', value: '$150K', po: 'PO-2026-0902', start: 'Dec 20, 2026', end: 'Dec 19, 2027', invoice: 'Invoice issued Dec 20, 2026' },
+  ],
+}
 
-export const DEMO_CONTRACTS: Record<string, Array<{ name: string; type: string; status: string; value: string; po: string; start: string; end: string; invoice: string }>> = { "Acme Corp": [ { "name": "Enterprise License 2026", "type": "Annual \u00b7 Auto-renew", "status": "RENEWAL DUE 32d", "value": "$480K", "po": "PO-2026-0142", "start": "Jan 01, 2026", "end": "Dec 31, 2026", "invoice": "Invoice #INV-041 \u00b7 Due Dec 15 \u00b7 $120K" }, { "name": "Professional Services", "type": "Quarterly \u00b7 Implementation", "status": "ACTIVE", "value": "$45K", "po": "PO-2026-0198", "start": "Oct 01, 2026", "end": "Mar 31, 2027", "invoice": "Invoice #INV-038 \u00b7 Paid Nov 01 \u00b7 $15K" } ], "Meridian Labs": [ { "name": "Enterprise Platform License", "type": "Annual \u00b7 Auto-renew", "status": "RENEWAL DUE 47d", "value": "$850K", "po": "PO-2025-0891", "start": "Apr 01, 2025", "end": "Mar 31, 2026", "invoice": "Invoice #INV-067 \u00b7 Due Mar 15 \u00b7 $212K" }, { "name": "Data Integration Add-on", "type": "Annual", "status": "ACTIVE", "value": "$95K", "po": "PO-2025-0912", "start": "Jul 01, 2025", "end": "Jun 30, 2026", "invoice": "Invoice #INV-052 \u00b7 Paid Jan 01 \u00b7 $47.5K" } ], "Axion Partners": [ { "name": "Growth License", "type": "Annual", "status": "PENDING LEGAL", "value": "$95K", "po": "Pending", "start": "TBD", "end": "TBD", "invoice": "Awaiting contract execution" } ], "TechFlow Inc": [ { "name": "Proposed Enterprise License", "type": "Annual", "status": "NEGOTIATION", "value": "$210K", "po": "Pending", "start": "TBD", "end": "TBD", "invoice": "Proposal sent \u00b7 Awaiting budget approval" } ], "TechVault Inc": [ { "name": "Proposed Growth License", "type": "Annual", "status": "PRICING REVIEW", "value": "$210K", "po": "Pending", "start": "TBD", "end": "TBD", "invoice": "Pricing negotiation in progress" } ], "Nexus AI": [ { "name": "Enterprise License", "type": "Annual", "status": "PO EXPECTED", "value": "$320K", "po": "Pending this week", "start": "Jan 01, 2026", "end": "Dec 31, 2026", "invoice": "Awaiting PO generation" } ], "Cobalt Systems": [ { "name": "Enterprise License 2026", "type": "Annual", "status": "SIGNED \u2713", "value": "$150K", "po": "PO-2026-0288", "start": "Jan 15, 2026", "end": "Jan 14, 2027", "invoice": "Invoice #INV-072 \u00b7 Due Feb 15 \u00b7 $150K" } ], "Vertex Systems": [ { "name": "Proposed Enterprise License", "type": "Annual", "status": "UNDER REVIEW", "value": "$140K", "po": "Pending", "start": "TBD", "end": "TBD", "invoice": "Proposal in procurement review" } ] }
+
+// The Overview 'AI risk signals' lines, verbatim from the mobile app.
+export const DEMO_RISK_LINES: Record<string, Array<{ tone: 'high' | 'watch' | 'positive'; text: string }>> = {
+  'Acme Corp': [
+    { tone: 'high', text: 'Executive dark 8 days - email opened 3x with no reply. Escalation risk rising.' },
+    { tone: 'high', text: 'CFO flagged pricing concern in last call. Finance loop-in may add 3-4 weeks.' },
+    { tone: 'watch', text: 'Legal review requested. Contract redlines sent, awaiting response since Nov 14.' },
+    { tone: 'positive', text: 'VP Eng confirmed technical fit. Integration team standing by.' },
+  ],
+  'Nexus AI': [
+    { tone: 'positive', text: 'Champion re-engaged after holiday break. Strong buying intent signals across 3 channels.' },
+    { tone: 'positive', text: 'Procurement confirmed budget approved. PO expected this week.' },
+    { tone: 'watch', text: 'Legal review is the only remaining blocker. Standard NDA redlines outstanding.' },
+  ],
+  'TechFlow Inc': [
+    { tone: 'watch', text: 'Price flinch detected - "need to check with finance" via WhatsApp. Budget may be tighter than stated.' },
+    { tone: 'watch', text: 'Competitor mention on last call. Evaluating a lower-cost alternative.' },
+    { tone: 'high', text: 'No reply to proposal sent 5 days ago. Champion may be losing momentum.' },
+    { tone: 'positive', text: 'IT team expressed strong interest in API capabilities.' },
+  ],
+  'Meridian Labs': [
+    { tone: 'watch', text: 'Timeline slipped from Q1 to Q2 without explanation. Internal priority shift suspected.' },
+    { tone: 'watch', text: 'Champion changed - original contact moved to different team. New relationship needs building.' },
+    { tone: 'positive', text: 'Strong budget signals. $850K pre-approved in Q2 budget cycle.' },
+    { tone: 'high', text: 'No exec engagement yet on a deal this size. Risk of losing to do-nothing.' },
+  ],
+}
