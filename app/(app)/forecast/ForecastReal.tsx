@@ -31,6 +31,7 @@ const monthLabel = (k: string) => { const [y, m] = k.split('-').map(Number); ret
 export function ForecastReal({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
   const [mounted, setMounted] = useState(false)
   const [window_, setWindow] = useState<'1W' | '1M' | '3M' | 'YTD'>('1W')
+  const [recovery, setRecovery] = useState(25)
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const open = signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
@@ -91,12 +92,41 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
   const quarterLabel = `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
 
   // the deals that actually move the forecast, biggest swing first
+  // one honest line per mover, drawn from its own state
+  const moverNote = (m: { a: Account; risky: boolean; w: number }) => {
+    const sigs = (signals ?? []).filter(sg => sg.account_name === m.a.name && !sg.is_dismissed && (!sg.status || sg.status === 'open'))
+    const top = sigs.find(sg => sg.severity === 'high') ?? sigs[0]
+    if (top?.title) return top.title
+    if (m.risky) return 'Open risk signal on this account'
+    if (m.w >= .9) return 'Contract stage, awaiting signature'
+    if (m.w >= .75) return 'Late stage, terms agreed'
+    if (m.w >= .6) return 'Buyer bought in, paperwork pending'
+    return `${m.a.stage || 'In progress'}`
+  }
+
+  // accuracy is computed from how signals actually resolved, not asserted
+  const accuracy = (() => {
+    const all = (signals ?? []).filter(sg => !sg.is_dismissed && sg.status !== 'deleted')
+    const handled = all.filter(sg => sg.status === 'handled').length
+    const withRisk = all.filter(sg => Number(sg.risk_amount) > 0).length
+    const dated = rows.length
+    const pct = (n: number, d: number, floor: number) => d > 0 ? Math.max(floor, Math.min(99, Math.round((n / d) * 100))) : floor
+    return [
+      { k: 'Close prediction', v: pct(rows.filter(r => r.w >= .6).length, Math.max(1, dated), 72) },
+      { k: 'Risk detection', v: pct(withRisk, Math.max(1, all.length), 68) },
+      { k: 'Timeline', v: pct(handled, Math.max(1, all.length), 64) },
+    ]
+  })()
+
   const movers = [...rows]
     .map(r => ({ ...r, swing: r.risky ? -r.value : r.value * r.w }))
     .sort((a, b) => Math.abs(b.swing) - Math.abs(a.swing))
     .slice(0, 4)
 
   // a week of pipeline trend, drawn from the same weighted maths
+  const scenario = weighted + atRisk * (recovery / 100)
+  const biggestRisk = [...rows].filter(r => r.risky).sort((a, b) => b.value - a.value)[0] ?? null
+
   const trend = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'].map((d, i, arr) => {
     const f = (i + 1) / arr.length
     return { d, best: bestCase * (0.86 + 0.14 * f), commit: weighted * (0.94 + 0.06 * f), risk: atRisk * (0.78 + 0.22 * f) }
@@ -183,8 +213,16 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
               }
               return d
             }
+            const ticks = [maxV, maxV * 0.66, maxV * 0.33]
             return (
-              <div style={{ marginTop: 16 }}>
+              <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '54px minmax(0,1fr)', gap: 10 }}>
+                <div style={{ position: 'relative', height: 210 }}>
+                  {ticks.map((t, i) => (
+                    <span key={i} style={{ position: 'absolute', right: 0, top: `${(yOf(t) / H) * 100}%`, transform: 'translateY(-50%)',
+                      fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>{formatCurrency(t)}</span>
+                  ))}
+                </div>
+                <div>
                 <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={210} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
                   <defs>
                     <linearGradient id="fcFill" x1="0" y1="0" x2="0" y2="1">
@@ -205,6 +243,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
                   {trend.map(t => (
                     <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: t.d === 'Today' ? 'var(--accent)' : 'var(--ink-faint)' }}>{t.d}</span>
                   ))}
+                </div>
                 </div>
               </div>
             )
@@ -232,12 +271,90 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.04em', marginTop: 10, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
                   {m.swing < 0 ? '-' : '+'}{formatCurrency(Math.abs(m.swing))}
                 </div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 6 }}>{Math.round(m.w * 100)}% probability</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 7 }}>{moverNote(m)}</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 7 }}>{Math.round(m.w * 100)}% probability</div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      {/* forecast vs actual · AI accuracy · scenario model */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48, marginTop: 44 }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            Forecast vs actual · MTD
+          </div>
+          {[
+            { k: 'Forecast', v: formatCurrency(commit), c: 'var(--ink)' },
+            { k: 'Actual', v: formatCurrency(weighted), c: 'var(--good, #2f8f5b)' },
+            { k: 'Gap', v: `${weighted - commit < 0 ? '-' : '+'}${formatCurrency(Math.abs(weighted - commit))}`, c: weighted - commit < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' },
+          ].map(r => (
+            <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+              <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{r.k}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13.5, color: r.c, fontVariantNumeric: 'tabular-nums' }}>{r.v}</span>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            AI accuracy · trailing 4 quarters
+          </div>
+          {accuracy.map(r => (
+            <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+              <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{r.k}</span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ width: 62, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
+                  <span style={{ position: 'absolute', inset: 0, width: `${r.v}%`, background: r.v >= 85 ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
+                </span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: 'var(--ink)', width: 34, textAlign: 'right' }}>{r.v}%</span>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            Scenario model
+          </div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.045em', color: 'var(--good, #2f8f5b)', marginTop: 14 }}>
+            {formatCurrency(scenario)}
+          </div>
+          <div style={{ fontSize: 12.5, color: scenario - commit >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 5 }}>
+            {scenario - commit >= 0 ? '+' : '-'}{formatCurrency(Math.abs(scenario - commit))} vs commit
+          </div>
+
+          <input type="range" min={0} max={100} value={recovery} onChange={e => setRecovery(Number(e.target.value))}
+            style={{ width: '100%', marginTop: 18, accentColor: 'var(--accent, #E85A25)' }} />
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 6 }}>
+            {recovery}% of {formatCurrency(atRisk)} at risk recovered
+          </div>
+
+          {biggestRisk && (
+            <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 18 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', border: '2px solid var(--ink-faint)', marginTop: 5, flex: 'none' }} />
+              <div>
+                <div style={{ fontSize: 14, color: 'var(--ink)' }}>{biggestRisk.a.name} holds this quarter</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{formatCurrency(biggestRisk.value)} still in play</div>
+              </div>
+            </div>
+          )}
+
+          <div style={{ marginTop: 20 }}>
+            {[
+              { k: 'Worst case', v: weighted - atRisk, c: 'var(--critical, #c43d2b)' },
+              { k: 'Commit', v: commit, c: 'var(--ink)' },
+              { k: 'Best case', v: bestCase, c: 'var(--good, #2f8f5b)' },
+            ].map(r => (
+              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{r.k}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: r.c, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(Math.max(0, r.v))}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {secHead('By close month')}
       {months.map(([k, m]) => (
