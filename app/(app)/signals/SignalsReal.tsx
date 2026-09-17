@@ -1,5 +1,7 @@
 'use client'
 
+import { DEMO_SIGNALS } from '@/lib/demo-dataset'
+
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
 // or answered with an AI-drafted follow-up email grounded in the signal's own
 // analysis + the real thread. Snooze/dismiss update optimistically; the draft
@@ -118,6 +120,18 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         document.getElementById(`sig-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
       }, 60)
       setTimeout(() => setFlashId(null), 3200)
+      return
+    }
+    // Demo signals live in the bundle, not the database: a deep link to one
+    // must resolve locally or it reports "not found" on every refresh.
+    if (id.startsWith('demo-') || (typeof document !== 'undefined' && document.body.dataset.demo === '1')) {
+      const local = (DEMO_SIGNALS as unknown as DBSignal[]).find(x => x.id === id)
+      if (local) {
+        if (wantReply) openDraft(local)
+        else setDetailFor(local)
+        return
+      }
+      setDeepNotFound(true)
       return
     }
     createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
@@ -735,14 +749,14 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
 
       {/* Deep link pointed at a signal that does not exist for this user */}
       {deepNotFound && (
-        <div onClick={() => setDeepNotFound(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => { setDeepNotFound(false); if (typeof window !== 'undefined') window.history.replaceState({}, '', '/signals') }} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', padding: '32px 28px', textAlign: 'center' }}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
             <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', marginBottom: 6 }}>Signal not found</div>
             <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 18 }}>This link points to a signal that does not exist or belongs to a different account. It may have been deleted, or you may be signed in as a different user.</div>
-            <button onClick={() => setDeepNotFound(false)} style={{ padding: '9px 22px', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit'" }}>Got it</button>
+            <button onClick={() => { setDeepNotFound(false); if (typeof window !== 'undefined') window.history.replaceState({}, '', '/signals') }} style={{ padding: '9px 22px', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit'" }}>Got it</button>
           </div>
         </div>
       )}
