@@ -914,22 +914,22 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
                 <span>Stage</span><span>Top Signal</span><span>Touch</span><span />
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
-                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4 }}>
+                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: riskColor[risk], fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
-                    <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', cursor: 'pointer' }}>{a.name}</span>
-                    <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
+                    <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
+                    <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.domain || ''}</div>
                   </div>
-                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
+                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)', letterSpacing: 'normal' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start', cursor: 'pointer',
                     padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
-                  <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
-                  <span style={{ ...cell, color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d`) : '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.stage || '--'}</span>
+                  <span style={{ ...cell, letterSpacing: 'normal', color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-faint)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts/${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
