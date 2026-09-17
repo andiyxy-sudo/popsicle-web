@@ -2449,3 +2449,27 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
     color: color-mix(in srgb, var(--ink) calc(var(--reading-type) * 100%), var(--ink-muted)) !important;
   }
 }
+
+
+/* ============================================================
+   v10.0 - FLUID MEASURE
+   The screen grows with the window instead of stopping at a fixed 1080px,
+   so a wide monitor gains columns and air rather than empty margin. It is
+   still capped, because a table 2000px wide is harder to read, not easier.
+
+   Tune with one value: --screen-max.
+   ============================================================ */
+:root { --screen-max: 1480px; }
+
+.dsk-screen { max-width: min(var(--screen-max), 100%) !important; width: 100%; }
+.ed-footer  { max-width: min(var(--screen-max), 100%) !important; }
+.ed-askbar-measure { max-width: min(var(--screen-max), 100%) !important; }
+
+/* Prose keeps its own comfortable measure whatever the screen does. */
+.ask-screen { max-width: min(920px, 100%) !important; }
+.read-prose { max-width: 68ch; }
+
+/* On very wide displays let the page breathe a little more at the sides. */
+@media (min-width: 1700px) {
+  .content { padding-left: 72px !important; padding-right: 72px !important; }
+}
