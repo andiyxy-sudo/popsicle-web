@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_SIGNALS, DEMO_MESSAGES, DEMO_BASELINES } from '@/lib/demo-dataset'
+import { DEMO_SIGNALS, DEMO_MESSAGES, DEMO_BASELINES, DEMO_INTELLIGENCE } from '@/lib/demo-dataset'
 import { IntelligenceReal } from './IntelligenceReal'
 
 export default async function IntelligencePage() {
@@ -11,13 +11,13 @@ export default async function IntelligencePage() {
   const userId = data.claims.sub as string
 
   if (email === DEMO_EMAIL) {
-    return <IntelligenceReal signals={DEMO_SIGNALS as never} messages={DEMO_MESSAGES as never} baselines={DEMO_BASELINES as never} />
+    return <IntelligenceReal signals={DEMO_SIGNALS as never} messages={DEMO_MESSAGES as never} baselines={DEMO_BASELINES as never} demo={DEMO_INTELLIGENCE} />
   }
 
   const since = new Date(Date.now() - 56 * 86400000).toISOString()
-  const [signalsRes, msgsRes, baselinesRes] = await Promise.all([
+  const [signalsRes, msgsRes, baselinesRes, accountsRes] = await Promise.all([
     supabase.from('signals')
-      .select('created_at, severity, signal_type, source_integration, risk_amount, is_dismissed, status')
+      .select('created_at, account_name, title, severity, signal_type, source_integration, risk_amount, is_dismissed, status, handled_action')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(500),
@@ -32,6 +32,9 @@ export default async function IntelligencePage() {
       .eq('user_id', userId)
       .order('total_messages', { ascending: false })
       .limit(20),
+    supabase.from('accounts')
+      .select('name, value, close_date, risk_level')
+      .eq('user_id', userId),
   ])
 
   return (
@@ -39,6 +42,7 @@ export default async function IntelligencePage() {
       signals={signalsRes.data ?? []}
       messages={msgsRes.data ?? []}
       baselines={baselinesRes.data ?? []}
+      accounts={accountsRes.data ?? []}
     />
   )
 }

@@ -464,3 +464,77 @@ export const DEMO_TEAM: TeamModel = {
   criticalOwned: '9/9', activeFollowUp: '6/9',
   followThrough: 75, loopClosure: 71,
 }
+
+// ---------- Intelligence (transcribed from the mobile Intelligence screen, v11.10) ----------
+export type IntelModel = {
+  riskDeltaPct: number; driver: string; holdingPct: number; protectedTotal: number
+  bullets: Array<{ tone: string; lead: string; rest: string }>
+  weekNo: number; newRisk: number; firstWeekRisk: number
+  stabilized: number; netChangePct: number
+  drivers: Array<{ k: string; v: number }>              // v < 0 = reduced risk (green, shown with +)
+  weeks: Array<{ label: string; added: number; stabilized: number }>
+  riskSits: Array<{ k: string; pct: number; exposure: number; color: string }>
+  actions: Array<{ k: string; used: number; success: number; churn: number }>
+  successRate: number; successTarget: number; recovered: number; caughtEarly: number
+  fasterDays: number; insight: string
+  forecast?: { forecast: number; actual: number }
+  sources: Array<{ k: string; n: number }>
+  renewals: Array<{ account: string; days: number; value: number; status: 'at risk' | 'monitor' | 'on track' }>
+}
+
+export const DEMO_INTELLIGENCE: IntelModel = {
+  riskDeltaPct: 75, driver: 'executive disengagement', holdingPct: 78, protectedTotal: 560_000,
+  bullets: [
+    { tone: '#c43d2b', lead: '3 accounts deteriorated', rest: ': Acme, TechFlow, Meridian.' },
+    { tone: '#2f8f5b', lead: 'Brightwave re-engaged', rest: ' after 2 weeks dark.' },
+    { tone: '#2f8f5b', lead: 'Cobalt closed-won', rest: ' for $150K, first this quarter.' },
+    { tone: '#0E0D0B', lead: 'Focus today:', rest: ' Meridian CEO video, Axion legal prep.' },
+  ],
+  weekNo: 8, newRisk: 579_000, firstWeekRisk: 330_000,
+  stabilized: 290_000, netChangePct: 8,
+  drivers: [
+    { k: 'Exec disengagement', v: 85_000 },
+    { k: 'SLA resolution', v: -62_000 },
+    { k: 'New competitor', v: 54_000 },
+    { k: 'Usage recovery', v: -31_000 },
+  ],
+  weeks: [
+    { label: 'W1', added: 330_000, stabilized: 210_000 },
+    { label: 'W2', added: 342_000, stabilized: 236_000 },
+    { label: 'W3', added: 318_000, stabilized: 258_000 },
+    { label: 'W4', added: 365_000, stabilized: 244_000 },
+    { label: 'W5', added: 412_000, stabilized: 262_000 },
+    { label: 'W6', added: 448_000, stabilized: 275_000 },
+    { label: 'W7', added: 508_000, stabilized: 281_000 },
+    { label: 'W8', added: 579_000, stabilized: 290_000 },
+  ],
+  riskSits: [
+    { k: 'Executive disengagement', pct: 34, exposure: 452_000, color: '#c43d2b' },
+    { k: 'Invoice delays', pct: 28, exposure: 372_000, color: '#d38b1d' },
+    { k: 'Competitor activity', pct: 22, exposure: 293_000, color: '#FF6B35' },
+    { k: 'Product usage decline', pct: 16, exposure: 213_000, color: '#5C5855' },
+  ],
+  actions: [
+    { k: 'Exec call', used: 6, success: 83, churn: -31 },
+    { k: 'Follow-up', used: 28, success: 74, churn: -18 },
+    { k: 'Escalation', used: 14, success: 68, churn: -22 },
+    { k: 'Invoice chase', used: 9, success: 45, churn: -8 },
+  ],
+  successRate: 78, successTarget: 80, recovered: 7, caughtEarly: 47,
+  fasterDays: 3.4,
+  insight: 'Executive calls cut churn most per intervention (−31%) but are used least. Follow-ups carry the volume at 74% effectiveness.',
+  forecast: { forecast: 1_240_000, actual: 1_180_000 },
+  sources: [
+    { k: 'Gmail / Outlook', n: 310 },
+    { k: 'WhatsApp', n: 194 },
+    { k: 'Slack', n: 128 },
+    { k: 'LinkedIn', n: 96 },
+    { k: 'Calls & CRM', n: 119 },
+  ],
+  renewals: [
+    { account: 'Meridian Labs', days: 32, value: 850_000, status: 'at risk' },
+    { account: 'Vertex Systems', days: 58, value: 140_000, status: 'monitor' },
+    { account: 'Brightwave', days: 74, value: 180_000, status: 'on track' },
+    { account: 'Cobalt Systems', days: 88, value: 150_000, status: 'on track' },
+  ],
+}
