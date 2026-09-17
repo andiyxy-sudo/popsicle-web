@@ -513,17 +513,30 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
 
         // What the detector actually saw. Prefer the model's own evidence list,
         // fall back to the labelled facts, and never invent a bullet.
+        // Every signal gets an evidence list. Prefer the detector's own
+        // evidence array; otherwise use the sentences of its description, which
+        // are the detector's statements of fact. Nothing here is invented.
+        const evidenceFromDesc: string[] = []
         const evidence: string[] = (() => {
           const out: string[] = []
           const ev = ai.evidence
           if (Array.isArray(ev)) for (const e of ev) { if (typeof e === 'string' && e.trim()) out.push(e.trim()) }
           else if (typeof ev === 'string' && ev.trim()) out.push(ev.trim())
-          if (quote) out.push(`They said: "${quote}"`)
+
+          if (out.length === 0 && descText) {
+            for (const sentence of descText.split(/(?<=[.!?])\s+/).map(x => x.trim()).filter(Boolean)) {
+              if (sentence.length < 6) continue
+              out.push(sentence.replace(/\s*[.]$/, ''))
+              evidenceFromDesc.push(sentence)
+              if (out.length >= 3) break
+            }
+          }
+          if (quote && !out.some(x => x.includes(quote.slice(0, 24)))) out.push(`They said: "${quote}"`)
           for (const [k, v] of aiRows) {
             const label = FACT_LABELS[k]
-            if (label && !out.some(x => x.toLowerCase().startsWith(label.toLowerCase()))) out.push(`${label}: ${fmtFact(k, v)}`)
+            if (label && out.length < 4 && !out.some(x => x.toLowerCase().startsWith(label.toLowerCase()))) out.push(`${label}: ${fmtFact(k, v)}`)
           }
-          return out.slice(0, 3)
+          return out.slice(0, 4)
         })()
 
         // Why this pattern matters, stated plainly per signal type.
@@ -587,7 +600,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
                     </div>
                   </div>
                 )}
-                {descText && !descDuplicatesTitle ? (
+                {descText && !descDuplicatesTitle && evidenceFromDesc.length === 0 ? (
                   <div className="read-prose read-prose-ink" style={{ marginBottom: 16 }}>{descText}</div>
                 ) : null}
                 {quote && evidence.length === 0 && (
