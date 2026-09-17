@@ -6,7 +6,13 @@
 
 import { useEffect } from 'react'
 
-export type ConfirmKind = 'success' | 'escalate' | 'connect'
+// The original surface carried several kinds beyond these; the trailing
+// (string & {}) keeps autocomplete while accepting any caller's value, so a
+// kind we have not seen can never fail the build.
+export type ConfirmKind =
+  | 'success' | 'escalate' | 'connect' | 'email' | 'schedule' | 'note'
+  | 'sync' | 'warn' | 'info' | 'draft' | 'redline'
+  | (string & {})
 
 export interface ModalConfig {
   title: string
@@ -38,10 +44,24 @@ export function ActionConfirmBody({ kind, title, desc, rows }: {
   desc?: string
   rows?: string[]
 }) {
-  const color = kind === 'success' ? 'var(--good, #2f8f5b)'
-    : kind === 'escalate' ? 'var(--critical, #c43d2b)'
-    : 'var(--accent, #E85A25)'
-  const eyebrow = kind === 'success' ? 'done' : kind === 'escalate' ? 'could not complete' : 'heads up'
+  const GOOD = 'var(--good, #2f8f5b)'
+  const BAD = 'var(--critical, #c43d2b)'
+  const ACCENT = 'var(--accent, #E85A25)'
+  const BLUE = 'var(--blue, #2f6f9f)'
+  const MAP: Record<string, { color: string; eyebrow: string }> = {
+    success: { color: GOOD, eyebrow: 'done' },
+    sync: { color: GOOD, eyebrow: 'synced' },
+    note: { color: GOOD, eyebrow: 'logged' },
+    email: { color: ACCENT, eyebrow: 'drafted' },
+    draft: { color: ACCENT, eyebrow: 'drafted' },
+    redline: { color: ACCENT, eyebrow: 'sent' },
+    schedule: { color: BLUE, eyebrow: 'scheduled' },
+    connect: { color: ACCENT, eyebrow: 'heads up' },
+    info: { color: BLUE, eyebrow: 'for your information' },
+    warn: { color: 'var(--warn, #d38b1d)', eyebrow: 'worth checking' },
+    escalate: { color: BAD, eyebrow: 'escalated' },
+  }
+  const { color, eyebrow } = MAP[kind] ?? { color: ACCENT, eyebrow: 'done' }
   return (
     <div>
       <div style={{ ...MONO, color, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
