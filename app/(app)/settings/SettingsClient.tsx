@@ -182,7 +182,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   }
 
   const Section = ({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingRight: 8 }}>
+    <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingLeft: 13 }}>
       {/* rows carry 16px of top padding, so the label matches it */}
       <div style={{ paddingTop: 16 }}>
         <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
@@ -195,7 +195,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const Row = ({ label, sub, value, onClick, danger }: { label: string; sub?: string; value?: React.ReactNode; onClick?: () => void; danger?: boolean }) => (
     <div onClick={onClick}
       className={onClick ? 'set-row' : undefined}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 15, color: danger ? 'var(--critical, #c43d2b)' : 'var(--ink)' }}>{label}</div>
         {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>}
@@ -261,7 +261,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
            ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings'],
            ['push', 'Push notifications', typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Allowed in this browser' : 'Needs browser permission'],
            ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled']] as const).map(([k, label, sub]) => (
-          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
             <div>
               <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
@@ -280,7 +280,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Tone" sub="Applies to every draft it prepares" value={voice.Tone} onClick={() => setSheet('Tone')} />
         <Row label="Length" sub="How long a first draft should run" value={voice.Length} onClick={() => setSheet('Length')} />
         <Row label="Sign-off" sub="The closing line on your emails" value={voice['Sign-off']} onClick={() => setSheet('Sign-off')} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
           <div>
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Send without asking</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Off means every draft waits for your approval</div>

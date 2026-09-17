@@ -2477,6 +2477,23 @@ body[data-modal="1"] .ed-askbar-wrap { display: none !important; }
 /* v10.8 - a light warmth on the two quietest pages: rows glow faintly on
    hover, connected sources carry a warm tint, outlined pills warm up. */
 .set-row { transition: background .16s ease; }
+.set-row { margin-inline: -10px; padding-inline: 10px !important; }
 .set-row:hover { background: rgba(232,90,37,.035); }
 .warm-pill { transition: background .16s ease, border-color .16s ease, color .16s ease; }
 .warm-pill:hover { background: rgba(232,90,37,.1) !important; border-color: rgba(232,90,37,.55) !important; color: var(--accent, #E85A25) !important; }
+
+
+/* ============================================================
+   v11.7 - the sun sits behind everything.
+   The paper colour lives on <body>; the main column and the content column
+   are transparent, so nothing can paint over the glow.
+   ============================================================ */
+body { background: var(--bg) !important; }
+.main { background: transparent !important; }
+.content { background: transparent !important; }
+.ed-wash {
+  position: fixed !important; top: 0 !important; right: 0 !important;
+  left: var(--sidebar-w, 216px) !important; height: 1200px !important;
+  pointer-events: none !important; z-index: 0 !important;
+}
+.dsk-screen { position: relative; z-index: 1; }
