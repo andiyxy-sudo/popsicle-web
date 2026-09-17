@@ -7,7 +7,7 @@ import { PageHead } from '@/components/layout/PageHead'
 // language (gradient hero, SEC section headers, flush cards). Every number is
 // computed from the user's own rows; sections render only when they have data.
 
-interface Sig { created_at?: string; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null }
+interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
 interface Baseline { account_name?: string; emails_per_week?: number; total_messages?: number; last_message_at?: string; our_median_reply_hours?: number; their_median_reply_hours?: number; total_reply_pairs?: number; confidence?: string }
 
@@ -63,6 +63,8 @@ const pct = (n: number, of: number) => (of > 0 ? Math.round((n / of) * 100) : 0)
 
 export function IntelligenceReal({ signals, messages, baselines }: { signals: Sig[]; messages: Msg[]; baselines: Baseline[] }) {
   const [mounted, setMounted] = useState(false)
+  const [range, setRange] = useState(30)
+  const [series, setSeries] = useState<'At risk' | 'Stabilized' | 'Both'>('At risk')
   useEffect(() => { setMounted(true) }, [])
   const now = Date.now()
 
@@ -151,95 +153,222 @@ export function IntelligenceReal({ signals, messages, baselines }: { signals: Si
   const heroBigLbl = openRisk > 0 ? `at risk across ${live.filter(s => (!s.status || s.status === 'open') && s.severity !== 'positive').length} open signals` : 'messages in the last 30 days'
   const heroDelta = openRisk > 0 ? delta(sig30.length, sigPrev.length) : delta(msg30.length, msgPrev.length)
 
+  // ---- risk movement, the spine of the design's Intelligence page ----
+  const handledRate = (() => {
+    const closed = signals.filter(sg => sg.status === 'handled').length
+    const all = signals.filter(sg => !sg.is_dismissed && sg.status !== 'deleted').length
+    return all > 0 ? Math.round((closed / all) * 100) : null
+  })()
+  const rangeMs = range * 86400000
+  const inRange = live.filter(sg => !sg.created_at || Date.now() - new Date(sg.created_at).getTime() <= rangeMs)
+  const WEEKS_BACK = 8
+  const weekBuckets = (() => {
+    const out: Array<{ label: string; added: number; stabilized: number }> = []
+    for (let i = WEEKS_BACK - 1; i >= 0; i--) {
+      const start = Date.now() - (i + 1) * 7 * 86400000
+      const end = Date.now() - i * 7 * 86400000
+      const inWeek = inRange.filter(sg => {
+        const t = sg.created_at ? new Date(sg.created_at).getTime() : 0
+        return t >= start && t < end
+      })
+      const added = inWeek.filter(sg => sg.severity !== 'positive').reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
+      const stabilized = inWeek.filter(sg => sg.severity === 'positive' || sg.status === 'handled').reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
+      out.push({ label: `W${WEEKS_BACK - i}`, added, stabilized })
+    }
+    return out
+  })()
+  const wLast = weekBuckets[weekBuckets.length - 1]
+  const wFirst = weekBuckets[0]
+  const riskDelta = wFirst?.added > 0 ? Math.round(((wLast.added - wFirst.added) / wFirst.added) * 100) : null
+  const stabilizedTotal = weekBuckets.reduce((a, w) => a + w.stabilized, 0)
+  const addedTotal = weekBuckets.reduce((a, w) => a + w.added, 0)
+  const netChange = addedTotal > 0 ? Math.round(((addedTotal - stabilizedTotal) / addedTotal) * 100) : 0
+
+  // what is actually moving the number
+  const drivers = (() => {
+    const by = new Map<string, number>()
+    for (const sg of inRange) {
+      const k = sg.signal_type || 'other'
+      by.set(k, (by.get(k) ?? 0) + (Number(sg.risk_amount) || 0) * (sg.severity === 'positive' ? -1 : 1))
+    }
+    return Array.from(by.entries())
+      .filter(([, v]) => v !== 0)
+      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+      .slice(0, 5)
+  })()
+
+  // headline facts
+  const deteriorated = Array.from(new Set(live.filter(sg => sg.severity === 'high').map(sg => sg.account_name).filter(Boolean))) as string[]
+  const reengaged = live.find(sg => sg.signal_type === 'reengaged')
+  const accountNames = Array.from(new Set(live.map(sg => sg.account_name).filter(Boolean))) as string[]
+  const won = live.find(sg => sg.signal_type === 'call_commitment' && sg.severity === 'positive')
+  const focus = live.filter(sg => sg.severity === 'high').slice(0, 2).map(sg => sg.account_name).filter(Boolean) as string[]
+
+  const bullets = [
+    deteriorated.length ? { tone: 'var(--critical, #c43d2b)', lead: `${deteriorated.length} account${deteriorated.length === 1 ? '' : 's'} deteriorated`, rest: `: ${deteriorated.slice(0, 3).join(', ')}.` } : null,
+    reengaged ? { tone: 'var(--good, #2f8f5b)', lead: `${reengaged.account_name} re-engaged`, rest: '.' } : null,
+    won ? { tone: 'var(--good, #2f8f5b)', lead: `${won.account_name} committed`, rest: won.title ? `: ${won.title}.` : '.' } : null,
+    focus.length ? { tone: 'var(--ink, #0E0D0B)', lead: 'Focus today:', rest: ` ${focus.join(', ')}.` } : null,
+  ].filter(Boolean) as Array<{ tone: string; lead: string; rest: string }>
+
   return (
     <div className="dsk-screen on">
-      <PageHead
-        eyebrow="Intelligence"
-        crumb={mounted ? `${live.length} signals · last 30 days` : `${live.length} signals`}
-        title={openRisk > 0
-          ? <><span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtMoney(openRisk)}</span> is exposed across {openHigh.length} critical signal{openHigh.length === 1 ? '' : 's'}.{' '}<span style={{ color: 'var(--ink-muted)' }}>Here is what the last weeks of conversation add up to.</span></>
-          : <>{msg30.length} conversations in the last 30 days.{' '}<span style={{ color: 'var(--ink-muted)' }}>Nothing is flagged critical right now.</span></>}
-      />
-
-      {/* naked stats over the rule */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))' }}>
-        {[
-          { n: openRisk > 0 ? fmtMoney(openRisk) : String(msg30.length), lbl: openRisk > 0 ? `at risk · ${openHigh.length} critical` : 'messages · 30 days', color: openRisk > 0 ? 'var(--critical, #c43d2b)' : 'var(--ink)', d: heroDelta },
-          { n: String(sig30.length), lbl: 'signals raised · 30 days', color: 'var(--ink)', d: delta(sig30.length, sigPrev.length) },
-          { n: String(activeAccounts), lbl: 'accounts active · 14 days', color: 'var(--ink)', d: null },
-          { n: ourAvg != null ? `${Math.round(ourAvg)}h` : '--', lbl: 'our median reply', color: 'var(--accent)', d: null },
-        ].map((st, i, arr) => (
-          <div key={i} style={{ paddingRight: 32 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-              <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</span>
-              {st.d && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{st.d}</span>}
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
+      {/* header with range control */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36, flexWrap: 'wrap' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+          Revenue intelligence <span style={{ margin: '0 8px' }}>/</span> last {range} days
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
+          <div style={{ display: 'flex', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: 3 }}>
+            {[30, 60, 90].map(d => (
+              <button key={d} onClick={() => setRange(d)}
+                style={{ font: 'inherit', fontSize: 12.5, fontWeight: range === d ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
+                  background: range === d ? 'var(--ink, #0E0D0B)' : 'transparent', color: range === d ? '#fff' : 'var(--ink-muted)' }}>{d} days</button>
+            ))}
           </div>
-        ))}
+          <button onClick={() => window.print()}
+            style={{ font: 'inherit', fontSize: 13, fontWeight: 500, background: 'none', border: 0, color: 'var(--ink-muted)', cursor: 'pointer' }}>Export PDF</button>
+        </div>
       </div>
 
-      {/* conversation volume - flowing line + area (prototype style) */}
-      {hasVolume && (
-        <section style={{ marginTop: 64 }}>
-          {SEC('Conversation volume', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{WEEKS} weeks · inbound + outbound</span>)}
+      {/* the narrative */}
+      <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(28px,3.3vw,40px)', letterSpacing: '-.035em', lineHeight: 1.16, margin: '18px 0 0', color: 'var(--ink)' }}>
+        {riskDelta != null && riskDelta !== 0 ? (
+          <>New risk is being added <span style={{ color: riskDelta > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>{Math.abs(riskDelta)}% {riskDelta > 0 ? 'faster' : 'slower'}</span> than eight weeks ago{deteriorated.length ? ', driven by executive disengagement' : ''}.{' '}</>
+        ) : (
+          <>{live.length} signal{live.length === 1 ? '' : 's'} analysed across {accountNames.length} account{accountNames.length === 1 ? '' : 's'}.{' '}</>
+        )}
+        <span style={{ color: 'var(--ink-muted)' }}>
+          {handledRate != null ? <>Interventions are holding at {handledRate}%, and </> : null}
+          Popsicle has protected <span style={{ color: 'var(--accent)' }}>{fmtMoney(stabilizedTotal)}</span> this quarter.
+        </span>
+      </h1>
+
+      {/* callouts */}
+      {bullets.length > 0 && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(210px,1fr))', gap: 26, marginTop: 26 }}>
+          {bullets.map((b, i) => (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 10, fontSize: 14, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.tone, marginTop: 7 }} />
+              <div><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{b.lead}</strong>{b.rest}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '34px 0 26px' }} />
+
+      {/* new risk added */}
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        New risk added · week {WEEKS_BACK}
+      </div>
+      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(46px,6vw,74px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 10, color: 'var(--critical, #c43d2b)' }}>
+        {fmtMoney(wLast?.added ?? 0)}
+      </div>
+      {riskDelta != null && (
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 12, fontSize: 13 }}>
+          <span style={{ color: riskDelta > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)', fontWeight: 600 }}>
+            {riskDelta > 0 ? '▲' : '▼'} {riskDelta > 0 ? '+' : ''}{riskDelta}%
+          </span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--ink-faint)' }}>vs W1 · {fmtMoney(wFirst?.added ?? 0)}</span>
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: 48, flexWrap: 'wrap', alignItems: 'flex-end', marginTop: 26 }}>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.04em', color: 'var(--good, #2f8f5b)' }}>{fmtMoney(stabilizedTotal)}</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 5 }}>stabilized this period</div>
+        </div>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.04em', color: netChange > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
+            {netChange > 0 ? '+' : ''}{netChange}%
+          </div>
+          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 5 }}>net risk change</div>
+        </div>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginLeft: 'auto', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--critical, #c43d2b)' }} />At risk
+          </span>
+          <span style={{ fontSize: 12.5, color: 'var(--ink-muted)', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />Stabilized
+          </span>
+          <div style={{ display: 'flex', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: 3 }}>
+            {(['At risk', 'Stabilized', 'Both'] as const).map(m => (
+              <button key={m} onClick={() => setSeries(m)}
+                style={{ font: 'inherit', fontSize: 12.5, fontWeight: series === m ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
+                  background: series === m ? 'var(--ink, #0E0D0B)' : 'transparent', color: series === m ? '#fff' : 'var(--ink-muted)' }}>{m}</button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* drivers + movement chart */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 32, alignItems: 'start' }}>
+        <div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>Key movement drivers</div>
+          {drivers.length === 0 && <div style={{ padding: '18px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No exposure recorded yet.</div>}
+          {drivers.map(([k, v]) => (
+            <div key={k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+              <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{TYPE_LABELS[k] || k}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: v < 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', whiteSpace: 'nowrap' }}>
+                {v < 0 ? '+' : ''}{fmtMoney(Math.abs(v))}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div>
           {(() => {
-            const W = 900, H = 190, PAD = 6
-            const maxV = Math.max(1, ...weeks.map(w => w.in + w.out))
-            const xs = weeks.map((_, i) => (i / Math.max(1, WEEKS - 1)) * W)
-            const ysTotal = weeks.map(w => H - PAD - ((w.in + w.out) / maxV) * (H - PAD * 2))
-            const ysIn = weeks.map(w => H - PAD - (w.in / maxV) * (H - PAD * 2))
-            // Catmull-Rom -> cubic bezier for the flowing curve the prototype uses
+            const W = 760, H = 230, PAD = 10
+            const vals = weekBuckets.map(w => (series === 'Stabilized' ? w.stabilized : w.added))
+            const alt = weekBuckets.map(w => w.stabilized)
+            const maxV = Math.max(1, ...vals, ...(series === 'Both' ? alt : []))
+            const xs = weekBuckets.map((_, i) => (i / Math.max(1, weekBuckets.length - 1)) * W)
+            const yOf = (v: number) => H - PAD - (v / maxV) * (H - PAD * 2)
             const curve = (ys: number[]) => {
               let d = `M${xs[0]},${ys[0]}`
               for (let i = 0; i < xs.length - 1; i++) {
                 const x0 = xs[Math.max(0, i - 1)], y0 = ys[Math.max(0, i - 1)]
-                const x1 = xs[i], y1 = ys[i]
-                const x2 = xs[i + 1], y2 = ys[i + 1]
+                const x1 = xs[i], y1 = ys[i], x2 = xs[i + 1], y2 = ys[i + 1]
                 const x3 = xs[Math.min(xs.length - 1, i + 2)], y3 = ys[Math.min(ys.length - 1, i + 2)]
                 d += ` C${x1 + (x2 - x0) / 6},${y1 + (y2 - y0) / 6} ${x2 - (x3 - x1) / 6},${y2 - (y3 - y1) / 6} ${x2},${y2}`
               }
               return d
             }
-            const lineTotal = curve(ysTotal)
-            const lineIn = curve(ysIn)
-            const area = `${lineTotal} L${W},${H} L0,${H} Z`
+            const main = curve(vals.map(yOf))
+            const second = curve(alt.map(yOf))
+            const riskColor = series === 'Stabilized' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)'
             return (
-              <div style={{ marginTop: 26 }}>
-                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={190} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+              <div>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={230} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
                   <defs>
-                    <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--accent, #E85A25)" stopOpacity=".16" />
-                      <stop offset="100%" stopColor="var(--accent, #E85A25)" stopOpacity="0" />
+                    <linearGradient id="riskFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={series === 'Stabilized' ? '#2f8f5b' : '#c43d2b'} stopOpacity=".14" />
+                      <stop offset="100%" stopColor={series === 'Stabilized' ? '#2f8f5b' : '#c43d2b'} stopOpacity="0" />
                     </linearGradient>
                   </defs>
                   {[0.25, 0.5, 0.75].map(f => (
-                    <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--hairline, #EFEAE1)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                    <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--hairline, #EFEAE1)" strokeWidth="1" strokeDasharray="4 6" vectorEffect="non-scaling-stroke" />
                   ))}
-                  <path d={area} fill="url(#volFill)" />
-                  <path d={lineTotal} fill="none" stroke="var(--accent, #E85A25)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d={lineIn} fill="none" stroke="var(--ink, #0E0D0B)" strokeWidth="1.5" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" opacity=".45" strokeLinecap="round" />
-                  {xs.map((x, i) => (
-                    <circle key={i} cx={x} cy={ysTotal[i]} r={i === xs.length - 1 ? 5 : 3}
-                      fill={i === xs.length - 1 ? 'var(--accent, #E85A25)' : 'var(--paper, #FBF8F3)'}
-                      stroke="var(--accent, #E85A25)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-                  ))}
+                  <path d={`${main} L${W},${H} L0,${H} Z`} fill="url(#riskFill)" />
+                  <path d={main} fill="none" stroke={riskColor} strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+                  {series === 'Both' && (
+                    <path d={second} fill="none" stroke="var(--good, #2f8f5b)" strokeWidth="2" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  )}
+                  <circle cx={xs[xs.length - 1]} cy={yOf(vals[vals.length - 1])} r="5" fill={riskColor} stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 </svg>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                  {weeks.map((w, i) => (
-                    <span key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: i === weeks.length - 1 ? 'var(--accent)' : 'var(--ink-faint)' }}>{w.label}</span>
+                  {weekBuckets.map((w, i) => (
+                    <span key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, color: i === weekBuckets.length - 1 ? 'var(--accent)' : 'var(--ink-faint)' }}>{w.label}</span>
                   ))}
-                </div>
-                <div style={{ display: 'flex', gap: 22, marginTop: 16, fontSize: 12.5, color: 'var(--ink-muted)' }}>
-                  <span><span style={{ display: 'inline-block', width: 16, height: 2, background: 'var(--accent)', verticalAlign: 'middle', marginRight: 8 }} />total messages</span>
-                  <span><span style={{ display: 'inline-block', width: 16, height: 2, background: 'var(--ink)', opacity: .45, verticalAlign: 'middle', marginRight: 8 }} />inbound only</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>peak {maxV}/week</span>
                 </div>
               </div>
             )
           })()}
-        </section>
-      )}
+        </div>
+      </div>
+
+      <div style={{ height: 1, background: 'var(--hairline, #EFEAE1)', margin: '44px 0 0' }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 64 }}>
         {/* signal mix */}

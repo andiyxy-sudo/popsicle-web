@@ -62,13 +62,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <div className="main" style={{ position: 'relative' }}>
         {/* warm corner wash (design shell) */}
-        <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)' }} />
+        <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(150% 120% at 100% -20%, rgba(255,138,80,.30), rgba(255,171,120,.12) 38%, rgba(255,138,80,0) 72%)' }} />
         <div className="content" ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {children}
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.0</span>
+            <span>v11.1</span>
           </footer>
         </div>
       </div>

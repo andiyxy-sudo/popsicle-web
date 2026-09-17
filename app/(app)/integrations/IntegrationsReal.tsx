@@ -331,6 +331,21 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
 
   const liveCount = PROVIDERS.filter(p => p.fn && active.includes(p.key)).length
 
+  // Facts for the headline and the stat row, all drawn from real counts.
+  const indexed30 = PROVIDERS.reduce((a, p) => a + (stats[p.key]?.thisMonth ?? 0), 0)
+  const indexedAll = PROVIDERS.reduce((a, p) => a + (stats[p.key]?.total ?? 0), 0)
+  const leader = PROVIDERS
+    .map(p => ({ name: p.name, n: stats[p.key]?.total ?? 0 }))
+    .sort((a, b) => b.n - a.n)[0]
+  const leaderShare = leader && indexedAll > 0 ? Math.round((leader.n / indexedAll) * 100) : 0
+  const missing = PROVIDERS.filter(p => p.fn && !active.includes(p.key)).slice(0, 2).map(p => p.name)
+  const lastSync = (() => {
+    const times = PROVIDERS.map(p => stats[p.key]?.lastSynced).filter(Boolean).map(t => new Date(t as string).getTime())
+    if (!times.length) return null
+    const mins = Math.round((Date.now() - Math.max(...times)) / 60000)
+    return mins < 1 ? 'just now' : mins < 60 ? `${mins}m` : mins < 1440 ? `${Math.round(mins / 60)}h` : `${Math.round(mins / 1440)}d`
+  })()
+
   // Actually call the disconnect edge action, then refresh.
   async function doDisconnect(p: Provider) {
     if (!p.fn) return
@@ -497,9 +512,18 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
     <div className="dsk-screen on">
       <PageHead
         eyebrow="Integrations"
-        crumb={`${liveCount} live`}
+        crumb={`${liveCount} active · ${PROVIDERS.length} available`}
         title={liveCount > 0
-          ? <><span style={{ color: 'var(--accent)' }}>{liveCount}</span> source{liveCount === 1 ? '' : 's'} feeding your pipeline.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect more and detection gets sharper.</span></>
+          ? <>
+              <span style={{ color: 'var(--accent)' }}>{liveCount}</span> source{liveCount === 1 ? '' : 's'} feeding{' '}
+              {indexedAll > 0 ? <><span style={{ color: 'var(--accent)' }}>{indexedAll.toLocaleString()}</span> signal{indexedAll === 1 ? '' : 's'}</> : 'your pipeline'}
+              {indexed30 > 0 ? <> in the last 30 days</> : null}.{' '}
+              <span style={{ color: 'var(--ink-muted)' }}>
+                {leader && leaderShare > 0 ? <>{leader.name} carries {leaderShare}% of the volume{missing.length ? '; ' : '.'}</> : null}
+                {missing.length ? <>{missing.join(' and ')} {missing.length === 1 ? 'is' : 'are'} still unconnected.</> : null}
+                {!leaderShare && !missing.length ? <>Every available source is connected.</> : null}
+              </span>
+            </>
           : <>No sources connected yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect Gmail or Slack and signals start arriving.</span></>}
       />
       {/* stats over the rule (design) */}
@@ -507,8 +531,9 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
         {[
           { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--ink)' },
           { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--ink)' },
-          { n: String(PROVIDERS.filter(x => x.fn).length), lbl: 'live integrations', color: 'var(--good, #2f8f5b)' },
-          { n: String(cats.length), lbl: 'categories', color: 'var(--ink)' },
+          { n: indexedAll ? indexedAll.toLocaleString() : '--', lbl: 'signals indexed · all time', color: 'var(--ink)' },
+          { n: indexed30 ? indexed30.toLocaleString() : '--', lbl: 'signals indexed · 30 days', color: 'var(--ink)' },
+          { n: lastSync ?? '--', lbl: 'since last sync', color: lastSync ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' },
         ].map((st, i, arr) => (
           <div key={i} style={{ paddingRight: 32 }}>
             <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
