@@ -117,20 +117,20 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       ))}
 
       {secHead('Every dated deal', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by close date</span>)}
-      <div style={{ display: 'grid', gridTemplateColumns: '96px minmax(120px,1.6fr) minmax(70px,.7fr) minmax(90px,.9fr) minmax(60px,.5fr) 96px', columnGap: 10, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <span>Close</span><span>Account</span><span>Value</span><span>Stage</span><span>Odds</span><span>Weighted</span>
       </div>
       {rows.map(r => (
         <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
-          style={{ display: 'grid', gridTemplateColumns: '96px minmax(120px,1.6fr) minmax(70px,.7fr) minmax(90px,.9fr) minmax(60px,.5fr) 96px', columnGap: 10, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 12.5 }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+          style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14 }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>
-            {r.a.name}{r.risky && <span style={{ color: 'var(--critical, #c43d2b)', marginLeft: 8, fontSize: 11.5, fontWeight: 500 }}>at risk</span>}
+            {r.a.name}{r.risky && <span style={{ color: 'var(--critical, #c43d2b)', marginLeft: 8, fontSize: 12.5, fontWeight: 500 }}>at risk</span>}
           </span>
-          <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{formatCurrency(r.value)}</span>
-          <span style={{ color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.a.stage || '--'}</span>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{Math.round(r.w * 100)}%</span>
-          <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--accent)' }}>{formatCurrency(r.weighted)}</span>
+          <span style={{ minWidth: 0, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)', whiteSpace: 'nowrap' }}>{formatCurrency(r.value)}</span>
+          <span style={{ minWidth: 0, color: 'var(--ink-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.a.stage || '--'}</span>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-faint)' }}>{Math.round(r.w * 100)}%</span>
+          <span style={{ minWidth: 0, fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: 'var(--accent)', whiteSpace: 'nowrap' }}>{formatCurrency(r.weighted)}</span>
         </div>
       ))}
 

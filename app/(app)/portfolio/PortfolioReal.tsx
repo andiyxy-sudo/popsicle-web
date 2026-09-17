@@ -172,7 +172,7 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
       </div>
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
-        const COLS = '30px minmax(90px,1.5fr) minmax(52px,.62fr) minmax(50px,.58fr) minmax(56px,.8fr) minmax(70px,1.2fr) minmax(44px,.5fr) 104px'
+        const COLS = '34px minmax(104px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.8fr) minmax(84px,1.2fr) minmax(52px,.5fr) 112px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
         const ordered = [...accounts].sort((x, y) => {
@@ -193,24 +193,24 @@ export function PortfolioReal({ accounts, demoSignals }: { accounts: Account[]; 
               const top = topSignalOf(sigs)
               return (
                 <div key={a.id} onClick={() => openA360(a)}
-                  style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 11.5, lineHeight: 1.35, cursor: 'pointer' }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 21, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
+                  style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
-                    <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 12.5, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
-                    <div style={{ ...cell, fontSize: 11, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
+                    <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
+                    <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
                   </div>
-                  <span style={{ ...cell, fontSize: 12, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
+                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'start',
                       padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
                   <button onClick={e => { e.stopPropagation(); if (top) router.push(`/signals?signal=${top.id}&action=reply`); else openA360(a) }}
-                    style={{ font: 'inherit', fontSize: 12, fontWeight: 500, width: 104, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>
                 </div>
