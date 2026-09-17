@@ -505,7 +505,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       {/* stats over the rule (design) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', paddingTop: 4, marginBottom: 20 }}>
         {[
-          { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--ink)' },
+          { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--accent, #E85A25)' },
           { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--ink)' },
           { n: String(PROVIDERS.filter(x => x.fn).length), lbl: 'live integrations', color: 'var(--good, #2f8f5b)' },
           { n: String(cats.length), lbl: 'categories', color: 'var(--ink)' },
@@ -525,8 +525,11 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
           <div key={cat} style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: 24, marginTop: 44 }}>
             {/* rows carry 18px of top padding, so the label matches it */}
             <div style={{ paddingTop: 18 }}>
-              <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{cat}</div>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>{onCount} active</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+                <span style={{ width: 3, height: 15, borderRadius: 2, background: onCount > 0 ? 'linear-gradient(180deg,#FF8A50,#E85A25)' : 'var(--border, #E5DFD4)' }} />
+                <span style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{cat}</span>
+              </div>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: onCount > 0 ? 'var(--accent, #E85A25)' : 'var(--ink-faint)', marginTop: 5, paddingLeft: 12 }}>{onCount} active</div>
             </div>
             <div>
               {inCat.map(p => {
@@ -534,7 +537,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                 const live = !!p.fn
                 return (
                   <div key={p.key} onClick={on ? () => { setSheet(p); setConfirmDc(false) } : undefined}
-                    style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
+                    className={on ? 'int-row on' : 'int-row'}
+                    style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 10px 18px 12px', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
@@ -543,13 +547,13 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                       <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 3 }}>{p.desc}</div>
                       {on && (
                         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 5 }}>
-                          {stats[p.key]?.total ? `${stats[p.key]?.total} signals · ` : ''}{stats[p.key]?.lastSynced ? `synced ${new Date(stats[p.key]!.lastSynced!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'connected'}
+                          {stats[p.key]?.total ? <span style={{ color: 'var(--accent, #E85A25)' }}>{stats[p.key]?.total} signals</span> : null}{stats[p.key]?.total ? ' · ' : ''}{stats[p.key]?.lastSynced ? `synced ${new Date(stats[p.key]!.lastSynced!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'connected'}
                         </div>
                       )}
                     </div>
                     {on ? (
                       <button onClick={e => { e.stopPropagation(); setSheet(p); setConfirmDc(false) }}
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }} className="warm-pill">Manage</button>
                     ) : live ? (
                       <button onClick={e => { e.stopPropagation(); connect(p) }} disabled={busy === p.key}
                         style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>

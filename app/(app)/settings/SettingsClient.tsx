@@ -22,7 +22,66 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [tz, setTz] = useState('')
   const [integrations, setIntegrations] = useState<string[]>([])
   const [counts, setCounts] = useState<{ signals: number; accounts: number } | null>(null)
-  const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true })
+  const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true, push: false, emailDigest: false })
+  const [digestTime, setDigestTime] = useState('07:00')
+  const [voice, setVoice] = useState<Record<string, string>>({ Tone: 'Direct', Length: 'Short', 'Sign-off': 'Best, Andy' })
+  const [autoSend, setAutoSend] = useState(false)
+  const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
+  const [quiet, setQuiet] = useState<Record<string, string>>({ From: '19:00', To: '08:00' })
+
+  async function saveJson(key: string, value: unknown) {
+    await supabase.auth.updateUser({ data: { [key]: value } }).catch(() => {})
+  }
+  const [device, setDevice] = useState('')
+  const [exportBusy, setExportBusy] = useState(false)
+
+  useEffect(() => {
+    // the one device we can honestly report on is this one
+    if (typeof navigator === 'undefined') return
+    const ua = navigator.userAgent
+    const os = /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : 'Unknown OS'
+    const br = /Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Safari\//.test(ua) ? 'Safari' : /Firefox\//.test(ua) ? 'Firefox' : 'Browser'
+    setDevice(`${br} on ${os}`)
+  }, [])
+
+  // Export is real: it pulls the workspace's own rows and downloads them.
+  async function exportData(fmt: 'json' | 'csv') {
+    setExportBusy(true)
+    try {
+      const [{ data: accts }, { data: sigs }] = await Promise.all([
+        supabase.from('accounts').select('*').eq('user_id', user.id),
+        supabase.from('signals').select('*').eq('user_id', user.id).limit(2000),
+      ])
+      let blob: Blob
+      let name: string
+      if (fmt === 'json') {
+        blob = new Blob([JSON.stringify({ exported_at: new Date().toISOString(), accounts: accts ?? [], signals: sigs ?? [] }, null, 2)], { type: 'application/json' })
+        name = 'popsicle-export.json'
+      } else {
+        const rows = (sigs ?? []) as Array<Record<string, unknown>>
+        const cols = ['created_at', 'account_name', 'signal_type', 'severity', 'title', 'description', 'risk_amount', 'source_integration', 'status']
+        const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`
+        blob = new Blob([[cols.join(','), ...rows.map(r => cols.map(c => esc(r[c])).join(','))].join('\n')], { type: 'text/csv' })
+        name = 'popsicle-signals.csv'
+      }
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url; a.download = name; a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExportBusy(false)
+      setSheet(null)
+    }
+  }
+
+  async function askPush() {
+    if (typeof Notification === 'undefined') return
+    const res = await Notification.requestPermission()
+    const on = res === 'granted'
+    const next = { ...notifs, push: on }
+    setNotifs(next)
+    await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
+  }
   const [sheet, setSheet] = useState<string | null>(null)
   const [prefs, setPrefs] = useState<Record<string, string>>({ Appearance: 'Light', Language: 'English (US)', Currency: 'USD' })
   const [copied, setCopied] = useState(false)
@@ -42,6 +101,17 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
   useEffect(() => {
     try { setTz(Intl.DateTimeFormat().resolvedOptions().timeZone || '') } catch { setTz('') }
+    // restore whatever was saved last time
+    supabase.auth.getUser().then(({ data: { user: u } }) => {
+      const m = (u?.user_metadata ?? {}) as Record<string, unknown>
+      if (m.digest_time) setDigestTime(String(m.digest_time))
+      if (m.draft_voice) setVoice(m.draft_voice as Record<string, string>)
+      if (m.thresholds) setThresholds(m.thresholds as Record<string, string>)
+      if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
+      if (typeof m.auto_send === 'boolean') setAutoSend(m.auto_send)
+      if (m.notif_prefs) setNotifs(m.notif_prefs as Record<string, boolean>)
+      if (m.prefs) setPrefs(m.prefs as Record<string, string>)
+    })
     let dead = false
     ;(async () => {
       const [{ data: integ }, { count: sigCount }, { count: acctCount }] = await Promise.all([
@@ -79,9 +149,26 @@ export function SettingsClient({ user }: SettingsClientProps) {
   // pretending to switch.
   const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string }> = {
     Workspace: { title: 'Workspace', sub: 'Popsicle Labs', rows: [['Workspace name', 'Popsicle Labs'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', '1 · invitations not enabled yet']] },
+    Tone: { title: 'Tone', sub: 'How drafts read', options: [['Direct', 'Short sentences, no preamble'], ['Warm', 'Friendly, still concise'], ['Formal', 'Full sentences, measured'], ['Match the thread', 'Mirror how they write to you']] },
+    Length: { title: 'Length', sub: 'How long a first draft runs', options: [['Short', 'Three or four sentences'], ['Medium', 'A paragraph and a clear ask'], ['Detailed', 'Context, evidence, then the ask']] },
+    'Sign-off': { title: 'Sign-off', sub: 'The closing line on your emails', options: [['Best, Andy', 'Standard'], ['Thanks, Andy', 'Warmer'], ['Regards, Andy', 'Formal'], ['No sign-off', 'Ends on the last line']] },
+    'Days dark': { title: 'Days dark before flagging', sub: 'How long silence runs before Popsicle raises it', options: [['3 days', 'Aggressive'], ['5 days', 'Balanced'], ['7 days', 'Relaxed'], ['10 days', 'Only long silences']] },
+    'Minimum deal size': { title: 'Minimum deal size', sub: 'Smaller deals stay quiet unless critical', options: [['No minimum', 'Surface everything'], ['$25K', 'Skip the smallest'], ['$50K', 'Focus on real pipeline'], ['$100K', 'Enterprise only']] },
+    'Commitment overdue': { title: 'Commitment overdue', sub: 'Grace period before a promise is chased', options: [['1 day', 'Immediately after the date'], ['3 days', 'Balanced'], ['7 days', 'Only clear misses']] },
+    'Quiet hours': { title: 'Quiet hours', sub: `Nothing interrupts you from ${quiet.From} to ${quiet.To}`, rows: [['Applies to', 'Push notifications and alerts'], ['Does not apply to', 'Signals still being detected'], ['Timezone', tz || 'your device setting']], options: [['19:00 - 08:00', 'Evenings and nights'], ['18:00 - 09:00', 'Longer window'], ['22:00 - 07:00', 'Late finish'], ['Off', 'Interrupt me any time']] },
+    Members: { title: 'Members', sub: 'Who can see this workspace', rows: [['You', `${user.email} · owner`], ['Others', 'No one else has access'], ['Seats', 'Invitations not enabled yet']], note: 'Signals, accounts and drafts are visible only to you until someone is invited.' },
+    'Invite a teammate': { title: 'Invite a teammate', sub: 'Share signals and coverage', rows: [['They will see', 'Accounts you choose to share'], ['They will not see', 'Your drafts or private notes'], ['Availability', 'Invitations not enabled yet']], note: 'Team seats arrive with the next release. Tell us who you want to add and we will set it up manually in the meantime.' },
+    'Signal visibility': { title: 'Signal visibility', sub: 'Whether teammates see your accounts', options: [['Private', 'Only you'], ['Team', 'Everyone in the workspace'], ['Owner and manager', 'You and whoever covers you']] },
+    'Data & privacy': { title: 'Data & privacy', sub: 'What Popsicle reads and keeps', rows: [['Reads', 'Sales threads on your connected sources'], ['Stores', 'Signals, account state and message metadata'], ['Retention', 'Until you delete the workspace'], ['Location', 'Hosted in Singapore'], ['Shared with', 'No one outside this workspace'], ['Model training', 'Your data is never used to train models']], actions: [['Export everything', true, () => exportData('json')]] },
+    'Delete workspace': { title: 'Delete workspace', sub: 'This cannot be undone', rows: [['Removes', counts ? `${counts.accounts} accounts and ${counts.signals} signals` : 'every account and signal'], ['Disconnects', `${integrations.length} source${integrations.length === 1 ? '' : 's'}`], ['Keeps', 'Nothing'], ['Timing', 'Immediate']], note: 'Deletion is handled manually while in beta so nothing is lost by accident. Email support@popsicle-labs.app from this address and it will be done within one working day.', actions: [['Export first', false, () => exportData('json')]] },
+    'Plan & billing': { title: 'Plan & billing', sub: 'Beta access', rows: [['Plan', 'Beta'], ['Cost', 'No charge during beta'], ['Seats', '1 · invitations not enabled yet'], ['Sources', `${integrations.length} connected`], ['Billing contact', user.email]], note: 'Pricing starts when the beta ends. You will be told before anything is charged.' },
+    'Export data': { title: 'Export data', sub: 'Your accounts and signals, downloaded now', rows: [['Accounts', counts ? String(counts.accounts) : '--'], ['Signals', counts ? String(counts.signals) : '--'], ['Includes', 'Everything this workspace holds for you'], ['Leaves Popsicle', 'Yes, the file downloads to this device']], actions: [['Download JSON', true, () => exportData('json')], [exportBusy ? 'Preparing...' : 'Download CSV', false, () => exportData('csv')]] },
+    'Two-factor authentication': { title: 'Two-factor authentication', sub: 'Currently disabled', rows: [['Status', 'Disabled'], ['Sign-in today', 'Email and password'], ['Recommended', 'Enable once available'], ['Availability', 'Not built yet']], note: 'Two-factor sign-in is on the roadmap. Until then, use a unique password for this account.' },
+    'Active sessions': { title: 'Active sessions', sub: '1 device signed in', rows: [['This device', device || 'This browser'], ['Signed in as', user.email], ['Other devices', 'None detected'], ['Sign out everywhere', 'Sign out below ends this session']], note: 'Popsicle keeps one session per browser. Signing out here ends it on this device.' },
+    "What's new": { title: "What's new", sub: 'Recent changes to Popsicle', rows: [['Ask AI', 'Streaming answers, saved questions, source inspection'], ['Account 360', 'People, timeline and contracts tabs'], ['Signals', 'Evidence and pattern match on every signal'], ['Integrations', 'Resolution broadcasts to Slack and HubSpot']] },
     'Work email': { title: 'Work email', sub: user.email, rows: [['Address', user.email], ['Changing it', 'Runs through account recovery, not this screen'], ['Sending from', 'Drafts send from this address via Gmail']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText(user.email); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
     'Your data': { title: 'Your data', sub: 'Everything Popsicle holds for this workspace', rows: [['Accounts & health', counts ? `${counts.accounts} records` : '--'], ['Signals', counts ? `${counts.signals} records` : '--'], ['Sources connected', `${integrations.length}`], ['Export', 'Not built yet']], note: 'Export is on the roadmap. Nothing is shared outside this workspace.' },
-    'Weekly digest': { title: 'Weekly digest', sub: 'Appears on Pulse every Monday', rows: [['Meetings this week', 'From your calendar'], ['Commitments due', 'From detected promises'], ['Gone quiet', 'Accounts past their own reply cadence'], ['Email delivery', 'Not enabled yet']], actions: [['Preview it now', true, () => router.push('/pulse?digest=1')]] },
+    'Weekly digest': { title: 'Weekly digest', sub: `Mondays at ${digestTime}`, rows: [['Meetings this week', 'From your calendar'], ['Commitments due', 'From detected promises'], ['Gone quiet', 'Accounts past their own reply cadence'], ['Email delivery', 'Not enabled yet']], options: [['06:00', 'Before the day starts'], ['07:00', 'With your first coffee'], ['08:00', 'At your desk'], ['09:00', 'After the morning rush']], actions: [['Preview it now', true, () => router.push('/pulse?digest=1')]] },
     Appearance: { title: 'Appearance', sub: 'How the portal renders on this device', options: [['Light', 'Warm paper, the default'], ['Dark', 'Not built yet'], ['Match system', 'Not built yet']] },
     Language: { title: 'Language', sub: 'Interface and AI responses', options: [['English (US)', 'Default'], ['English (UK)', 'Spelling and dates'], ['Bahasa Indonesia', 'Not translated yet']] },
     Timezone: { title: 'Timezone', sub: 'Used for digests, ages and time-of-day logic', rows: [['Detected', tz || 'unknown'], ['Source', 'Your browser setting'], ['Changing it', 'Change your device timezone']] },
@@ -107,14 +194,15 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
   const Row = ({ label, sub, value, onClick, danger }: { label: string; sub?: string; value?: React.ReactNode; onClick?: () => void; danger?: boolean }) => (
     <div onClick={onClick}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
+      className={onClick ? 'set-row' : undefined}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 8px 16px 10px', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
       <div style={{ minWidth: 0 }}>
         <div style={{ fontSize: 15, color: danger ? 'var(--critical, #c43d2b)' : 'var(--ink)' }}>{label}</div>
         {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-muted)', fontSize: 14, whiteSpace: 'nowrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, color: onClick ? 'var(--ink)' : 'var(--ink-muted)', fontSize: 14, whiteSpace: 'nowrap' }}>
         {value}
-        {onClick && <span style={{ color: 'var(--ink-faint)' }}>›</span>}
+        {onClick && <span style={{ color: 'var(--accent, #E85A25)', fontSize: 16, lineHeight: 1 }}>›</span>}
       </div>
     </div>
   )
@@ -125,11 +213,14 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Settings <span style={{ margin: '0 8px' }}>/</span> Popsicle Labs
         </div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>all changes save automatically</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="sig-pulse" style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
+          all changes save automatically
+        </div>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 22 }}>
-        <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: 'none' }}>
+        <span style={{ width: 54, height: 54, borderRadius: '50%', background: 'linear-gradient(135deg,#FF8A50,#E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, flex: 'none', boxShadow: '0 0 0 4px rgba(232,90,37,.12)' }}>
           {(user.email[0] || 'A').toUpperCase()}
         </span>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -137,15 +228,16 @@ export function SettingsClient({ user }: SettingsClientProps) {
           <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 2 }}>{user.email}{tz ? ` · ${tz}` : ''}</div>
         </div>
         <button onClick={() => { const el = document.querySelector('.ed-sb-user') as HTMLElement | null; el?.click() }}
-          style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1.5px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Edit profile</button>
+          className="warm-pill"
+          style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1.5px solid var(--accent, #E85A25)', background: 'rgba(232,90,37,.06)', color: 'var(--accent, #E85A25)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Edit profile</button>
       </div>
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
       <Section title="Account" sub="Profile, workspace and data.">
         <Row label="Workspace" sub="Popsicle Labs" value="1 seat" onClick={() => setSheet('Workspace')} />
-        <Row label="Work email" value={user.email} onClick={() => setSheet('Work email')} />
+        <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
         <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} onClick={() => setSheet('Your data')} />
-        <Row label="Weekly digest" sub="Appears on Pulse every Monday" value="Mondays" onClick={() => setSheet('Weekly digest')} />
+        <Row label="Weekly digest" sub="Appears on Pulse at the start of your week" value={`Mondays · ${digestTime}`} onClick={() => setSheet('Weekly digest')} />
       </Section>
 
       <Section title="Preferences" sub="How the portal looks and reads.">
@@ -153,6 +245,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Language" value={prefs.Language} onClick={() => setSheet('Language')} />
         <Row label="Timezone" value={tz || '--'} onClick={() => setSheet('Timezone')} />
         <Row label="Currency" value={prefs.Currency} onClick={() => setSheet('Currency')} />
+        <Row label="Export data" sub="Download your accounts and signals" value="JSON · CSV" onClick={() => setSheet('Export data')} />
       </Section>
 
       <Section title="Sources" sub="Channels Popsicle reads to raise signals.">
@@ -164,25 +257,62 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="Notifications" sub="What Popsicle should interrupt you for.">
         {([['risk', 'Risk alerts', 'Critical signals, as they are detected'],
-           ['digest', 'Weekly summary', 'Mondays, on the Pulse screen'],
-           ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings']] as const).map(([k, label, sub]) => (
+           ['digest', 'Weekly summary', `Mondays at ${digestTime}, on the Pulse screen`],
+           ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings'],
+           ['push', 'Push notifications', typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Allowed in this browser' : 'Needs browser permission'],
+           ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled']] as const).map(([k, label, sub]) => (
           <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
             <div>
               <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
             </div>
-            <button onClick={() => toggleNotif(k)} aria-label={label}
+            <button onClick={() => (k === 'push' ? askPush() : toggleNotif(k))} aria-label={label}
               style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px', marginRight: 2,
                 background: notifs[k] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
               <span style={{ position: 'absolute', top: 3, left: notifs[k] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
             </button>
           </div>
         ))}
+        <Row label="Quiet hours" sub="Nothing interrupts you inside this window" value={`${quiet.From} - ${quiet.To}`} onClick={() => setSheet('Quiet hours')} />
+      </Section>
+
+      <Section title="Drafting" sub="How Popsicle writes on your behalf.">
+        <Row label="Tone" sub="Applies to every draft it prepares" value={voice.Tone} onClick={() => setSheet('Tone')} />
+        <Row label="Length" sub="How long a first draft should run" value={voice.Length} onClick={() => setSheet('Length')} />
+        <Row label="Sign-off" sub="The closing line on your emails" value={voice['Sign-off']} onClick={() => setSheet('Sign-off')} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div>
+            <div style={{ fontSize: 15, color: 'var(--ink)' }}>Send without asking</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Off means every draft waits for your approval</div>
+          </div>
+          <button onClick={() => { const v = !autoSend; setAutoSend(v); saveJson('auto_send', v) }} aria-label="Send without asking"
+            style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
+              background: autoSend ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
+            <span style={{ position: 'absolute', top: 3, left: autoSend ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
+          </button>
+        </div>
+      </Section>
+
+      <Section title="Escalation" sub="When a signal becomes your problem.">
+        <Row label="Days dark before flagging" sub="How long silence runs before Popsicle raises it" value={thresholds['Days dark']} onClick={() => setSheet('Days dark')} />
+        <Row label="Minimum deal size" sub="Smaller deals stay quiet unless critical" value={thresholds['Minimum deal size']} onClick={() => setSheet('Minimum deal size')} />
+        <Row label="Commitment overdue" sub="Grace period before a promise is chased" value={thresholds['Commitment overdue']} onClick={() => setSheet('Commitment overdue')} />
+      </Section>
+
+      <Section title="Team" sub="Who else can see this workspace.">
+        <Row label="Members" sub="You are the only member" value="1" onClick={() => setSheet('Members')} />
+        <Row label="Invite a teammate" sub="Share signals and coverage" value="Invite" onClick={() => setSheet('Invite a teammate')} />
+        <Row label="Signal visibility" sub="Whether teammates see your accounts" value="Private" onClick={() => setSheet('Signal visibility')} />
       </Section>
 
       <Section title="Security" sub="Access to this account.">
         <Row label="Password" sub="Change the password you sign in with"
           value={pwOpen ? 'Cancel' : 'Change'} onClick={() => { setPwOpen(!pwOpen); setPwStatus(null) }} />
+        <Row label="Two-factor authentication" sub="A second step when signing in"
+          value={<span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
+          onClick={() => setSheet('Two-factor authentication')} />
+        <Row label="Active sessions" sub={device ? `This device: ${device}` : 'Signed-in devices'}
+          value="1 device" onClick={() => setSheet('Active sessions')} />
         {pwOpen && (
           <div style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', display: 'grid', gap: 14, maxWidth: 380 }}>
             <label style={{ display: 'block' }}>
@@ -208,10 +338,14 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </Section>
 
       <Section title="More" sub="Product information.">
+        <Row label="What's new" sub="Recent changes to Popsicle" value="v10.6" onClick={() => setSheet("What's new")} />
         <Row label="Ask AI" sub="Answers grounded in your own data" value="Open" onClick={() => setSheet('Ask AI')} />
         <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => setSheet('Help & support')} />
         <Row label="About Popsicle" value="v3.6" onClick={() => setSheet('About Popsicle')} />
+        <Row label="Data & privacy" sub="What Popsicle reads, stores and for how long" value="Read" onClick={() => setSheet('Data & privacy')} />
         <Row label="Email support" value="support@popsicle-labs.app" onClick={() => setSheet('Email support')} />
+        <Row label="Delete workspace" sub="Removes every account, signal and connection" danger
+          value={<span style={{ color: 'var(--critical, #c43d2b)' }}>Delete</span>} onClick={() => setSheet('Delete workspace')} />
       </Section>
 
       {sheet && SHEETS[sheet] && (() => {
@@ -235,11 +369,23 @@ export function SettingsClient({ user }: SettingsClientProps) {
               ))}
 
               {sh.options?.map(([label, desc]) => {
+                const isTime = /^\d{2}:\d{2}$/.test(label)
                 const key = sh.title
-                const chosen = prefs[key] === label
+                const chosen = isTime ? digestTime === label
+                  : ['Tone', 'Length', 'Sign-off'].includes(key) ? voice[key] === label
+                  : ['Days dark', 'Minimum deal size', 'Commitment overdue'].includes(key) ? thresholds[key] === label
+                  : key === 'Quiet hours' ? `${quiet.From} - ${quiet.To}` === label
+                  : prefs[key] === label
                 const disabled = desc.includes('Not built') || desc.includes('Not translated')
                 return (
-                  <div key={label} onClick={() => { if (!disabled) choosePref(key, label) }}
+                  <div key={label} onClick={() => {
+                    if (disabled) return
+                    if (isTime) { setDigestTime(label); saveJson('digest_time', label); setSheet(null) }
+                    else if (['Tone', 'Length', 'Sign-off'].includes(key)) { const n = { ...voice, [key]: label }; setVoice(n); saveJson('draft_voice', n); setSheet(null) }
+                    else if (['Days dark', 'Minimum deal size', 'Commitment overdue'].includes(key)) { const n = { ...thresholds, [key]: label }; setThresholds(n); saveJson('thresholds', n); setSheet(null) }
+                    else if (key === 'Quiet hours') { const [f, t] = label.split(' - '); const n = { From: f ?? 'Off', To: t ?? 'Off' }; setQuiet(n); saveJson('quiet_hours', n); setSheet(null) }
+                    else choosePref(key, label)
+                  }}
                     style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .5 : 1 }}>
                     <div>
                       <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{label}</div>

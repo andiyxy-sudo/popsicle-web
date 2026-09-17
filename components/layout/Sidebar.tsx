@@ -59,12 +59,14 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const [profileOpen, setProfileOpen] = useState(false)
   const [draftName, setDraftName] = useState(displayName)
   const [draftTz, setDraftTz] = useState('')
+  const [draftRole, setDraftRole] = useState(displayRole)
   const [photo, setPhoto] = useState<string | null>((user as { avatar_url?: string }).avatar_url ?? null)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   useEffect(() => {
     if (profileOpen) {
       setDraftName(displayName)
+      setDraftRole(displayRole)
       try { setDraftTz(Intl.DateTimeFormat().resolvedOptions().timeZone || '') } catch { setDraftTz('') }
       setSaved(false)
     }
@@ -102,7 +104,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
     setSaving(true)
     // Name lives on the auth user's metadata; email changes are an auth flow,
     // so this panel shows the address rather than pretending to edit it.
-    await supabase.auth.updateUser({ data: { name: draftName.trim(), avatar_url: photo ?? null } }).catch(() => {})
+    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null } }).catch(() => {})
     setSaving(false); setSaved(true)
     router.refresh()
     setTimeout(() => setProfileOpen(false), 700)
@@ -165,8 +167,8 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 </span>
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)' }}>Your profile</div>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.03em', marginTop: 2 }}>{displayName}</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.03em' }}>Edit profile</div>
+                <div style={{ fontSize: 13.5, color: 'var(--ink-muted, #5C5855)', marginTop: 3 }}>{displayName} · {user.email}</div>
               </div>
               <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
             </div>
@@ -194,18 +196,27 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               </label>
             </div>
 
-            <div style={{ padding: '28px 32px 0' }}>
-              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 6, borderBottom: '1px solid var(--ink, #0E0D0B)' }}>Account</div>
-              {[['Integrations', 'Sources feeding your signals', '/integrations'], ['Settings', 'Preferences and workspace', '/settings']].map(([k, sub, href]) => (
-                <div key={k} onClick={() => { setProfileOpen(false); router.push(href) }}
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, cursor: 'pointer' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div>{k}</div>
-                    <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
-                  </div>
-                  <span style={{ color: 'var(--accent)' }}>→</span>
+            <div style={{ padding: '26px 32px 0' }}>
+              <label style={{ display: 'block' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Job title</span>
+                <input value={draftRole} onChange={e => setDraftRole(e.target.value)} placeholder="VP Sales"
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+              </label>
+
+              <div style={{ marginTop: 22 }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Signature name</span>
+                <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 6, lineHeight: 1.55 }}>
+                  Drafts you send sign off as <strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{draftName.trim() || displayName}</strong> from {user.email}.
                 </div>
-              ))}
+              </div>
+
+              <div style={{ marginTop: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div>
+                  <div style={{ fontSize: 15, color: 'var(--ink)' }}>Working hours</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
+                </div>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{draftTz || 'detecting'}</span>
+              </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '24px 32px 28px' }}>
