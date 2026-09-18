@@ -96,7 +96,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 10050, background: '#FBF8F3', overflowY: 'auto', fontFamily: "'Outfit', sans-serif", color: '#0E0D0B' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10050, background: '#FBF8F3', overflowY: 'auto', fontFamily: "'Outfit', sans-serif", color: '#0E0D0B', display: 'flex', flexDirection: 'column' }}>
       {/* warm corner wash */}
       <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, width: 'min(900px,100%)', height: 900, pointerEvents: 'none', background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)' }} />
       <style>{`
@@ -110,7 +110,10 @@ export default function LoginPage() {
         .lg-alt:hover { border-color:#0E0D0B; }
       `}</style>
 
-      <div style={{ position: 'relative', width: 'min(340px, calc(100vw - 40px))', margin: '0 auto', padding: '72px 0 64px', animation: 'fadeUp .6s both' }}>
+      {/* margin:auto on both axes centres the card in any viewport, and unlike
+          align-items:center it still scrolls cleanly when the viewport is
+          shorter than the card (small phones, landscape) */}
+      <div style={{ position: 'relative', width: 'min(340px, calc(100vw - 40px))', margin: 'auto', padding: '40px 0', animation: 'fadeUp .6s both', flex: 'none' }}>
         {/* brand */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 26 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

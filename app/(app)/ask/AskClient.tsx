@@ -473,7 +473,7 @@ export function AskClient() {
   const [mountedHist, setMountedHist] = useState(false)
   useEffect(() => {
     setMountedHist(true)
-    if (typeof document !== 'undefined' && document.body.dataset.demo === '1') { setSourceCount(7); return }
+    if (typeof document !== 'undefined' && document.body.dataset.demo === '1') { setSourceCount(4); return }
     const supa = createClient()
     supa.auth.getUser().then(({ data: { user } }) => {
       if (!user) return

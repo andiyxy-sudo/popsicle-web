@@ -836,3 +836,11 @@ export const DEMO_FORECAST = {
   commit: 1_240_000, weighted: 1_180_000, bestCase: 2_400_000, atRisk: 1_330_000,
   riskyDeals: 2, dealsToClose: 4, accuracy: 86, daysLeft: 8, commitDeltaPct: 12,
 }
+
+// ---------- Pulse stat strip (desktop design, aligned to mobile: 4 integrations, v11.25) ----------
+export const DEMO_PULSE_STRIP = {
+  atRisk: 1_200_000, atRiskDelta: 85_000, high: 3, med: 4, low: 2,
+  active: 47, newToday: 12, critical: 18, warn: 16, positive: 13,
+  protectedTotal: 560_000, protectedDeltaPct: 38, saved: 4, actions: 12, hitPct: 94,
+  aiConfidence: 91, integrations: 4, syncedAgo: '2 min ago',
+}

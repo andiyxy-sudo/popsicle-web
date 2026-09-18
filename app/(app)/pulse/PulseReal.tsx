@@ -9,11 +9,18 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import type { Account, Signal } from '@/types'
 import { formatCurrency, formatRelativeTime } from '@/lib/utils'
 
+export type PulseStrip = {
+  atRisk: number; atRiskDelta: number; high: number; med: number; low: number
+  active: number; newToday: number; critical: number; warn: number; positive: number
+  protectedTotal: number; protectedDeltaPct: number; saved: number; actions: number; hitPct: number
+  aiConfidence: number; integrations: number; syncedAgo: string
+}
 interface Props {
   name: string
   accounts: Account[]
   signals: Signal[]
   integrationCount: number
+  demoStrip?: PulseStrip
 }
 
 
@@ -402,11 +409,13 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   if (!meetings.length && !due.length && !attention.length) return null
   const secLbl = (t: string) => <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 7 }}>{t}</div>
   const cols = [meetings.length, due.length, attention.length].filter(Boolean).length
+  const [dateReady, setDateReady] = useState(false)
+  useEffect(() => { setDateReady(true) }, [])
   return (
     <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: '12px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Today</span>
-        <span style={{ fontSize: 10.5, color: 'var(--t4)' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+        <span style={{ fontSize: 10.5, color: 'var(--t4)' }}>{dateReady ? new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }) : ''}</span>
       </div>
       <div style={{ padding: '14px 20px', display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 20 }}>
         {meetings.length > 0 && (
@@ -574,7 +583,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
-export function PulseReal({ name, accounts, signals, integrationCount }: Props) {
+export function PulseReal({ name, accounts, signals, integrationCount, demoStrip }: Props) {
   // Demo rows live in the bundle, not the database: skip every client round-trip.
   const isDemoData = accounts.some(a => String(a.id).startsWith('demo-')) || signals.some(s => String(s.id).startsWith('demo-'))
   // Accounts with a meeting inside 48h (attention-formula factor).
@@ -813,27 +822,49 @@ export function PulseReal({ name, accounts, signals, integrationCount }: Props) 
       <div style={{ marginTop: 24 }}><WeekDigest /></div>
       <TodayBlock accounts={accounts} signals={signals} />
 
-      {/* naked stat row over the ink rule */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', gap: '28px 32px', marginTop: 40, paddingTop: 28, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
-        <div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{atRiskTotal > 0 ? formatCurrency(atRiskTotal) : '$0'}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>revenue at risk · {riskByAcct.size} account{riskByAcct.size === 1 ? '' : 's'}</div>
-        </div>
-        <div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, background: 'var(--accent-gradient, linear-gradient(90deg,#FF8A50,#E85A25))', WebkitBackgroundClip: 'text', backgroundClip: 'text', color: 'transparent', fontVariantNumeric: 'tabular-nums' }}>{protectedVal > 0 ? formatCurrency(protectedVal) : '$0'}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>value acted on · {handled.length} handled</div>
-        </div>
-        <div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{formatCurrency(pipelineValue)}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8 }}>pipeline value · {accounts.length} accounts</div>
-        </div>
-        {aiConf != null && (
-          <div onClick={() => setConfOpen(true)} style={{ cursor: 'pointer' }}>
-            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{aiConf}%</div>
-            <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 7 }}>AI confidence <span style={{ color: 'var(--accent)', fontWeight: 600 }}>→</span></div>
-          </div>
-        )}
-      </div>
+      {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
+      {(() => {
+        const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+        const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
+        const sub = { fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 12 }
+        const delta = (text: string, color: string) => <span style={{ fontSize: 13, fontWeight: 600, color, marginLeft: 8 }}>{text}</span>
+        const bySev = { high: accounts.filter(a => a.risk_level === 'high').length, med: accounts.filter(a => a.risk_level === 'medium').length, low: accounts.filter(a => a.risk_level === 'low').length }
+        const st: PulseStrip = demoStrip ?? {
+          atRisk: atRiskTotal, atRiskDelta: 0, high: bySev.high, med: bySev.med, low: bySev.low,
+          active: open.length, newToday: open.filter(sg => sg.created_at && Date.now() - new Date(sg.created_at).getTime() < 86400000).length,
+          critical: highs.length, warn: open.filter(sg => sg.severity === 'watch').length, positive: open.filter(sg => sg.severity === 'positive').length,
+          protectedTotal: protectedVal, protectedDeltaPct: 0, saved: new Set(handled.map(sg => sg.account_name)).size, actions: handled.length,
+          hitPct: signals.length ? Math.round((handled.length / Math.max(1, handled.length + highs.length)) * 100) : 0,
+          aiConfidence: aiConf ?? 0, integrations: integrationCount, syncedAgo: 'just now',
+        }
+        return (
+          <>
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', marginTop: 40 }} />
+            <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+                <div style={MONO}>Revenue at risk</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'}</span>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
+                <div style={sub}>{st.high} high · {st.med} med · {st.low} low</div>
+              </div>
+              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+                <div style={MONO}>Active signals</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.active}</span>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
+              </div>
+              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+                <div style={MONO}>Revenue protected</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--accent, #E85A25)')}>{st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'}</span>{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={sub}>{st.saved} saved · {st.actions} actions · {st.hitPct}% hit</div>
+              </div>
+              <div className="stat-cell" onClick={() => setConfOpen(true)} style={{ paddingTop: 22, paddingBottom: 18, cursor: 'pointer' }}>
+                <div style={MONO}>AI confidence</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.aiConfidence}%</span></div>
+                <div style={{ ...sub, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />{st.integrations} integrations synced · {st.syncedAgo}</div>
+              </div>
+            </div>
+          </>
+        )
+      })()}
       {confOpen && <ConfidenceRing signals={signals} forceOpen onClose={() => setConfOpen(false)} />}
 
       {/* three editorial columns */}
