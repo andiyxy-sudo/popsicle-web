@@ -2519,3 +2519,7 @@ body { background: var(--bg) !important; }
 /* v11.14: Ask quick-action cards */
 .ask-quick:hover { background: var(--accent-tint, #FFF1EA) !important; }
 .ask-quick:hover .ask-suggest-arrow { transform: translateX(3px); }
+
+/* v11.18: Manage button on connected integrations */
+.btn-manage { transition: background .15s ease, border-color .15s ease; }
+.btn-manage:hover { background: rgba(232,90,37,.14) !important; border-color: rgba(232,90,37,.45) !important; }
