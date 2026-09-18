@@ -188,7 +188,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
               {headline}
             </h1>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
-            <div onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>

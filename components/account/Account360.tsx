@@ -11,7 +11,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS } from '@/lib/demo-dataset'
+// Demo data is loaded on demand (dynamic import) so the slide-over, which is
+// mounted on every page, does not ship the whole demo dataset to every visitor.
+import type { DEMO_PEOPLE as DemoPeopleT, DEMO_CONTRACTS as DemoContractsT } from '@/lib/demo-dataset'
 
 // ---------- meeting-artifact classifier (port of _shared/messageArtifact.ts
 // per the mobile contract's 5 rule families; the DB column is informational,
@@ -214,6 +216,8 @@ export function Account360() {
   const [openFor, setOpenFor] = useState<{ id?: string; name: string } | null>(null)
   const [data, setData] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(false)
+  const [demoPeople, setDemoPeople] = useState<(typeof DemoPeopleT)[string]>([])
+  const [demoContracts, setDemoContracts] = useState<(typeof DemoContractsT)[string]>([])
   const [tab, setTab] = useState<'comms' | 'timeline' | 'commitments' | 'people' | 'contracts'>('comms')
   const [fType, setFType] = useState<string | null>(null)
   const [fSev, setFSev] = useState<string | null>(null)
@@ -238,13 +242,17 @@ export function Account360() {
     async function load() {
       // Demo accounts have non-uuid ids and no rows in the database: build the
       // payload locally so the slide-over works identically in the demo.
-      const demoAcct = DEMO_ACCOUNTS.find(a => a.id === openFor!.id || a.name === openFor!.name)
+      const isDemoId = String(openFor!.id).startsWith('demo-') || document.body.dataset.demo === '1'
+      const demoAcct = isDemoId ? await import('@/lib/demo-dataset').then(m => {
+        const a = m.DEMO_ACCOUNTS.find(x => x.id === openFor!.id || x.name === openFor!.name)
+        if (a) { setDemoPeople(m.DEMO_PEOPLE[a.name] ?? []); setDemoContracts(m.DEMO_CONTRACTS[a.name] ?? []) }
+        return a ? { acct: a, sigs: (m.DEMO_SIGNALS as unknown as Sig[]).filter(x => x.account_name === a.name), msgs: (m.DEMO_MESSAGES as unknown as Msg[]).filter(x => x.account_name === a.name).slice(0, 30) } : null
+      }) : null
       if (demoAcct) {
-        const sigs = (DEMO_SIGNALS as unknown as Sig[]).filter(x => x.account_name === demoAcct.name)
-        const msgs = (DEMO_MESSAGES as unknown as Msg[]).filter(x => x.account_name === demoAcct.name).slice(0, 30)
+        const { acct: demoAccount, sigs, msgs } = demoAcct
         if (!dead) {
           setData({
-            account: demoAcct as unknown as Record<string, unknown>,
+            account: demoAccount as unknown as Record<string, unknown>,
             messages: msgs, signals: sigs, dismissed_signals: [], transcripts: [],
             baseline: null, slack_channels: [], slack_anchor_sigs: [],
           })
@@ -418,7 +426,7 @@ export function Account360() {
 
           {/* ============ PEOPLE ============ */}
           {!loading && data && tab === 'people' && (() => {
-            const ppl = DEMO_PEOPLE[acc.name || openFor.name] ?? []
+            const ppl = demoPeople
             if (!ppl.length) return <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>No contact roles recorded for this account yet.</div>
             const badgeColor = (b: string) => b === 'CHAMPION' ? 'var(--good, #2f8f5b)' : b === 'BLOCKER' || b === 'DECISION MAKER' ? 'var(--critical, #c43d2b)' : 'var(--blue, #2f6f9f)'
             return (
@@ -446,7 +454,7 @@ export function Account360() {
 
           {/* ============ CONTRACTS ============ */}
           {!loading && data && tab === 'contracts' && (() => {
-            const cons = DEMO_CONTRACTS[acc.name || openFor.name] ?? []
+            const cons = demoContracts
             if (!cons.length) return <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--ink-faint)' }}>No contracts on file for this account.</div>
             return (
               <div>

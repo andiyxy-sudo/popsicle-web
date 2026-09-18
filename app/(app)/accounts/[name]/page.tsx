@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AccountPage } from './AccountPage'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
 
 // Data is fetched here, on the server, so the page arrives populated instead
 // of blank-then-fetching in the browser.
@@ -10,7 +10,8 @@ export default async function Page({ params }: { params: Promise<{ name: string 
   const { name } = await params
   const accountName = decodeURIComponent(name)
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData ? { id: claimsData.claims.sub as string, email: claimsData.claims.email as string | undefined } : null
   if (!user) redirect('/login')
 
   if (user.email === DEMO_EMAIL) {
@@ -21,6 +22,7 @@ export default async function Page({ params }: { params: Promise<{ name: string 
         account={(demo ?? null) as never}
         signals={DEMO_SIGNALS.filter(s => s.account_name === accountName) as never}
         messages={DEMO_MESSAGES.filter(m => m.account_name === accountName).slice(0, 40) as never}
+        demo={{ people: DEMO_PEOPLE[accountName], contracts: DEMO_CONTRACTS[accountName], extra: DEMO_EXTRA[accountName], comms: DEMO_COMMS[accountName], timeline: DEMO_TIMELINE[accountName], riskLines: DEMO_RISK_LINES[accountName] }}
       />
     )
   }

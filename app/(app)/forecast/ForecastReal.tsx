@@ -193,7 +193,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 30px' }} />
 
       {/* commit hero + trend */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>
+      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Commit · {quarterLabel.split(' ')[0]}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 12 }}>

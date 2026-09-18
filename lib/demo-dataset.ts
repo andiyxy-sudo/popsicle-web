@@ -2,7 +2,12 @@
 // exactly the same story. Figures, names, quotes and dates are verbatim.
 import type { Account, Signal } from '@/types'
 
-const now = Date.now()
+// Demo clock: today at 09:00 UTC, computed once. Server and client resolve the
+// same instant within a UTC day, so every derived timestamp (created_at,
+// last_contact_date, sync times) is identical on both sides and hydration can
+// never disagree about an age. Offsets below are relative to this anchor.
+export const DEMO_NOW = (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })()
+const now = DEMO_NOW
 const iso = (h: number) => new Date(now - h * 3600000).toISOString()
 const at = (m: number, d: number) => new Date(2026, m - 1, d).toISOString()
 
@@ -820,8 +825,8 @@ export const DEMO_MOVERS = [
 // ---------- Integrations (demo volume: seven sources, 847 signals in 30 days, v11.17) ----------
 // thisMonth sums to 847 and lines up with the Intelligence "Signal sources"
 // column (Gmail 310 · WhatsApp 194 · Slack 128 · Calendar & Meet 96 · calls & CRM 119).
-const _d = (daysAgo: number, h = 9) => new Date(Date.now() - daysAgo * 86400000 - (24 - h) * 3600000).toISOString()
-const _sync = (minsAgo: number) => new Date(Date.now() - minsAgo * 60000).toISOString()
+const _d = (daysAgo: number, h = 9) => new Date(DEMO_NOW - daysAgo * 86400000 - (24 - h) * 3600000).toISOString()
+const _sync = (minsAgo: number) => new Date(DEMO_NOW - minsAgo * 60000).toISOString()
 export const DEMO_INTEGRATION_ACTIVE = ['gmail', 'whatsapp', 'slack', 'zoom']
 export const DEMO_INTEGRATION_STATS: Record<string, { total: number; thisMonth: number; high: number; watch: number; positive: number; lastSignal: string | null; connectedAt: string | null; lastSynced: string | null; identity?: string | null }> = {
   // mobile Signal Source Breakdown: 847 signals · 4 active sources

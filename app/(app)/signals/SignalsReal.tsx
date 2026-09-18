@@ -1,6 +1,7 @@
 'use client'
 
-import { DEMO_SIGNALS, DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
+import type { DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
+type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
 // or answered with an AI-drafted follow-up email grounded in the signal's own
@@ -60,7 +61,7 @@ interface Draft { subject: string; body: string; to: string; cc?: string; proven
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
+export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[]; demoHead?: DemoHead }) {
   const router = useRouter()
   const [signals, setSignals] = useState<DBSignal[]>(initial)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -126,7 +127,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
     // Demo signals live in the bundle, not the database: a deep link to one
     // must resolve locally or it reports "not found" on every refresh.
     if (id.startsWith('demo-') || (typeof document !== 'undefined' && document.body.dataset.demo === '1')) {
-      const local = (DEMO_SIGNALS as unknown as DBSignal[]).find(x => x.id === id)
+      const local = initial.find(x => x.id === id)
       if (local) {
         if (wantReply) openDraft(local)
         else setDetailFor(local)
@@ -403,12 +404,12 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         const week = signals.filter(sg => sg.created_at && Date.now() - new Date(sg.created_at).getTime() <= 7 * 86400000)
         const fresh = week.filter(sg => Date.now() - new Date(sg.created_at!).getTime() <= 86400000)
         const isDemo = initial.some(sg => String(sg.id).startsWith('demo-'))
-        const weekN = isDemo ? DEMO_PULSE_WEEK.signals : week.length
-        const newN = isDemo ? DEMO_PULSE_WEEK.fresh : fresh.length
+        const weekN = isDemo && demoHead ? demoHead.week.signals : week.length
+        const newN = isDemo && demoHead ? demoHead.week.fresh : fresh.length
         const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink)' } as const
         const highRisk = critical.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
-        const stats: Array<{ n: string; lbl: string; color: string; strong?: boolean }> = isDemo
-          ? DEMO_SIGNALS_HEAD.map(st => ({ n: st.n, lbl: st.lbl, color: TONE[st.tone], strong: st.strong }))
+        const stats: Array<{ n: string; lbl: string; color: string; strong?: boolean }> = isDemo && demoHead
+          ? demoHead.head.map(st => ({ n: st.n, lbl: st.lbl, color: TONE[st.tone], strong: st.strong }))
           : [
             { n: String(critical.length), lbl: `critical${highRisk > 0 ? ` · ${fmtMoney(highRisk)} at risk` : ''}`, color: TONE.critical },
             { n: String(watch.length), lbl: `watch${totalWatchRisk > 0 ? ` · ${fmtMoney(totalWatchRisk)} exposure` : ''}`, color: TONE.warn },
@@ -418,7 +419,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         return (
           <>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
-            <div onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>

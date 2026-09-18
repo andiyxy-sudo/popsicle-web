@@ -875,7 +875,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         return (
           <>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', marginTop: 40 }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'}</span>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>

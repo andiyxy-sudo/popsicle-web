@@ -7,7 +7,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
+import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
+
+// Demo slices for this one account arrive as props from the server page, so
+// the client bundle never includes the whole demo dataset.
+export type DemoSlices = { people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
@@ -23,7 +27,7 @@ const TYPE_LABELS: Record<string, string> = {
 }
 const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${v}`
 
-export function AccountPage({ accountName, account, signals, messages }: { accountName: string; account: Acct | null; signals: Sig[]; messages: Msg[] }) {
+export function AccountPage({ accountName, account, signals, messages, demo = {} }: { accountName: string; account: Acct | null; signals: Sig[]; messages: Msg[]; demo?: DemoSlices }) {
   const router = useRouter()
   const [tab, setTab] = useState<'overview' | 'comms' | 'people' | 'timeline' | 'contracts'>('overview')
   const acct = account
@@ -37,8 +41,8 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
   const riskColor = risk === 'high' ? 'var(--critical, #c43d2b)' : risk === 'medium' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
   const health = acct?.health_score ?? 50
   const daysDark = acct?.last_contact_date && mounted ? Math.floor((Date.now() - new Date(acct.last_contact_date).getTime()) / 86400000) : null
-  const people = DEMO_PEOPLE[accountName] ?? []
-  const contracts = DEMO_CONTRACTS[accountName] ?? []
+  const people = demo.people ?? []
+  const contracts = demo.contracts ?? []
 
   // health sparkline: trend implied by open severities over time
   const spark = useMemo(() => {
@@ -55,7 +59,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
     color: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)',
   }))
 
-  const extra = DEMO_EXTRA[accountName]
+  const extra = demo.extra
   const breakdown = extra ? extra.breakdown.map(b => ({ k: b.k, v: b.v })) : [
     { k: 'Engagement', v: Math.max(5, Math.min(100, health - open.filter(s => s.signal_type === 'silent_stall').length * 18)) },
     { k: 'Product fit', v: Math.max(20, Math.min(100, 60 + open.filter(s => s.severity === 'positive').length * 12)) },
@@ -148,7 +152,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
               {flags.length === 0 && <span style={{ fontSize: 13.5, color: 'var(--ink-faint)' }}>No open flags.</span>}
             </div>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk signals</div>
-            {DEMO_RISK_LINES[accountName]?.map((r, i) => {
+            {demo.riskLines?.map((r, i) => {
               const c = r.tone === 'high' ? 'var(--critical, #c43d2b)' : r.tone === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
               return (
                 <div key={`rl${i}`} style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -157,8 +161,8 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
                 </div>
               )
             })}
-            {!DEMO_RISK_LINES[accountName] && open.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing open on this account.</div>}
-            {!DEMO_RISK_LINES[accountName] && open.map(s => (
+            {!demo.riskLines && open.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing open on this account.</div>}
+            {!demo.riskLines && open.map(s => (
               <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
                 style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
@@ -199,10 +203,10 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
       )}
 
       {/* COMMS */}
-      {tab === 'comms' && DEMO_COMMS[accountName] && (
+      {tab === 'comms' && demo.comms && (
         <div style={{ marginTop: 22 }}>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>Recent communications</div>
-          {DEMO_COMMS[accountName].map((c, i) => {
+          {demo.comms.map((c, i) => {
             const tone = c.tone === 'positive' ? 'var(--good, #2f8f5b)' : c.tone === 'negative' ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)'
             return (
               <div key={i} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -220,7 +224,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
           })}
         </div>
       )}
-      {tab === 'comms' && !DEMO_COMMS[accountName] && (() => {
+      {tab === 'comms' && !demo.comms && (() => {
         const sorted = [...messages].filter(m => m.received_at).sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))
         if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No correspondence recorded for this account.</div>
         const dayLabel = (iso: string) => {
@@ -284,10 +288,10 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
       })()}
 
       {/* TIMELINE */}
-      {tab === 'timeline' && DEMO_TIMELINE[accountName] && (
+      {tab === 'timeline' && demo.timeline && (
         <div style={{ marginTop: 22 }}>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Deal timeline</div>
-          {DEMO_TIMELINE[accountName].map((t, i) => {
+          {demo.timeline.map((t, i) => {
             const c = t.kind === 'negative' ? 'var(--critical, #c43d2b)' : t.kind === 'watch' ? 'var(--warn, #d38b1d)' : t.kind === 'call' ? 'var(--blue, #2f6f9f)' : 'var(--good, #2f8f5b)'
             return (
               <div key={i} style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -309,7 +313,7 @@ export function AccountPage({ accountName, account, signals, messages }: { accou
           })}
         </div>
       )}
-      {tab === 'timeline' && !DEMO_TIMELINE[accountName] && (() => {
+      {tab === 'timeline' && !demo.timeline && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
         if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
         const monthOf = (iso?: string | null) => iso && mounted ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''

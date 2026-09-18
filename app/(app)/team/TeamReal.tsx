@@ -213,7 +213,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
 
       {/* takeaways */}
       {m.bullets.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 34 }}>
+        <div className="g4" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 34 }}>
           {m.bullets.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 12, fontSize: 13.5, lineHeight: 1.55, color: MUTED }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.tone, marginTop: 7 }} />
@@ -226,7 +226,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
 
       {/* three figures */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
         {/* Exposure summary (mobile) or ARR */}
         {m.exposure ? (
           <div>
@@ -338,7 +338,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
 
       {/* individual breakdown */}
       <H2 title="Individual breakdown" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>response time · last 7 days</span>} />
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, m.reps.length))}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, Math.max(1, m.reps.length))}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
         {m.reps.map(r => {
           const t = trendMeta[r.trend]
           return (
@@ -495,7 +495,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div style={{ height: 1, background: RULE, margin: '72px 0 30px' }} />
 
       {/* execution summary */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Revenue movement · this week</div>
           <Row pad="14px 0"><span>New critical accounts</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: m.newCritical ? RED : INK }}>+{m.newCritical}</span></Row>
@@ -529,7 +529,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
 
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Execution quality</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16, marginTop: 14 }}>
+          <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 16, marginTop: 14 }}>
             {[
               { v: m.timeToAction ? fmtH(m.timeToAction) : '--', k: 'time to action', c: INK },
               { v: `${m.followThrough}%`, k: 'follow-through', c: m.followThrough >= 70 ? GREEN : AMBER },
