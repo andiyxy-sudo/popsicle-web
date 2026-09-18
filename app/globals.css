@@ -2504,10 +2504,11 @@ body { background: var(--bg) !important; }
 
 /* v11.14: stat rows. Strong rule sits under the last figure until you hover
    another one, then it follows the pointer. */
-.stat-row > .stat-cell { border-bottom: 1px solid var(--hairline, #EFEAE1); transition: border-color .18s ease; cursor: default; }
-.stat-row > .stat-cell:last-child { border-bottom-color: var(--rule-strong, #0E0D0B); }
-.stat-row:hover > .stat-cell:last-child { border-bottom-color: var(--hairline, #EFEAE1); }
-.stat-row > .stat-cell:hover { border-bottom-color: var(--rule-strong, #0E0D0B) !important; }
+.stat-row > .stat-cell { position: relative; border-bottom: 1px solid var(--hairline, #EFEAE1); cursor: default; }
+.stat-row > .stat-cell::after { content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--rule-strong, #0E0D0B); opacity: 0; transition: opacity .18s ease; }
+.stat-row > .stat-cell:last-child::after { opacity: 1; }
+.stat-row:hover > .stat-cell:last-child::after { opacity: 0; }
+.stat-row > .stat-cell:hover::after { opacity: 1 !important; }
 
 /* v11.14: table rows. A soft inset highlight that bleeds a little past the
    text column so the row reads as a unit. */
