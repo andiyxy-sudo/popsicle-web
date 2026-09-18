@@ -356,38 +356,38 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             Scenario model
           </div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.045em', color: 'var(--good, #2f8f5b)', marginTop: 14 }}>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(38px,4.2vw,52px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)', marginTop: 16 }}>
             {formatCurrency(scenario)}
           </div>
-          <div style={{ fontSize: 12.5, color: scenario - commitF >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 5 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: scenario - commitF >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 10 }}>
             {scenario - commitF >= 0 ? '+' : '-'}{formatCurrency(Math.abs(scenario - commitF))} vs commit
           </div>
 
           <input type="range" min={0} max={100} value={recovery} onChange={e => setRecovery(Number(e.target.value))}
-            style={{ width: '100%', marginTop: 18, accentColor: 'var(--accent, #E85A25)' }} />
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 6 }}>
-            {recovery}% of {formatCurrency(atRisk)} at risk recovered
+            style={{ width: '100%', marginTop: 22, accentColor: 'var(--accent, #E85A25)' }} />
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink-faint)', marginTop: 8 }}>
+            {recovery}% of {formatCurrency(atRiskF)} at risk recovered
           </div>
 
           {biggestRisk && (
             <div style={{ display: 'flex', gap: 11, alignItems: 'flex-start', marginTop: 18 }}>
               <span style={{ width: 8, height: 8, borderRadius: '50%', border: '2px solid var(--ink-faint)', marginTop: 5, flex: 'none' }} />
               <div>
-                <div style={{ fontSize: 14, color: 'var(--ink)' }}>{biggestRisk.a.name} holds this quarter</div>
-                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{formatCurrency(biggestRisk.value)} still in play</div>
+                <div style={{ fontSize: 15, color: 'var(--ink)' }}>{biggestRisk.a.name} holds this quarter</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 3 }}>{formatCurrency(biggestRisk.value)} still in play</div>
               </div>
             </div>
           )}
 
           <div style={{ marginTop: 20 }}>
             {[
-              { k: 'Worst case', v: weighted - atRisk, c: 'var(--critical, #c43d2b)' },
-              { k: 'Commit', v: commit, c: 'var(--ink)' },
+              { k: 'Worst case', v: weightedF - atRiskF, c: 'var(--critical, #c43d2b)' },
+              { k: 'Commit', v: commitF, c: 'var(--ink)' },
               { k: 'Best case', v: bestCase, c: 'var(--good, #2f8f5b)' },
             ].map(r => (
-              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
-                <span style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{r.k}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 13, color: r.c, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(Math.max(0, r.v))}</span>
+              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{r.k}</span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 14, color: r.c, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(Math.max(0, r.v))}</span>
               </div>
             ))}
           </div>
