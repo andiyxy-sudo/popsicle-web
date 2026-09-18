@@ -2500,3 +2500,21 @@ body { background: var(--bg) !important; }
   pointer-events: none !important; z-index: 0 !important;
 }
 .dsk-screen { position: relative; z-index: 1; }
+
+
+/* v11.14: stat rows. Strong rule sits under the last figure until you hover
+   another one, then it follows the pointer. */
+.stat-row > .stat-cell { border-bottom: 1px solid var(--hairline, #EFEAE1); transition: border-color .18s ease; cursor: default; }
+.stat-row > .stat-cell:last-child { border-bottom-color: var(--rule-strong, #0E0D0B); }
+.stat-row:hover > .stat-cell:last-child { border-bottom-color: var(--hairline, #EFEAE1); }
+.stat-row > .stat-cell:hover { border-bottom-color: var(--rule-strong, #0E0D0B) !important; }
+
+/* v11.14: table rows. A soft inset highlight that bleeds a little past the
+   text column so the row reads as a unit. */
+.tbl-row { position: relative; isolation: isolate; }
+.tbl-row::before { content: ''; position: absolute; inset: 1px -14px 0 -14px; border-radius: 8px; background: var(--inset, #F4F0E8); opacity: 0; transition: opacity .15s ease; z-index: -1; pointer-events: none; }
+.tbl-row:hover::before { opacity: 1; }
+
+/* v11.14: Ask quick-action cards */
+.ask-quick:hover { background: var(--accent-tint, #FFF1EA) !important; }
+.ask-quick:hover .ask-suggest-arrow { transform: translateX(3px); }

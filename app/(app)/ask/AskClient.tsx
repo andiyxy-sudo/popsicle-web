@@ -416,6 +416,7 @@ export function AskClient() {
   const [busy, setBusy] = useState(false)
   const [phase, setPhase] = useState(0)
   const [atBottom, setAtBottom] = useState(true)
+  const [deepGroup, setDeepGroup] = useState(0)
   type Hist = { id: string; question: string; answer: string; pinned: boolean; created_at: string }
   const [history, setHistory] = useState<Hist[]>([])
   const [sourceCount, setSourceCount] = useState<number | null>(null)
@@ -681,38 +682,42 @@ export function AskClient() {
             </div>
           )}
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 48, marginTop: 4 }}>
-            {/* what do I do now */}
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Quick actions</div>
-              {QUICK.map(a => (
-                <div key={a.label} onClick={() => send(a.q)} className="ask-suggest"
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{a.label}</div>
-                    <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 3 }}>{a.sub}</div>
-                  </div>
-                  <span className="ask-suggest-arrow" style={{ color: 'var(--accent)', flex: 'none' }}>→</span>
+          {/* start here: four quick actions as a quiet 2x2 grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0,1fr))', gap: 12 }}>
+            {QUICK.map(a => (
+              <div key={a.label} onClick={() => send(a.q)} className="ask-quick"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, padding: '18px 20px', borderRadius: 14, cursor: 'pointer',
+                  background: 'var(--inset, #F4F0E8)', transition: 'background .15s ease, transform .15s ease' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{a.label}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 3 }}>{a.sub}</div>
                 </div>
-              ))}
-            </div>
+                <span className="ask-suggest-arrow" style={{ color: 'var(--accent)', flex: 'none', fontSize: 15 }}>→</span>
+              </div>
+            ))}
+          </div>
 
-            {/* what is going on */}
-            <div>
-              <div style={{ fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Deep dive</div>
-              {DEEP.map(sec => (
-                <div key={sec.group} style={{ marginTop: 22 }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>{sec.group}</div>
-                  {sec.items.map(q => (
-                    <div key={q} onClick={() => send(q)} className="ask-suggest"
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14.5, color: 'var(--ink)' }}>
-                      <span style={{ minWidth: 0 }}>{q}</span>
-                      <span className="ask-suggest-arrow" style={{ color: 'var(--ink-faint)', flex: 'none' }}>›</span>
-                    </div>
-                  ))}
-                </div>
+          {/* explore: one group at a time, chosen with pills */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 40, paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>Or explore</div>
+            <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: 3 }}>
+              {DEEP.map((sec, i) => (
+                <button key={sec.group} onClick={() => setDeepGroup(i)}
+                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: deepGroup === i ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
+                    background: deepGroup === i ? 'var(--ink)' : 'transparent', color: deepGroup === i ? '#fff' : 'var(--ink-muted)', transition: 'background .15s ease, color .15s ease' }}>
+                  {sec.group}
+                </button>
               ))}
             </div>
+          </div>
+          <div key={deepGroup} className="fade-in">
+            {DEEP[deepGroup].items.map(q => (
+              <div key={q} onClick={() => send(q)} className="ask-suggest"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '15px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 15, color: 'var(--ink)' }}>
+                <span style={{ minWidth: 0 }}>{q}</span>
+                <span className="ask-suggest-arrow" style={{ color: 'var(--ink-faint)', flex: 'none' }}>›</span>
+              </div>
+            ))}
           </div>
         </div>
       )}

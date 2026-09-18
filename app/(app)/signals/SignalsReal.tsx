@@ -1,6 +1,6 @@
 'use client'
 
-import { DEMO_SIGNALS } from '@/lib/demo-dataset'
+import { DEMO_SIGNALS, DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
 
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
 // or answered with an AI-drafted follow-up email grounded in the signal's own
@@ -397,20 +397,37 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         )}
       </h1>
 
-      {/* stat row, hairline-divided */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', marginTop: 40, paddingTop: 26, borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
-        {[
-          { n: String(critical.length), lbl: `critical${totalRisk > 0 ? ` · ${fmtMoney(totalRisk)} at risk` : ''}`, color: 'var(--critical, #c43d2b)' },
-          { n: String(watch.length), lbl: `watch${totalWatchRisk > 0 ? ` · ${fmtMoney(totalWatchRisk)} exposure` : ''}`, color: 'var(--warn, #d38b1d)' },
-          { n: String(positive.length), lbl: `positive${posValue > 0 ? ` · ${fmtMoney(posValue)} closing` : ''}`, color: 'var(--good, #2f8f5b)' },
-          { n: String(signals.length), lbl: 'signals in view', color: 'var(--ink)' },
-        ].map((st, i, arr) => (
-          <div key={i} style={{ paddingRight: 32 }}>
-            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 8 }}>{st.lbl}</div>
-          </div>
-        ))}
-      </div>
+      {/* stat row: strong rule above, hairline under each figure, strong rule under the last */}
+      {(() => {
+        const week = signals.filter(sg => sg.created_at && Date.now() - new Date(sg.created_at).getTime() <= 7 * 86400000)
+        const fresh = week.filter(sg => Date.now() - new Date(sg.created_at!).getTime() <= 86400000)
+        const isDemo = initial.some(sg => String(sg.id).startsWith('demo-'))
+        const weekN = isDemo ? DEMO_PULSE_WEEK.signals : week.length
+        const newN = isDemo ? DEMO_PULSE_WEEK.fresh : fresh.length
+        const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink)' } as const
+        const highRisk = critical.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
+        const stats: Array<{ n: string; lbl: string; color: string; strong?: boolean }> = isDemo
+          ? DEMO_SIGNALS_HEAD.map(st => ({ n: st.n, lbl: st.lbl, color: TONE[st.tone], strong: st.strong }))
+          : [
+            { n: String(critical.length), lbl: `critical${highRisk > 0 ? ` · ${fmtMoney(highRisk)} at risk` : ''}`, color: TONE.critical },
+            { n: String(watch.length), lbl: `watch${totalWatchRisk > 0 ? ` · ${fmtMoney(totalWatchRisk)} exposure` : ''}`, color: TONE.warn },
+            { n: String(positive.length), lbl: `positive${posValue > 0 ? ` · ${fmtMoney(posValue)} closing` : ''}`, color: TONE.good },
+            { n: String(weekN), lbl: `signals this week${newN ? ` · ${newN} new` : ''}`, color: TONE.ink, strong: true },
+          ]
+        return (
+          <>
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
+            <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+              {stats.map((st, i) => (
+                <div key={i} className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )
+      })()}
 
       {/* section head + filter pills */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 56, paddingBottom: 14 }}>
@@ -438,7 +455,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)}
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row"
               style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 110px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',

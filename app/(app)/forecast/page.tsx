@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MOVERS } from '@/lib/demo-dataset'
 import { ForecastReal } from './ForecastReal'
 
 export default async function ForecastPage() {
@@ -9,7 +9,7 @@ export default async function ForecastPage() {
   if (!user) return null
 
   if (user.email === DEMO_EMAIL) {
-    return <ForecastReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} />
+    return <ForecastReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} demoMovers={DEMO_MOVERS} />
   }
 
   const [acc, sig] = await Promise.all([

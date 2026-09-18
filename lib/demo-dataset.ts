@@ -554,3 +554,20 @@ export const DEMO_PORTFOLIO: PortfolioHead = {
 export const DEMO_PORTFOLIO_HEADLINE = {
   highCount: 2, highValue: 1_330_000, darkHours: 48, closingName: 'Nexus', healthyCount: 2,
 }
+
+// ---------- Signals stat row (transcribed from the mobile Signals screen, v11.13) ----------
+export const DEMO_PULSE_WEEK = { signals: 47, fresh: 12 }
+export const DEMO_SIGNALS_HEAD = [
+  { n: '2', lbl: 'critical · $1.33M at risk', tone: 'critical' as const },
+  { n: '4', lbl: 'watch · $655K exposure', tone: 'warn' as const },
+  { n: '1', lbl: 'positive · $320K closing', tone: 'good' as const },
+  { n: '47', lbl: 'signals this week · 12 new', tone: 'ink' as const, strong: true },
+]
+
+// ---------- Forecast movers (transcribed from the mobile Forecast screen, v11.14) ----------
+export const DEMO_MOVERS = [
+  { name: 'Nexus AI', tag: 'Closing', tone: 'good' as const, note: 'PO expected this week · legal clear', swing: 320_000, prob: 84 },
+  { name: 'Meridian Labs', tag: 'Renewal at risk', tone: 'critical' as const, note: 'Timeline slipping to Q2 · 5 days dark', swing: -850_000, prob: 41 },
+  { name: 'Acme Corp', tag: 'Stalled', tone: 'critical' as const, note: 'CFO silent 8 days · competitor in play', swing: -480_000, prob: 38 },
+  { name: 'Brightwave', tag: 'Expansion', tone: 'good' as const, note: 'Pilot converting · RevOps re-engaged', swing: 180_000, prob: 72 },
+]

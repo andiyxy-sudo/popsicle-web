@@ -28,7 +28,9 @@ const weightOf = (stage?: string | null) => {
 const monthKey = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}` }
 const monthLabel = (k: string) => { const [y, m] = k.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }
 
-export function ForecastReal({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
+export type Mover = { name: string; tag: string; tone: 'good' | 'critical'; note: string; swing: number; prob: number }
+
+export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Account[]; signals: Signal[]; demoMovers?: Mover[] }) {
   const [mounted, setMounted] = useState(false)
   const [window_, setWindow] = useState<'1W' | '1M' | '3M' | 'YTD'>('1W')
   const [recovery, setRecovery] = useState(25)
@@ -122,6 +124,12 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
     .map(r => ({ ...r, swing: r.risky ? -r.value : r.value * r.w }))
     .sort((a, b) => Math.abs(b.swing) - Math.abs(a.swing))
     .slice(0, 4)
+  const moverCards: Mover[] = demoMovers ?? movers.map(m => ({
+    name: m.a.name,
+    tag: m.risky ? (/renew/i.test(m.a.stage || '') ? 'Renewal at risk' : 'Stalled') : /clos/i.test(m.a.stage || '') ? 'Closing' : (m.a.stage || 'Open'),
+    tone: m.risky ? 'critical' : 'good',
+    note: moverNote(m), swing: m.swing, prob: Math.round(m.w * 100),
+  }))
 
   // a week of pipeline trend, drawn from the same weighted maths
   const scenario = weighted + atRisk * (recovery / 100)
@@ -252,29 +260,34 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       </div>
 
       {/* what moves the number */}
-      {movers.length > 0 && (
-        <div style={{ marginTop: 44 }}>
+      {moverCards.length > 0 && (
+        <div style={{ marginTop: 56 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 0 }}>
-            {movers.map((m, i) => (
-              <div key={m.a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(m.a.name)}`)}
-                style={{ padding: '20px 24px 20px 0', borderRight: i < movers.length - 1 ? '1px solid var(--hairline, #EFEAE1)' : 'none', paddingLeft: i === 0 ? 0 : 24, cursor: 'pointer' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.a.name}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: m.risky ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
-                    {m.risky ? 'at risk' : (m.a.stage || 'open')}
-                  </span>
+          <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, moverCards.length)}, minmax(0,1fr))`, columnGap: 32 }}>
+            {moverCards.map(m => {
+              const tone = m.tone === 'critical' ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)'
+              return (
+                <div key={m.name} className="stat-cell" onClick={() => router.push(`/accounts/${encodeURIComponent(m.name)}`)}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '22px 0 20px', cursor: 'pointer' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.name}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 6 }}>{m.note}</div>
+                  </div>
+                  <div style={{ textAlign: 'right', flex: 'none' }}>
+                    <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', lineHeight: 1, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
+                      {m.swing < 0 ? '−' : '+'}{formatCurrency(Math.abs(m.swing))}
+                    </div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 8 }}>{m.prob}% probability</div>
+                  </div>
                 </div>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.04em', marginTop: 10, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
-                  {m.swing < 0 ? '-' : '+'}{formatCurrency(Math.abs(m.swing))}
-                </div>
-                <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 7 }}>{moverNote(m)}</div>
-                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 7 }}>{Math.round(m.w * 100)}% probability</div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       )}
@@ -378,6 +391,7 @@ export function ForecastReal({ accounts, signals }: { accounts: Account[]; signa
       </div>
       {rows.map(r => (
         <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
+          className="tbl-row"
           style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14 }}>
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>

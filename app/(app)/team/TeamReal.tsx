@@ -291,7 +291,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
               <span>#</span><span>Rep</span><span>Signals</span><span>Saved</span><span>Protected</span><span>Avg resp</span><span>Save rate</span><span>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
-              <div key={r.name} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
+              <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: i === 0 ? ACCENT : INK }}>{i + 1}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                   <Avatar rep={r} size={36} />
@@ -387,7 +387,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         const s = sevMeta[q.sev]
         const rep = repBy(q.rep)
         return (
-          <div key={i} onClick={() => openQueueItem(q)}
+          <div key={i} onClick={() => openQueueItem(q)} className="tbl-row"
             style={{ display: 'grid', gridTemplateColumns: '3px minmax(0,1fr) auto 32px', gap: 16, alignItems: 'center', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
             <span style={{ width: 3, height: 34, background: s.c }} />
             <div style={{ minWidth: 0 }}>

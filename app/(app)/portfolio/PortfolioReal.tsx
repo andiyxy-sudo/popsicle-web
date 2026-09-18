@@ -187,9 +187,9 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
               {headline}
             </h1>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
-                <div key={i} style={{ paddingTop: 22, paddingBottom: 18, borderBottom: `1px solid ${st.strong ? 'var(--rule-strong, #0E0D0B)' : 'var(--hairline, #EFEAE1)'}` }}>
+                <div key={i} className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
                   <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
@@ -224,7 +224,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} onClick={() => openA360(a)}
+                <div key={a.id} onClick={() => openA360(a)} className="tbl-row"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
