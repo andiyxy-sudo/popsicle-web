@@ -42,16 +42,32 @@ const DEEP: Array<{ group: string; items: string[] }> = [
 const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
 
 // ---- markdown-lite renderer -------------------------------------------------
+// Emoji status markers the model sometimes adds become quiet coloured dots.
+const EMOJI_DOT: Record<string, string> = { '🔴': 'var(--critical, #c43d2b)', '🟠': 'var(--warn, #d38b1d)', '🟡': 'var(--warn, #d38b1d)', '🟢': 'var(--good, #2f8f5b)', '🔵': 'var(--blue, #2f6f9f)', '⚪': 'var(--ink-faint)' }
 function inline(text: string, key: number) {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean)
+  // **bold**, *italic* / _italic_, `code`, and status emoji
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|_[^_\n]+_|`[^`]+`|[🔴🟠🟡🟢🔵⚪])/g).filter(Boolean)
   return (
     <span key={key}>
-      {parts.map((p, i) =>
-        p.startsWith('**') && p.endsWith('**')
-          ? <strong key={i} style={{ fontWeight: 500, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
-          : <span key={i}>{p}</span>)}
+      {parts.map((p, i) => {
+        if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
+        if ((p.startsWith('*') && p.endsWith('*') && p.length > 2) || (p.startsWith('_') && p.endsWith('_') && p.length > 2)) return <em key={i} style={{ fontStyle: 'italic', color: 'var(--ink)' }}>{p.slice(1, -1)}</em>
+        if (p.startsWith('`') && p.endsWith('`')) return <code key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.92em', background: 'var(--inset, #F4F0E8)', padding: '1px 6px', borderRadius: 5 }}>{p.slice(1, -1)}</code>
+        if (EMOJI_DOT[p]) return <span key={i} style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: EMOJI_DOT[p], marginLeft: 6, verticalAlign: 'middle', position: 'relative', top: -1 }} />
+        return <span key={i}>{p}</span>
+      })}
     </span>
   )
+}
+// Numbered items ("1. Acme Corp - CFO silent 8 days ($480K)") become titled rows.
+function splitNumbered(t: string): { n: string; title: string; figure: string | null } | null {
+  const m = t.match(/^(\d+)[.)]\s+(.*)$/)
+  if (!m) return null
+  let title = m[2].replace(/\*\*/g, '').trim()
+  const fig = title.match(/\(([^)]*[$\d][^)]*)\)\s*([🔴🟠🟡🟢🔵⚪])?\s*$/)
+  let figure: string | null = null
+  if (fig) { figure = fig[1]; title = title.slice(0, fig.index).trim() + (fig[2] ? ` ${fig[2]}` : '') }
+  return { n: m[1], title, figure }
 }
 
 function Answer({ text }: { text: string }) {
@@ -255,11 +271,32 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
   let buf: string[] = []
   const flush = (k: number) => {
     if (!buf.length) return
-    paras.push(<p key={`p${k}`} style={{ margin: '0 0 15px', fontSize: 16, lineHeight: 1.72, letterSpacing: '-.004em', color: 'var(--ink)' }}>{inline(buf.join(' '), k)}</p>)
+    paras.push(<p key={`p${k}`} style={{ margin: '0 0 15px', fontSize: 15.5, lineHeight: 1.72, letterSpacing: '-.004em', color: 'var(--ink)', maxWidth: 620 }}>{inline(buf.join(' '), k)}</p>)
     buf = []
   }
   body.forEach((l, i) => {
     if (!l) { flush(i); return }
+    // section heading ("# Not yours, but flag to reps" or "Not yours:") → quiet mono label
+    if (/^#{1,6}\s/.test(l)) {
+      flush(i)
+      paras.push(<div key={`h${i}`} className="ans-in" style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '26px 0 6px', paddingBottom: 8, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>{l.replace(/^#{1,6}\s/, '').replace(/[*_:]+$/, '')}</div>)
+      return
+    }
+    // numbered item → titled row with the figure as a chip
+    const num = splitNumbered(l)
+    if (num) {
+      flush(i)
+      paras.push(
+        <div key={`n${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '26px minmax(0,1fr)', gap: 12, alignItems: 'baseline', margin: '22px 0 6px', paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--accent)' }}>{num.n.padStart(2, '0')}</span>
+          <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: '-.02em', color: 'var(--ink)', lineHeight: 1.3 }}>{inline(num.title, i)}</span>
+            {num.figure && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>{num.figure}</span>}
+          </span>
+        </div>
+      )
+      return
+    }
     // a line that is mostly a quotation, or is marked as a draft, is content
     // to be sent rather than prose to be read
     const q = l.match(/^(?:draft|subject|send|message|say)?\s*:?\s*["“](.+)["”]\.?$/i)
@@ -289,7 +326,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
       // otherwise a normal bullet, with any "Label:" lead-in set in ink
       const m2 = t.match(/^([^:*]{2,28}):\s+(.*)$/)
       paras.push(
-        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '9px 0 9px 2px', fontSize: 15, lineHeight: 1.7, letterSpacing: '-.002em', color: 'var(--ink-muted)' }}>
+        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 13, padding: '7px 0 7px 38px', fontSize: 15, lineHeight: 1.7, letterSpacing: '-.002em', color: 'var(--ink-muted)' }}>
           <span style={{ width: 5, height: 5, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
           <div>{m2 && !t.startsWith('**')
             ? <><strong style={{ fontWeight: 600, color: 'var(--ink)' }}>{m2[1]}:</strong> {inline(m2[2], i)}</>
