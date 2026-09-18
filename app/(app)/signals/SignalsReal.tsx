@@ -591,7 +591,6 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               if (out.length >= 3) break
             }
           }
-          if (quote && !out.some(x => x.includes(quote.slice(0, 24)))) out.push(`They said: "${quote}"`)
           for (const [k, v] of aiRows) {
             const label = FACT_LABELS[k]
             if (label && out.length < 4 && !out.some(x => x.toLowerCase().startsWith(label.toLowerCase()))) out.push(`${label}: ${fmtFact(k, v)}`)
@@ -638,10 +637,10 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} severity
                   </div>
                   <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</h2>
-                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle}{inactive ? ` · ${inactive}` : ''}</div>
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}{d.source_integration ? ` · via ${d.source_integration}` : ''}{inactive ? ` · ${inactive}` : ''}</div>
                 </div>
                 <button onClick={() => setDetailFor(null)} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)', flex: 'none', paddingTop: 4 }}>close</button>
               </div>
@@ -653,35 +652,41 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                       <div style={mlab}>AI confidence</div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em', marginTop: 6, color: sevColor }}>{conf}%</div>
                     </div>
-                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, paddingBottom: 7 }}>
-                      {d.source_integration && (
-                        <span style={{ ...mlab, color: 'var(--ink-faint)' }}>via {d.source_integration}</span>
-                      )}
-                      <div style={{ width: '100%', maxWidth: 160, height: 2, background: 'var(--hairline, #EFEAE1)' }}>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 9, paddingBottom: 9 }}>
+                      <div style={{ width: '100%', maxWidth: 150, height: 2, background: 'var(--hairline, #EFEAE1)' }}>
                         <div style={{ width: `${conf}%`, height: '100%', background: sevColor }} />
                       </div>
                     </div>
                   </div>
                 )}
-                {descText && !descDuplicatesTitle && evidenceFromDesc.length === 0 ? (
+                {/* Signals detected: what the detector saw, as dotted rows */}
+                {evidence.length > 0 && (
+                  <div style={{ marginBottom: 22 }}>
+                    <div style={{ ...mlab, paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Signals detected</div>
+                    {evidence.map((e, i) => (
+                      <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px minmax(0,1fr)', gap: 10, alignItems: 'baseline', padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor, position: 'relative', top: -1 }} />
+                        <span>{e}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {evidence.length === 0 && descText && !descDuplicatesTitle ? (
                   <div className="read-prose read-prose-ink" style={{ marginBottom: 16 }}>{descText}</div>
                 ) : null}
-                {quote && evidence.length === 0 && (
-                  <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, marginBottom: 20 }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words</div>
+                {/* Source: the exact words that raised it */}
+                {quote && (
+                  <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, margin: '0 0 22px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words{d.source_integration ? ` · ${d.source_integration}` : ''}</div>
                     <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 8 }}>&ldquo;{quote}&rdquo;</div>
                   </div>
                 )}
-                {reason && (
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Why this was raised</div>
-                    <div className="read-prose" style={{ color: 'var(--ink-muted)', marginTop: 11 }}>{reason}</div>
-                  </div>
-                )}
-                {typeof ai.recommendation === 'string' && ai.recommendation && (
-                  <div style={{ paddingLeft: 16, borderLeft: '2px solid var(--accent)', margin: '20px 0' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--accent)' }}>Recommended play</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginTop: 8 }}>{ai.recommendation}</div>
+                {/* Pattern match: why this shape of signal matters */}
+                {(pattern || reason) && (
+                  <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, margin: '0 0 22px' }}>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>Pattern match</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginTop: 8 }}>{pattern ?? reason}</div>
+                    {pattern && reason && <div className="read-prose" style={{ color: 'var(--ink-muted)', marginTop: 8 }}>{reason}</div>}
                   </div>
                 )}
                 {/* the account, source and confidence are already stated above,
@@ -766,6 +771,9 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {modalMode === 'view' && (
                   <div style={{ marginTop: 18 }}>
                     <div style={{ ...mlab, marginBottom: 2 }}>Suggested actions</div>
+                    {typeof ai.recommendation === 'string' && ai.recommendation && (
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, padding: '8px 0 12px' }}>{ai.recommendation}</div>
+                    )}
                     {!inactive && actionRow('Draft a follow-up email', () => { setDetailFor(null); openDraft(d) })}
                     {!inactive && actionRow('Mark as handled', () => setModalMode('handle'))}
                     {d.signal_type?.startsWith('call') && d.source_message_id && actionRow('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}

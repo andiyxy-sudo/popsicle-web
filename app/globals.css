@@ -1989,8 +1989,10 @@ input, select, textarea { border-radius: var(--r-sheet); }
 /* Logo block: design geometry — sidebar pad 22 + logo pad 19 + 72px mark,
    so its centre lands at 77px, matching the breadcrumb row centre at 74px
    (main padding 56 + 36px row / 2). Do not change without changing both. */
-.ed-sb-logo { display: flex; align-items: center; padding: 19px 0 0 32px; cursor: pointer; }
-.ed-sb-logo img { height: 72px; width: auto; display: block; }
+/* v11.36: mark 10% smaller (72 → 65px); top padding grows by the 7px removed so the
+   logo's vertical centre stays level with the page header row */
+.ed-sb-logo { display: flex; align-items: center; padding: 22.5px 0 3.5px 32px; cursor: pointer; }
+.ed-sb-logo img { height: 65px; width: auto; display: block; }
 .ed-sb-nav { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; scrollbar-width: none; }
 .ed-sb-nav::-webkit-scrollbar { width: 0; }
 .ed-sb-rule { height: 1px; }
