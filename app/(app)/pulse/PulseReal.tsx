@@ -21,6 +21,7 @@ interface Props {
   signals: Signal[]
   integrationCount: number
   demoStrip?: PulseStrip
+  demoLate?: LateItem[]
 }
 
 
@@ -356,6 +357,51 @@ function computeHealth(signals: Signal[], accounts: Account[]): number {
   return Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
 }
 
+// Late commitments: the quiet grey panel under the headline. Demo mode shows
+// fixed items from the demo accounts; live mode reads open commitments that are
+// due today or earlier from the commitments table.
+export type LateItem = { id: string; text: string; account: string | null; daysLate: number }
+function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoItems?: LateItem[] }) {
+  const demoMode = accounts.some(a => String(a.id).startsWith('demo-'))
+  const router = useRouter()
+  const [items, setItems] = useState<LateItem[]>(demoMode ? (demoItems ?? []) : [])
+  useEffect(() => {
+    if (demoMode) return
+    let dead = false
+    async function load() {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user) return
+      const end = new Date(); end.setHours(23, 59, 59, 999)
+      const { data } = await supa.from('commitments').select('id, text, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+        .lte('due_at', end.toISOString()).order('due_at').limit(6)
+      if (dead) return
+      setItems(((data ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null }>).map(c => ({
+        id: c.id, text: c.text, account: c.account_name,
+        daysLate: c.due_at ? Math.max(0, Math.floor((Date.now() - new Date(c.due_at).getTime()) / 86400000)) : 0,
+      })))
+    }
+    load()
+    return () => { dead = true }
+  }, [demoMode])
+  if (!items.length) return null
+  return (
+    <div style={{ marginTop: 26, padding: '10px 18px', background: 'var(--inset, #F4F0E8)', borderRadius: 6, maxWidth: 680 }}>
+      {items.map(c => (
+        <div key={c.id} onClick={() => c.account && router.push(`/accounts/${encodeURIComponent(c.account)}`)}
+          style={{ display: 'grid', gridTemplateColumns: '58px minmax(0,1fr)', gap: 14, alignItems: 'baseline', padding: '7px 0', cursor: c.account ? 'pointer' : 'default' }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.4px', textTransform: 'uppercase', color: c.daysLate > 0 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)', whiteSpace: 'nowrap' }}>
+            {c.daysLate > 0 ? `${c.daysLate}d late` : 'due today'}
+          </span>
+          <span style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
+            {c.text}{c.account ? <> <span style={{ color: 'var(--ink-faint)', margin: '0 6px' }}>/</span><span style={{ color: 'var(--ink-muted)' }}>{c.account}</span></> : null}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // TODAY block (mobile item 22): meetings today, due/overdue commitments, and
 // accounts needing attention ranked by the shared attention formula (order
 // only, no visible score). Sections are absent when empty; quiet day = block hidden.
@@ -409,9 +455,9 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   })()
 
   if (!loaded) return null
-  if (!meetings.length && !due.length && !attention.length) return null
+  if (!meetings.length && !attention.length) return null
   const secLbl = (t: string) => <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 7 }}>{t}</div>
-  const cols = [meetings.length, due.length, attention.length].filter(Boolean).length
+  const cols = [meetings.length, attention.length].filter(Boolean).length
   return (
     <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: '12px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -428,20 +474,6 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
                 <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--t1)' }}>{m.summary || 'Meeting'}{m.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {m.account_name}</span> : null}</span>
               </div>
             ))}
-          </div>
-        )}
-        {due.length > 0 && (
-          <div>
-            {secLbl('Commitments due')}
-            {due.map(c => {
-              const overdue = c.due_at ? new Date(c.due_at).getTime() < Date.now() - 86400000 : false
-              return (
-                <div key={c.id} onClick={() => c.account_name && router.push(`/accounts/${encodeURIComponent(c.account_name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: c.account_name ? 'pointer' : 'default', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: 9, fontWeight: 800, color: overdue ? 'var(--danger)' : 'var(--amber)', flexShrink: 0 }}>{overdue ? 'OVERDUE' : 'DUE'}</span>
-                  <span style={{ fontSize: 11.5, color: 'var(--t1)', fontWeight: 600 }}>{c.owner === 'them' ? 'They: ' : c.owner === 'us' ? 'We: ' : ''}{c.text}{c.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {c.account_name}</span> : null}</span>
-                </div>
-              )
-            })}
           </div>
         )}
         {attention.length > 0 && (
@@ -584,7 +616,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
-export function PulseReal({ name, accounts, signals, integrationCount, demoStrip }: Props) {
+export function PulseReal({ name, accounts, signals, integrationCount, demoStrip, demoLate }: Props) {
   // Demo rows live in the bundle, not the database: skip every client round-trip.
   const isDemoData = accounts.some(a => String(a.id).startsWith('demo-')) || signals.some(s => String(s.id).startsWith('demo-'))
   // Accounts with a meeting inside 48h (attention-formula factor).
@@ -818,6 +850,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       </div>
 
       {narrative}
+      <LateCommitments accounts={accounts} demoItems={demoLate} />
 
       <PreMeetingBrief />
       <div style={{ marginTop: 24 }}><WeekDigest /></div>
@@ -841,23 +874,23 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         return (
           <>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', marginTop: 40 }} />
-            <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
-              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+              <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'}</span>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
                 <div style={sub}>{st.high} high · {st.med} med · {st.low} low</div>
               </div>
-              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+              <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Active signals</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.active}</span>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
-              <div className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+              <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue protected</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--accent, #E85A25)')}>{st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'}</span>{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.saved} saved · {st.actions} actions · {st.hitPct}% hit</div>
               </div>
-              <div className="stat-cell" onClick={() => setConfOpen(true)} style={{ paddingTop: 22, paddingBottom: 18, cursor: 'pointer' }}>
+              <div onClick={() => setConfOpen(true)} style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <div style={MONO}>AI confidence</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.aiConfidence}%</span></div>
                 <div style={{ ...sub, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />{st.integrations} integrations synced · {st.syncedAgo}</div>

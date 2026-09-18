@@ -844,3 +844,10 @@ export const DEMO_PULSE_STRIP = {
   protectedTotal: 560_000, protectedDeltaPct: 38, saved: 4, actions: 12, hitPct: 94,
   aiConfidence: 91, integrations: 4, syncedAgo: '2 min ago',
 }
+
+// ---------- Pulse late commitments (from the demo timelines and transcript, v11.29) ----------
+export const DEMO_LATE_COMMITMENTS = [
+  { id: 'demo-lc-1', text: 'Send the Gong comparison doc and security whitepaper to Sarah Chen', account: 'Acme Corp', daysLate: 2 },
+  { id: 'demo-lc-2', text: 'Send pre-approved redline contract to Rachel Voss', account: 'Axion Partners', daysLate: 5 },
+  { id: 'demo-lc-3', text: 'Book the legal check-in with Dana Kim ahead of the Jan 28 close', account: 'Vertex Systems', daysLate: 0 },
+]
