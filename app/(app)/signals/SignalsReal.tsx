@@ -79,6 +79,7 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
   const [deepNotFound, setDeepNotFound] = useState(false)
   const [filter, setFilter] = useState<'all' | 'critical' | 'watch' | 'positive'>('all')
   const [mounted, setMounted] = useState(false)
+  const [statHover, setStatHover] = useState<number | null>(null)   // strong underline follows the pointer
   useEffect(() => { setMounted(true) }, [])
   const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
   const [handleText, setHandleText] = useState('')
@@ -417,9 +418,11 @@ export function SignalsReal({ signals: initial }: { signals: DBSignal[] }) {
         return (
           <>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
-            <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
-                <div key={i} className="stat-cell" style={{ paddingTop: 22, paddingBottom: 18 }}>
+                <div key={i} onMouseEnter={() => setStatHover(i)}
+                  style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--rule-strong, #0E0D0B)', opacity: (statHover ?? stats.length - 1) === i ? 1 : 0, transition: 'opacity .18s ease' }} />
                   <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
