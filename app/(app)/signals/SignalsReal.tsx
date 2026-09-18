@@ -67,6 +67,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   const [busyId, setBusyId] = useState<string | null>(null)
   // Draft modal state
   const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
+  // per-action popups (row buttons): each row action has its own window instead of
+  // everything opening the email draft
+  type RowActionKind = 'email' | 'schedule' | 'map' | 'close'
+  const [rowAction, setRowAction] = useState<{ s: DBSignal; kind: RowActionKind; label: string } | null>(null)
+  const [slotPick, setSlotPick] = useState<number>(0)
+  const [mapName, setMapName] = useState(''); const [mapRole, setMapRole] = useState('')
+  const [closeMode, setCloseMode] = useState<'done' | 'reset'>('done'); const [closeDate, setCloseDate] = useState('')
+  const [draftIntent, setDraftIntent] = useState<string>('')
   const [draft, setDraft] = useState<Draft | null>(null)
   const [draftErr, setDraftErr] = useState<string>('')
   const [draftSlow, setDraftSlow] = useState(false)
@@ -310,7 +318,8 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     setBusyId(null)
   }
 
-  async function openDraft(s: DBSignal) {
+  async function openDraft(s: DBSignal, intent?: string) {
+    setDraftIntent(intent || '')
     setSendState('idle'); setSendErr(''); setDraftErr(''); setDraftSlow(false)
     setContacts([])
     if (s.account_name && !isDemoSig(s)) {
@@ -326,7 +335,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       const r = await fetch('/api/draft', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ signal_id: s.id }),
+        body: JSON.stringify({ signal_id: s.id, intent: intent || '' }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok || !j.body) {
@@ -518,7 +527,13 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               </div>
               <div onClick={e => e.stopPropagation()}>
                 {!isHandled && (
-                  <button onClick={() => openDraft(s)} style={{
+                  <button onClick={() => {
+                    const t = s.signal_type || ''
+                    const kind: RowActionKind = /meeting_cancelled|meeting_declined|deal_stage_backward|call_sentiment_drop|timeline_slip/.test(t) ? 'schedule'
+                      : t === 'champion_change' ? 'map' : t === 'commitment_overdue' ? 'close' : 'email'
+                    if (kind === 'email') openDraft(s, action)
+                    else { setSlotPick(0); setMapName(''); setMapRole(''); setCloseMode('done'); setCloseDate(''); setRowAction({ s, kind, label: action }) }
+                  }} style={{
                     font: 'inherit', fontSize: 12.5, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, cursor: 'pointer',
                     background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{action}</button>
@@ -533,6 +548,108 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
         <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask AI to prioritise →</span>
       </div>
+
+      {/* Row-action popups: schedule, map contact, close out */}
+      {rowAction && (() => {
+        const { s, kind, label } = rowAction
+        const sevColor = s.severity === 'high' ? 'var(--danger)' : s.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
+        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+        const inputStyle = { font: 'inherit', fontSize: 14, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', width: '100%' } as const
+        const primary = (text: string, go: () => void, disabled?: boolean) => (
+          <button onClick={go} disabled={disabled} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .45 : 1, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>{text}</button>
+        )
+        const ghost = (text: string, go: () => void) => (
+          <button onClick={go} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 999, border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>{text}</button>
+        )
+        const close = () => setRowAction(null)
+        const slots = (() => {
+          const out: Array<{ label: string; iso: string }> = []
+          const d = new Date(); d.setHours(10, 0, 0, 0)
+          let added = 0, i = 1
+          while (added < 3 && i < 10) {
+            const t = new Date(d); t.setDate(t.getDate() + i); i++
+            if (t.getDay() === 0 || t.getDay() === 6) continue
+            const hour = added === 1 ? 14 : 10
+            t.setHours(hour, added === 2 ? 30 : 0, 0, 0)
+            out.push({ label: t.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) + ' · ' + t.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }), iso: t.toISOString() })
+            added++
+          }
+          return out
+        })()
+        const titleFor = kind === 'schedule' ? label : kind === 'map' ? 'Map the new decision-maker' : 'Close out the commitment'
+        return (
+          <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', zIndex: 820, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: 'min(440px,100%)', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+              <div style={{ padding: '26px 28px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                <div>
+                  <div style={{ ...mlab, color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{s.account_name || 'Signal'}</div>
+                  <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>{titleFor}</h2>
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{s.title}</div>
+                </div>
+                <button onClick={close} style={{ ...mlab, background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)' }}>Close</button>
+              </div>
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '20px 28px 0' }} />
+              <div style={{ padding: '20px 28px 26px' }}>
+
+                {kind === 'schedule' && (
+                  <>
+                    <div style={mlab}>Pick a window</div>
+                    <div style={{ marginTop: 10 }}>
+                      {slots.map((sl, i) => (
+                        <div key={sl.iso} onClick={() => setSlotPick(i)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14.5, color: 'var(--ink)' }}>
+                          <span style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${slotPick === i ? 'var(--accent)' : 'var(--ink-faint)'}`, background: slotPick === i ? 'var(--accent)' : 'transparent', boxShadow: slotPick === i ? 'inset 0 0 0 3px var(--paper, #FBF8F3)' : 'none', flex: 'none' }} />
+                          {sl.label}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 12, lineHeight: 1.5 }}>The invite goes out as an email you review first, with the window above proposed and one alternative.</div>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+                      {ghost('Cancel', close)}
+                      {primary('Draft the invite', () => { close(); openDraft(s, `${label}: propose ${slots[slotPick]?.label ?? 'a window early next week'} for a 20-minute call, plus one alternative`) })}
+                    </div>
+                  </>
+                )}
+
+                {kind === 'map' && (
+                  <>
+                    <div style={mlab}>Who is the new decision-maker?</div>
+                    <div style={{ display: 'grid', gap: 10, marginTop: 12 }}>
+                      <input value={mapName} onChange={e => setMapName(e.target.value)} placeholder="Full name" style={inputStyle} />
+                      <input value={mapRole} onChange={e => setMapRole(e.target.value)} placeholder="Role, e.g. VP Operations" style={inputStyle} />
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 12, lineHeight: 1.5 }}>Popsicle will re-map the account to this contact and draft an introduction that restates the buying case for them.</div>
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+                      {ghost('Cancel', close)}
+                      {primary('Map and draft intro', () => { const who = `${mapName.trim()}${mapRole.trim() ? `, ${mapRole.trim()}` : ''}`; markHandled(s, `Mapped ${who}`); close(); openDraft(s, `introduce yourself to the new contact ${who} and restate the buying case briefly`) }, !mapName.trim())}
+                    </div>
+                  </>
+                )}
+
+                {kind === 'close' && (
+                  <>
+                    <div style={mlab}>What happened?</div>
+                    <div style={{ marginTop: 10 }}>
+                      {([['done', 'It got done', 'Mark the commitment complete and clear the signal.'], ['reset', 'Reset the date', 'Pick a new date and let the other side know.']] as const).map(([k, t, sub]) => (
+                        <div key={k} onClick={() => setCloseMode(k)} style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr)', gap: 12, alignItems: 'start', padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                          <span style={{ width: 14, height: 14, borderRadius: '50%', marginTop: 3, border: `2px solid ${closeMode === k ? 'var(--accent)' : 'var(--ink-faint)'}`, background: closeMode === k ? 'var(--accent)' : 'transparent', boxShadow: closeMode === k ? 'inset 0 0 0 3px var(--paper, #FBF8F3)' : 'none' }} />
+                          <span><span style={{ fontSize: 14.5, color: 'var(--ink)', fontWeight: 600 }}>{t}</span><span style={{ display: 'block', fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</span></span>
+                        </div>
+                      ))}
+                    </div>
+                    {closeMode === 'reset' && <input type="date" value={closeDate} onChange={e => setCloseDate(e.target.value)} style={{ ...inputStyle, marginTop: 14 }} />}
+                    <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+                      {ghost('Cancel', close)}
+                      {closeMode === 'done'
+                        ? primary('Mark complete', () => { markHandled(s, 'Commitment completed'); close() })
+                        : primary('Reset and notify', () => { markHandled(s, `Date reset to ${closeDate || 'a new date'}`); close(); openDraft(s, `let them know the commitment date moved to ${closeDate || 'a new date'} and confirm it works for them`) }, !closeDate)}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Draft modal */}
       {/* Signal detail (deep-linked or opened): full analysis breakdown */}
@@ -820,7 +937,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 620, background: 'var(--paper, #FBF8F3)', padding: '40px 44px 44px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
             {/* eyebrow + close */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>ai-drafted · draft email</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>ai-drafted · {draftIntent ? draftIntent.split(':')[0].slice(0, 28) : 'draft email'}</span>
               <button onClick={() => setDraftFor(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
             </div>
             <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.035em', margin: '12px 0 0', color: 'var(--ink)' }}>{draftFor.account_name || 'Draft reply'}</h2>

@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   const { data: claimsData } = await supabase.auth.getClaims()
   if (!claimsData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { signal_id } = await req.json().catch(() => ({}))
+  const { signal_id, intent } = await req.json().catch(() => ({}))
   if (!signal_id) return NextResponse.json({ error: 'missing_signal_id' }, { status: 400 })
 
   // Demo signals live in the dataset, not the database. The draft is still
@@ -86,6 +86,7 @@ export async function POST(req: NextRequest) {
     '- If the thread shows they already answered something, do not re-ask it.',
     '- Take no stance on pricing, discounts, contract terms, or internal decisions and commit to nothing not already in the thread; propose a conversation instead.',
     '- Do not invent numbers, dates, amounts, or names. If a specific figure is not in the material provided, leave it out.',
+    ...(typeof intent === 'string' && intent.trim() ? [`- PURPOSE OF THIS EMAIL: ${intent.trim()}. Write specifically for that purpose (for example a comparison one-pager, an ROI sheet, a contract redline, a meeting invite, a written confirmation), not a generic check-in.`] : []),
   ].join('\n')
 
   const apiKey = process.env.ANTHROPIC_API_KEY
