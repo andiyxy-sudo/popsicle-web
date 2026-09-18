@@ -30,7 +30,9 @@ const monthLabel = (k: string) => { const [y, m] = k.split('-').map(Number); ret
 
 export type Mover = { name: string; tag: string; tone: 'good' | 'critical'; note: string; swing: number; prob: number }
 
-export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Account[]; signals: Signal[]; demoMovers?: Mover[] }) {
+export type ForecastFigures = { commit: number; weighted: number; bestCase: number; atRisk: number; riskyDeals: number; dealsToClose: number; accuracy: number; daysLeft: number; commitDeltaPct: number }
+
+export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { accounts: Account[]; signals: Signal[]; demoMovers?: Mover[]; demoFigures?: ForecastFigures }) {
   const [mounted, setMounted] = useState(false)
   const [window_, setWindow] = useState<'1W' | '1M' | '3M' | 'YTD'>('1W')
   const [recovery, setRecovery] = useState(25)
@@ -82,15 +84,23 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
   }
 
   // ---- the numbers the design's top half is built on ----
-  const bestCase = rows.reduce((a, r) => a + r.value, 0)
-  const commitProgress = commit > 0 ? Math.min(100, Math.round((weighted / commit) * 100)) : 0
-  const toGo = Math.max(0, commit - weighted)
+  const computed = { bestCase: rows.reduce((a, r) => a + r.value, 0) }
+  // demo mode pins the headline figures to the mobile app so both surfaces agree
+  const commitF = demoFigures?.commit ?? commit
+  const weightedF = demoFigures?.weighted ?? weighted
+  const bestCase = demoFigures?.bestCase ?? computed.bestCase
+  const atRiskF = demoFigures?.atRisk ?? atRisk
+  const riskyDeals = demoFigures?.riskyDeals ?? rows.filter(r => r.risky).length
+  const dealsToClose = demoFigures?.dealsToClose ?? rows.filter(r => r.w >= .6).length
+  const accuracyPct = demoFigures?.accuracy ?? Math.min(99, 70 + Math.round(rows.length * 1.5))
+  const commitProgress = commitF > 0 ? Math.min(100, Math.round((weightedF / commitF) * 100)) : 0
+  const toGo = Math.max(0, commitF - weightedF)
   const quarterEnd = (() => {
     const d = new Date()
     const q = Math.floor(d.getMonth() / 3)
     return new Date(d.getFullYear(), q * 3 + 3, 0)
   })()
-  const daysLeft = Math.max(0, Math.ceil((quarterEnd.getTime() - Date.now()) / 86400000))
+  const daysLeft = demoFigures?.daysLeft ?? Math.max(0, Math.ceil((quarterEnd.getTime() - Date.now()) / 86400000))
   const quarterLabel = `Q${Math.floor(new Date().getMonth() / 3) + 1} ${new Date().getFullYear()}`
 
   // the deals that actually move the forecast, biggest swing first
@@ -132,7 +142,7 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
   }))
 
   // a week of pipeline trend, drawn from the same weighted maths
-  const scenario = weighted + atRisk * (recovery / 100)
+  const scenario = weightedF + atRiskF * (recovery / 100)
   const biggestRisk = [...rows].filter(r => r.risky).sort((a, b) => b.value - a.value)[0] ?? null
 
   // the trend window changes both the x labels and how far back each series
@@ -151,7 +161,7 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
     const curve = (base: number, [start, pow]: number[], f: number) => base * (start + (1 - start) * Math.pow(f, pow))
     return labels.map((d, i, arr) => {
       const f = arr.length > 1 ? i / (arr.length - 1) : 1
-      return { d, best: curve(bestCase, spec.best, f), commit: curve(weighted, spec.commit, f), risk: curve(atRisk, spec.risk, f) }
+      return { d, best: curve(bestCase, spec.best, f), commit: curve(weightedF, spec.commit, f), risk: curve(atRiskF, spec.risk, f) }
     })
   })()
 
@@ -172,7 +182,7 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
 
       {/* the narrative */}
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: 'var(--ink)' }}>
-        Commit is <span style={{ color: 'var(--good, #2f8f5b)' }}>{commitProgress}% achieved</span> at {formatCurrency(weighted)} with {daysLeft} days to go.{' '}
+        Commit is <span style={{ color: 'var(--good, #2f8f5b)' }}>{commitProgress}% achieved</span> at {formatCurrency(weightedF)} with {daysLeft} days to go.{' '}
         <span style={{ color: 'var(--ink-muted)' }}>
           Best case reaches {formatCurrency(bestCase)}
           {movers[0] ? <> if {movers[0].a.name} closes this week</> : null}
@@ -187,22 +197,22 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Commit · {quarterLabel.split(' ')[0]}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 12 }}>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commit)}</span>
-            {commitProgress > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--good, #2f8f5b)' }}>+{commitProgress - 100 > 0 ? commitProgress - 100 : Math.max(1, Math.round(commitProgress / 8))}%</span>}
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commitF)}</span>
+            {commitProgress > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--good, #2f8f5b)' }}>+{demoFigures?.commitDeltaPct ?? (commitProgress - 100 > 0 ? commitProgress - 100 : Math.max(1, Math.round(commitProgress / 8)))}%</span>}
           </div>
           <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 22, position: 'relative' }}>
             <div style={{ position: 'absolute', inset: 0, width: `${commitProgress}%`, background: 'var(--good, #2f8f5b)' }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)' }}>
-            <span>{formatCurrency(weighted)} actual</span><span>{formatCurrency(toGo)} to go</span>
+            <span>{formatCurrency(weightedF)} actual</span><span>{formatCurrency(toGo)} to go</span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px 22px', marginTop: 34 }}>
             {[
               { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
-              { n: formatCurrency(atRisk), lbl: `pipeline exposed · ${rows.filter(r => r.risky).length} deals`, color: 'var(--critical, #c43d2b)' },
-              { n: String(rows.filter(r => r.w >= .6).length), lbl: 'deals to close · 30 days', color: 'var(--ink)' },
-              { n: `${Math.min(99, 70 + Math.round(rows.length * 1.5))}%`, lbl: 'AI accuracy · trailing', color: 'var(--ink)' },
+              { n: formatCurrency(atRiskF), lbl: `pipeline exposed · ${riskyDeals} deals`, color: 'var(--critical, #c43d2b)' },
+              { n: String(dealsToClose), lbl: 'deals to close · 30 days', color: 'var(--ink)' },
+              { n: `${accuracyPct}%`, lbl: 'AI accuracy · ▲ 3%/qtr', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
@@ -314,9 +324,9 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
             Forecast vs actual · MTD
           </div>
           {[
-            { k: 'Forecast', v: formatCurrency(commit), c: 'var(--ink)' },
-            { k: 'Actual', v: formatCurrency(weighted), c: 'var(--good, #2f8f5b)' },
-            { k: 'Gap', v: `${weighted - commit < 0 ? '-' : '+'}${formatCurrency(Math.abs(weighted - commit))}`, c: weighted - commit < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' },
+            { k: 'Forecast', v: formatCurrency(commitF), c: 'var(--ink)' },
+            { k: 'Actual', v: formatCurrency(weightedF), c: 'var(--good, #2f8f5b)' },
+            { k: 'Gap', v: `${weightedF - commitF < 0 ? '-' : '+'}${formatCurrency(Math.abs(weightedF - commitF))}`, c: weightedF - commitF < 0 ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)' },
           ].map(r => (
             <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{r.k}</span>
@@ -349,8 +359,8 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
           <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.045em', color: 'var(--good, #2f8f5b)', marginTop: 14 }}>
             {formatCurrency(scenario)}
           </div>
-          <div style={{ fontSize: 12.5, color: scenario - commit >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 5 }}>
-            {scenario - commit >= 0 ? '+' : '-'}{formatCurrency(Math.abs(scenario - commit))} vs commit
+          <div style={{ fontSize: 12.5, color: scenario - commitF >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 5 }}>
+            {scenario - commitF >= 0 ? '+' : '-'}{formatCurrency(Math.abs(scenario - commitF))} vs commit
           </div>
 
           <input type="range" min={0} max={100} value={recovery} onChange={e => setRecovery(Number(e.target.value))}

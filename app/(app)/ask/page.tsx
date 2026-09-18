@@ -6,7 +6,9 @@ import { AskClient } from './AskClient'
 // Uses the same /api/ask co-pilot (with message self-extraction) as the drawer.
 export default async function AskPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // local JWT check instead of an auth-server round trip on every navigation
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData ? { id: claimsData.claims.sub as string, email: claimsData.claims.email as string | undefined } : null
   if (!user) redirect('/login')
   return <AskClient />
 }

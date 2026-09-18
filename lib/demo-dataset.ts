@@ -40,22 +40,28 @@ export const DEMO_EXTRA: Record<string, Extra> = {
   'Brightwave': {
     contact_name: 'Andy G', trend: '+9%', repScore: 84, expiry: 'Feb 10',
     flags: ['Buyer Active', 'Onboarding Interest'], statusNote: 'Re-engaged',
-    breakdown: [{ k: 'Engagement', v: 86 }, { k: 'Product Fit', v: 90 }, { k: 'Legal', v: 78 }, { k: 'Financial', v: 88 }],
+    breakdown: [{ k: 'Engagement', v: 85 }, { k: 'Product', v: 72 }, { k: 'Support', v: 90 }, { k: 'Finance', v: 65 }],
   },
   'Axion Partners': {
     contact_name: 'Andy G', trend: '-9%', repScore: 41, expiry: 'Feb 28',
     flags: ['Legal Blocker', '+3-5 Weeks'],
-    breakdown: [{ k: 'Engagement', v: 40 }, { k: 'Product Fit', v: 74 }, { k: 'Legal', v: 40 }, { k: 'Financial', v: 62 }],
+    breakdown: [{ k: 'Engagement', v: 52 }, { k: 'Product', v: 48 }, { k: 'Support', v: 70 }, { k: 'Finance', v: 35 }],
   },
   'TechVault Inc': {
     contact_name: 'Mike Ross', trend: '-2%', repScore: 58, expiry: 'Mar 15',
     flags: ['Budget Concern', 'Finance Review'],
-    breakdown: [{ k: 'Engagement', v: 48 }, { k: 'Product Fit', v: 76 }, { k: 'Legal', v: 70 }, { k: 'Financial', v: 44 }],
+    breakdown: [{ k: 'Engagement', v: 68 }, { k: 'Product', v: 92 }, { k: 'Support', v: 78 }, { k: 'Finance', v: 32 }],
   },
   'Cobalt Health': {
     contact_name: 'Jamie Torres', trend: '+14%', repScore: 95, expiry: 'Closed Dec 20',
     flags: ['Contract Signed', 'Onboarding Started'], statusNote: 'Onboarding',
-    breakdown: [{ k: 'Engagement', v: 94 }, { k: 'Product Fit', v: 96 }, { k: 'Legal', v: 100 }, { k: 'Financial', v: 100 }],
+    breakdown: [{ k: 'Engagement', v: 88 }, { k: 'Product', v: 82 }, { k: 'Support', v: 95 }, { k: 'Finance', v: 90 }],
+  },
+  // Vertex Systems, transcribed from the mobile Overview (v11.20).
+  'Vertex Systems': {
+    contact_name: 'Dana Kim', trend: '+5%', repScore: 84, expiry: 'Jan 28',
+    flags: ['Legal Review', 'Close Jan 28'],
+    breakdown: [{ k: 'Engagement', v: 84 }, { k: 'Product Fit', v: 90 }, { k: 'Legal', v: 65 }, { k: 'Financial', v: 88 }],
   },
 }
 
@@ -73,6 +79,8 @@ export const DEMO_ACCOUNTS: Account[] = [
   A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Andy G', 'high', 41, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
   A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Mike Ross', 'medium', 58, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
   A('demo-cobalt', 'Cobalt Health', 'cobalthealth.com', 150000, 'Closed Won', 'Jamie Torres', 'low', 95, at(12, 20), 48, ['Contract Signed', 'Onboarding Started']),
+  // ninth account, from the mobile Portfolio / Team / Intelligence screens
+  A('demo-vertex', 'Vertex Systems', 'vertexsystems.com', 175000, 'Proposal', 'Dana Kim', 'low', 84, at(1, 28), 48, ['Legal Review', 'Close Jan 28']),
 ]
 
 // ---------------------------------------------------------------- signals
@@ -130,6 +138,10 @@ export const DEMO_SIGNALS: Signal[] = [
     'Buyer re-engaged and asked about onboarding timelines.', 'gmail', 30, null, 89, undefined, 'Lock the next step today'),
   S('demo-sg-16', 'Cobalt Health', 'call_commitment', 'positive', 'Contract signed, onboarding started',
     'Contract signed. Onboarding kickoff scheduled.', 'hubspot', 48, null, 96, undefined, undefined),
+  S('demo-sg-17', 'Vertex Systems', 'commitment_overdue', 'watch', 'Proposal opened 5x, no next step set',
+    'Dana Kim opened the proposal five times this week. No meeting or next step has been set. Close date Jan 28 leaves little slack for legal.', 'gmail', 96, 175000, 78,
+    'Shared the proposal with leadership. Everyone is on board. Just waiting for legal to finish their review.',
+    'Book the legal check-in now so the Jan 28 close holds.'),
 ]
 
 // ---------------------------------------------------------------- people
@@ -160,6 +172,56 @@ export const DEMO_PEOPLE: Record<string, Array<{ name: string; role: string; bad
     { name: 'Brian Miles', role: 'CFO', badge: 'UNKNOWN', status: 'Never contacted', last: 'never', eng: 0,
       desc: 'Budget holder not yet engaged. Likely the reason for finance delay. Consider exec outreach.' },
   ],
+  // transcribed from the mobile People tab (v11.19); eng + desc derived from the comms/timeline on screen
+  'TechVault Inc': [
+    { name: 'Kevin Cho', role: 'VP Engineering', badge: 'CHAMPION', status: 'Active', last: '1d ago', eng: 84,
+      desc: 'Champion. Technical eval scored 9.2/10 and he endorsed personally. Needs CFO ROI sign-off to release budget.' },
+    { name: 'Elena Wu', role: 'CFO', badge: 'DECISION MAKER', status: 'Never contacted', last: 'never', eng: 0,
+      desc: 'Holds the budget. Wants to see ROI numbers before approving. No direct contact yet.' },
+    { name: 'James Burke', role: 'IT Director', badge: 'TECHNICAL', status: 'Active', last: '7d ago', eng: 68,
+      desc: 'Security review complete with no issues. SSO integration tested in staging.' },
+  ],
+  'Cobalt Health': [
+    { name: 'Lisa Park', role: 'CFO', badge: 'EXEC SPONSOR', status: 'Active', last: '5d ago', eng: 86,
+      desc: 'Signed the contract Dec 20. Praised the onboarding and is looking forward to the QBR.' },
+    { name: 'Raj Kapoor', role: 'Head of Revenue Ops', badge: 'CHAMPION', status: 'Active', last: '1d ago', eng: 94,
+      desc: 'Reports 94% adoption after week 2. Credits WhatsApp signal capture with 3 hours saved per rep per week.' },
+    { name: 'Amy Walsh', role: 'VP Product', badge: 'POWER USER', status: 'Active', last: '3d ago', eng: 80,
+      desc: 'Wants to explore the analytics module and demo it to the wider product team. $75K upsell path.' },
+  ],
+  // transcribed from the mobile People tab, batch 2 (v11.20)
+  'Axion Partners': [
+    { name: 'Rachel Voss', role: 'Procurement', badge: 'CHAMPION', status: 'Active', last: '5d ago', eng: 62,
+      desc: 'Budget is approved on her side. Asked for a pre-approved redline to get through the legal gate faster.' },
+    { name: 'David Hartley', role: 'General Counsel', badge: 'BLOCKER', status: 'Active', last: '2d ago', eng: 45,
+      desc: 'Requires SOC2 Type II, penetration test results and a completed DPA before proceeding. 3-5 week delay.' },
+    { name: 'Maya Singh', role: 'CTO', badge: 'EXEC SPONSOR', status: 'Quiet', last: '14d ago', eng: 28,
+      desc: 'Showed initial interest, then forwarded to procurement. No C-suite engagement since.' },
+  ],
+  'Brightwave': [
+    { name: 'Tom Okafor', role: 'VP Product', badge: 'CHAMPION', status: 'Active', last: '2h ago', eng: 88,
+      desc: 'Re-initiated contact after a 2-week gap. Asking for the implementation timeline and training before Q2 kickoff.' },
+    { name: 'Nadia Reyes', role: 'CFO', badge: 'DECISION MAKER', status: 'Active', last: '5d ago', eng: 74,
+      desc: 'Budget approved on their end. Tom is leading the technical review.' },
+    { name: 'Peter Liang', role: 'VP Engineering', badge: 'TECHNICAL', status: 'Active', last: '3d ago', eng: 80,
+      desc: 'Ran a POC with the API. Integration is clean, no red flags from his team.' },
+  ],
+  'Meridian Labs': [
+    { name: 'Alex Park', role: 'Head of Revenue Ops', badge: 'CHAMPION', status: 'Active', last: '3d ago', eng: 55,
+      desc: 'Original champion but influence limited post-restructure. Supportive but needs exec above her to move.' },
+    { name: 'Dana Wu', role: 'Product Lead', badge: 'INFLUENCER', status: 'Active', last: '5d ago', eng: 70,
+      desc: 'Enthusiastic about product fit. Could be elevated to co-champion. Has exec access.' },
+    { name: 'Rachel Jones', role: 'CFO', badge: 'UNKNOWN', status: 'Never contacted', last: 'never', eng: 0,
+      desc: 'Q2 budget decision maker. Not yet engaged. Critical to get on a call before Feb to lock timing.' },
+  ],
+  'Vertex Systems': [
+    { name: 'Dana Kim', role: 'VP Operations', badge: 'CHAMPION', status: 'Active', last: '2d ago', eng: 84,
+      desc: 'Highly engaged champion. Actively driving internal buy-in. Keep close and support with exec materials.' },
+    { name: 'Chris Lee', role: 'IT Manager', badge: 'INFLUENCER', status: 'Active', last: '3d ago', eng: 88,
+      desc: 'Completed security review, passed. Key technical validator. Recommending to VP.' },
+    { name: 'Helen Brooks', role: 'CFO', badge: 'DECISION MAKER', status: 'Active', last: '8d ago', eng: 72,
+      desc: 'Reviewed financials. Positive on ROI case. Approving after legal clears.' },
+  ],
 }
 
 // ---------------------------------------------------------------- comms
@@ -180,11 +242,11 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
     { who: 'Lena Ford', role: 'IT Director', via: 'Gmail', tone: 'neutral', when: '7d ago',
       quote: 'Your API docs look solid. How does the integration compare to Gong\'s offering?' },
     { who: 'Jamie Torres', role: 'VP Sales Ops', via: 'Gmail', tone: 'neutral', when: '10d ago',
-      quote: 'Can you send over the formal proposal and pricing options? We are evaluating 2-3 vendors.' },
+      quote: "Can you send over the formal proposal and pricing options? We're evaluating 2-3 vendors." },
   ],
   'Meridian Labs': [
     { who: 'Alex Park', role: 'Head of Revenue Ops', via: 'Gmail', tone: 'negative', when: '5d ago',
-      quote: 'We have pushed the evaluation to Q2 now. Internal restructuring has slowed things down. Let us reconnect in Jan.' },
+      quote: "We've pushed the evaluation to Q2 now. Internal restructuring has slowed things down. Let's reconnect in Jan." },
     { who: 'Dana Wu', role: 'Product Lead', via: 'Slack', tone: 'neutral', when: '8d ago',
       quote: 'Still very interested in the platform. Just needs exec sign-off which is a Q2 thing now.' },
     { who: 'Alex Park', role: 'Head of Revenue Ops', via: 'Gmail', tone: 'positive', when: '14d ago',
@@ -192,11 +254,61 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
   ],
   'Nexus AI': [
     { who: 'Marcus Webb', role: 'CEO', via: 'Gmail', tone: 'positive', when: '1d ago',
-      quote: 'We are very close to signing. Just waiting on legal to clear the last two redlines. Should be done by Friday.' },
+      quote: "We're very close to signing. Just waiting on legal to clear the last two redlines. Should be done by Friday." },
     { who: 'Priya Shah', role: 'CTO', via: 'Slack', tone: 'positive', when: '2d ago',
       quote: 'The API integration passed all our security tests. Ready on our end.' },
     { who: 'Tom Nguyen', role: 'Legal', via: 'Gmail', tone: 'neutral', when: '3d ago',
-      quote: 'Two clauses outstanding - data residency and liability cap. We will have edits by Thursday.' },
+      quote: "Two clauses outstanding - data residency and liability cap. We'll have edits by Thursday." },
+  ],
+  // transcribed from the mobile Comms tab (v11.19)
+  'TechVault Inc': [
+    { who: 'Kevin Cho', role: 'VP Engineering', via: 'WhatsApp', tone: 'neutral', when: '1d ago',
+      quote: 'Need to run this by our CFO first - she wants to see the ROI numbers before approving the budget.' },
+    { who: 'Mike Ross', role: 'Account Executive', via: 'Gmail', tone: 'positive', when: '3d ago',
+      quote: 'Sent ROI calculator and phased pricing option (60/40 split). Kevin opened both attachments same day.' },
+    { who: 'Kevin Cho', role: 'VP Engineering', via: 'Slack', tone: 'positive', when: '7d ago',
+      quote: 'Technical eval scored 9.2/10. My team loves the real-time signal detection. Budget is the only blocker.' },
+    { who: 'James Burke', role: 'IT Director', via: 'Gmail', tone: 'positive', when: '12d ago',
+      quote: 'Security review complete - no issues found. SSO integration tested successfully in our staging environment.' },
+  ],
+  'Cobalt Health': [
+    { who: 'Lisa Park', role: 'CFO', via: 'Gmail', tone: 'positive', when: '5d ago',
+      quote: 'Thanks for the seamless onboarding. Team is already using the dashboard daily. Looking forward to the QBR.' },
+    { who: 'Raj Kapoor', role: 'Head of RevOps', via: 'Slack', tone: 'positive', when: '7d ago',
+      quote: 'Adoption is at 94% after week 2. The WhatsApp signal capture alone saved us 3 hours per rep per week.' },
+    { who: 'Amy Walsh', role: 'VP Product', via: 'Gmail', tone: 'positive', when: '10d ago',
+      quote: 'Would love to explore the analytics module. Can we schedule a demo for the wider product team?' },
+    { who: 'Billing System', role: 'Auto-generated', via: 'Gmail', tone: 'positive', when: 'Dec 28',
+      quote: 'Wire transfer of $37,500 received and reconciled against PO-2026-0275. Receipt sent to ops@cobalthealth.com.' },
+  ],
+  // transcribed from the mobile Comms tab, batch 2 (v11.20)
+  'Axion Partners': [
+    { who: 'David Hartley', role: 'General Counsel', via: 'Gmail', tone: 'negative', when: '2d ago',
+      quote: 'Before we can proceed, we need SOC2 Type II certification, penetration test results, and a completed DPA.' },
+    { who: 'Rachel Voss', role: 'Procurement', via: 'Phone', tone: 'neutral', when: '5d ago',
+      quote: 'Budget is approved but legal gate is non-negotiable. Can you send a pre-approved redline to expedite?' },
+    { who: '#axion-deal', role: 'Internal', via: 'Slack', tone: 'negative', when: '7d ago',
+      quote: 'Legal hold confirmed. Rachel flagged 3-5 week minimum delay. No workaround without security docs.' },
+    { who: 'Maya Singh', role: 'CTO', via: 'Gmail', tone: 'neutral', when: '21d ago',
+      quote: 'Interesting platform. Forwarding to Rachel in procurement to handle the commercial side.' },
+  ],
+  'Brightwave': [
+    { who: 'Tom Okafor', role: 'VP Product', via: 'Gmail', tone: 'positive', when: '2d ago',
+      quote: 'What does the implementation timeline look like? We want training done before Q2 kickoff.' },
+    { who: 'Nadia Reyes', role: 'CFO', via: 'WhatsApp', tone: 'positive', when: '5d ago',
+      quote: 'Budget approved on our end. Tom is leading the technical review - you should hear from him soon.' },
+    { who: 'Peter Liang', role: 'VP Engineering', via: 'Slack', tone: 'positive', when: '8d ago',
+      quote: 'Ran a POC with the API last week. Integration is clean - no red flags from my team.' },
+    { who: 'Andy G', role: 'Account Executive', via: 'Gmail', tone: 'neutral', when: '14d ago',
+      quote: 'Sent personalized ROI deck after 2-week silence. Open confirmed within 4 minutes. 3 page views logged.' },
+  ],
+  'Vertex Systems': [
+    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: '6mo ago',
+      quote: 'Shared the proposal with leadership. Everyone is on board. Just waiting for legal to finish their review.' },
+    { who: 'Chris Lee', role: 'IT Manager', via: 'Slack', tone: 'positive', when: '6mo ago',
+      quote: 'Completed the security review. Your platform passed everything. Recommending to VP.' },
+    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: '6mo ago',
+      quote: 'Great demo last week. The workflow automation feature is exactly what we need.' },
   ],
 }
 
@@ -240,6 +352,72 @@ export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; 
       body: 'Renewal pricing email opened by Sarah Chen three times. Zero response - high-intent ghosting pattern.' },
     { title: 'Exec Gone Dark', kind: 'negative', when: '8d ago',
       body: 'Sarah Chen (CFO) stopped responding to all outreach. Last email opened but no reply.' },
+  ],
+  // transcribed from the mobile Timeline tab (v11.19)
+  'TechVault Inc': [
+    { title: 'CFO Approval Required', kind: 'watch', when: '1d ago',
+      body: 'Kevin Cho flagged finance review needed. ROI numbers requested.' },
+    { title: 'ROI Package Sent', kind: 'positive', when: '3d ago',
+      body: 'Phased pricing (60/40) + ROI calculator delivered. Both opened by Kevin.' },
+    { title: 'Technical Eval Passed', kind: 'positive', when: '7d ago',
+      body: 'Engineering scored 9.2/10. Kevin personally endorsed. No technical blockers.' },
+    { title: 'Demo Completed', kind: 'positive', when: '12d ago',
+      body: 'Full product demo with engineering team. Strong alignment on requirements.' },
+  ],
+  'Cobalt Health': [
+    { title: 'QBR Scheduled - Feb 15', kind: 'positive', when: '1d ago',
+      body: 'First quarterly review set. Agenda includes upsell discussion for analytics module.' },
+    { title: 'Onboarding Complete', kind: 'positive', when: '7d ago',
+      body: '94% adoption in 2 weeks. Team using dashboard daily. NPS 72.' },
+    { title: 'Contract Signed', kind: 'positive', when: 'Dec 20',
+      body: 'Lisa Park (CFO) signed. Jamie Torres assigned as CSM. Go-live Dec 22.' },
+    { title: 'First Payment Received', kind: 'positive', when: 'Dec 28',
+      body: '$37.5K wire transfer processed. Auto-reconciled against PO.' },
+  ],
+  // transcribed from the mobile Timeline tab, batch 2 (v11.20)
+  'Axion Partners': [
+    { title: 'Legal Hold - Security Audit', kind: 'negative', when: '2d ago',
+      body: 'General Counsel requires SOC2 + pen test before PO. 3-5 week delay.' },
+    { title: 'Procurement Call Complete', kind: 'watch', when: '5d ago',
+      body: 'Rachel Voss confirmed budget approved. Legal gate is the only blocker.' },
+    { title: 'Proposal Sent', kind: 'positive', when: '10d ago',
+      body: 'Competitive pricing proposal delivered. Rachel forwarded to legal same day.' },
+    { title: 'CTO Referral', kind: 'positive', when: '21d ago',
+      body: 'Maya Singh forwarded to procurement after initial interest. Positive signal.' },
+  ],
+  'Brightwave': [
+    { title: 'Contract Review Started', kind: 'positive', when: '2d ago',
+      body: 'Tom Okafor reviewing terms. Internal approval expected by Friday.' },
+    { title: 'Re-engaged After Silence', kind: 'positive', when: '5d ago',
+      body: 'Tom re-initiated contact after 2-week gap. Asking onboarding questions.' },
+    { title: 'Buyer Went Dark', kind: 'watch', when: '19d ago',
+      body: 'No response for 14 days. Re-engagement sequence triggered by Popsicle.' },
+    { title: 'Initial Proposal Sent', kind: 'positive', when: '21d ago',
+      body: 'Full pricing with implementation roadmap. Opened within 4 minutes.' },
+  ],
+  'Meridian Labs': [
+    { title: 'Urgency Campaign Deployed', kind: 'positive', when: '2d ago',
+      body: 'Cost-of-delay analysis sent showing $47K/month impact of Q2 push. Re-engagement sequence initiated.' },
+    { title: 'Engagement Dropping', kind: 'negative', when: '4d ago',
+      body: 'Email response times increasing. Meeting requests going unanswered for 5+ days.' },
+    { title: 'Exec Sign-off Needed', kind: 'watch', when: '7d ago',
+      body: 'Decision escalated to VP level. Alex Park unable to approve unilaterally.' },
+    { title: 'Timeline Pushed to Q2', kind: 'watch', when: '10d ago',
+      body: '"Thinking more Q2 now" - pushed without explanation. No reason given for delay.' },
+    { title: 'Discovery Call Completed', kind: 'call', when: '14d ago',
+      body: 'Initial meeting with Alex Park. Strong interest in revenue intelligence capabilities.' },
+  ],
+  'Vertex Systems': [
+    { title: 'Close Date Confirmed', kind: 'positive', when: '1d ago',
+      body: 'Dana Kim confirmed Jan 28 target. Contract review in final stage.' },
+    { title: 'Deal Health: Strong', kind: 'positive', when: '3d ago',
+      body: 'All engagement metrics positive. Regular communication cadence maintained.' },
+    { title: 'Leadership Aligned', kind: 'positive', when: '7d ago',
+      body: 'VP of Sales and CRO both expressed support. Internal champion secured at executive level.' },
+    { title: 'Security Review Passed', kind: 'positive', when: '10d ago',
+      body: 'IT team completed security assessment. All compliance checkboxes cleared.' },
+    { title: 'Initial Proposal Delivered', kind: 'call', when: '15d ago',
+      body: 'Comprehensive proposal sent to Dana Kim. Competitive pricing for 50-seat deployment.' },
   ],
 }
 
@@ -351,6 +529,37 @@ export const DEMO_RISK_LINES: Record<string, Array<{ tone: 'high' | 'watch' | 'p
     { tone: 'positive', text: 'Strong budget signals. $850K pre-approved in Q2 budget cycle.' },
     { tone: 'high', text: 'No exec engagement yet on a deal this size. Risk of losing to do-nothing.' },
   ],
+  // Cobalt Health AI Executive Brief, transcribed from the mobile Overview (v11.19)
+  'Cobalt Health': [
+    { tone: 'positive', text: 'Contract signed Dec 20 - onboarding kicked off with implementation team.' },
+    { tone: 'positive', text: 'Jamie Torres assigned as CSM - first QBR scheduled for Feb 15, 2026.' },
+    { tone: 'watch', text: 'Expansion opportunity: $75K upsell for analytics module - champion interested.' },
+    { tone: 'positive', text: 'NPS score: 72 after initial deployment. Strong internal advocacy building.' },
+  ],
+  // AI Executive Briefs / AI Risk Signals, transcribed from the mobile Overview, batch 2 (v11.20)
+  'Axion Partners': [
+    { tone: 'high', text: 'Legal team loop-in adds 3-5 weeks to close timeline - highest delay risk.' },
+    { tone: 'high', text: 'No C-suite engagement yet - deal depends entirely on mid-level champion.' },
+    { tone: 'watch', text: 'Competitor (Clari) mentioned in internal Slack - evaluation may be underway.' },
+    { tone: 'watch', text: 'Send pre-approved redline contract to bypass legal review cycle.' },
+  ],
+  'Brightwave': [
+    { tone: 'positive', text: 'Buyer re-engaged after 2-week silence - strong buying intent confirmed via onboarding questions.' },
+    { tone: 'positive', text: 'Tom Okafor actively requesting implementation timeline - close readiness 88%.' },
+    { tone: 'watch', text: 'Send onboarding preview package within 24 hours to maintain momentum.' },
+    { tone: 'watch', text: 'Previous stall was budget-related - confirm finance approval before contract send.' },
+  ],
+  'Vertex Systems': [
+    { tone: 'positive', text: 'Champion proactively sharing materials internally. Strong buy-in from IT and operations.' },
+    { tone: 'positive', text: 'Legal received contract last week - no objections raised yet.' },
+    { tone: 'watch', text: 'Close date is Jan 28. Legal timeline may be tight without active follow-up.' },
+  ],
+  'TechVault Inc': [
+    { tone: 'watch', text: '"Check with finance first" on WhatsApp - price sensitivity confirmed.' },
+    { tone: 'watch', text: 'CFO not yet involved - decision requires budget committee sign-off.' },
+    { tone: 'positive', text: 'Technical evaluation scored 9.2/10 - product fit is strong.' },
+    { tone: 'watch', text: 'Send phased pricing proposal: 60% start, expand after ROI proven.' },
+  ],
 }
 
 // ---------- Team (transcribed from the mobile Team screen, v11.9) ----------
@@ -367,7 +576,10 @@ export type TeamRep = {
   activity: number[][]       // 5 rows (8-10 .. 4-6) x 7 cols (Mo..Su), 0..4
   ownership: 'active' | 'stale'; ownershipNote?: string
   followThrough: number; closure: number
+  exposure?: number          // mobile Coverage & Ownership: exposure per rep
+  improvedAccts?: number; stabilized?: number   // mobile Stabilization Efficiency
 }
+export type TeamAction = { rep: string; account: string; when: string; action: string; driver: string; from: number; to: number; recovered: number }
 export type TeamQueueItem = { account: string; sev: 'critical' | 'high' | 'medium'; summary: string; age: string; rep: string; signalId?: string }
 export type TeamModel = {
   protectedTotal: number; protectedDeltaPct: number
@@ -383,33 +595,43 @@ export type TeamModel = {
   newCritical: number; stabilized: number; actionsTaken: number; signalsPerDay: number; signalsPerDayDelta: number
   criticalOwned: string; activeFollowUp: string
   followThrough: number; loopClosure: number
+  // mobile-only sections
+  exposure?: { total: number; stabilizedThisWeek: number; aiConfidence: number; updated: string }
+  unowned?: { count: number; risk: number; stale: number }
+  actionsFeed?: TeamAction[]
+  executionInsight?: string
+  headline?: string
 }
 
 export const DEMO_TEAM: TeamModel = {
+  // Mobile Team Intelligence is the source of truth (v11.23)
   protectedTotal: 560_000, protectedDeltaPct: 38,
-  waitingCount: 7, waitingValue: 2_170_000, criticalWithOneRep: true,
+  waitingCount: 7, waitingValue: 2_170_000, criticalWithOneRep: false,
+  headline: 'Mike Ross is 2.5x slower than the team median on first action, and two critical accounts lack a second touch.',
   bullets: [
-    { tone: '#2f8f5b', text: 'Exec calls have 83% success rate vs 74% for email, the highest-impact intervention by far.' },
-    { tone: '#E85A25', text: "Andy G's 1.2h avg response is 45% faster than team average, strongest signal coverage." },
-    { tone: '#d38b1d', text: "Jamie Torres' 3.1h response correlates with lower save rate, coaching on urgency recommended." },
-    { tone: '#0E0D0B', text: 'Mike Ross closed 2 deals with zero escalation, replicate his re-engagement sequence across the team.' },
+    { tone: '#2f8f5b', text: 'Exec calls have 83% success rate vs 74% for follow-ups, the highest-impact intervention by far.' },
+    { tone: '#E85A25', text: "Andy G's 2.1h response is half the team median. 12 signals caught, 4 deals recovered, $284K protected." },
+    { tone: '#d38b1d', text: 'Mike Ross at 6.7h time-to-action. Loop closure 13 points below team average. Coaching on urgency recommended.' },
+    { tone: '#0E0D0B', text: 'Jamie Torres closed the Meridian invoice dispute (+$44K) and holds Cobalt at NPS 72. Improving on follow-through, 81%.' },
   ],
+  exposure: { total: 892_000, stabilizedThisWeek: 284_000, aiConfidence: 87, updated: '12 min ago' },
   arr: 2_640_000, accountCount: 9,
   split: [
-    { k: 'Critical', color: '#c43d2b', value: 1_330_000, accts: 2 },
-    { k: 'Watching', color: '#d38b1d', value: 655_000, accts: 4 },
-    { k: 'Healthy', color: '#2f8f5b', value: 650_000, accts: 3 },
+    { k: 'Critical', color: '#c43d2b', value: 575_000, accts: 2 },
+    { k: 'Watching', color: '#d38b1d', value: 1_200_000, accts: 3 },
+    { k: 'Healthy', color: '#2f8f5b', value: 825_000, accts: 4 },
   ],
-  timeToAction: 2.2, timeToActionDelta: -1.8,
-  coveragePct: 89, covered: 8,
+  timeToAction: 4.2, timeToActionDelta: 0,
+  coveragePct: 85, covered: 8,
   signalsThisWeek: 47, actioned: 40, autoDeployedPct: 62,
   reps: [
     {
       name: 'Andy G', title: 'VP of Sales', color: '#FF6B35',
-      accounts: ['Acme', 'Techflow', 'Axion', 'Meridian'], arr: 1_640_000,
-      signals: 24, saved: 4, protectedValue: 284_000, avgResp: 1.2, saveRate: 89, churnDelta: -19, performance: 88,
+      accounts: ['Acme Corp', 'Brightwave', 'Axion Partners', 'Vertex Systems'], arr: 930_000, exposure: 480_000,
+      signals: 12, saved: 4, protectedValue: 284_000, avgResp: 2.1, saveRate: 88, churnDelta: -19, performance: 88,
       badge: 'Top performer', badgeTone: 'accent', trend: 'improving',
-      spark: [2.0, 1.6, 2.3, 1.4, 1.7, 1.3, 1.1],
+      improvedAccts: 4, stabilized: 142_000,
+      spark: [3.1, 2.8, 3.0, 2.4, 2.6, 2.2, 2.1],
       activity: [
         [0, 3, 4, 4, 3, 1, 0],
         [3, 3, 3, 3, 2, 0, 0],
@@ -421,10 +643,11 @@ export const DEMO_TEAM: TeamModel = {
     },
     {
       name: 'Mike Ross', title: 'AE Senior', color: '#2f6f9f',
-      accounts: ['Nexus', 'Cobalt', 'Brightwave'], arr: 650_000,
-      signals: 14, saved: 2, protectedValue: 176_000, avgResp: 2.4, saveRate: 78, churnDelta: -14, performance: 78,
-      badge: 'Most closes', badgeTone: 'blue', trend: 'steady',
-      spark: [2.4, 2.3, 2.5, 2.2, 2.4, 2.3, 2.4],
+      accounts: ['Nexus AI', 'TechFlow Inc', 'TechVault Inc'], arr: 670_000, exposure: 295_000,
+      signals: 9, saved: 2, protectedValue: 176_000, avgResp: 6.7, saveRate: 64, churnDelta: -14, performance: 64,
+      badge: 'Most closes', badgeTone: 'blue', trend: 'needs coaching',
+      improvedAccts: 3, stabilized: 98_000,
+      spark: [5.2, 5.6, 5.9, 6.1, 6.4, 6.6, 6.7],
       activity: [
         [0, 1, 3, 3, 3, 0, 0],
         [2, 2, 2, 2, 2, 0, 0],
@@ -432,14 +655,15 @@ export const DEMO_TEAM: TeamModel = {
         [0, 1, 1, 1, 1, 0, 0],
         [0, 0, 2, 0, 0, 0, 0],
       ],
-      ownership: 'stale', ownershipNote: 'Stale 3d', followThrough: 74, closure: 71,
+      ownership: 'stale', ownershipNote: 'Stale 3d', followThrough: 64, closure: 58,
     },
     {
       name: 'Jamie Torres', title: 'AE', color: '#7C5CFC',
-      accounts: ['Techvault', 'Vertex'], arr: 350_000,
-      signals: 9, saved: 1, protectedValue: 100_000, avgResp: 3.1, saveRate: 65, churnDelta: -11, performance: 66,
-      badge: 'Improving', badgeTone: 'warn', trend: 'needs coaching',
-      spark: [2.6, 2.9, 3.0, 2.9, 3.4, 3.2, 3.5],
+      accounts: ['Meridian Labs', 'Cobalt Health'], arr: 1_000_000, exposure: 167_000,
+      signals: 6, saved: 1, protectedValue: 100_000, avgResp: 3.8, saveRate: 81, churnDelta: -11, performance: 74,
+      badge: 'Improving', badgeTone: 'warn', trend: 'steady',
+      improvedAccts: 2, stabilized: 44_000,
+      spark: [4.1, 4.0, 3.9, 4.0, 3.8, 3.9, 3.8],
       activity: [
         [0, 1, 2, 3, 1, 1, 0],
         [1, 2, 2, 2, 1, 0, 0],
@@ -447,22 +671,30 @@ export const DEMO_TEAM: TeamModel = {
         [1, 1, 1, 1, 2, 0, 0],
         [0, 0, 1, 0, 0, 0, 0],
       ],
-      ownership: 'active', followThrough: 64, closure: 58,
+      ownership: 'active', followThrough: 81, closure: 74,
     },
   ],
   queue: [
     { account: 'Acme Corp', sev: 'critical', summary: 'CFO silent 8 days · 3 emails opened, 0 replies', age: '8d', rep: 'Andy G' },
-    { account: 'Meridian Labs', sev: 'critical', summary: 'Gong POC confirmed by CEO · competitor active', age: '5d', rep: 'Andy G' },
-    { account: 'TechFlow Inc', sev: 'high', summary: 'COO budget concern on Zoom · "need to check finance"', age: '3h', rep: 'Andy G' },
-    { account: 'Axion Partners', sev: 'high', summary: 'Legal stall day 3 · redline not sent yet', age: '3d', rep: 'Andy G' },
-    { account: 'TechVault Inc', sev: 'high', summary: 'VP Eng WhatsApp: price concern · no follow-up', age: '2d', rep: 'Jamie Torres' },
-    { account: 'Vertex Systems', sev: 'medium', summary: 'Proposal opened 5× · no next step set', age: '4d', rep: 'Jamie Torres' },
-    { account: 'Brightwave', sev: 'medium', summary: 'Re-engagement email opened · no reply sent', age: '1d', rep: 'Mike Ross' },
+    { account: 'Meridian Labs', sev: 'critical', summary: 'Timeline pushed to Q2 · exec sign-off needed', age: '5d', rep: 'Jamie Torres' },
+    { account: 'TechFlow Inc', sev: 'high', summary: 'Price flinch on WhatsApp · "check with finance first"', age: '3h', rep: 'Mike Ross' },
+    { account: 'Axion Partners', sev: 'high', summary: 'Legal hold day 3 · SOC2 + pen test before PO', age: '3d', rep: 'Andy G' },
+    { account: 'TechVault Inc', sev: 'high', summary: 'CFO approval required · ROI numbers requested', age: '2d', rep: 'Mike Ross' },
+    { account: 'Vertex Systems', sev: 'medium', summary: 'Proposal opened 5x · no next step set', age: '4d', rep: 'Andy G' },
+    { account: 'Brightwave', sev: 'medium', summary: 'Contract review started · approval expected Friday', age: '1d', rep: 'Andy G' },
   ],
   unresolvedPct: 15,
-  newCritical: 2, stabilized: 3, actionsTaken: 40, signalsPerDay: 6.7, signalsPerDayDelta: 2.1,
-  criticalOwned: '9/9', activeFollowUp: '6/9',
-  followThrough: 75, loopClosure: 71,
+  newCritical: 2, stabilized: 3, actionsTaken: 14, signalsPerDay: 6.7, signalsPerDayDelta: 2.1,
+  criticalOwned: '8/10', activeFollowUp: '6/10',
+  unowned: { count: 2, risk: 245_000, stale: 2 },
+  followThrough: 78, loopClosure: 71,
+  executionInsight: 'Mike Ross is 2.5x slower than team median on first action. Two critical accounts lack second-touch. Loop closure rate 13 points below team average.',
+  actionsFeed: [
+    { rep: 'Andy G', account: 'Brightwave', when: '6mo ago', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
+    { rep: 'Mike Ross', account: 'Nexus AI', when: '6mo ago', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },
+    { rep: 'Jamie Torres', account: 'Meridian Labs', when: '6mo ago', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice Delay', from: 66, to: 48, recovered: 44_000 },
+    { rep: 'Andy G', account: 'Vertex Systems', when: '6mo ago', action: 'Competitive battle card delivered to champion', driver: 'Competitor Activity', from: 61, to: 38, recovered: 36_000 },
+  ],
 }
 
 // ---------- Intelligence (transcribed from the mobile Intelligence screen, v11.10) ----------
@@ -480,32 +712,43 @@ export type IntelModel = {
   forecast?: { forecast: number; actual: number }
   sources: Array<{ k: string; n: number }>
   renewals: Array<{ account: string; days: number; value: number; status: 'at risk' | 'monitor' | 'on track' }>
+  // mobile-only
+  hero?: { protectedTotal: number; caughtEarly: number; recovered: number; fasterDays: number }
+  performance?: { riskChangePct: number; successRatePct: number; stabilized: number }
+  storyChips?: string[]
+  bySegment?: Array<{ k: string; v: number; color: string }>
+  byHealth?: Array<{ k: string; n: number; color: string }>
+  exposureTrend?: { total: number; vsPrior: number; peak: string; trajectory: string; weeks: string[]; shape: number[] }
 }
 
 export const DEMO_INTELLIGENCE: IntelModel = {
-  riskDeltaPct: 75, driver: 'executive disengagement', holdingPct: 78, protectedTotal: 560_000,
+  // Mobile Revenue Intelligence is the source of truth (v11.23)
+  riskDeltaPct: 35, driver: 'executive disengagement', holdingPct: 78, protectedTotal: 560_000,
+  hero: { protectedTotal: 560_000, caughtEarly: 42, recovered: 7, fasterDays: 3.4 },
+  performance: { riskChangePct: 8, successRatePct: 78, stabilized: 284_000 },
+  storyChips: ['3 Deteriorated', '1 Recovered', '+$85K Net Risk'],
   bullets: [
     { tone: '#c43d2b', lead: '3 accounts deteriorated', rest: ': Acme, TechFlow, Meridian.' },
     { tone: '#2f8f5b', lead: 'Brightwave re-engaged', rest: ' after 2 weeks dark.' },
-    { tone: '#2f8f5b', lead: 'Cobalt closed-won', rest: ' for $150K, first this quarter.' },
-    { tone: '#0E0D0B', lead: 'Focus today:', rest: ' Meridian CEO video, Axion legal prep.' },
+    { tone: '#d38b1d', lead: 'Net pipeline risk +$85K', rest: ' · intervention rate 78%.' },
+    { tone: '#E85A25', lead: 'Focus today:', rest: ' Meridian CRO video + Axion legal prep.' },
   ],
-  weekNo: 8, newRisk: 579_000, firstWeekRisk: 330_000,
+  weekNo: 8, newRisk: 579_000, firstWeekRisk: 429_000,
   stabilized: 290_000, netChangePct: 8,
   drivers: [
     { k: 'Exec disengagement', v: 85_000 },
     { k: 'SLA resolution', v: -62_000 },
-    { k: 'New competitor', v: 54_000 },
-    { k: 'Usage recovery', v: -31_000 },
+    { k: 'New competitor', v: 45_000 },
   ],
   weeks: [
-    { label: 'W1', added: 330_000, stabilized: 210_000 },
-    { label: 'W2', added: 342_000, stabilized: 236_000 },
-    { label: 'W3', added: 318_000, stabilized: 258_000 },
-    { label: 'W4', added: 365_000, stabilized: 244_000 },
-    { label: 'W5', added: 412_000, stabilized: 262_000 },
-    { label: 'W6', added: 448_000, stabilized: 275_000 },
-    { label: 'W7', added: 508_000, stabilized: 281_000 },
+    // shape read off the mobile chart: rises W1-W3, dips W4, climbs to W8 (+35% W1 to W8)
+    { label: 'W1', added: 429_000, stabilized: 210_000 },
+    { label: 'W2', added: 452_000, stabilized: 236_000 },
+    { label: 'W3', added: 461_000, stabilized: 258_000 },
+    { label: 'W4', added: 440_000, stabilized: 244_000 },
+    { label: 'W5', added: 494_000, stabilized: 262_000 },
+    { label: 'W6', added: 517_000, stabilized: 275_000 },
+    { label: 'W7', added: 534_000, stabilized: 281_000 },
     { label: 'W8', added: 579_000, stabilized: 290_000 },
   ],
   riskSits: [
@@ -520,23 +763,25 @@ export const DEMO_INTELLIGENCE: IntelModel = {
     { k: 'Escalation', used: 14, success: 68, churn: -22 },
     { k: 'Invoice chase', used: 9, success: 45, churn: -8 },
   ],
-  successRate: 78, successTarget: 80, recovered: 7, caughtEarly: 47,
+  successRate: 78, successTarget: 80, recovered: 7, caughtEarly: 42,
   fasterDays: 3.4,
   insight: 'Executive calls cut churn most per intervention (−31%) but are used least. Follow-ups carry the volume at 74% effectiveness.',
   forecast: { forecast: 1_240_000, actual: 1_180_000 },
   sources: [
-    { k: 'Gmail / Outlook', n: 310 },
-    { k: 'WhatsApp', n: 194 },
-    { k: 'Slack', n: 128 },
-    { k: 'LinkedIn', n: 96 },
-    { k: 'Calls & CRM', n: 119 },
+    { k: 'Gmail / Outlook', n: 372 },
+    { k: 'WhatsApp', n: 251 },
+    { k: 'Slack', n: 152 },
+    { k: 'Zoom / Calls', n: 72 },
   ],
   renewals: [
-    { account: 'Meridian Labs', days: 32, value: 850_000, status: 'at risk' },
-    { account: 'Vertex Systems', days: 58, value: 140_000, status: 'monitor' },
-    { account: 'Brightwave', days: 74, value: 180_000, status: 'on track' },
-    { account: 'Cobalt Systems', days: 88, value: 150_000, status: 'on track' },
+    { account: 'Meridian Labs', days: 32, value: 245_000, status: 'at risk' },
+    { account: 'NovaCorp', days: 58, value: 310_000, status: 'monitor' },
+    { account: 'Brightwave', days: 74, value: 195_000, status: 'on track' },
+    { account: 'Vertex Systems', days: 88, value: 142_000, status: 'on track' },
   ],
+  bySegment: [{ k: 'Enterprise', v: 607_000, color: '#c43d2b' }, { k: 'Mid-Market', v: 214_000, color: '#d38b1d' }, { k: 'SMB', v: 71_000, color: '#7C5CFC' }],
+  byHealth: [{ k: 'Critical', n: 3, color: '#c43d2b' }, { k: 'Monitor', n: 2, color: '#d38b1d' }, { k: 'Healthy', n: 3, color: '#2f8f5b' }],
+  exposureTrend: { total: 892_000, vsPrior: 145_000, peak: '$1.04M (W3)', trajectory: 'Worsening +12%/wk', weeks: ['W1', 'W2', 'W3', 'W4', 'Now'], shape: [0.3, 0.45, 0.4, 0.62, 0.55, 0.78, 0.7, 0.95] },
 }
 
 // ---------- Portfolio head (transcribed from the mobile Portfolio screen, v11.12) ----------
@@ -577,13 +822,17 @@ export const DEMO_MOVERS = [
 // column (Gmail 310 · WhatsApp 194 · Slack 128 · Calendar & Meet 96 · calls & CRM 119).
 const _d = (daysAgo: number, h = 9) => new Date(Date.now() - daysAgo * 86400000 - (24 - h) * 3600000).toISOString()
 const _sync = (minsAgo: number) => new Date(Date.now() - minsAgo * 60000).toISOString()
-export const DEMO_INTEGRATION_ACTIVE = ['gmail', 'slack', 'whatsapp', 'gcal', 'hubspot', 'fireflies', 'zoom']
+export const DEMO_INTEGRATION_ACTIVE = ['gmail', 'whatsapp', 'slack', 'zoom']
 export const DEMO_INTEGRATION_STATS: Record<string, { total: number; thisMonth: number; high: number; watch: number; positive: number; lastSignal: string | null; connectedAt: string | null; lastSynced: string | null; identity?: string | null }> = {
-  gmail:     { total: 1_012, thisMonth: 310, high: 41, watch: 168, positive: 101, lastSignal: _sync(18),  connectedAt: _d(112), lastSynced: _sync(12),  identity: 'andy@popsicle-labs.app' },
-  whatsapp:  { total: 588,   thisMonth: 194, high: 22, watch: 109, positive: 63,  lastSignal: _sync(41),  connectedAt: _d(88),  lastSynced: _sync(12),  identity: '+62 812 · Popsicle Sales' },
-  slack:     { total: 402,   thisMonth: 128, high: 14, watch: 71,  positive: 43,  lastSignal: _sync(66),  connectedAt: _d(104), lastSynced: _sync(12),  identity: 'Popsicle Labs' },
-  gcal:      { total: 311,   thisMonth: 96,  high: 9,  watch: 52,  positive: 35,  lastSignal: _sync(190), connectedAt: _d(112), lastSynced: _sync(12),  identity: 'andy@popsicle-labs.app' },
-  zoom:      { total: 197,   thisMonth: 63,  high: 8,  watch: 30,  positive: 25,  lastSignal: _d(1, 16),  connectedAt: _d(61),  lastSynced: _sync(48),  identity: 'andy@popsicle-labs.app' },
-  fireflies: { total: 104,   thisMonth: 32,  high: 4,  watch: 15,  positive: 13,  lastSignal: _d(2, 11),  connectedAt: _d(47),  lastSynced: _sync(48),  identity: 'Popsicle Labs' },
-  hubspot:   { total: 76,    thisMonth: 24,  high: 6,  watch: 12,  positive: 6,   lastSignal: _d(1, 9),   connectedAt: _d(70),  lastSynced: _sync(120), identity: 'Popsicle Labs · 9 deals' },
+  // mobile Signal Source Breakdown: 847 signals · 4 active sources
+  gmail:    { total: 1_214, thisMonth: 372, high: 49, watch: 201, positive: 122, lastSignal: _sync(18), connectedAt: _d(112), lastSynced: _sync(12), identity: 'andy@popsicle-labs.app' },
+  whatsapp: { total: 761,   thisMonth: 251, high: 28, watch: 141, positive: 82,  lastSignal: _sync(41), connectedAt: _d(88),  lastSynced: _sync(12), identity: '+62 812 · Popsicle Sales' },
+  slack:    { total: 478,   thisMonth: 152, high: 17, watch: 84,  positive: 51,  lastSignal: _sync(66), connectedAt: _d(104), lastSynced: _sync(12), identity: 'Popsicle Labs' },
+  zoom:     { total: 237,   thisMonth: 72,  high: 9,  watch: 35,  positive: 28,  lastSignal: _d(1, 16), connectedAt: _d(61),  lastSynced: _sync(48), identity: 'andy@popsicle-labs.app' },
+}
+
+// ---------- Forecast headline figures (mobile Pulse + Intelligence: $1.24M forecast, $1.18M actual, v11.23) ----------
+export const DEMO_FORECAST = {
+  commit: 1_240_000, weighted: 1_180_000, bestCase: 2_400_000, atRisk: 1_330_000,
+  riskyDeals: 2, dealsToClose: 4, accuracy: 86, daysLeft: 8, commitDeltaPct: 12,
 }

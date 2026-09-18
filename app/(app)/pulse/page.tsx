@@ -5,13 +5,15 @@ import { PulseReal } from './PulseReal'
 
 export default async function PulsePage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // local JWT check instead of an auth-server round trip on every navigation
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData ? { id: claimsData.claims.sub as string, email: claimsData.claims.email as string | undefined } : null
   if (!user) return null
 
   const isDemo = user.email === DEMO_EMAIL
   if (isDemo) {
     // Demo showcases the SAME redesigned screen, fed by the static dataset.
-    return <PulseReal name="Andy" accounts={DEMO_ACCOUNTS} signals={DEMO_SIGNALS} integrationCount={7} />
+    return <PulseReal name="Andy" accounts={DEMO_ACCOUNTS} signals={DEMO_SIGNALS} integrationCount={4} />
   }
 
   // Real user: fetch live data

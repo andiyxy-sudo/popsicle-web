@@ -335,10 +335,12 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   // Facts for the headline and the stat row, all drawn from real counts.
   const indexed30 = PROVIDERS.reduce((a, p) => a + (stats[p.key]?.thisMonth ?? 0), 0)
   const indexedAll = PROVIDERS.reduce((a, p) => a + (stats[p.key]?.total ?? 0), 0)
+  // share of the last 30 days when we have it, all-time otherwise
+  const shareBase = indexed30 > 0 ? indexed30 : indexedAll
   const leader = PROVIDERS
-    .map(p => ({ name: p.name, n: stats[p.key]?.total ?? 0 }))
+    .map(p => ({ name: p.name, n: (indexed30 > 0 ? stats[p.key]?.thisMonth : stats[p.key]?.total) ?? 0 }))
     .sort((a, b) => b.n - a.n)[0]
-  const leaderShare = leader && indexedAll > 0 ? Math.round((leader.n / indexedAll) * 100) : 0
+  const leaderShare = leader && shareBase > 0 ? Math.round((leader.n / shareBase) * 100) : 0
   // the two unconnected sources most worth naming, biggest gaps first
   const PITCH = ['salesforce', 'teams', 'outlook', 'gong', 'whatsapp', 'hubspot', 'slack', 'gmail', 'gcal', 'zoom', 'fireflies']
   const missing = PROVIDERS.filter(p => !active.includes(p.key))

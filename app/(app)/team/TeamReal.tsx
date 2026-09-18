@@ -14,6 +14,8 @@ import type { Account, Signal } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import type { TeamModel, TeamRep, TeamQueueItem } from '@/lib/demo-dataset'
 
+const ACTION_FILTERS = ['All', 'Critical only', 'My accounts'] as const
+
 const MONO = { fontFamily: "'DM Mono',monospace", letterSpacing: '1.5px', textTransform: 'uppercase' as const }
 const MONO_NUM = { fontFamily: "'DM Mono',monospace", fontVariantNumeric: 'tabular-nums' as const }
 const OUTFIT = "'Outfit',sans-serif"
@@ -169,6 +171,7 @@ const Row = ({ children, pad = '11px 0' }: { children: React.ReactNode; pad?: st
 export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[]; signals: Signal[]; me: string; integrations?: string[]; demo?: TeamModel }) {
   const [mounted, setMounted] = useState(false)
   const [queueRep, setQueueRep] = useState<string>('All')
+  const [feedFilter, setFeedFilter] = useState<typeof ACTION_FILTERS[number]>('All')
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
 
@@ -200,7 +203,9 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
         The team protected <span style={{ color: ACCENT }}>{formatCurrency(m.protectedTotal)}</span> this quarter{m.protectedDeltaPct ? <>, up {m.protectedDeltaPct}% on Q3</> : null}.{' '}
         <span style={{ color: MUTED }}>
-          {m.waitingCount > 0
+          {m.headline
+            ? <>{m.exposure ? <><span style={{ color: RED }}>{formatCurrency(m.exposure.total)}</span> is exposed across {m.accountCount} accounts. </> : null}{m.headline}</>
+            : m.waitingCount > 0
             ? <>{word(m.waitingCount)} signal{m.waitingCount === 1 ? '' : 's'} worth <span style={{ color: RED }}>{formatCurrency(m.waitingValue)}</span> {m.waitingCount === 1 ? 'is' : 'are'} still waiting for a response{m.criticalWithOneRep && crit === 2 ? ', and both critical accounts sit with one rep' : m.criticalWithOneRep ? `, and all ${crit} critical accounts sit with one rep` : ''}.</>
             : <>Nothing is waiting for a response.</>}
         </span>
@@ -222,7 +227,19 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
 
       {/* three figures */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
-        {/* ARR */}
+        {/* Exposure summary (mobile) or ARR */}
+        {m.exposure ? (
+          <div>
+            <div style={{ ...MONO, fontSize: 10, color: FAINT, display: 'flex', justifyContent: 'space-between' }}><span>Revenue exposure</span><span style={{ color: GREEN, display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />Live</span></div>
+            <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.exposure.total)}</div>
+            <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>total exposure across {m.accountCount} accounts</div>
+            <div style={{ marginTop: 25 }}>
+              <Row><span>Stabilized this week</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: GREEN }}>{formatCurrency(m.exposure.stabilizedThisWeek)}</span></Row>
+              <Row><span>Pipeline ARR</span><span style={{ ...MONO_NUM, fontSize: 12.5 }}>{formatCurrency(m.arr)}</span></Row>
+              <Row><span>AI confidence</span><span style={{ ...MONO_NUM, fontSize: 12.5, color: ACCENT }}>{m.exposure.aiConfidence}% <span style={{ color: FAINT }}>· updated {m.exposure.updated}</span></span></Row>
+            </div>
+          </div>
+        ) : (
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT }}>ARR under management</div>
           <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.arr)}</div>
@@ -239,6 +256,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
             ))}
           </div>
         </div>
+        )}
 
         {/* Time to action */}
         <div>
@@ -250,7 +268,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>
             {m.timeToActionDelta
               ? <><span style={{ color: m.timeToActionDelta < 0 ? GREEN : RED, fontWeight: 600 }}>{m.timeToActionDelta < 0 ? '▼' : '▲'} {fmtH(Math.abs(m.timeToActionDelta))}</span> vs last month</>
-              : 'median, signal raised to handled'}
+              : 'median time from signal to first action'}
           </div>
           <div style={{ marginTop: 25 }}>
             {m.reps.map(r => (
@@ -278,7 +296,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       {/* leaderboard */}
       <H2 title="Popsicle Saves leaderboard" right={
         <span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
-          team total {formatCurrency(m.protectedTotal)}{m.protectedDeltaPct ? <> · <span style={{ color: GREEN }}>▲</span> +{m.protectedDeltaPct}% vs Q3</> : null}
+          Q4 2026 · team total {formatCurrency(m.protectedTotal)}{m.protectedDeltaPct ? <> · <span style={{ color: GREEN }}>▲</span> +{m.protectedDeltaPct}% vs Q3</> : null}
         </span>
       } />
       {(() => {
@@ -288,7 +306,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         return (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 9.5, color: FAINT }}>
-              <span>#</span><span>Rep</span><span>Signals</span><span>Saved</span><span>Protected</span><span>Avg resp</span><span>Save rate</span><span>Churn Δ</span><span>Performance</span>
+              <span>#</span><span>Rep</span><span>Caught</span><span>Recovered</span><span>Protected</span><span>T2A</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
               <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
@@ -360,6 +378,72 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         })}
       </div>
 
+      {/* stabilization efficiency (mobile) */}
+      {m.reps.some(r => r.stabilized != null) && (
+        <>
+          <H2 title="Stabilization efficiency" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>ranked by revenue stabilized · last 7 days</span>} />
+          {(() => {
+            const cols = 'minmax(180px,1.6fr) .8fr .8fr .8fr .9fr'
+            const num = { ...MONO_NUM, fontSize: 13 }
+            return (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 9.5, color: FAINT }}>
+                  <span>Rep</span><span>Improved</span><span>Churn Δ</span><span>Follow-thru</span><span style={{ textAlign: 'right' }}>Stabilized</span>
+                </div>
+                {[...m.reps].sort((a, b) => (b.stabilized ?? 0) - (a.stabilized ?? 0)).map(r => (
+                  <div key={r.name} className="tbl-row" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar rep={r} size={30} /><span style={{ fontWeight: 600, color: INK }}>{r.name}</span></span>
+                    <span style={num}>{r.improvedAccts ?? '--'} accts</span>
+                    <span style={{ ...num, color: GREEN }}>{r.churnDelta}%</span>
+                    <span style={{ ...num, color: r.followThrough >= 70 ? GREEN : AMBER }}>{r.followThrough}%</span>
+                    <span style={{ ...num, color: GREEN, textAlign: 'right', fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em' }}>{formatCurrency(r.stabilized ?? 0)}</span>
+                  </div>
+                ))}
+              </>
+            )
+          })()}
+        </>
+      )}
+
+      {/* revenue actions feed (mobile) */}
+      {m.actionsFeed && m.actionsFeed.length > 0 && (() => {
+        const feed = m.actionsFeed.filter(a => feedFilter === 'All' ? true : feedFilter === 'My accounts' ? a.rep === me : a.from >= 60)
+        return (
+          <>
+            <H2 title="Revenue actions feed" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>{m.actionsTaken} actions taken · last 7 days</span>} />
+            <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999, margin: '18px 0 4px' }}>
+              {ACTION_FILTERS.map(k => (
+                <button key={k} onClick={() => setFeedFilter(k)}
+                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: feedFilter === k ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer', background: feedFilter === k ? INK : 'transparent', color: feedFilter === k ? '#fff' : MUTED }}>{k}</button>
+              ))}
+            </div>
+            {feed.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: FAINT }}>No actions match this filter.</div>}
+            {feed.map((a, i) => {
+              const rep = repBy(a.rep)
+              return (
+                <div key={i} className="tbl-row" onClick={() => router.push(`/accounts/${encodeURIComponent(a.account)}`)}
+                  style={{ display: 'grid', gridTemplateColumns: '32px minmax(0,1fr) auto', gap: 16, alignItems: 'start', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
+                  <Avatar rep={rep} size={32} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 14.5, fontWeight: 600, color: INK }}>{a.rep}</span>
+                      <span style={{ fontSize: 13, color: FAINT }}>· {a.account}</span>
+                    </div>
+                    <div style={{ fontSize: 14.5, color: INK, marginTop: 4 }}>{a.action}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 6, ...MONO_NUM, fontSize: 12.5 }}>
+                      <span style={{ color: FAINT }}>{a.driver}</span>
+                      <span style={{ color: GREEN }}>{a.from}% → {a.to}%</span>
+                      <span style={{ color: GREEN, fontWeight: 600 }}>+{formatCurrency(a.recovered)}</span>
+                    </div>
+                  </div>
+                  <span style={{ ...MONO_NUM, fontSize: 11.5, color: FAINT, whiteSpace: 'nowrap' }}>{a.when}</span>
+                </div>
+              )
+            })}
+          </>
+        )
+      })()}
+
       {/* unactioned queue */}
       <H2 title="Unactioned signal queue" top={72} right={
         <span style={{ ...MONO, fontSize: 10.5, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
@@ -423,14 +507,20 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
             <span style={{ ...MONO, fontSize: 10, color: FAINT }}>Coverage & ownership</span>
-            <span style={{ ...MONO, fontSize: 10, color: RED, textTransform: 'none', letterSpacing: '.3px' }}>all {m.accountCount} accounts owned</span>
+            <span style={{ ...MONO, fontSize: 10, color: RED, textTransform: 'none', letterSpacing: '.3px' }}>{m.unowned && m.unowned.count > 0 ? `${m.unowned.count} unowned` : `all ${m.accountCount} accounts owned`}</span>
           </div>
           <div style={{ fontSize: 13.5, color: MUTED, margin: '12px 0 6px' }}>Critical coverage <strong style={{ color: INK, fontWeight: 600 }}>{m.criticalOwned} owned</strong> · {m.activeFollowUp} with active follow-up</div>
+          {m.unowned && (
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '4px 0 10px' }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: RED, background: 'rgba(196,61,43,.08)', borderRadius: 999, padding: '5px 11px' }}>Unowned risk: {formatCurrency(m.unowned.risk)}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: AMBER, background: 'rgba(211,139,29,.1)', borderRadius: 999, padding: '5px 11px' }}>Stale: {m.unowned.stale} accounts</span>
+            </div>
+          )}
           {m.reps.map(r => (
             <div key={r.name} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0', borderBottom: `1px solid ${HAIR}` }}>
               <Avatar rep={r} size={26} />
               <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: INK, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                <span style={{ fontWeight: 600 }}>{r.name}</span> <span style={{ color: MUTED }}>{r.accounts.length} accounts · {formatCurrency(r.arr)}</span>
+                <span style={{ fontWeight: 600 }}>{r.name}</span> <span style={{ color: MUTED }}>{r.accounts.length} accounts · {r.exposure != null ? `${formatCurrency(r.exposure)} exposure` : formatCurrency(r.arr)}</span>
               </span>
               <span style={{ ...MONO, fontSize: 10, color: r.ownership === 'active' ? GREEN : AMBER, whiteSpace: 'nowrap' }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
             </div>
@@ -454,7 +544,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 52px 48px 60px', gap: 10, ...MONO, fontSize: 9.5, color: FAINT, marginTop: 26, paddingBottom: 8 }}>
             <span>Rep</span><span style={{ textAlign: 'right' }}>T2A</span><span style={{ textAlign: 'right' }}>F/T</span><span style={{ textAlign: 'right' }}>Closure</span>
           </div>
-          {m.reps.map(r => (
+          {[...m.reps].sort((a, b) => a.avgResp - b.avgResp).map(r => (
             <div key={r.name} style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 52px 48px 60px', gap: 10, padding: '12px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
               <span style={{ color: INK, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
               <span style={{ ...MONO_NUM, fontSize: 12.5, color: respColor(r.avgResp), textAlign: 'right' }}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
@@ -462,6 +552,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
               <span style={{ ...MONO_NUM, fontSize: 12.5, color: r.closure >= 70 ? GREEN : AMBER, textAlign: 'right' }}>{r.closure}%</span>
             </div>
           ))}
+          {m.executionInsight && <div style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.55, marginTop: 18, padding: '14px 16px', background: 'var(--inset, #F4F0E8)', borderRadius: 12 }}>{m.executionInsight}</div>}
         </div>
       </div>
     </div>

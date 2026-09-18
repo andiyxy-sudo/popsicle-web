@@ -5,7 +5,9 @@ import { SettingsClient } from './SettingsClient'
 // The old nested scroll container here was overriding the redesigned layout.
 export default async function SettingsPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // local JWT check instead of an auth-server round trip on every navigation
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData ? { id: claimsData.claims.sub as string, email: claimsData.claims.email as string | undefined } : null
   if (!user) return null
 
   return <SettingsClient user={{ email: user.email ?? '', id: user.id }} />

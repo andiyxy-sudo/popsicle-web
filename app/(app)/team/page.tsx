@@ -5,11 +5,13 @@ import { TeamReal } from './TeamReal'
 
 export default async function TeamPage() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  // local JWT check instead of an auth-server round trip on every navigation
+  const { data: claimsData } = await supabase.auth.getClaims()
+  const user = claimsData ? { id: claimsData.claims.sub as string, email: claimsData.claims.email as string | undefined } : null
   if (!user) return null
 
   if (user.email === DEMO_EMAIL) {
-    return <TeamReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} me="Andy G" demo={DEMO_TEAM} integrations={['gmail', 'gcal', 'slack', 'zoom', 'hubspot', 'fireflies', 'meet']} />
+    return <TeamReal accounts={DEMO_ACCOUNTS as never} signals={DEMO_SIGNALS as never} me="Andy G" demo={DEMO_TEAM} integrations={['gmail', 'whatsapp', 'slack', 'zoom']} />
   }
 
   const [acc, sig, integ] = await Promise.all([

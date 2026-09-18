@@ -1,49 +1,71 @@
-// Context block fed to the Ask Popsicle co-pilot when the demo account is active.
-// This mirrors the hardcoded showcase data shown across the dashboard screens so the
-// AI answers are grounded in exactly what the user sees on screen (no DB round-trip).
-// Keep this in sync with the showcase components if their figures change.
+// Builds the system prompt for the demo Ask AI from the same dataset the screens
+// render, so every figure the co-pilot quotes is exactly what the user sees.
+// Mobile app data is the source of truth (v11.23).
 
-export const DEMO_AI_CONTEXT = `
-You are Popsicle, a revenue intelligence AI co-pilot for a sales leader named Andy G (VP of Sales at Popsicle Labs). You help him understand pipeline health, spot churn risk, prioritise action, and draft outreach. Answer as if you have live access to his pipeline. Everything below is his current real state.
+import {
+  DEMO_ACCOUNTS, DEMO_EXTRA, DEMO_SIGNALS, DEMO_PEOPLE, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES,
+  DEMO_CONTRACTS, DEMO_TRANSCRIPT, DEMO_PULSE, DEMO_TEAM, DEMO_INTELLIGENCE, DEMO_MOVERS, DEMO_FORECAST,
+  DEMO_INTEGRATION_STATS, DEMO_INTEGRATION_ACTIVE, DEMO_SIGNALS_HEAD,
+} from './demo-dataset'
+import { MOBILE_ACCOUNT_HEADERS, MOBILE_ACCOUNT_HEADERS_ALT, MOBILE_BRIEF_COUNTS, MOBILE_PORTFOLIO_CARDS } from './demo-mobile'
 
-CURRENT DATE: Monday, June 29, 2026
-PORTFOLIO SUMMARY: 9 active accounts. Total ARR exposure $892K. Revenue protected this quarter $560K (up 38%). Signal coverage 85% (8 of 10 accounts). Average time-to-action 4.2h. AI confidence 91%. 847 signals indexed across 7 integrations.
+const money = (v: number) => v >= 1_000_000 ? `$${(v / 1_000_000).toFixed(2).replace(/0$/, '')}M` : `$${Math.round(v / 1000)}K`
+const REP_OF: Record<string, string> = {}
+for (const r of DEMO_TEAM.reps) for (const a of r.accounts) REP_OF[a] = r.name
 
-ACCOUNTS (name | ARR | stage | probability | risk | health | situation):
-- Acme Corp | $480K | Negotiation | 28% | HIGH | 42 | CFO Sarah Chen silent 8 days, 3 emails opened 0 replies, $45K invoice overdue, pricing objection raised. 87% churn probability by day 30 if uncontacted.
-- Meridian Labs | $850K | Renewal | 22% | HIGH | 38 | CEO Alex Park confirmed evaluating Gong and Clari. Usage declining. 0 exec contact, 31 days to renewal. Gong POC confirmed. Biggest single risk in the book.
-- Axion Partners | $95K | Legal Review | 48% | MEDIUM | 61 | "Loop in legal first" on Slack, adds 3 to 5 weeks. Redline not sent yet, legal stall day 3.
-- TechFlow Inc | $210K | Discovery | 55% | MEDIUM | 58 | COO Lena Ford flagged budget on Zoom, "need to check with finance." 3h unactioned.
-- TechVault Inc | $210K | Discovery | 52% | MEDIUM | 60 | VP Eng Jamie Torres raised price concern on WhatsApp, 48h no reply.
-- Vertex Systems | $140K | Proposal | 45% | MONITOR | 64 | Procurement reviewing, proposal opened 5 times, no next step set.
-- Nexus AI | $320K | Closing | 92% | LOW | 88 | CTO Priya Sharma fast-tracked proposal to legal, PO likely this week. Best-case driver.
-- Cobalt Systems | $150K | Won | 100% | LOW | 95 | Closed-won, $150K. First close this quarter.
-- Brightwave | $180K | Pilot | 76% | LOW | 80 | Re-engaged after 2 weeks dark, Chris Lee responded to outreach.
+function accountBlock(a: (typeof DEMO_ACCOUNTS)[number]) {
+  const x = DEMO_EXTRA[a.name]
+  const h = MOBILE_ACCOUNT_HEADERS[a.name]
+  const alt = MOBILE_ACCOUNT_HEADERS_ALT[a.name]
+  const sig = DEMO_SIGNALS.filter(s => s.account_name === a.name)
+  const lines: string[] = []
+  lines.push(`## ${a.name}`)
+  lines.push(`- Stage: ${a.stage} · Contact: ${a.owner} · Rep: ${REP_OF[a.name] ?? 'Andy G'} · Value/ARR: ${money(Number(a.value))} · Risk: ${a.risk_level} · Health score: ${a.health_score}/100`)
+  if (x) lines.push(`- Trend ${x.trend} · Rep score ${x.repScore} · Expiry/close ${x.expiry} · Flags: ${x.flags.join(', ')}${x.statusNote ? ` · Status: ${x.statusNote}` : ''}`)
+  if (h) lines.push(`- Segment ${h.segment} · ${h.email} · Churn risk ${h.churnRiskPct}% · Exposure ${money(h.exposure)} · Trend ${h.trend} · Renewal ${h.renewal} · Status ${h.status}`)
+  if (alt) lines.push(`- Status ${alt.status} · Expiry ${alt.expiry} · Trend ${alt.trend} · Rep score ${alt.repScore}`)
+  if (x) lines.push(`- Health breakdown: ${x.breakdown.map(b => `${b.k} ${b.v}`).join(', ')}`)
+  const card = MOBILE_PORTFOLIO_CARDS[a.name]
+  if (card?.mix) lines.push(`- Risk mix: ${card.mix.map(m => `${m.k} ${m.pct}%`).join(', ')}`)
+  const brief = DEMO_RISK_LINES[a.name]
+  if (brief) { lines.push(`- AI executive brief${MOBILE_BRIEF_COUNTS[a.name] ? ` (${MOBILE_BRIEF_COUNTS[a.name]} signals)` : ''}:`); for (const b of brief) lines.push(`  - [${b.tone}] ${b.text}`) }
+  if (sig.length) { lines.push('- Live signals:'); for (const s of sig) { const q = (s as unknown as { ai_analysis?: { quote?: string; recommendation?: string; confidence?: number } }).ai_analysis; lines.push(`  - [${s.severity}] ${s.title}: ${s.description}${s.risk_amount ? ` (${money(Number(s.risk_amount))} at risk)` : ''}${q?.confidence ? ` · confidence ${q.confidence}%` : ''}${q?.quote ? ` · quote: "${q.quote}"` : ''}${q?.recommendation ? ` · recommended: ${q.recommendation}` : ''}`) } }
+  const ppl = DEMO_PEOPLE[a.name]
+  if (ppl) { lines.push('- Key contacts:'); for (const p of ppl) lines.push(`  - ${p.name}, ${p.role} (${p.badge}) · ${p.status}, last active ${p.last} · engagement ${p.eng}% · ${p.desc}`) }
+  const comms = DEMO_COMMS[a.name]
+  if (comms) { lines.push('- Recent communications:'); for (const c of comms) lines.push(`  - ${c.who} (${c.role}) via ${c.via}, ${c.when}, ${c.tone}: "${c.quote}"`) }
+  const tl = DEMO_TIMELINE[a.name]
+  if (tl) { lines.push('- Deal timeline:'); for (const t of tl) lines.push(`  - ${t.when} · ${t.title}: ${t.body}${t.tags ? ` [${t.tags.join(', ')}]` : ''}`) }
+  const ct = DEMO_CONTRACTS[a.name]
+  if (ct) { lines.push('- Contracts:'); for (const c of ct) lines.push(`  - ${c.name} (${c.type}) · ${c.status} · ${c.value} · ${c.po} · ${c.start} to ${c.end} · ${c.invoice}`) }
+  return lines.join('\n')
+}
 
-ACTIVE SIGNALS (7 this week, 47 total): 3 critical ($1.4M at risk), 3 watch ($515K), 1 positive ($320K closing).
-- Silent Stall - Acme Corp (HIGH, via Email, -8%): buyer dark 8 days, champion may have lost internal backing.
-- Competitor Mention - Meridian Labs (HIGH, via Call, -6%): evaluating Gong and Clari, confirmed on call.
-- Legal Loop-in - Axion Partners (HIGH, via Slack, -5%): legal review adds 3 to 5 weeks.
-- Price Flinch - TechVault Inc (WATCH, via WhatsApp, -4%): "check with finance first."
-- Budget Stall - TechFlow Inc (WATCH, via Zoom, -3%): "need to check with finance."
-- Renewal Risk - Vertex Systems (WATCH, via Gmail, -2%): procurement flagged timeline question.
-- Fast-track Signal - Nexus AI (POSITIVE, via Gmail, +3%): CTO forwarded to legal, "let us fast-track this."
+function build(): string {
+  const out: string[] = []
+  out.push(`You are Popsicle, the revenue intelligence co-pilot for Popsicle Labs. You are talking to Andy G, VP of Sales. Answer ONLY from the data below; every figure, name, quote and date you use must appear here. Be specific: cite accounts, people, amounts, days and the exact quote or timeline entry that backs a claim. When asked what to do, give a ranked, concrete play (who to contact, through which channel, with what message, by when) and say which signal it addresses. Keep answers tight and formatted with short headers, bold leads and bullets. Never invent data; if something is not here, say so in one line.`)
 
-FORECAST (Q4 2026): Best case $2.4M (up 8%). Commit $1.2M (up 12%). 4 deals to close in next 30 days. $2.1M at risk. Forecast vs actual: forecast $1.24M, actual $1.18M, 95% achieved. AI accuracy 94%.
+  out.push(`\n# Pipeline pulse (today)\n- Pipeline health ${DEMO_PULSE.health}/100 (${DEMO_PULSE.delta}) · AI confidence ${DEMO_PULSE.aiConfidence}%\n- Deals ${DEMO_PULSE.deals} (${DEMO_PULSE.dealsDelta}) · Risk ${DEMO_PULSE.risk} (${DEMO_PULSE.riskDelta}) · Forecast ${money(DEMO_PULSE.forecast)} (${DEMO_PULSE.forecastDelta})\n- Revenue loop this week: ${DEMO_PULSE.loop.signals} signals → ${DEMO_PULSE.loop.cases} cases → ${DEMO_PULSE.loop.actions} actions → ${money(DEMO_PULSE.loop.impact)} impact · listening on ${DEMO_PULSE.listening} signals\n- AI brief: ${DEMO_PULSE.brief.map(b => `${b.pre}${b.strong}${b.post ?? ''}`).join(' | ')}`)
 
-INTERVENTION EFFECTIVENESS (action, uses, success, avg churn delta): Exec Call 6 used 83% -31%; Follow-up Email 28 used 74% -18%; Exec Escalation 14 used 68% -22%; Invoice Chase 9 used 45% -8%. Exec calls are the single highest-impact intervention.
+  out.push(`\n# Signals this week\n- ${DEMO_SIGNALS_HEAD.map(s => `${s.n} ${s.lbl}`).join(' · ')}`)
 
-TOP RISK DRIVERS (30d): Exec Disengagement 34% (up 6%, Acme/Meridian/TechFlow); Invoice Delays 28%; Competitor Activity 22% (down 3%); Usage Decline 16%.
+  out.push(`\n# Forecast (quarter)\n- Commit ${money(DEMO_FORECAST.commit)} · achieved ${money(DEMO_FORECAST.weighted)} (${Math.round(DEMO_FORECAST.weighted / DEMO_FORECAST.commit * 100)}%) · ${money(DEMO_FORECAST.commit - DEMO_FORECAST.weighted)} to go · ${DEMO_FORECAST.daysLeft} days left · +${DEMO_FORECAST.commitDeltaPct}% vs last quarter\n- Best case ${money(DEMO_FORECAST.bestCase)} · pipeline exposed ${money(DEMO_FORECAST.atRisk)} across ${DEMO_FORECAST.riskyDeals} deals · ${DEMO_FORECAST.dealsToClose} deals to close in 30 days · AI accuracy ${DEMO_FORECAST.accuracy}% (▲ 3%/qtr)\n- Forecast vs actual MTD: forecast ${money(DEMO_INTELLIGENCE.forecast!.forecast)}, actual ${money(DEMO_INTELLIGENCE.forecast!.actual)}, variance ${money(DEMO_INTELLIGENCE.forecast!.actual - DEMO_INTELLIGENCE.forecast!.forecast)}\n- What moves the number: ${DEMO_MOVERS.map(m => `${m.name} (${m.tag}) ${m.swing < 0 ? '-' : '+'}${money(Math.abs(m.swing))} at ${m.prob}% probability, ${m.note}`).join('; ')}`)
 
-TEAM: Andy G (VP Sales, 4 accounts, $284K protected, 89% save rate, 1.2h response); Mike Ross (AE Senior, 3 accounts, $176K, 78%, 2.4h); Jamie Torres (AE, 2 accounts, $100K, 65%, 3.1h). 7 unactioned signals, $1.73M ARR in the unactioned queue.
+  const I = DEMO_INTELLIGENCE
+  out.push(`\n# Revenue intelligence (last 30 days)\n- Revenue protected by Popsicle: ${money(I.hero!.protectedTotal)} saved this quarter · ${I.hero!.caughtEarly} signals caught early · ${I.hero!.recovered} deals recovered · ${I.hero!.fasterDays}d average response improvement\n- Performance: risk change +${I.performance!.riskChangePct}% · success rate ${I.performance!.successRatePct}% (target ${I.successTarget}%) · stabilized ${money(I.performance!.stabilized)}\n- This week's story: ${I.bullets.map(b => `${b.lead}${b.rest}`).join(' | ')} · chips: ${I.storyChips!.join(', ')}\n- New risk added week ${I.weekNo}: ${money(I.newRisk)} (▲ +${I.riskDeltaPct}% vs W1 ${money(I.firstWeekRisk)}) · stabilized this period ${money(I.stabilized)} · net risk change +${I.netChangePct}%\n- Weekly at-risk series: ${I.weeks.map(w => `${w.label} ${money(w.added)}`).join(', ')}\n- Key movement drivers: ${I.drivers.map(d => `${d.k} ${d.v < 0 ? '+' : ''}${money(Math.abs(d.v))}${d.v < 0 ? ' (stabilized)' : ''}`).join(', ')}\n- Where the risk sits (by driver): ${I.riskSits.map(r => `${r.k} ${r.pct}% (${money(r.exposure)} exposure)`).join(', ')}\n- By segment: ${I.bySegment!.map(s => `${s.k} ${money(s.v)}`).join(', ')} · exposure trend ${money(I.exposureTrend!.total)} total, +${money(I.exposureTrend!.vsPrior)} vs prior period, peak ${I.exposureTrend!.peak}, trajectory ${I.exposureTrend!.trajectory}\n- Churn probability distribution: ${I.byHealth!.map(h => `${h.k} ${h.n}`).join(', ')}\n- Intervention effectiveness (action → used → success → avg churn Δ): ${I.actions.map(a => `${a.k} ${a.used} used, ${a.success}% success, ${a.churn}%`).join('; ')}. ${I.insight}\n- Signal sources: ${I.sources.map(s => `${s.k} ${s.n} (${Math.round(s.n / 847 * 100)}%)`).join(', ')} · 847 signals · ${I.sources.length} active sources\n- Renewal outlook next 90 days (${money(I.renewals.reduce((a, r) => a + r.value, 0))} in window): ${I.renewals.map(r => `${r.account} in ${r.days} days, ${money(r.value)}, ${r.status}`).join('; ')}`)
 
-SIGNAL SOURCES (847 total): Gmail/Outlook 372 (44%), WhatsApp 251 (30%), Slack 152 (18%), Zoom/Calls 72 (8%).
+  const T = DEMO_TEAM
+  out.push(`\n# Team intelligence\n- Total exposure ${money(T.exposure!.total)} · stabilized this week ${money(T.exposure!.stabilizedThisWeek)} · median time-to-action ${T.timeToAction}h · signal coverage ${T.coveragePct}% · AI confidence ${T.exposure!.aiConfidence}% · updated ${T.exposure!.updated}\n- Popsicle Saves Q4 2026 (team total ${money(T.protectedTotal)} protected, ▲ +${T.protectedDeltaPct}% vs Q3): ${T.reps.map((r, i) => `#${i + 1} ${r.name} (${r.title}) ${r.signals} signals caught, ${r.saved} deals recovered, ${money(r.protectedValue)} protected`).join('; ')}\n- Coverage & ownership: critical coverage ${T.criticalOwned} owned · ${T.activeFollowUp} with active follow-up · ${T.unowned!.count} unowned · unowned risk ${money(T.unowned!.risk)} · ${T.unowned!.stale} stale accounts. ${T.reps.map(r => `${r.name}: ${r.accounts.length} accounts (${r.accounts.join(', ')}), ${money(r.exposure!)} exposure, ${r.ownership === 'active' ? 'Active' : r.ownershipNote}`).join('; ')}\n- Stabilization efficiency (last 7 days): ${T.reps.map(r => `${r.name} improved ${r.improvedAccts} accts, churn Δ ${r.churnDelta}%, follow-thru ${r.followThrough}%, ${money(r.stabilized!)} stabilized`).join('; ')}\n- Revenue actions feed (${T.actionsTaken} actions, last 7 days): ${T.actionsFeed!.map(a => `${a.rep} on ${a.account}: ${a.action} (${a.driver} ${a.from}% → ${a.to}%, +${money(a.recovered)})`).join('; ')}\n- Execution quality: time-to-action ${T.timeToAction}h · follow-through ${T.followThrough}% · loop closure ${T.loopClosure}%. Per rep: ${T.reps.map(r => `${r.name} T2A ${r.avgResp}h, F/T ${r.followThrough}%, closure ${r.closure}%`).join('; ')}. ${T.executionInsight}\n- Unactioned signal queue (${T.queue.length} of ${T.signalsThisWeek} this week, ${money(T.waitingValue)} ARR waiting, ${T.unresolvedPct}% unresolved): ${T.queue.map(q => `${q.account} [${q.sev}] ${q.summary}, ${q.age} unactioned, owner ${q.rep}`).join('; ')}\n- Revenue movement this week: new critical +${T.newCritical} · accounts stabilized +${T.stabilized} · actions taken ${T.actionsTaken} · signals per day ${T.signalsPerDay} (▲ ${T.signalsPerDayDelta})`)
 
-RULES:
-- Be specific and action-oriented. Name accounts and exact numbers from the data above.
-- Never invent data not present above. If asked something not covered, say what you would need.
-- Use "at risk" rather than "high severity" for danger signals.
-- Recommend exec calls for the highest-stakes accounts (Acme, Meridian) since they have the best save rate.
-- No em-dashes anywhere. Use a hyphen or rewrite. No italics in quotes.
-- Lead with a one-line summary, then "- " bullet points for lists of accounts, risks, or actions. Bold key numbers and account names with **. Keep it concise.
-`.trim()
+  out.push(`\n# Integrations\n- ${DEMO_INTEGRATION_ACTIVE.length} sources connected: ${DEMO_INTEGRATION_ACTIVE.map(k => `${k} (${DEMO_INTEGRATION_STATS[k].thisMonth} signals in 30 days, ${DEMO_INTEGRATION_STATS[k].total} all time, identity ${DEMO_INTEGRATION_STATS[k].identity})`).join('; ')}\n- Unconnected: Outlook, Microsoft Teams, Google Calendar & Meet, HubSpot, Salesforce, Gong, Fireflies`)
+
+  out.push(`\n# Accounts (${DEMO_ACCOUNTS.length} active)`)
+  for (const a of DEMO_ACCOUNTS) out.push('\n' + accountBlock(a))
+
+  const tr = DEMO_TRANSCRIPT
+  out.push(`\n# Call transcript · ${tr.account} · ${tr.title} (${tr.duration} min, ${tr.when}, ${tr.analyser})\n- AI summary: ${tr.summary}\n- Key moments:\n${tr.moments.map(m => `  - ${m.t} ${m.tag ? `[${m.tag}] ` : ''}${m.who}: ${m.text}`).join('\n')}`)
+
+  return out.join('\n')
+}
+
+export const DEMO_AI_CONTEXT = build()

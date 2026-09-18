@@ -195,6 +195,16 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       )}
 
+      {m.storyChips && m.storyChips.length > 0 && (
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 22 }}>
+          {m.storyChips.map(c => {
+            const tone = /deteriorat|net risk/i.test(c) ? (/net risk/i.test(c) ? AMBER : RED) : GREEN
+            return <span key={c} style={{ fontSize: 12, fontWeight: 600, color: tone, background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: '5px 11px' }}>{c}</span>
+          })}
+          {m.performance && <span style={{ fontSize: 12, color: MUTED, alignSelf: 'center', marginLeft: 6, ...MONO_NUM }}>last 30 days · risk change +{m.performance.riskChangePct}% · success {m.performance.successRatePct}% · stabilized {fmtMoney(m.performance.stabilized)}</span>}
+        </div>
+      )}
+
       <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
 
       {/* ---- risk movement spine ---- */}
@@ -289,7 +299,49 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {m.riskSits.length > 0 && (
         <>
           <H2 title="Where the risk sits" right={<Pills items={['By driver', 'By segment', 'By health'] as const} value={sits} onChange={setSits} />} />
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.riskSits.length)}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
+          {sits === 'By segment' && m.bySegment && (() => {
+            const tot = m.bySegment.reduce((a, x) => a + x.v, 0) || 1
+            return (
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,1fr) minmax(260px,.9fr)', gap: 48, marginTop: 30 }}>
+                <div>
+                  {m.bySegment.map(x => (
+                    <Row key={x.k} pad="14px 0">
+                      <span style={{ color: INK }}>{x.k}</span>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ width: 160, height: 3, background: HAIR, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${Math.round((x.v / tot) * 100)}%`, background: x.color }} /></span>
+                        <span style={{ ...MONO_NUM, fontSize: 13, color: x.color, width: 56, textAlign: 'right' }}>{fmtMoney(x.v)}</span>
+                      </span>
+                    </Row>
+                  ))}
+                </div>
+                {m.exposureTrend && (
+                  <div>
+                    <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Exposure trend · {fmtMoney(m.exposureTrend.total)} total · +{fmtMoney(m.exposureTrend.vsPrior)} vs prior period</div>
+                    <Row><span style={{ color: MUTED }}>Peak exposure</span><span style={{ ...MONO_NUM, fontSize: 13, color: RED }}>{m.exposureTrend.peak}</span></Row>
+                    <Row><span style={{ color: MUTED }}>Current trajectory</span><span style={{ ...MONO_NUM, fontSize: 13, color: AMBER }}>{m.exposureTrend.trajectory}</span></Row>
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+          {sits === 'By health' && m.byHealth && (() => {
+            const tot = m.byHealth.reduce((a, x) => a + x.n, 0) || 1
+            return (
+              <div style={{ maxWidth: 560, marginTop: 30 }}>
+                <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Churn probability distribution · {tot} accounts</div>
+                {m.byHealth.map(x => (
+                  <Row key={x.k} pad="14px 0">
+                    <span style={{ color: x.color, fontWeight: 600 }}>{x.k}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ width: 220, height: 3, background: HAIR, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${Math.round((x.n / tot) * 100)}%`, background: x.color }} /></span>
+                      <span style={{ ...MONO_NUM, fontSize: 13, color: x.color, width: 20, textAlign: 'right' }}>{x.n}</span>
+                    </span>
+                  </Row>
+                ))}
+              </div>
+            )
+          })()}
+          <div style={{ display: sits === 'By driver' || !(sits === 'By segment' ? m.bySegment : m.byHealth) ? 'grid' : 'none', gridTemplateColumns: `repeat(${Math.min(4, m.riskSits.length)}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
             {m.riskSits.map(r => (
               <div key={r.k}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
