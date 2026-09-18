@@ -163,12 +163,17 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   // restore on failure so nothing silently disappears.
   // Snooze = status transition (mobile contract): status='snoozed' + snoozed_until;
   // wake_snoozed_signals cron reopens it. Row leaves every open feed until then.
+  // Demo signals have no database rows: every action below applies locally and
+  // skips Supabase and router.refresh (a refresh would reload the static demo
+  // set and undo the change). The UI behaves exactly as live.
+  const isDemoSig = (s: DBSignal) => String(s.id).startsWith('demo-')
   async function snooze(s: DBSignal, until: Date) {
     if (busyId) return
     setBusyId(s.id)
     const prev = signals
     setSignals(prev.filter(x => x.id !== s.id))
     setDetailFor(null)
+    if (isDemoSig(s)) { setBusyId(null); return }
     const { error } = await createClient().from('signals')
       .update({ status: 'snoozed', snoozed_until: until.toISOString() }).eq('id', s.id)
     if (error) setSignals(prev)
@@ -183,6 +188,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     setBusyId(s.id)
     const prev = signals
     setSignals(prev.filter(x => x.id !== s.id))
+    if (isDemoSig(s)) { setBusyId(null); return }
     const { error } = await createClient().from('signals').update({ [flag]: true }).eq('id', s.id)
     if (error) setSignals(prev)
     else router.refresh()
@@ -192,6 +198,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   async function sendNow() {
     if (!draft || !draftFor || sendState === 'sending') return
     setSendState('sending'); setSendErr('')
+    if (isDemoSig(draftFor)) {
+      // demo: no mailbox behind it; show the same success path the live flow takes
+      await new Promise(r => setTimeout(r, 900))
+      setSendState('sent')
+      markHandled(draftFor, 'Sent follow-up')
+      setTimeout(() => { setDraftFor(null); setSendState('idle') }, 1400)
+      return
+    }
     try {
       const supa = createClient()
       const { data: { session } } = await supa.auth.getSession()
@@ -221,6 +235,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     if (busyId) return
     setBusyId(s.id)
     const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
+    if (isDemoSig(s)) {
+      setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
+      setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
+      setBusyId(null); return
+    }
     const supa = createClient()
     const { data: updated, error } = await supa.from('signals').update(patch).eq('id', s.id).select('id')
     if (!error && (updated?.length ?? 0) > 0) {
@@ -254,6 +273,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     const prev = signals
     setSignals(prev.filter(x => x.id !== s.id))
     setDetailFor(null)
+    if (isDemoSig(s)) { setBusyId(null); return }
     const { error } = await createClient().from('signals')
       .update({ status: 'deleted', deleted_reason: reason, deleted_at: new Date().toISOString() }).eq('id', s.id)
     if (error) setSignals(prev)
@@ -267,6 +287,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   async function assignAccount(s: DBSignal, accountId: string, accountName: string) {
     if (busyId) return
     setBusyId(s.id)
+    if (isDemoSig(s)) {
+      setSignals(prev => prev.map(x => x.id === s.id ? { ...x, account_name: accountName } : x))
+      setDetailFor(prev => prev && prev.id === s.id ? { ...prev, account_name: accountName } : prev)
+      setBusyId(null); return
+    }
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
     const { error } = await supa.from('signals').update({ account_name: accountName }).eq('id', s.id)
@@ -288,7 +313,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   async function openDraft(s: DBSignal) {
     setSendState('idle'); setSendErr(''); setDraftErr(''); setDraftSlow(false)
     setContacts([])
-    if (s.account_name) {
+    if (s.account_name && !isDemoSig(s)) {
       createClient().from('account_baselines').select('contact_email')
         .eq('account_name', s.account_name).not('contact_email', 'is', null)
         .order('last_message_at', { ascending: false }).limit(6)

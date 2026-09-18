@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { DEMO_SIGNALS, DEMO_COMMS, DEMO_PEOPLE } from '@/lib/demo-dataset'
 
 // POST { signal_id } -> { subject, body, to }
 // Drafts a follow-up email grounded in the signal's AI analysis plus the most
@@ -8,17 +9,33 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { data: claimsData } = await supabase.auth.getClaims()
+  if (!claimsData) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { signal_id } = await req.json().catch(() => ({}))
   if (!signal_id) return NextResponse.json({ error: 'missing_signal_id' }, { status: 400 })
 
-  const { data: sig } = await supabase
-    .from('signals')
-    .select('account_name, signal_type, severity, title, description, ai_analysis, source_integration, raw_content, created_at')
-    .eq('id', signal_id)
-    .maybeSingle()
+  // Demo signals live in the dataset, not the database. The draft is still
+  // written by the model, grounded in the demo signal and the demo thread.
+  const isDemo = String(signal_id).startsWith('demo-')
+  type SigRow = { account_name: string | null; signal_type: string; severity: string; title: string; description: string | null; ai_analysis: Record<string, unknown> | null; source_integration: string | null; raw_content: string | null; created_at: string | null }
+  let sig: SigRow | null = null
+  if (isDemo) {
+    const d = DEMO_SIGNALS.find(s => s.id === signal_id) as unknown as (SigRow & { ai_analysis?: Record<string, unknown> }) | undefined
+    if (d) {
+      const people = DEMO_PEOPLE[d.account_name ?? ''] ?? []
+      const champion = people.find(p => /CHAMPION|DECISION|SPONSOR/.test(p.badge)) ?? people[0]
+      const domain = (d.account_name ?? 'example').toLowerCase().replace(/[^a-z]/g, '') + '.com'
+      sig = { ...d, ai_analysis: { ...(d.ai_analysis ?? {}), contact_name: champion?.name ?? '', sender_email: champion ? `${champion.name.split(' ')[0].toLowerCase()}@${domain}` : '' } }
+    }
+  } else {
+    const { data } = await supabase
+      .from('signals')
+      .select('account_name, signal_type, severity, title, description, ai_analysis, source_integration, raw_content, created_at')
+      .eq('id', signal_id)
+      .maybeSingle()
+    sig = (data as SigRow | null)
+  }
   if (!sig) return NextResponse.json({ error: 'signal_not_found' }, { status: 404 })
 
   const ai = (sig.ai_analysis ?? {}) as Record<string, unknown>
@@ -27,7 +44,10 @@ export async function POST(req: NextRequest) {
 
   // Recent real messages with this account, newest first, for thread context.
   let thread = ''
-  if (sig.account_name) {
+  if (isDemo && sig.account_name) {
+    const comms = DEMO_COMMS[sig.account_name] ?? []
+    if (comms.length) thread = comms.map(c => `[${/Andy G|Mike Ross|Jamie Torres|Billing System/.test(c.who) ? 'ME' : 'THEM'} ${c.when} via ${c.via}] ${c.who}, ${c.role}: ${c.quote}`).join('\n')
+  } else if (sig.account_name) {
     const { data: msgs } = await supabase
       .from('messages')
       .select('sender, subject, content, received_at, direction')
