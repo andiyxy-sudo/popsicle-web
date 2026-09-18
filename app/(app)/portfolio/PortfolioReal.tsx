@@ -229,7 +229,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
               return (
                 <div key={a.id} onClick={() => openA360(a)} className="tbl-row"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: riskColor[risk] || 'var(--ink)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: h >= 70 ? 'var(--good, #2f8f5b)' : h >= 40 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)', fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
                     <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
