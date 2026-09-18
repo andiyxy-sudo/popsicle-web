@@ -622,7 +622,7 @@ export function AskClient() {
           transition: 'max-height .45s cubic-bezier(.22,.61,.36,1), opacity .25s ease',
         }}>
           <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
-            Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your signals, accounts and correspondence.</span>
+            Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your <span style={{ color: 'var(--accent)' }}>signals</span>, accounts and correspondence.</span>
           </h1>
           <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '32px 0 0' }} />
         </div>

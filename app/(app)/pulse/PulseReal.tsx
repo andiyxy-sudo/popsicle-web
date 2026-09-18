@@ -366,6 +366,9 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   const [due, setDue] = useState<Array<{ id: string; text: string; owner: string | null; due_at: string | null; account_name: string | null }>>([])
   const [soonAccts, setSoonAccts] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
+  // the date line renders after mount only (server timezone differs from the browser's)
+  const [dateReady, setDateReady] = useState(false)
+  useEffect(() => { setDateReady(true) }, [])
   useEffect(() => {
     let dead = false
     if (demoMode) { setLoaded(true); return }
@@ -409,8 +412,6 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
   if (!meetings.length && !due.length && !attention.length) return null
   const secLbl = (t: string) => <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 7 }}>{t}</div>
   const cols = [meetings.length, due.length, attention.length].filter(Boolean).length
-  const [dateReady, setDateReady] = useState(false)
-  useEffect(() => { setDateReady(true) }, [])
   return (
     <div className="dcard fade-in" style={{ marginBottom: 18, padding: 0, overflow: 'hidden' }}>
       <div style={{ padding: '12px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>
