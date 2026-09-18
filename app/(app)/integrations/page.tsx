@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { IntegrationsReal, ProviderStat } from './IntegrationsReal'
+import { DEMO_INTEGRATION_ACTIVE, DEMO_INTEGRATION_STATS } from '@/lib/demo-dataset'
 
 export default async function IntegrationsPage() {
   const supabase = await createClient()
@@ -11,7 +12,7 @@ export default async function IntegrationsPage() {
   const userId = claims.sub as string
 
   if (email === DEMO_EMAIL) {
-    return <IntegrationsReal active={['gmail', 'gcal', 'slack', 'zoom', 'hubspot', 'fireflies', 'meet']} />
+    return <IntegrationsReal active={DEMO_INTEGRATION_ACTIVE} stats={DEMO_INTEGRATION_STATS} />
   }
 
   const [{ data: integrations }, { data: signals }] = await Promise.all([

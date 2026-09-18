@@ -135,10 +135,25 @@ export function ForecastReal({ accounts, signals, demoMovers }: { accounts: Acco
   const scenario = weighted + atRisk * (recovery / 100)
   const biggestRisk = [...rows].filter(r => r.risky).sort((a, b) => b.value - a.value)[0] ?? null
 
-  const trend = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Today'].map((d, i, arr) => {
-    const f = (i + 1) / arr.length
-    return { d, best: bestCase * (0.86 + 0.14 * f), commit: weighted * (0.94 + 0.06 * f), risk: atRisk * (0.78 + 0.22 * f) }
-  })
+  // the trend window changes both the x labels and how far back each series
+  // starts: a week barely moves, YTD shows the whole climb to today's figures
+  const trend = (() => {
+    const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const now = new Date(), mo = now.getMonth()
+    const monthsBack = (n: number) => Array.from({ length: n }, (_, i) => MONTHS[(mo - n + i + 12) % 12])
+    const spec = {
+      '1W': { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'], best: [0.86, 1.0], commit: [0.94, 1.0], risk: [0.78, 1.0] },
+      '1M': { labels: ['W1', 'W2', 'W3', 'W4'], best: [0.72, 1.15], commit: [0.85, 1.1], risk: [0.55, 1.3] },
+      '3M': { labels: monthsBack(3), best: [0.58, 1.25], commit: [0.7, 1.2], risk: [0.42, 1.5] },
+      'YTD': { labels: monthsBack(Math.max(1, mo)), best: [0.34, 1.35], commit: [0.48, 1.3], risk: [0.22, 1.7] },
+    }[window_]
+    const labels = [...spec.labels, 'Today']
+    const curve = (base: number, [start, pow]: number[], f: number) => base * (start + (1 - start) * Math.pow(f, pow))
+    return labels.map((d, i, arr) => {
+      const f = arr.length > 1 ? i / (arr.length - 1) : 1
+      return { d, best: curve(bestCase, spec.best, f), commit: curve(weighted, spec.commit, f), risk: curve(atRisk, spec.risk, f) }
+    })
+  })()
 
   return (
     <div className="dsk-screen on">

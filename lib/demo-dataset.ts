@@ -571,3 +571,19 @@ export const DEMO_MOVERS = [
   { name: 'Acme Corp', tag: 'Stalled', tone: 'critical' as const, note: 'CFO silent 8 days · competitor in play', swing: -480_000, prob: 38 },
   { name: 'Brightwave', tag: 'Expansion', tone: 'good' as const, note: 'Pilot converting · RevOps re-engaged', swing: 180_000, prob: 72 },
 ]
+
+// ---------- Integrations (demo volume: seven sources, 847 signals in 30 days, v11.17) ----------
+// thisMonth sums to 847 and lines up with the Intelligence "Signal sources"
+// column (Gmail 310 · WhatsApp 194 · Slack 128 · Calendar & Meet 96 · calls & CRM 119).
+const _d = (daysAgo: number, h = 9) => new Date(Date.now() - daysAgo * 86400000 - (24 - h) * 3600000).toISOString()
+const _sync = (minsAgo: number) => new Date(Date.now() - minsAgo * 60000).toISOString()
+export const DEMO_INTEGRATION_ACTIVE = ['gmail', 'slack', 'whatsapp', 'gcal', 'hubspot', 'fireflies', 'zoom']
+export const DEMO_INTEGRATION_STATS: Record<string, { total: number; thisMonth: number; high: number; watch: number; positive: number; lastSignal: string | null; connectedAt: string | null; lastSynced: string | null; identity?: string | null }> = {
+  gmail:     { total: 1_012, thisMonth: 310, high: 41, watch: 168, positive: 101, lastSignal: _sync(18),  connectedAt: _d(112), lastSynced: _sync(12),  identity: 'andy@popsicle-labs.app' },
+  whatsapp:  { total: 588,   thisMonth: 194, high: 22, watch: 109, positive: 63,  lastSignal: _sync(41),  connectedAt: _d(88),  lastSynced: _sync(12),  identity: '+62 812 · Popsicle Sales' },
+  slack:     { total: 402,   thisMonth: 128, high: 14, watch: 71,  positive: 43,  lastSignal: _sync(66),  connectedAt: _d(104), lastSynced: _sync(12),  identity: 'Popsicle Labs' },
+  gcal:      { total: 311,   thisMonth: 96,  high: 9,  watch: 52,  positive: 35,  lastSignal: _sync(190), connectedAt: _d(112), lastSynced: _sync(12),  identity: 'andy@popsicle-labs.app' },
+  zoom:      { total: 197,   thisMonth: 63,  high: 8,  watch: 30,  positive: 25,  lastSignal: _d(1, 16),  connectedAt: _d(61),  lastSynced: _sync(48),  identity: 'andy@popsicle-labs.app' },
+  fireflies: { total: 104,   thisMonth: 32,  high: 4,  watch: 15,  positive: 13,  lastSignal: _d(2, 11),  connectedAt: _d(47),  lastSynced: _sync(48),  identity: 'Popsicle Labs' },
+  hubspot:   { total: 76,    thisMonth: 24,  high: 6,  watch: 12,  positive: 6,   lastSignal: _d(1, 9),   connectedAt: _d(70),  lastSynced: _sync(120), identity: 'Popsicle Labs · 9 deals' },
+}

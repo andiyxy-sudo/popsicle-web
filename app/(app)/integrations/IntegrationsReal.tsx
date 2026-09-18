@@ -11,12 +11,13 @@ const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
 // Providers whose OAuth + ingestion are live (reusing the Android backend).
 // fn = the edge function slug. Others are shown as "coming soon".
-type Provider = { key: string; name: string; desc: string; cat: string; fn?: string; token?: boolean }
+type Provider = { key: string; name: string; short?: string; desc: string; cat: string; fn?: string; token?: boolean }
 const PROVIDERS: Provider[] = [
   { key: 'gmail', name: 'Gmail', desc: 'Reads sales threads · Detects tone & ghosting', cat: 'Email', fn: 'oauth-gmail' },
   { key: 'outlook', name: 'Outlook', desc: 'Microsoft 365 email · Same AI analysis', cat: 'Email' },
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
-  { key: 'whatsapp', name: 'WhatsApp Business', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
+  { key: 'whatsapp', name: 'WhatsApp Business', short: 'WhatsApp', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
+  { key: 'teams', name: 'Microsoft Teams', short: 'Teams', desc: 'Shared channels & chats · Same stall detection', cat: 'Messaging' },
   { key: 'gcal', name: 'Google Calendar & Meet', desc: 'Meeting cadence & stall detection · Meet call transcripts & analysis', cat: 'Calendar', fn: 'oauth-gcal' },
   { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
@@ -329,7 +330,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
     }
   }
 
-  const liveCount = PROVIDERS.filter(p => p.fn && active.includes(p.key)).length
+  const liveCount = PROVIDERS.filter(p => active.includes(p.key)).length
 
   // Facts for the headline and the stat row, all drawn from real counts.
   const indexed30 = PROVIDERS.reduce((a, p) => a + (stats[p.key]?.thisMonth ?? 0), 0)
@@ -338,7 +339,13 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
     .map(p => ({ name: p.name, n: stats[p.key]?.total ?? 0 }))
     .sort((a, b) => b.n - a.n)[0]
   const leaderShare = leader && indexedAll > 0 ? Math.round((leader.n / indexedAll) * 100) : 0
-  const missing = PROVIDERS.filter(p => p.fn && !active.includes(p.key)).slice(0, 2).map(p => p.name)
+  // the two unconnected sources most worth naming, biggest gaps first
+  const PITCH = ['salesforce', 'teams', 'outlook', 'gong', 'whatsapp', 'hubspot', 'slack', 'gmail', 'gcal', 'zoom', 'fireflies']
+  const missing = PROVIDERS.filter(p => !active.includes(p.key))
+    .sort((a, b) => PITCH.indexOf(a.key) - PITCH.indexOf(b.key)).slice(0, 2).map(p => p.short ?? p.name)
+  const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+  const numWord = (n: number) => (n >= 0 && n <= 10 ? NUMWORD[n] : String(n))
+  const feeding = indexed30 > 0 ? indexed30 : indexedAll
   const lastSync = (() => {
     const times = PROVIDERS.map(p => stats[p.key]?.lastSynced).filter(Boolean).map(t => new Date(t as string).getTime())
     if (!times.length) return null
@@ -515,8 +522,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
         crumb={`${liveCount} active · ${PROVIDERS.length} available`}
         title={liveCount > 0
           ? <>
-              <span style={{ color: 'var(--accent)' }}>{liveCount}</span> source{liveCount === 1 ? '' : 's'} feeding{' '}
-              {indexedAll > 0 ? <><span style={{ color: 'var(--accent)' }}>{indexedAll.toLocaleString()}</span> signal{indexedAll === 1 ? '' : 's'}</> : 'your pipeline'}
+              {numWord(liveCount)} source{liveCount === 1 ? '' : 's'} feeding{' '}
+              {feeding > 0 ? <><span style={{ color: 'var(--accent)' }}>{feeding.toLocaleString()} signal{feeding === 1 ? '' : 's'}</span></> : 'your pipeline'}
               {indexed30 > 0 ? <> in the last 30 days</> : null}.{' '}
               <span style={{ color: 'var(--ink-muted)' }}>
                 {leader && leaderShare > 0 ? <>{leader.name} carries {leaderShare}% of the volume{missing.length ? '; ' : '.'}</> : null}
