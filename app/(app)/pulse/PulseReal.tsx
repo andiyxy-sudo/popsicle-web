@@ -405,6 +405,7 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
 // TODAY block (mobile item 22): meetings today, due/overdue commitments, and
 // accounts needing attention ranked by the shared attention formula (order
 // only, no visible score). Sections are absent when empty; quiet day = block hidden.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signal[] }) {
   const demoMode = accounts.some(a => String(a.id).startsWith('demo-'))
   const router = useRouter()
@@ -854,7 +855,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
 
       <PreMeetingBrief />
       <div style={{ marginTop: 24 }}><WeekDigest /></div>
-      <TodayBlock accounts={accounts} signals={signals} />
+      {/* Today / Needs attention card retired (v11.33): late commitments live in the panel under the headline */}
 
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
       {(() => {
