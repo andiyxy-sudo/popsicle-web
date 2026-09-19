@@ -2139,9 +2139,13 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 /* v2.7 — short pages must not leave the footer floating mid-screen:
    the content column fills the viewport and the footer is pushed to the end. */
-/* keep the column simple: flex layouts here were fragile on first paint */
-.content > .dsk-screen { min-height: calc(100vh - 300px); }
-.ed-footer { margin-top: 36px; padding-top: 20px; }
+/* v11.42: the footer sits at the bottom of the scroll column on short pages
+   (People tab with three rows, Contracts with one) instead of floating mid-screen,
+   and follows the content on long ones. The 120px bottom padding on .content keeps
+   the floating Ask bar clear of the footer in both cases. */
+.content { display: flex; flex-direction: column; }
+.content > .dsk-screen { min-height: 0; flex: 0 0 auto; margin-bottom: 36px; }
+.ed-footer { margin-top: auto; padding-top: 20px; flex: none; }
 
 /* nav items are links now: keep the row styling */
 a.ed-sb-item, a.ed-sb-item:hover { text-decoration: none; }
