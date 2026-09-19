@@ -139,7 +139,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
       const r = await fetch('/api/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: invEmail, role: invRole }) })
       const j = await r.json()
       if (!r.ok) { setInvState('error'); setInvMsg(j.error === 'invalid_email' ? 'That does not look like an email address.' : 'Could not send the invite.'); return }
-      setInvState('sent'); setInvMsg(j.demo ? 'Invites are simulated on the demo account.' : j.sent ? `Invite sent to ${invEmail}.` : (j.note ?? 'Invite recorded.'))
+      if (!j.demo && !j.sent) { setInvState('error'); setInvMsg(j.error ? `Supabase refused the invite: ${j.error}` : (j.note ?? 'Invite recorded, but the email was not sent.')); loadInvites(); return }
+      setInvState('sent'); setInvMsg(j.demo ? 'Invites are simulated on the demo account.' : `Invite sent to ${invEmail}. It can take a minute; check spam if it does not arrive.`)
       if (j.demo) setInvites(prev => [{ id: `demo-${Date.now()}`, email: invEmail, role: invRole, status: 'sent', created_at: new Date().toISOString() }, ...prev])
       else loadInvites()
       setInvEmail('')
