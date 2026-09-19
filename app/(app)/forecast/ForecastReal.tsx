@@ -220,7 +220,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
               { n: `${accuracyPct}%`, lbl: demoFigures ? 'AI accuracy · ▲ 3%/qtr' : 'AI accuracy · estimate until 2 closed quarters', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 8, lineHeight: 1.4 }}>{st.lbl}</div>
               </div>
             ))}

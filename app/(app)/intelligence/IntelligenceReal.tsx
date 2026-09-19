@@ -398,22 +398,22 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         <div style={{ paddingTop: 16 }}>
           <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 20 }}>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}>{fmtMoney(m.protectedTotal)}</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}>{fmtMoney(m.protectedTotal)}</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>protected this quarter</div>
             </div>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.successRate}%</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.successRate}%</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>success rate · target {m.successTarget}%</div>
             </div>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{m.recovered}</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{m.recovered}</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · {m.caughtEarly} caught early</div>
             </div>
           </div>
           {m.fasterDays > 0 && (
             <div style={{ marginTop: 34 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
+                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: FAINT }}>d</span>
               </div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>faster response vs last quarter</div>

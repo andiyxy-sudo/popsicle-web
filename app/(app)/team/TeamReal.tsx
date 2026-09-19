@@ -232,7 +232,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         {m.exposure ? (
           <div>
             <div style={{ ...MONO, fontSize: 10, color: FAINT, display: 'flex', justifyContent: 'space-between' }}><span>Revenue exposure</span><span style={{ color: GREEN, display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />Live</span></div>
-            <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(36px,3.8vw,48px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.exposure.total)}</div>
+            <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.exposure.total)}</div>
             <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>total exposure across {m.accountCount} accounts</div>
             <div style={{ marginTop: 25 }}>
               <Row><span>Stabilized this week</span><span style={{ ...MONO_NUM, fontSize: 12, color: GREEN }}>{formatCurrency(m.exposure.stabilizedThisWeek)}</span></Row>
@@ -243,7 +243,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         ) : (
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT }}>ARR under management</div>
-          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(36px,3.8vw,48px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.arr)}</div>
+          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.arr)}</div>
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>across {m.accountCount} accounts</div>
           <div style={{ display: 'flex', gap: 3, height: 3, marginTop: 22 }}>
             {m.split.map(x => <span key={x.k} style={{ flex: x.value / splitTotal, background: x.color }} />)}
@@ -263,7 +263,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Time to action</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginTop: 14 }}>
-            <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(36px,3.8vw,48px)', letterSpacing: '-.05em', lineHeight: 1, color: INK }}>{m.timeToAction ? m.timeToAction.toFixed(1) : '--'}</span>
+            <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, color: INK }}>{m.timeToAction ? m.timeToAction.toFixed(1) : '--'}</span>
             <span style={{ fontFamily: OUTFIT, fontSize: 22, color: MUTED }}>h</span>
           </div>
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>
@@ -284,7 +284,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         {/* Coverage */}
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Signal coverage</div>
-          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(36px,3.8vw,48px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: GREEN }}>{m.coveragePct}%</div>
+          <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: GREEN }}>{m.coveragePct}%</div>
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>{m.covered} of {m.accountCount} accounts covered</div>
           <div style={{ marginTop: 25 }}>
             <Row><span>Signals this week</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.signalsThisWeek}</span></Row>

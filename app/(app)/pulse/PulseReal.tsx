@@ -860,8 +860,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
       {(() => {
         const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-        // one step below the headline (44px) so the 74 in the headline stays the page's largest figure
-        const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 34, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
+        const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
         const sub = { fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 12 }
         const delta = (text: string, color: string) => <span style={{ fontSize: 13, fontWeight: 600, color, marginLeft: 8 }}>{text}</span>
         const bySev = { high: accounts.filter(a => a.risk_level === 'high').length, med: accounts.filter(a => a.risk_level === 'medium').length, low: accounts.filter(a => a.risk_level === 'low').length }
