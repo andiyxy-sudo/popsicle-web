@@ -57,9 +57,9 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
       {toasts.map(t => (
         <div key={t.id} className="live-toast"
           onClick={() => { if (t.account) window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, contact: '', stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: '--' } })); dismiss(t.id) }}
-          style={{ pointerEvents: 'auto', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 14, padding: '14px 16px 14px 18px', position: 'relative', overflow: 'hidden',
+          style={{ pointerEvents: 'auto', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, padding: '14px 16px 14px 18px', position: 'relative', overflow: 'hidden',
             boxShadow: '0 18px 50px -20px rgba(14,13,11,.35), 0 2px 8px rgba(14,13,11,.06)', cursor: t.account ? 'pointer' : 'default' }}>
-          <span style={{ position: 'absolute', left: 0, top: 12, bottom: 12, width: 3, borderRadius: 2, background: color(t.severity) }} />
+          <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color(t.severity) }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
             <span className="live-dot" style={{ background: color(t.severity) }} />
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: color(t.severity) }}>New signal · {word(t.severity)}</span>
