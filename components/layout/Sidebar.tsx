@@ -60,11 +60,8 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const [draftName, setDraftName] = useState(displayName)
   const [draftTz, setDraftTz] = useState('')
   const [draftRole, setDraftRole] = useState(displayRole)
-  const meta = user as { timezone?: string; work_start?: string; work_end?: string; digest_time?: string }
+  const meta = user as { timezone?: string }
   const [tzPick, setTzPick] = useState(meta.timezone ?? '')
-  const [workStart, setWorkStart] = useState(meta.work_start ?? '09:00')
-  const [workEnd, setWorkEnd] = useState(meta.work_end ?? '18:00')
-  const [digestTime, setDigestTime] = useState(meta.digest_time ?? '08:00')
   // Security: which sign-in methods the account has, and whether a password is set.
   // Loaded when the sheet opens (identities are not in the session claims).
   type PwMode = 'change' | 'set' | 'oauth' | 'loading'
@@ -152,7 +149,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
     setSaving(true)
     // Name lives on the auth user's metadata; email changes are an auth flow,
     // so this panel shows the address rather than pretending to edit it.
-    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, timezone: tzPick || draftTz, work_start: workStart, work_end: workEnd, digest_time: digestTime } }).catch(() => {})
+    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, timezone: tzPick || draftTz } }).catch(() => {})
     setSaving(false); setSaved(true)
     router.refresh()
     setTimeout(() => setProfileOpen(false), 700)
@@ -259,25 +256,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 </div>
               </div>
 
-              <div style={{ marginTop: 22, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div>
-                  <div style={{ fontSize: 15, color: 'var(--ink)' }}>Working hours</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
-                </div>
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: 'var(--ink)' }}>
-                  <input type="time" value={workStart} onChange={e => setWorkStart(e.target.value)} style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
-                  <span style={{ color: 'var(--ink-faint)' }}>to</span>
-                  <input type="time" value={workEnd} onChange={e => setWorkEnd(e.target.value)} style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
-                </span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div>
-                  <div style={{ fontSize: 15, color: 'var(--ink)' }}>Morning digest</div>
-                  <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Overnight signals and today's meetings, once a day</div>
-                </div>
-                <input type="time" value={digestTime} onChange={e => setDigestTime(e.target.value)} style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
-              </div>
-              {/* notification toggles live on the Settings page */}
+              {/* working hours, morning digest and notification toggles live on the Settings page */}
             </div>
 
             {/* Security */}

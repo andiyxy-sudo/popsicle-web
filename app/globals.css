@@ -2135,7 +2135,7 @@ input:focus-visible, textarea:focus-visible, select:focus-visible { outline: non
 
 /* v2.6 — the wash must sit above the paper but below content, and must not
    scroll away with the column. */
-.ed-wash { position: absolute; top: 0; right: 0; left: 0; height: 1100px; pointer-events: none; z-index: 0; }
+.ed-wash { position: absolute; top: 0; right: 0; left: 0; height: 100%; max-height: 1100px; pointer-events: none; z-index: 0; }
 
 /* v2.7 — short pages must not leave the footer floating mid-screen:
    the content column fills the viewport and the footer is pushed to the end. */
@@ -2502,7 +2502,10 @@ body { background: var(--bg) !important; }
    following the viewport. */
 .ed-wash {
   position: absolute !important; top: 0 !important; right: 0 !important;
-  left: 0 !important; height: 1200px !important;
+  /* v11.44: height is capped at the column's own height. A fixed 1200px box
+     extended the scrollable area of .content on short pages, which is what left
+     the empty run below the footer on Account 360 tabs. */
+  left: 0 !important; height: 100% !important; max-height: 1200px !important;
   pointer-events: none !important; z-index: 0 !important;
 }
 .dsk-screen { position: relative; z-index: 1; }

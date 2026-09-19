@@ -24,6 +24,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [counts, setCounts] = useState<{ signals: number; accounts: number } | null>(null)
   const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true, push: false, emailDigest: false, slackCritical: true, emailHandled: true })
   const [digestTime, setDigestTime] = useState('07:00')
+  const [workHours, setWorkHours] = useState<{ start: string; end: string }>({ start: '09:00', end: '18:00' })
+  const [morningDigest, setMorningDigest] = useState('08:00')
   const [voice, setVoice] = useState<Record<string, string>>({ Tone: 'Direct', Length: 'Short', 'Sign-off': 'Best, Andy' })
   const [autoSend, setAutoSend] = useState(false)
   const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
@@ -105,6 +107,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
     supabase.auth.getUser().then(({ data: { user: u } }) => {
       const m = (u?.user_metadata ?? {}) as Record<string, unknown>
       if (m.digest_time) setDigestTime(String(m.digest_time))
+      if (m.work_start || m.work_end) setWorkHours({ start: String(m.work_start ?? '09:00'), end: String(m.work_end ?? '18:00') })
+      if (m.morning_digest) setMorningDigest(String(m.morning_digest))
       if (m.draft_voice) setVoice(m.draft_voice as Record<string, string>)
       if (m.thresholds) setThresholds(m.thresholds as Record<string, string>)
       if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
@@ -238,6 +242,31 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
         <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} onClick={() => setSheet('Your data')} />
         <Row label="Weekly digest" sub="Appears on Pulse at the start of your week" value={`Mondays · ${digestTime}`} onClick={() => setSheet('Weekly digest')} />
+      </Section>
+
+      <Section title="Your day" sub="When Popsicle should work around you.">
+        {/* moved here from Edit profile (v11.44) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div>
+            <div style={{ fontSize: 15, color: 'var(--ink)' }}>Working hours</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
+          </div>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: 'var(--ink)' }}>
+            <input type="time" value={workHours.start} onChange={e => { const v = { ...workHours, start: e.target.value }; setWorkHours(v); saveJson('work_start', v.start) }}
+              style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+            <span style={{ color: 'var(--ink-faint)' }}>to</span>
+            <input type="time" value={workHours.end} onChange={e => { const v = { ...workHours, end: e.target.value }; setWorkHours(v); saveJson('work_end', v.end) }}
+              style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div>
+            <div style={{ fontSize: 15, color: 'var(--ink)' }}>Morning digest</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Overnight signals and today's meetings, once a day</div>
+          </div>
+          <input type="time" value={morningDigest} onChange={e => { setMorningDigest(e.target.value); saveJson('morning_digest', e.target.value) }}
+            style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+        </div>
       </Section>
 
       <Section title="Preferences" sub="How the portal looks and reads.">
