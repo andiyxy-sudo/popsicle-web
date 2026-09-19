@@ -115,7 +115,7 @@ function PreMeetingBrief() {
           <span style={{ fontSize: 13.5, fontWeight: 800, color: 'var(--t1)' }}>{brief.summary}</span>
           <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t3)' }}>{brief.account}</span>
         </div>
-        <div style={{ fontSize: 10.5, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>
+        <div style={{ fontSize: 11, color: 'var(--t4)', fontFamily: "'DM Mono',monospace" }}>
           {brief.daysDark != null ? `Last touch ${brief.daysDark === 0 ? 'today' : brief.daysDark + 'd ago'}` : 'No touches recorded'}
         </div>
       </div>
@@ -390,7 +390,7 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
       {items.map(c => (
         <div key={c.id} onClick={() => c.account && router.push(`/accounts/${encodeURIComponent(c.account)}`)}
           style={{ display: 'grid', gridTemplateColumns: '58px minmax(0,1fr)', gap: 14, alignItems: 'baseline', padding: '7px 0', cursor: c.account ? 'pointer' : 'default' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.4px', textTransform: 'uppercase', color: c.daysLate > 0 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: c.daysLate > 0 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)', whiteSpace: 'nowrap' }}>
             {c.daysLate > 0 ? `${c.daysLate}d late` : 'due today'}
           </span>
           <span style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
@@ -471,7 +471,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
             {secLbl(`${meetings.length} meeting${meetings.length === 1 ? '' : 's'}`)}
             {meetings.map(m => (
               <div key={m.event_id} style={{ display: 'flex', gap: 8, marginBottom: 6, alignItems: 'baseline' }}>
-                <span style={{ fontSize: 10.5, fontWeight: 800, color: 'var(--t3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{new Date(m.start_ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--t3)', fontFamily: "'DM Mono',monospace", flexShrink: 0 }}>{new Date(m.start_ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                 <span style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--t1)' }}>{m.summary || 'Meeting'}{m.account_name ? <span style={{ color: 'var(--t3)', fontWeight: 500 }}> · {m.account_name}</span> : null}</span>
               </div>
             ))}
@@ -599,7 +599,7 @@ function WeekDigest() {
             {state.quiet.map(q => (
               <div key={q.name} onClick={() => router.push(`/accounts/${encodeURIComponent(q.name)}`)} style={{ display: 'flex', gap: 7, marginBottom: 6, cursor: 'pointer', alignItems: 'baseline' }}>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t1)' }}>{q.name}</span>
-                <span style={{ fontSize: 10.5, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{q.days}d silent</span>
+                <span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>{q.days}d silent</span>
               </div>
             ))}
           </div>
@@ -832,7 +832,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                         <div style={{ display: 'flex', gap: 9, alignItems: 'center', flexWrap: 'wrap' }}>
                           <span style={{ width: 7, height: 7, borderRadius: '50%', flex: 'none', background: sg.severity === 'high' ? 'var(--critical)' : sg.severity === 'positive' ? 'var(--good)' : 'var(--warn)' }}></span>
                           <span style={{ fontWeight: 600, fontSize: 14.5, color: 'var(--ink)' }}>{sg.account_name || 'Unmapped'}</span>
-                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{sg.source_integration || ''}</span>
+                          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{sg.source_integration || ''}</span>
                         </div>
                         <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.45, paddingLeft: 16 }}>{sg.title}</div>
                       </div>
@@ -860,7 +860,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
       {(() => {
         const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-        const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
+        // one step below the headline (44px) so the 74 in the headline stays the page's largest figure
+        const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 34, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
         const sub = { fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 12 }
         const delta = (text: string, color: string) => <span style={{ fontSize: 13, fontWeight: 600, color, marginLeft: 8 }}>{text}</span>
         const bySev = { high: accounts.filter(a => a.risk_level === 'high').length, med: accounts.filter(a => a.risk_level === 'medium').length, low: accounts.filter(a => a.risk_level === 'low').length }
@@ -991,7 +992,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start', cursor: 'pointer',
                     padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, letterSpacing: 'normal', color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>

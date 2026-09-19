@@ -11,6 +11,7 @@
 import { useState, useEffect } from 'react'
 import { PageHead } from '@/components/layout/PageHead'
 import type { IntelModel } from '@/lib/demo-dataset'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -145,6 +146,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
   const [range, setRange] = useState<30 | 60 | 90>(30)
   const [series, setSeries] = useState<'At risk' | 'Stabilized' | 'Both'>('At risk')
   const [sits, setSits] = useState<'By driver' | 'By segment' | 'By health'>('By driver')
+  const [hoverW, setHoverW] = useState<number | null>(null)   // risk chart hover index
   useEffect(() => { setMounted(true) }, [])
   void messages; void baselines; void mounted
 
@@ -241,7 +243,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 36, alignItems: 'start' }}>
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Key movement drivers</div>
-          {m.drivers.length === 0 && <div style={{ padding: '18px 0', fontSize: 14, color: FAINT }}>No exposure recorded yet.</div>}
+          {m.drivers.length === 0 && <EmptyState line="No movement to explain yet." hint="Drivers appear once signals carry a dollar amount at risk." compact />}
           {m.drivers.map(d => (
             <Row key={d.k}>
               <span>{d.k}</span>
@@ -271,8 +273,10 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
             const second = curve(alt.map(yOf))
             const color = series === 'Stabilized' ? '#2f8f5b' : '#c43d2b'
             return (
-              <div>
-                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={230} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+              <div style={{ position: 'relative' }}>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={230} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible', cursor: 'crosshair' }}
+                  onMouseMove={e => { const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect(); const f = (e.clientX - r.left) / r.width; setHoverW(Math.max(0, Math.min(m.weeks.length - 1, Math.round(f * (m.weeks.length - 1))))) }}
+                  onMouseLeave={() => setHoverW(null)}>
                   <defs>
                     <linearGradient id="riskFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor={color} stopOpacity=".16" />
@@ -286,9 +290,22 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
                   <path d={main} fill="none" stroke={color} strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
                   {series === 'Both' && <path d={second} fill="none" stroke="#2f8f5b" strokeWidth="2" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />}
                   <circle cx={xs[xs.length - 1]} cy={yOf(vals[vals.length - 1])} r="5" fill={color} stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                  {hoverW != null && (
+                    <g>
+                      <line x1={xs[hoverW]} x2={xs[hoverW]} y1={0} y2={H} stroke="var(--ink, #0E0D0B)" strokeWidth="1" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" opacity=".5" />
+                      <circle cx={xs[hoverW]} cy={yOf(vals[hoverW])} r="4" fill={color} stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    </g>
+                  )}
                 </svg>
+                {hoverW != null && (
+                  <div style={{ position: 'absolute', left: `${(hoverW / Math.max(1, m.weeks.length - 1)) * 100}%`, top: 0, transform: `translateX(${hoverW > m.weeks.length / 2 ? '-100%' : '0'})`, pointerEvents: 'none',
+                    background: 'var(--paper, #FBF8F3)', border: `1px solid ${HAIR}`, padding: '8px 12px', ...MONO_NUM, fontSize: 11, color: MUTED, whiteSpace: 'nowrap', boxShadow: '0 8px 24px -12px rgba(14,13,11,.25)' }}>
+                    <div style={{ color: INK, marginBottom: 4 }}>{m.weeks[hoverW].label}</div>
+                    <div>at risk <span style={{ color: RED }}>{fmtMoney(m.weeks[hoverW].added)}</span> · stabilized <span style={{ color: GREEN }}>{fmtMoney(m.weeks[hoverW].stabilized)}</span></div>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                  {m.weeks.map((w, i) => <span key={i} style={{ ...MONO_NUM, fontSize: 9.5, color: i === m.weeks.length - 1 ? ACCENT : FAINT }}>{w.label}</span>)}
+                  {m.weeks.map((w, i) => <span key={i} style={{ ...MONO_NUM, fontSize: 10, color: i === m.weeks.length - 1 ? ACCENT : FAINT }}>{w.label}</span>)}
                 </div>
               </div>
             )
@@ -301,7 +318,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         <>
           <H2 title="Where the risk sits" right={(m.bySegment || m.byHealth)
             ? <Pills items={(['By driver', ...(m.bySegment ? ['By segment'] : []), ...(m.byHealth ? ['By health'] : [])] as Array<'By driver' | 'By segment' | 'By health'>)} value={sits} onChange={setSits} />
-            : <span style={{ ...MONO, fontSize: 10.5, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>open exposure by driver</span>} />
+            : <span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>open exposure by driver</span>} />
           {sits === 'By segment' && m.bySegment && (() => {
             const tot = m.bySegment.reduce((a, x) => a + x.v, 0) || 1
             return (
@@ -362,13 +379,13 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       )}
 
       {/* ---- what's working ---- */}
-      <H2 title="What's working" right={<span style={{ ...MONO, fontSize: 10.5, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>action → outcome · this quarter</span>} />
+      <H2 title="What's working" right={<span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>action → outcome · this quarter</span>} />
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 56, marginTop: 8, alignItems: 'start' }}>
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 9.5, color: FAINT, padding: '16px 0 12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 10, color: FAINT, padding: '16px 0 12px' }}>
             <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ</span>}
           </div>
-          {m.actions.length === 0 && <div style={{ padding: '16px 0', fontSize: 14, color: FAINT }}>No handled signals yet.</div>}
+          {m.actions.length === 0 && <EmptyState line="Nothing handled yet." hint="Mark a signal handled and its action shows up here with its outcome." compact />}
           {m.actions.map(a => (
             <div key={a.k} style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, padding: '18px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14.5, alignItems: 'center' }}>
               <span style={{ color: INK }}>{a.k}</span>
@@ -381,22 +398,22 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         <div style={{ paddingTop: 16 }}>
           <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 20 }}>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}>{fmtMoney(m.protectedTotal)}</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}>{fmtMoney(m.protectedTotal)}</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>protected this quarter</div>
             </div>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.successRate}%</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.successRate}%</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>success rate · target {m.successTarget}%</div>
             </div>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{m.recovered}</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{m.recovered}</div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · {m.caughtEarly} caught early</div>
             </div>
           </div>
           {m.fasterDays > 0 && (
             <div style={{ marginTop: 34 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
+                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: FAINT }}>d</span>
               </div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>faster response vs last quarter</div>
@@ -434,9 +451,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
             <Row key={s.k} pad="13px 0">
               <span style={{ color: MUTED }}>{s.k}</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ ...MONO_NUM, fontSize: 12.5, color: INK }}>{s.n}</span>
+                <span style={{ ...MONO_NUM, fontSize: 12, color: INK }}>{s.n}</span>
                 <span style={{ color: FAINT, fontSize: 11 }}>·</span>
-                <span style={{ ...MONO_NUM, fontSize: 12.5, color: INK, width: 34, textAlign: 'right' }}>{pct(s.n, srcTotal)}%</span>
+                <span style={{ ...MONO_NUM, fontSize: 12, color: INK, width: 34, textAlign: 'right' }}>{pct(s.n, srcTotal)}%</span>
                 <span style={{ width: 74, height: 3, background: HAIR, position: 'relative' }}>
                   <span style={{ position: 'absolute', inset: 0, width: `${pct(s.n, srcMax)}%`, background: INK }} />
                 </span>
@@ -455,9 +472,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
               <Row key={r.account} pad="13px 0">
                 <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
                   <span style={{ color: INK, fontWeight: 500, whiteSpace: 'nowrap' }}>{r.account}</span>
-                  <span style={{ ...MONO_NUM, fontSize: 11.5, color: FAINT, whiteSpace: 'nowrap' }}>{r.days}d · {fmtMoney(r.value)}</span>
+                  <span style={{ ...MONO_NUM, fontSize: 11, color: FAINT, whiteSpace: 'nowrap' }}>{r.days}d · {fmtMoney(r.value)}</span>
                 </span>
-                <span style={{ ...MONO, fontSize: 9.5, color: s.c, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
+                <span style={{ ...MONO, fontSize: 10, color: s.c, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: s.c }} />{s.t}
                 </span>
               </Row>

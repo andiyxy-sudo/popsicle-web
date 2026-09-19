@@ -36,6 +36,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
   const [mounted, setMounted] = useState(false)
   const [window_, setWindow] = useState<'1W' | '1M' | '3M' | 'YTD'>('1W')
   const [recovery, setRecovery] = useState(25)
+  const [hoverI, setHoverI] = useState<number | null>(null)   // trend chart hover index
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
   const open = signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
@@ -219,7 +220,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
               { n: `${accuracyPct}%`, lbl: demoFigures ? 'AI accuracy · ▲ 3%/qtr' : 'AI accuracy · estimate until 2 closed quarters', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 28, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 8, lineHeight: 1.4 }}>{st.lbl}</div>
               </div>
             ))}
@@ -259,8 +260,10 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                       fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>{formatCurrency(t)}</span>
                   ))}
                 </div>
-                <div>
-                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={260} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
+                <div style={{ position: 'relative' }}>
+                <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={260} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible', cursor: 'crosshair' }}
+                  onMouseMove={e => { const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect(); const f = (e.clientX - r.left) / r.width; setHoverI(Math.max(0, Math.min(trend.length - 1, Math.round(f * (trend.length - 1))))) }}
+                  onMouseLeave={() => setHoverI(null)}>
                   <defs>
                     <linearGradient id="fcFill" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#c43d2b" stopOpacity=".10" />
@@ -275,10 +278,24 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                   <path d={path('commit')} fill="none" stroke="var(--good, #2f8f5b)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
                   <path d={path('risk')} fill="none" stroke="var(--critical, #c43d2b)" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
                   <circle cx={xs[xs.length - 1]} cy={yOf(trend[trend.length - 1].best)} r="4.5" fill="var(--critical, #c43d2b)" stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                  {hoverI != null && (
+                    <g>
+                      <line x1={xs[hoverI]} x2={xs[hoverI]} y1={0} y2={H} stroke="var(--ink, #0E0D0B)" strokeWidth="1" strokeDasharray="2 4" vectorEffect="non-scaling-stroke" opacity=".5" />
+                      <circle cx={xs[hoverI]} cy={yOf(trend[hoverI].best)} r="4" fill="var(--ink, #0E0D0B)" stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                      <circle cx={xs[hoverI]} cy={yOf(trend[hoverI].commit)} r="4" fill="var(--good, #2f8f5b)" stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
+                    </g>
+                  )}
                 </svg>
+                {hoverI != null && (
+                  <div style={{ position: 'absolute', left: `${(hoverI / Math.max(1, trend.length - 1)) * 100}%`, top: 0, transform: `translateX(${hoverI > trend.length / 2 ? '-100%' : '0'})`, pointerEvents: 'none',
+                    background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', padding: '8px 12px', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-muted)', whiteSpace: 'nowrap', boxShadow: '0 8px 24px -12px rgba(14,13,11,.25)' }}>
+                    <div style={{ color: 'var(--ink)', marginBottom: 4 }}>{trend[hoverI].d}</div>
+                    <div>best <span style={{ color: 'var(--ink)' }}>{formatCurrency(trend[hoverI].best)}</span> · commit <span style={{ color: 'var(--good, #2f8f5b)' }}>{formatCurrency(trend[hoverI].commit)}</span> · risk <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(trend[hoverI].risk)}</span></div>
+                  </div>
+                )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 9 }}>
                   {trend.map(t => (
-                    <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: t.d === 'Today' ? 'var(--ink)' : 'var(--ink-faint)' }}>{t.d}</span>
+                    <span key={t.d} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: t.d === 'Today' ? 'var(--ink)' : 'var(--ink-faint)' }}>{t.d}</span>
                   ))}
                 </div>
                 </div>
@@ -293,7 +310,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         <div style={{ marginTop: 56 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
           </div>
           <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, moverCards.length)}, minmax(0,1fr))`, columnGap: 32 }}>
             {moverCards.map(m => {
@@ -304,7 +321,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.name}</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 6 }}>{m.note}</div>
                   </div>
@@ -312,7 +329,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                     <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', lineHeight: 1, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
                       {m.swing < 0 ? '−' : '+'}{formatCurrency(Math.abs(m.swing))}
                     </div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', marginTop: 8 }}>{m.prob}% probability</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>{m.prob}% probability</div>
                   </div>
                 </div>
               )
@@ -433,7 +450,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         </div>
       ))}
 
-      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 22 }}>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 22 }}>
         weighting: closed 100 · contract 90 · negotiation 75 · bought-in 60 · proposal 45 · evaluation 30 · discovery 15 · open high signal −40%
       </div>
     </div>

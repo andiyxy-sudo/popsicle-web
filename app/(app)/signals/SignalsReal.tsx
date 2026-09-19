@@ -1,6 +1,7 @@
 'use client'
 
 import type { DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
+import { EmptyState } from '@/components/ui/EmptyState'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
@@ -478,14 +479,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
             <button key={k} onClick={() => setFilter(k as typeof filter)} style={{
               font: 'inherit', fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 999, cursor: 'pointer', border: 0,
               background: filter === k ? 'var(--ink)' : 'transparent', color: filter === k ? 'var(--paper, #FBF8F3)' : 'var(--ink-muted)',
-            }}>{lbl} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, opacity: .7 }}>{n}</span></button>
+            }}>{lbl} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, opacity: .7 }}>{n}</span></button>
           ))}
         </div>
       </div>
 
       {/* alert rows */}
       <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
-        {shown.length === 0 && <div style={{ padding: '28px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing in this filter.</div>}
+        {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New signals land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
         {shown.map(s => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
           const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
@@ -510,7 +511,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   <span onClick={e => { e.stopPropagation(); setDetailFor(s) }} style={{ fontSize: 13, color: accent, cursor: 'pointer' }}>· why →</span>
                   {s.corroboration?.with?.length ? (
                     <span onClick={e => { e.stopPropagation(); router.push(`/signals?signal=${s.corroboration!.with![0].signal_id}`) }} title={s.corroboration.reason || ''}
-                      style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>corroborated</span>
+                      style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>corroborated</span>
                   ) : null}
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 5 }}>{quote ? `"${quote}"` : (s.title || body)}</div>
@@ -520,7 +521,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               </div>
               <div style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>
                 {isHandled ? (
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
                   <>
                     <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
@@ -557,7 +558,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         <div style={{ marginTop: 52 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recently handled</h2>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>
           </div>
           {handledList.slice(0, 6).map(s => (
             <div key={s.id} className="tbl-row" onClick={() => setDetailFor(s)}
@@ -570,7 +571,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 </div>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--good, #2f8f5b)', marginTop: 5, textTransform: 'uppercase', letterSpacing: '1px' }}>{s.handled_action || 'handled'}</div>
               </div>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{mounted && s.handled_at ? timeAgo(s.handled_at) : ''}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{mounted && s.handled_at ? timeAgo(s.handled_at) : ''}</span>
             </div>
           ))}
         </div>
@@ -580,7 +581,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       {rowAction && (() => {
         const { s, kind, label } = rowAction
         const sevColor = s.severity === 'high' ? 'var(--danger)' : s.severity === 'positive' ? 'var(--ok)' : 'var(--amber)'
-        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const inputStyle = { font: 'inherit', fontSize: 14, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', width: '100%' } as const
         const primary = (text: string, go: () => void, disabled?: boolean) => (
           <button onClick={go} disabled={disabled} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .45 : 1, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>{text}</button>
@@ -760,7 +761,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           commitment_overdue: 'Overdue promises are the most common reason a deal quietly loses trust.',
         }
         const pattern = PATTERNS[d.signal_type || ''] || null
-        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
+        const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const actionRow = (text: string, go: () => void) => (
           <div onClick={go} key={text}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>
@@ -821,14 +822,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {/* Source: the exact words that raised it */}
                 {quote && (
                   <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, margin: '0 0 22px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words{d.source_integration ? ` · ${d.source_integration}` : ''}</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>In their words{d.source_integration ? ` · ${d.source_integration}` : ''}</div>
                     <div style={{ fontSize: 15, color: 'var(--ink)', lineHeight: 1.5, fontStyle: 'italic', marginTop: 8 }}>&ldquo;{quote}&rdquo;</div>
                   </div>
                 )}
                 {/* Pattern match: why this shape of signal matters */}
                 {(pattern || reason) && (
                   <div style={{ paddingLeft: 16, borderLeft: `2px solid ${sevColor}`, margin: '0 0 22px' }}>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>Pattern match</div>
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor }}>Pattern match</div>
                     <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.45, marginTop: 8 }}>{pattern ?? reason}</div>
                     {pattern && reason && <div className="read-prose" style={{ color: 'var(--ink-muted)', marginTop: 8 }}>{reason}</div>}
                   </div>
@@ -933,7 +934,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
                         {[['Snooze', () => setModalMode('snooze')], ['Dismiss', () => { setDetailFor(null); setFlag(d, 'is_dismissed') }], ['Remove', () => setModalMode('remove')]].map(([lbl, fn]) => (
                           <button key={String(lbl)} onClick={fn as () => void}
-                            style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.3px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>{String(lbl)}</button>
+                            style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.3px', textTransform: 'uppercase', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>{String(lbl)}</button>
                         ))}
                       </div>
                     )}
@@ -1023,7 +1024,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   style={{ width: '100%', boxSizing: 'border-box', padding: '22px 26px', fontSize: 15.5, lineHeight: 1.75, color: 'var(--ink)', background: '#FFFDFA', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", display: 'block' }} />
 
                 {draft.provenance && (
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 12 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 12 }}>
                     grounded in {draft.provenance.grounded_in.join(' + ')}{draft.provenance.thread_messages ? ` · ${draft.provenance.thread_messages} messages` : ''} · facts checked
                   </div>
                 )}

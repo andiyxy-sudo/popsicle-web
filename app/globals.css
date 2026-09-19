@@ -2567,3 +2567,23 @@ body { background: var(--bg) !important; }
   a { text-decoration: none !important; color: inherit !important; }
   * { box-shadow: none !important; }
 }
+
+
+/* v11.48: sections enter with a short stagger on navigation (first six children) */
+.dsk-screen.on > * { animation: screenIn .45s var(--spring-soft, cubic-bezier(.2,.8,.2,1)) both; }
+.dsk-screen.on > *:nth-child(1) { animation-delay: 0ms; }
+.dsk-screen.on > *:nth-child(2) { animation-delay: 40ms; }
+.dsk-screen.on > *:nth-child(3) { animation-delay: 80ms; }
+.dsk-screen.on > *:nth-child(4) { animation-delay: 120ms; }
+.dsk-screen.on > *:nth-child(5) { animation-delay: 160ms; }
+.dsk-screen.on > *:nth-child(6) { animation-delay: 200ms; }
+.dsk-screen.on > *:nth-child(n+7) { animation-delay: 220ms; }
+.dsk-screen.on { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .dsk-screen.on > * { animation: none !important; } }
+
+/* v11.48: a faint echo of the warm wash behind the footer, and a glow on the Ask CTA */
+.ed-footer { position: relative; }
+.ed-footer::before { content: ''; position: absolute; left: -56px; right: -56px; top: -40px; bottom: -120px; pointer-events: none; z-index: -1;
+  background: radial-gradient(ellipse 520px 160px at 100% 100%, rgba(255,138,80,.10), rgba(255,138,80,0) 70%); }
+.ed-askbar button { transition: box-shadow .18s ease, transform .18s ease; }
+.ed-askbar button:hover { box-shadow: 0 0 0 5px rgba(232,90,37,.14), 0 10px 24px -10px rgba(232,90,37,.6); transform: translateY(-1px); }
