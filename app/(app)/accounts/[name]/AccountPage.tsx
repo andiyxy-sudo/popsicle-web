@@ -1,5 +1,7 @@
 'use client'
 
+import { healthTone } from '@/lib/utils'
+
 // Account 360 as a full page, matching the design: breadcrumb, name + ARR,
 // four stats with a health sparkline, five tabs, and an Overview built from
 // the account's real signals. Demo accounts read from the bundled dataset;
@@ -177,10 +179,10 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
               <div key={b.k} style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, marginBottom: 7 }}>
                   <span style={{ color: 'var(--ink)' }}>{b.k}</span>
-                  <span style={{ color: b.v < 40 ? 'var(--critical, #c43d2b)' : b.v < 70 ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)' }}>{b.v}%</span>
+                  <span style={{ color: healthTone(b.v) }}>{b.v}%</span>
                 </div>
                 <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
-                  <div style={{ position: 'absolute', inset: 0, width: `${b.v}%`, background: b.v < 40 ? 'var(--critical, #c43d2b)' : b.v < 70 ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)' }} />
+                  <div style={{ position: 'absolute', inset: 0, width: `${b.v}%`, background: healthTone(b.v) }} />
                 </div>
               </div>
             ))}

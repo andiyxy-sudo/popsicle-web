@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import type { Account, Signal } from '@/types'
-import { formatCurrency, formatRelativeTime } from '@/lib/utils'
+import { healthTone, formatCurrency, formatRelativeTime } from '@/lib/utils'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -981,7 +981,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: riskColor[risk], fontVariantNumeric: 'tabular-nums' }}>{health}</span>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
                     <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.domain || ''}</div>

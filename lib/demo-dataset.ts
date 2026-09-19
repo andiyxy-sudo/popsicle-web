@@ -76,16 +76,16 @@ const A = (id: string, name: string, domain: string, value: number, stage: strin
      close_date: close, last_contact_date: iso(lastContactHours), tags, user_id: 'demo', created_at: iso(4000) }) as Account
 
 export const DEMO_ACCOUNTS: Account[] = [
-  A('demo-acme', 'Acme Corp', 'acmecorp.com', 480000, 'Negotiation', 'Sarah Chen', 'high', 74, at(12, 31), 192, ['Exec Unresponsive', '8d Dark', 'Champion at Risk']),
-  A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 68, at(3, 30), 120, ['Timeline Slip']),
+  A('demo-acme', 'Acme Corp', 'acmecorp.com', 480000, 'Negotiation', 'Sarah Chen', 'high', 36, at(12, 31), 192, ['Exec Unresponsive', '8d Dark', 'Champion at Risk']),
+  A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 58, at(3, 30), 120, ['Timeline Slip']),
   A('demo-nexus', 'Nexus AI', 'nexus.ai', 320000, 'Closing', 'Marcus Webb', 'low', 91, at(1, 15), 20, ['Legal Clearing', 'PO Expected']),
   A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jamie Torres', 'medium', 61, at(2, 1), 72, ['Price Flinch', 'Finance Review']),
-  A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Andy G', 'low', 84, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
-  A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Andy G', 'high', 41, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
-  A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Mike Ross', 'medium', 58, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
+  A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Andy G', 'low', 82, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
+  A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Andy G', 'high', 38, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
+  A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Mike Ross', 'medium', 59, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
   A('demo-cobalt', 'Cobalt Health', 'cobalthealth.com', 150000, 'Closed Won', 'Jamie Torres', 'low', 95, at(12, 20), 48, ['Contract Signed', 'Onboarding Started']),
   // ninth account, from the mobile Portfolio / Team / Intelligence screens
-  A('demo-vertex', 'Vertex Systems', 'vertexsystems.com', 175000, 'Proposal', 'Dana Kim', 'low', 84, at(1, 28), 48, ['Legal Review', 'Close Jan 28']),
+  A('demo-vertex', 'Vertex Systems', 'vertexsystems.com', 175000, 'Proposal', 'Dana Kim', 'low', 82, at(1, 28), 48, ['Legal Review', 'Close Jan 28']),
 ]
 
 // ---------------------------------------------------------------- signals

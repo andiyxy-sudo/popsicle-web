@@ -68,3 +68,20 @@ export function integrationLabel(provider: string): string {
 export function stripEmDash(text: string): string {
   return text.replace(/[--]/g, ' - ')
 }
+
+
+// ---------------------------------------------------------------------------
+// Health scale, used everywhere a health score, churn risk or risk level is coloured.
+//   health  >= 70  green    40..69 amber    < 40 red
+//   churn risk % is the inverse: < 30 green, 30..60 amber, > 60 red
+//   risk level maps onto the same bands: low = green, medium = amber, high = red
+// ---------------------------------------------------------------------------
+export const TONE = { good: 'var(--good, #2f8f5b)', warn: 'var(--warn, #d38b1d)', critical: 'var(--critical, #c43d2b)' } as const
+export function healthTone(score: number | null | undefined): string {
+  if (score == null || Number.isNaN(Number(score))) return 'var(--ink-faint, #A09C97)'
+  const s = Number(score)
+  return s >= 70 ? TONE.good : s >= 40 ? TONE.warn : TONE.critical
+}
+export function churnTone(pct: number | null | undefined): string { return pct == null ? 'var(--ink-faint, #A09C97)' : healthTone(100 - Number(pct)) }
+export function riskTone(level: string | null | undefined): string { return level === 'high' ? TONE.critical : level === 'medium' ? TONE.warn : level === 'low' ? TONE.good : 'var(--ink-faint, #A09C97)' }
+export function riskFromHealth(score: number | null | undefined): 'high' | 'medium' | 'low' { const s = Number(score ?? 0); return s >= 70 ? 'low' : s >= 40 ? 'medium' : 'high' }
