@@ -874,7 +874,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         }
         return (
           <>
-            <div style={{ height: 1, background: 'var(--hairline, #EFEAE1)', marginTop: 40 }} />
+            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', opacity: .7, marginTop: 40 }} />
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
