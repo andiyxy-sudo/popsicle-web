@@ -44,7 +44,11 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
 
   const dated = accounts.filter(a => a.close_date && a.value)
   const rows = dated.map(a => {
-    const w = weightOf(a.stage)
+    // HubSpot deals carry their own probability (0-100) and close date; use them
+    // when present, otherwise fall back to the stage weights above
+    const hs = a as Account & { probability?: number | null; hs_probability?: number | null }
+    const p = hs.probability ?? hs.hs_probability
+    const w = typeof p === 'number' && p >= 0 && p <= 100 ? p / 100 : weightOf(a.stage)
     const risky = (highBy.get(a.name) ?? 0) > 0
     const value = Number(a.value) || 0
     return { a, value, weighted: value * w * (risky ? .6 : 1), w, risky, month: monthKey(a.close_date!) }
@@ -212,7 +216,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
               { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
               { n: formatCurrency(atRiskF), lbl: `pipeline exposed · ${riskyDeals} deals`, color: 'var(--critical, #c43d2b)' },
               { n: String(dealsToClose), lbl: 'deals to close · 30 days', color: 'var(--ink)' },
-              { n: `${accuracyPct}%`, lbl: 'AI accuracy · ▲ 3%/qtr', color: 'var(--ink)' },
+              { n: `${accuracyPct}%`, lbl: demoFigures ? 'AI accuracy · ▲ 3%/qtr' : 'AI accuracy · estimate until 2 closed quarters', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
                 <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>

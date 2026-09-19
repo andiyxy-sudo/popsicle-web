@@ -60,13 +60,11 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const [draftName, setDraftName] = useState(displayName)
   const [draftTz, setDraftTz] = useState('')
   const [draftRole, setDraftRole] = useState(displayRole)
-  const meta = user as { timezone?: string; work_start?: string; work_end?: string; digest_time?: string; notify_slack?: boolean; notify_email?: boolean }
+  const meta = user as { timezone?: string; work_start?: string; work_end?: string; digest_time?: string }
   const [tzPick, setTzPick] = useState(meta.timezone ?? '')
   const [workStart, setWorkStart] = useState(meta.work_start ?? '09:00')
   const [workEnd, setWorkEnd] = useState(meta.work_end ?? '18:00')
   const [digestTime, setDigestTime] = useState(meta.digest_time ?? '08:00')
-  const [notifySlack, setNotifySlack] = useState(meta.notify_slack ?? true)
-  const [notifyEmail, setNotifyEmail] = useState(meta.notify_email ?? true)
   // Security: which sign-in methods the account has, and whether a password is set.
   // Loaded when the sheet opens (identities are not in the session claims).
   type PwMode = 'change' | 'set' | 'oauth' | 'loading'
@@ -154,7 +152,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
     setSaving(true)
     // Name lives on the auth user's metadata; email changes are an auth flow,
     // so this panel shows the address rather than pretending to edit it.
-    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, timezone: tzPick || draftTz, work_start: workStart, work_end: workEnd, digest_time: digestTime, notify_slack: notifySlack, notify_email: notifyEmail } }).catch(() => {})
+    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, timezone: tzPick || draftTz, work_start: workStart, work_end: workEnd, digest_time: digestTime } }).catch(() => {})
     setSaving(false); setSaved(true)
     router.refresh()
     setTimeout(() => setProfileOpen(false), 700)
@@ -279,14 +277,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 </div>
                 <input type="time" value={digestTime} onChange={e => setDigestTime(e.target.value)} style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
               </div>
-              {([['Slack DMs for critical signals', notifySlack, setNotifySlack], ['Email for handled and snoozed signals', notifyEmail, setNotifyEmail]] as Array<[string, boolean, (v: boolean) => void]>).map(([label, on, set]) => (
-                <div key={label} onClick={() => set(!on)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-                  <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
-                  <span style={{ width: 38, height: 22, borderRadius: 999, background: on ? 'var(--accent, #E85A25)' : 'var(--hairline, #EFEAE1)', position: 'relative', transition: 'background .15s ease', flex: 'none' }}>
-                    <span style={{ position: 'absolute', top: 3, left: on ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .15s ease', boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
-                  </span>
-                </div>
-              ))}
+              {/* notification toggles live on the Settings page */}
             </div>
 
             {/* Security */}

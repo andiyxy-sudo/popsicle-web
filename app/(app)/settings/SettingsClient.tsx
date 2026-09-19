@@ -22,7 +22,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [tz, setTz] = useState('')
   const [integrations, setIntegrations] = useState<string[]>([])
   const [counts, setCounts] = useState<{ signals: number; accounts: number } | null>(null)
-  const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true, push: false, emailDigest: false })
+  const [notifs, setNotifs] = useState<Record<string, boolean>>({ risk: true, digest: true, brief: true, push: false, emailDigest: false, slackCritical: true, emailHandled: true })
   const [digestTime, setDigestTime] = useState('07:00')
   const [voice, setVoice] = useState<Record<string, string>>({ Tone: 'Direct', Length: 'Short', 'Sign-off': 'Best, Andy' })
   const [autoSend, setAutoSend] = useState(false)
@@ -260,7 +260,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
            ['digest', 'Weekly summary', `Mondays at ${digestTime}, on the Pulse screen`],
            ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings'],
            ['push', 'Push notifications', typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Allowed in this browser' : 'Needs browser permission'],
-           ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled']] as const).map(([k, label, sub]) => (
+           ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled'],
+           ['slackCritical', 'Slack DMs for critical signals', 'A direct message the moment an at-risk signal lands'],
+           ['emailHandled', 'Email for handled and snoozed signals', 'A short confirmation when a signal is closed or parked']] as const).map(([k, label, sub]) => (
           <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
             <div>
               <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>

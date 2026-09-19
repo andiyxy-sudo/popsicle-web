@@ -125,7 +125,7 @@ Always label the closing block exactly "RECOMMENDED PLAY:" and never "Recommende
 Write the play as one instruction sentence first, then at most two short supporting sentences: what to say, and when. Never pack several instructions into a single sentence.
 When you suggest exact wording to send - an opening line, a subject, a short message - put that wording on its own line wrapped in double quotes and nothing else on that line, so it can be copied cleanly.
 
-Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. Never invent figures. Only list sources that genuinely appear in the context above.
+Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. No emoji anywhere. No markdown headings with #; a section label is a short line ending with a colon. When ranking accounts, write each as "1. Account, short headline ($figure)" on its own line with at most three bullets under it, each opening with a two-word bold lead such as **Why first:**. Quotes in plain double quotes, no italics. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()
 
   return runAnthropic(contextBlock, messages, wantStream)

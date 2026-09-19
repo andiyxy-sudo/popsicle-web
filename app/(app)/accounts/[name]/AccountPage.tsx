@@ -14,7 +14,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 export type DemoSlices = { people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
-type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
+type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
 type Acct = { id?: string; name: string; domain?: string | null; value?: number | null; stage?: string | null; owner?: string | null; health_score?: number | null; risk_level?: string | null; close_date?: string | null; last_contact_date?: string | null; contact_name?: string }
 
@@ -320,6 +320,22 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         let lastMonth = ''
         return (
           <div style={{ marginTop: 20 }}>
+            {(() => {
+              const done = sorted.filter(x => x.status === 'handled')
+              if (!done.length) return null
+              return (
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Actions taken on this account · {done.length}</div>
+                  {done.map(x => (
+                    <div key={`log-${x.id}`} style={{ display: 'grid', gridTemplateColumns: '58px minmax(0,1fr) auto', gap: 12, alignItems: 'baseline', padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{mounted && x.handled_at ? new Date(x.handled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
+                      <span style={{ fontSize: 14, color: 'var(--ink)' }}><span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>{x.handled_action || 'Handled'}</span><span style={{ color: 'var(--ink-faint)' }}> · </span><span style={{ color: 'var(--ink-muted)' }}>{x.title}</span></span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{x.source_integration ? `via ${x.source_integration}` : ''}</span>
+                    </div>
+                  ))}
+                </div>
+              )
+            })()}
             <div style={{ fontSize: 13.5, color: 'var(--ink-faint)', marginBottom: 6 }}>
               {sorted.length} signal{sorted.length === 1 ? '' : 's'} · {sorted.filter(x => x.status === 'handled').length} handled · newest first
             </div>

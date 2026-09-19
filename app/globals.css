@@ -2518,6 +2518,13 @@ body { background: var(--bg) !important; }
 .tbl-row::before { content: ''; position: absolute; inset: 1px -14px 0 -14px; border-radius: 8px; background: var(--inset, #F4F0E8); opacity: 0; transition: opacity .15s ease; z-index: -1; pointer-events: none; }
 .tbl-row:hover::before { opacity: 1; }
 
+/* v11.41: live signal toasts */
+.live-toast { animation: toastIn .42s cubic-bezier(.2,.9,.25,1.15) both; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.live-toast-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; animation: toastLife 9s linear both; opacity: .35; }
+@keyframes toastLife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .live-toast, .live-toast-bar { animation: none; } }
+
 /* v11.14: Ask quick-action cards */
 .ask-quick:hover { background: var(--accent-tint, #FFF1EA) !important; }
 .ask-quick:hover .ask-suggest-arrow { transform: translateX(3px); }

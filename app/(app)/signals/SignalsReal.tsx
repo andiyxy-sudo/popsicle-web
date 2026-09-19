@@ -395,7 +395,10 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   const posValue = positive.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
   const newest = mounted && signals[0]?.created_at ? timeAgo(signals[0].created_at) : ''
   const srcCount = new Set(signals.map(x => x.source_integration).filter(Boolean)).size
-  const shown = filter === 'critical' ? critical : filter === 'watch' ? watch : filter === 'positive' ? positive : [...critical, ...watch, ...positive]
+  // handled signals leave the live list and collect in the Recently handled strip below
+  const handledList = [...signals].filter(s => s.status === 'handled').sort((a, b) => String(b.handled_at ?? '').localeCompare(String(a.handled_at ?? '')))
+  const shownAll = (filter === 'critical' ? critical : filter === 'watch' ? watch : filter === 'positive' ? positive : [...critical, ...watch, ...positive])
+  const shown = shownAll.filter(s => s.status !== 'handled')
   const ACTION_LABEL: Record<string, string> = {
     silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
     competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
@@ -548,6 +551,30 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
         <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask AI to prioritise →</span>
       </div>
+
+      {/* Recently handled: what was done, by when, so actions have somewhere to be seen */}
+      {handledList.length > 0 && (
+        <div style={{ marginTop: 52 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recently handled</h2>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>
+          </div>
+          {handledList.slice(0, 6).map(s => (
+            <div key={s.id} className="tbl-row" onClick={() => setDetailFor(s)}
+              style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+              <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800, fontSize: 13 }}>✓</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{s.account_name || 'Signal'}</span>
+                  <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{s.title}</span>
+                </div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--good, #2f8f5b)', marginTop: 5, textTransform: 'uppercase', letterSpacing: '1px' }}>{s.handled_action || 'handled'}</div>
+              </div>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{mounted && s.handled_at ? timeAgo(s.handled_at) : ''}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Row-action popups: schedule, map contact, close out */}
       {rowAction && (() => {
