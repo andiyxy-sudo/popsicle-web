@@ -143,7 +143,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(240px,1fr)', gap: 56, marginTop: 30 }}>
           <div>
-            <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginBottom: 34 }}>
+            <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', paddingBottom: 22, marginBottom: 26, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               {flags.map((f, i) => (
                 <span key={i} onClick={() => setFlag(buildFlag(accountName, [f.sig], risk, href => router.push(href)))}
                   title="Why this flag"
@@ -153,7 +153,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
               ))}
               {flags.length === 0 && <span style={{ fontSize: 13.5, color: 'var(--ink-faint)' }}>No open flags.</span>}
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 6 }}>AI risk signals</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk signals</div>
             {demo.riskLines?.map((r, i) => {
               const c = r.tone === 'high' ? 'var(--critical, #c43d2b)' : r.tone === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
               return (
