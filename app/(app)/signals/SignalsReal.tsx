@@ -2,6 +2,8 @@
 
 import type { DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { DateField } from '@/components/ui/DateField'
+import { useEscape } from '@/components/ui/useEscape'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
@@ -92,6 +94,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   const [statHover, setStatHover] = useState<number | null>(null)   // strong underline follows the pointer
   useEffect(() => { setMounted(true) }, [])
   const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
+  useEscape(!!detailFor || !!draftFor || !!rowAction, () => { if (rowAction) setRowAction(null); else if (draftFor) setDraftFor(null); else setDetailFor(null) })
   const [handleText, setHandleText] = useState('')
   const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
   const [assignPick, setAssignPick] = useState('')
@@ -679,7 +682,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                         </div>
                       ))}
                     </div>
-                    {closeMode === 'reset' && <input type="date" value={closeDate} onChange={e => setCloseDate(e.target.value)} style={{ ...inputStyle, marginTop: 14 }} />}
+                    {closeMode === 'reset' && <div style={{ marginTop: 14 }}><DateField value={closeDate} onChange={setCloseDate} placeholder="New date" /></div>}
                     <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
                       {ghost('Cancel', close)}
                       {closeMode === 'done'

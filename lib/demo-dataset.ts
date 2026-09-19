@@ -497,6 +497,25 @@ export const DEMO_BASELINES = [
 
 // contracts kept from the earlier extraction
 export const DEMO_CONTRACTS: Record<string, Array<{ name: string; type: string; status: string; value: string; po: string; start: string; end: string; invoice: string }>> = {
+  // drafted from each account's timeline and comms (v11.59)
+  'Meridian Labs': [
+    { name: 'Enterprise Platform', type: 'Annual subscription · proposed', status: 'PENDING EXEC SIGN-OFF', value: '$850K', po: 'Not raised', start: 'Apr 1, 2027', end: 'Mar 31, 2028', invoice: 'Budget pre-approved in the Q2 cycle; decision escalated to VP level' },
+  ],
+  'Brightwave': [
+    { name: 'Growth Plan', type: 'Annual subscription', status: 'IN REVIEW', value: '$180K', po: 'Pending', start: 'Mar 1, 2027', end: 'Feb 28, 2028', invoice: 'Tom Okafor reviewing terms; internal approval expected by Friday' },
+  ],
+  'Axion Partners': [
+    { name: 'Enterprise License', type: 'Annual subscription · redline', status: 'LEGAL HOLD', value: '$95K', po: 'Blocked', start: 'TBD', end: 'TBD', invoice: 'SOC2 Type II, penetration test results and DPA required before PO' },
+  ],
+  'TechFlow Inc': [
+    { name: 'Growth Plan, phased', type: '60/40 phased annual', status: 'PROPOSAL SENT', value: '$210K', po: 'Not raised', start: 'Feb 1, 2027', end: 'Jan 31, 2028', invoice: 'Phased pricing option sent; CFO ROI calculator attached' },
+  ],
+  'TechVault Inc': [
+    { name: 'Growth Plan, phased', type: '60% start, expand after ROI', status: 'AWAITING CFO', value: '$140K', po: 'Not raised', start: 'Mar 15, 2027', end: 'Mar 14, 2028', invoice: 'ROI package delivered; finance review requested by Kevin Cho' },
+  ],
+  'Vertex Systems': [
+    { name: '50-seat Deployment', type: 'Annual subscription', status: 'CONTRACT REVIEW', value: '$175K', po: 'Pending', start: 'Feb 1, 2027', end: 'Jan 31, 2028', invoice: 'Legal received the contract last week; close target Jan 28' },
+  ],
   'Acme Corp': [
     { name: 'Enterprise License', type: 'Annual subscription', status: 'RENEWAL DUE', value: '$480K', po: 'PO-2026-0418', start: 'Jan 1, 2026', end: 'Dec 31, 2026', invoice: 'Last invoice paid Nov 2, 2026' },
   ],

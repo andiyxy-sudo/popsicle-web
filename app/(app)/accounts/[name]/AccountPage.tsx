@@ -1,6 +1,7 @@
 'use client'
 
 import { healthTone } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 // Account 360 as a full page, matching the design: breadcrumb, name + ARR,
 // four stats with a health sparkline, five tabs, and an Overview built from
@@ -123,6 +124,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
             <path d={`M${spark}`} fill="none" stroke={riskColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </>, open.length ? `${open.length} open signal${open.length === 1 ? '' : 's'}` : 'no open signals')}
+        {stat('Churn risk', `${Math.max(0, Math.min(100, 100 - health))}%`, health >= 70 ? 'low' : health >= 40 ? 'medium' : 'high', healthTone(health))}
         {stat('Renewal', extra?.expiry ?? (acct.close_date && mounted ? new Date(acct.close_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--'), acct.stage || '')}
         {extra && stat('Trend', extra.trend, `rep score ${extra.repScore}`, extra.trend.startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)')}
         {stat('Exposure', money(open.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)), `${open.filter(s => s.severity === 'high').length} critical`, riskColor)}
@@ -290,6 +292,55 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       })()}
 
       {/* TIMELINE */}
+      {tab === 'people' && (() => {
+        if (!people.length) return <EmptyState line="No contacts mapped yet." hint="Contacts appear as Popsicle sees who writes, who is copied and who decides. You can add one from the account slide-over." />
+        const badgeColor = (b: string) => /CHAMPION|SPONSOR|POWER/.test(b) ? 'var(--good, #2f8f5b)' : /BLOCKER|DECISION/.test(b) ? 'var(--critical, #c43d2b)' : /UNKNOWN/.test(b) ? 'var(--ink-faint)' : 'var(--warn, #d38b1d)'
+        return (
+          <div style={{ marginTop: 8 }}>
+            {people.map(p => (
+              <div key={p.name} style={{ display: 'grid', gridTemplateColumns: '44px minmax(0,1fr) 150px', gap: 18, alignItems: 'start', padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <span style={{ width: 44, height: 44, borderRadius: '50%', background: healthTone(p.eng), opacity: .9, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 14 }}>{p.name.split(' ').map(x => x[0]).join('').slice(0, 2)}</span>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
+                    <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{p.role}</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', color: badgeColor(p.badge) }}>{p.badge}</span>
+                  </div>
+                  <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.55, marginTop: 6, maxWidth: 620 }}>{p.desc}</div>
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}><span>{p.status}{p.last && p.last !== 'never' ? ` · ${p.last}` : ''}</span><span style={{ color: healthTone(p.eng) }}>{p.eng}%</span></div>
+                  <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 8, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${p.eng}%`, background: healthTone(p.eng) }} /></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+
+      {tab === 'contracts' && (() => {
+        if (!contracts.length) return <EmptyState line="No contracts on file." hint="Contracts show up here once HubSpot or your billing system is connected, or when a signed agreement is attached to the account." />
+        const tone = (st: string) => /HOLD|BLOCK/.test(st) ? 'var(--critical, #c43d2b)' : /DUE|PENDING|AWAITING|REVIEW|LEGAL|SENT/.test(st) ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
+        return (
+          <div style={{ marginTop: 8 }}>
+            {contracts.map(c => (
+              <div key={c.name} style={{ padding: '22px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)' }}>{c.name}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', color: tone(c.status) }}>{c.status}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.03em', color: 'var(--ink)' }}>{c.value}</span>
+                </div>
+                <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{c.type}</div>
+                <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginTop: 12, fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
+                  <span>{c.po}</span><span>{c.start} → {c.end}</span>
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 10, lineHeight: 1.55 }}>{c.invoice}</div>
+              </div>
+            ))}
+          </div>
+        )
+      })()}
+
       {tab === 'timeline' && demo.timeline && (
         <div style={{ marginTop: 22 }}>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Deal timeline</div>
@@ -317,7 +368,8 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       )}
       {tab === 'timeline' && !demo.timeline && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-        if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
+        if (!sorted.length) return <EmptyState line="No timeline yet." hint="Every signal, call and commitment on this account lands here in order." />
+        if (false) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
         const monthOf = (iso?: string | null) => iso && mounted ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''
         let lastMonth = ''
         return (

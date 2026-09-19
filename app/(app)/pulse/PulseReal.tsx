@@ -8,6 +8,7 @@ import { attentionScore } from '@/lib/attention'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import type { Account, Signal } from '@/types'
 import { CountUp } from '@/components/ui/CountUp'
+import { useEscape } from '@/components/ui/useEscape'
 import { healthTone, formatCurrency, formatRelativeTime } from '@/lib/utils'
 
 export type PulseStrip = {
@@ -719,6 +720,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [inboxOpen, setInboxOpen] = useState(false)
+  useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
 
   const narrative = (() => {
@@ -729,7 +731,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         Pipeline health is <span style={{ color: 'var(--accent-hot, #FF6B35)' }}>{health}</span>{deltaTxt}.{' '}
         <span style={{ color: 'var(--ink-muted)' }}>
           {atRiskTotal > 0 && riskAccts > 0
-            ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRiskTotal)}</span> of risk{highs.length > 0 ? ' and need you today' : ''}.</>
+            ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRiskTotal)}</span> of risk{highs.length > 0 ? <> and need <span style={{ color: 'var(--good, #2f8f5b)' }}>you</span> today</> : null}.</>
             : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
             : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
             : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
@@ -938,7 +940,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           {activityRows.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--wash, #F4F0E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
+              <div className="read-prose read-prose-ink" style={{ flex: 1, minWidth: 0 }}>
                 {sg.status === 'handled' && <span style={{ color: 'var(--good)', fontWeight: 800 }}>✓ </span>}
                 {sg.account_name ? <strong style={{ fontWeight: 600 }}>{sg.account_name}</strong> : null}{sg.account_name ? ', ' : ''}{sg.title}
               </div>
@@ -981,8 +983,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <>
               {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-                <span>Stage</span><span>Top Signal</span><span>Touch</span><span />
+                <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
+                <span style={{ textAlign: 'center' }}>Stage</span><span>Top Signal</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span>
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
@@ -991,16 +993,16 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
                     <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
                   </div>
-                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)', letterSpacing: 'normal' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
+                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)', letterSpacing: 'normal', textAlign: 'center' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start', cursor: 'pointer',
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'center', cursor: 'pointer',
                     padding: '3px 10px', borderRadius: 0, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.02em', color: riskColor[risk] }}>{risk === 'medium' ? 'Med' : risk === 'high' ? 'High' : 'Low'}</span>
                   </span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{a.stage || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)', textAlign: 'center' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, letterSpacing: 'normal', color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-faint)' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts/${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
 import { healthTone } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 import { buildA360 } from '@/lib/demo-accounts'
@@ -244,9 +245,10 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         return (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-              <span>Stage</span><span>Signal</span><span>Owner</span><span>Trend</span><span>Touch</span><span>Actions</span>
+              <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
+              <span style={{ textAlign: 'center' }}>Stage</span><span>Signal</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span>
             </div>
+            {ordered.length === 0 && <EmptyState line={view === 'all' ? 'No accounts yet.' : `Nothing ${view === 'high' ? 'high risk' : view} right now.`} hint={view === 'all' ? 'Let Popsicle scan your inbox and find the companies worth tracking.' : 'Switch the view, or wait for the next signal.'} compact />}
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)
@@ -260,20 +262,20 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
                     <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
                   </div>
-                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
+                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)', textAlign: 'center' }}>{fmtVal(a.value)}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'start',
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'center',
                       padding: '3px 10px', borderRadius: 0, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
+                    <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '.02em', color: riskColor[risk] }}>{risk === 'medium' ? 'Med' : risk === 'high' ? 'High' : 'Low'}</span>
                   </span>
-                  <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)', textAlign: 'center' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{meta[a.name]?.rep ?? '--'}</span>
-                  <span style={{ ...cell, fontFamily: "'DM Mono',monospace", fontSize: 12, color: (meta[a.name]?.trend ?? '').startsWith('-') ? 'var(--critical, #c43d2b)' : (meta[a.name]?.trend ?? '').startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }}>{meta[a.name]?.trend ? `${(meta[a.name].trend!.startsWith('-') ? '↘ ' : '↗ ')}${meta[a.name].trend}` : '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)', textAlign: 'center' }}>{meta[a.name]?.rep ?? '--'}</span>
+                  <span style={{ ...cell, textAlign: 'center', fontSize: 13, color: (meta[a.name]?.trend ?? '').startsWith('-') ? 'var(--critical, #c43d2b)' : (meta[a.name]?.trend ?? '').startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }}>{meta[a.name]?.trend ? `${(meta[a.name].trend!.startsWith('-') ? '↘ ' : '↗ ')}${meta[a.name].trend}` : '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
                   <button onClick={e => { e.stopPropagation(); if (top) router.push(`/signals?signal=${top.id}&action=reply`); else openA360(a) }}
-                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, justifySelf: 'center', padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>
                 </div>

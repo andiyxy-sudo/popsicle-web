@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Account, Signal } from '@/types'
 import { PageHead } from '@/components/layout/PageHead'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
 
 const STAGE_WEIGHT: Array<[RegExp, number]> = [
@@ -81,9 +82,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       <div className="dsk-screen on">
         <PageHead eyebrow="Forecast" crumb="no close dates yet"
           title={<>Nothing to forecast yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Accounts need a close date and a value before they can be projected.</span></>} />
-        <div style={{ fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.6, maxWidth: 620 }}>
-          Connect HubSpot, or set close dates on your accounts, and this screen fills in with weighted pipeline by month.
-        </div>
+        <EmptyState line="Connect HubSpot, or set close dates on your accounts." hint="This screen then fills in with weighted pipeline by month, what moves the number, and the scenario model." action="Open integrations" onAction={() => router.push('/integrations')} />
       </div>
     )
   }
@@ -415,47 +414,32 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         </div>
       </div>
 
-      {secHead('By close month', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'inline-flex', gap: 16 }}>
-        <span><span style={{ display: 'inline-block', width: 10, height: 10, background: 'linear-gradient(90deg, #FF8A50, var(--accent, #E85A25))', marginRight: 6, verticalAlign: 'middle' }} />expected</span>
-        <span><span style={{ display: 'inline-block', width: 10, height: 10, background: 'rgba(232,90,37,.16)', marginRight: 6, verticalAlign: 'middle' }} />upside</span>
-        <span><span style={{ display: 'inline-block', width: 10, height: 10, backgroundImage: 'repeating-linear-gradient(135deg, rgba(196,61,43,.75) 0 2px, rgba(196,61,43,.15) 2px 4px)', marginRight: 6, verticalAlign: 'middle' }} />at risk</span>
-      </span>)}
-      {/* One row per month. The bar is the whole month's pipeline; the solid part is what
-          the model expects to land, the light part is upside, the hatched end is the slice
-          sitting on at-risk deals. Deal chips underneath explain the number. */}
+      {secHead('By close month', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>expected of total · at-risk deals in red</span>)}
+      {/* Three columns per month: the month, a single two-tone bar (expected vs the rest),
+          and the figures. Deals are listed by name only; at-risk ones are red. */}
       {months.map(([k, m]) => {
-        const pct = (v: number) => Math.max(0, Math.min(100, (v / maxMonth) * 100))
         const cover = m.value > 0 ? Math.round((m.weighted / m.value) * 100) : 0
-        const upside = Math.max(0, m.value - m.weighted)
+        const widthTotal = Math.max(0, Math.min(100, (m.value / maxMonth) * 100))
         return (
-          <div key={k} style={{ padding: '26px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 24, flexWrap: 'wrap' }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-                <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 19, letterSpacing: '-.025em', color: 'var(--ink)' }}>{monthLabel(k)}</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{m.n} deal{m.n === 1 ? '' : 's'}</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: 18 }}>
-                <span><span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: 'var(--accent)' }}>{formatCurrency(m.weighted)}</span> <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>expected</span></span>
-                <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>of <span style={{ color: 'var(--ink)', fontWeight: 600 }}>{formatCurrency(m.value)}</span></span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: cover >= 60 ? 'var(--good, #2f8f5b)' : cover >= 35 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)' }}>{cover}% confidence</span>
+          <div key={k} className="g3" style={{ display: 'grid', gridTemplateColumns: 'minmax(150px,.7fr) minmax(220px,1.6fr) minmax(180px,.8fr)', gap: 40, alignItems: 'center', padding: '22px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 18, letterSpacing: '-.025em', color: 'var(--ink)' }}>{monthLabel(k)}</div>
+              <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 4, lineHeight: 1.5 }}>
+                {m.deals.sort((a, b) => b.value - a.value).map((d, i) => (
+                  <span key={d.a.id}>
+                    <span onClick={() => router.push(`/accounts/${encodeURIComponent(d.a.name)}`)} style={{ cursor: 'pointer', color: d.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{d.a.name}</span>{i < m.deals.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
               </div>
             </div>
-            <div style={{ height: 14, background: 'var(--inset, #F4F0E8)', position: 'relative', marginTop: 14, overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${pct(m.value)}%`, background: 'rgba(232,90,37,.16)' }} />
-              {m.risk > 0 && <div style={{ position: 'absolute', top: 0, bottom: 0, left: `${pct(m.value) - pct(m.risk)}%`, width: `${pct(m.risk)}%`, backgroundImage: 'repeating-linear-gradient(135deg, rgba(196,61,43,.75) 0 3px, rgba(196,61,43,.15) 3px 7px)' }} />}
-              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${pct(m.weighted)}%`, background: 'linear-gradient(90deg, #FF8A50, var(--accent, #E85A25))' }} />
-              {pct(m.weighted) > 14 && <span style={{ position: 'absolute', left: 8, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1px', textTransform: 'uppercase', color: '#fff' }}>expected</span>}
-              {upside > 0 && pct(m.value) - pct(m.weighted) > 14 && <span style={{ position: 'absolute', left: `calc(${pct(m.weighted)}% + 8px)`, top: 0, bottom: 0, display: 'flex', alignItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--accent)' }}>upside {formatCurrency(upside)}</span>}
+            <div style={{ height: 10, background: 'var(--inset, #F4F0E8)', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${widthTotal}%`, background: 'rgba(232,90,37,.18)' }} />
+              <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: `${widthTotal * (cover / 100)}%`, background: 'var(--accent, #E85A25)' }} />
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-              {m.deals.sort((a, b) => b.value - a.value).map(d => (
-                <span key={d.a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(d.a.name)}`)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--ink)', background: 'var(--inset, #F4F0E8)', padding: '6px 12px', cursor: 'pointer',
-                    borderLeft: `3px solid ${d.risky ? 'var(--critical, #c43d2b)' : d.w >= .6 ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'}` }}>
-                  <span style={{ fontWeight: 600 }}>{d.a.name}</span>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-muted)' }}>{formatCurrency(d.value)} · {Math.round(d.w * 100)}%{d.risky ? ' · at risk' : ''}</span>
-                </span>
-              ))}
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: 'var(--accent)' }}>{formatCurrency(m.weighted)}</span>
+              <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}> of {formatCurrency(m.value)}</span>
+              <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: cover >= 60 ? 'var(--good, #2f8f5b)' : cover >= 35 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)', marginTop: 4 }}>{cover}% expected{m.risk ? ` · ${formatCurrency(m.risk)} at risk` : ''}</div>
             </div>
           </div>
         )

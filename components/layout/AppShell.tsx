@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { LiveSignals } from './LiveSignals'
+import { CommandPalette } from './CommandPalette'
 import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -18,6 +19,9 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const [ask, setAsk] = useState('')
   const router = useRouter()
   const pathname = usePathname()
+  // the section-entrance animation plays only while this is set (navigation), never on re-renders
+  const [entering, setEntering] = useState(true)
+  useEffect(() => { setEntering(true); const t = setTimeout(() => setEntering(false), 800); return () => clearTimeout(t) }, [pathname])
   // Every route lands at the top: the scrollable column is .content, and
   // browser scroll anchoring + the entrance animation can otherwise leave it
   // a few pixels down on first paint.
@@ -62,8 +66,9 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
     <>
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
+      <CommandPalette demo={isDemo} />
       <div className="main" style={{ position: 'relative' }}>
-        <div className="content" ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
+        <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {/* warm corner wash (design shell). Lives inside the scroll column so
               it is pinned to the top of the page and scrolls away with it. */}
           <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(circle 760px at 90% -8%, rgba(255,138,80,.22), rgba(255,138,80,.09) 40%, rgba(255,138,80,0) 70%)' }} />
@@ -71,7 +76,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.58</span>
+            <span>v11.59</span>
           </footer>
         </div>
       </div>

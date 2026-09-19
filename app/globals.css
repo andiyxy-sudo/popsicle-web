@@ -2573,16 +2573,16 @@ body { background: var(--bg) !important; }
 /* fill-mode backwards: once a section has entered it carries no transform, so the
    fixed overlays inside it (settings sheets, inbox backdrop, signal modals) are
    positioned against the viewport, not the section */
-.dsk-screen.on > * { animation: screenIn .45s var(--spring-soft, cubic-bezier(.2,.8,.2,1)) backwards; }
-.dsk-screen.on > *:nth-child(1) { animation-delay: 0ms; }
-.dsk-screen.on > *:nth-child(2) { animation-delay: 40ms; }
-.dsk-screen.on > *:nth-child(3) { animation-delay: 80ms; }
-.dsk-screen.on > *:nth-child(4) { animation-delay: 120ms; }
-.dsk-screen.on > *:nth-child(5) { animation-delay: 160ms; }
-.dsk-screen.on > *:nth-child(6) { animation-delay: 200ms; }
-.dsk-screen.on > *:nth-child(n+7) { animation-delay: 220ms; }
+.content.entering .dsk-screen.on > * { animation: screenIn .45s var(--spring-soft, cubic-bezier(.2,.8,.2,1)) backwards; }
+.content.entering .dsk-screen.on > *:nth-child(1) { animation-delay: 0ms; }
+.content.entering .dsk-screen.on > *:nth-child(2) { animation-delay: 40ms; }
+.content.entering .dsk-screen.on > *:nth-child(3) { animation-delay: 80ms; }
+.content.entering .dsk-screen.on > *:nth-child(4) { animation-delay: 120ms; }
+.content.entering .dsk-screen.on > *:nth-child(5) { animation-delay: 160ms; }
+.content.entering .dsk-screen.on > *:nth-child(6) { animation-delay: 200ms; }
+.content.entering .dsk-screen.on > *:nth-child(n+7) { animation-delay: 220ms; }
 .dsk-screen.on { animation: none !important; }
-@media (prefers-reduced-motion: reduce) { .dsk-screen.on > * { animation: none !important; } }
+@media (prefers-reduced-motion: reduce) { .content.entering .dsk-screen.on > * { animation: none !important; } }
 
 /* v11.48: a faint echo of the warm wash behind the footer, and a glow on the Ask CTA */
 .ed-footer { position: relative; }
@@ -2590,3 +2590,10 @@ body { background: var(--bg) !important; }
   background: radial-gradient(ellipse 520px 160px at 100% 100%, rgba(255,138,80,.10), rgba(255,138,80,0) 70%); }
 .ed-askbar button { transition: box-shadow .18s ease, transform .18s ease; }
 .ed-askbar button:hover { box-shadow: 0 0 0 5px rgba(232,90,37,.14), 0 10px 24px -10px rgba(232,90,37,.6); transform: translateY(-1px); }
+
+
+/* v11.59: keyboard focus that looks designed. Mouse clicks keep the quiet look. */
+button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:focus-visible, .stat-cell:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent, #E85A25) !important; outline-offset: 2px !important; border-radius: 2px;
+}
+.tbl-row { outline: none; }

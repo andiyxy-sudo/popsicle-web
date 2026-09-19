@@ -4,7 +4,8 @@ export function cn(...classes: (string | undefined | null | false)[]) {
 
 export function formatCurrency(value: number | null | undefined): string {
   if (value == null) return '--'
-  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(1)}M`
+  // two decimals above $1M ($1.24M; a trailing zero is dropped, $1.2M), none below ($480K)
+  if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`
   if (value >= 1_000) return `$${(value / 1_000).toFixed(0)}K`
   return `$${value.toLocaleString()}`
 }

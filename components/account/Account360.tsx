@@ -13,6 +13,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 // Demo data is loaded on demand (dynamic import) so the slide-over, which is
 // mounted on every page, does not ship the whole demo dataset to every visitor.
+import { DateField } from '@/components/ui/DateField'
+import { useEscape } from '@/components/ui/useEscape'
 import type { DEMO_PEOPLE as DemoPeopleT, DEMO_CONTRACTS as DemoContractsT } from '@/lib/demo-dataset'
 
 // ---------- meeting-artifact classifier (port of _shared/messageArtifact.ts
@@ -152,7 +154,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
             <select value={newOwner} onChange={e => setNewOwner(e.target.value as 'us' | 'them')} style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 11.5, background: 'var(--bg, #FBF8F3)', color: 'var(--t1)' }}>
               <option value="us">We promised</option><option value="them">They promised</option>
             </select>
-            <input type="date" value={newDue} onChange={e => setNewDue(e.target.value)} style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--border)', fontSize: 11.5, background: 'var(--bg, #FBF8F3)', color: 'var(--t1)' }} />
+            <DateField value={newDue} onChange={setNewDue} placeholder="Due date" />
             {btn(busy === 'new' ? 'Saving...' : 'Save', addManual, true)}
           </div>
         </div>
@@ -214,6 +216,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
 export function Account360() {
   const router = useRouter()
   const [openFor, setOpenFor] = useState<{ id?: string; name: string } | null>(null)
+  useEscape(!!openFor, () => setOpenFor(null))
   const [data, setData] = useState<Payload | null>(null)
   const [loading, setLoading] = useState(false)
   const [demoPeople, setDemoPeople] = useState<(typeof DemoPeopleT)[string]>([])

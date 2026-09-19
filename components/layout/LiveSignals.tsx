@@ -57,22 +57,21 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
       {toasts.map(t => (
         <div key={t.id} className="live-toast"
           onClick={() => { if (t.account) window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, contact: '', stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: '--' } })); dismiss(t.id) }}
-          style={{ pointerEvents: 'auto', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, padding: '14px 16px 14px 18px', position: 'relative', overflow: 'hidden',
-            boxShadow: '0 18px 50px -20px rgba(14,13,11,.35), 0 2px 8px rgba(14,13,11,.06)', cursor: t.account ? 'pointer' : 'default' }}>
-          <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, background: color(t.severity) }} />
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-            <span className="live-dot" style={{ background: color(t.severity) }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.5px', textTransform: 'uppercase', color: color(t.severity) }}>New signal · {word(t.severity)}</span>
-            <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>{t.source ? `via ${SRC[t.source] ?? t.source}` : 'just now'}</span>
-            <button onClick={e => { e.stopPropagation(); dismiss(t.id) }} aria-label="Dismiss" style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 16, marginLeft: 4 }}>×</button>
+          style={{ pointerEvents: 'auto', background: 'var(--ink, #0E0D0B)', color: 'var(--paper, #FBF8F3)', padding: '16px 18px 16px 20px', position: 'relative', overflow: 'hidden',
+            boxShadow: '0 24px 60px -24px rgba(14,13,11,.6)', cursor: t.account ? 'pointer' : 'default', borderTop: `2px solid ${color(t.severity)}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span className="live-dot" style={{ background: color(t.severity), boxShadow: 'none' }} />
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(251,248,243,.55)' }}>New signal · <span style={{ color: color(t.severity) }}>{word(t.severity)}</span></span>
+            <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'rgba(251,248,243,.4)' }}>{t.source ? SRC[t.source] ?? t.source : 'now'}</span>
+            <button onClick={e => { e.stopPropagation(); dismiss(t.id) }} aria-label="Dismiss" style={{ font: 'inherit', background: 'none', border: 0, color: 'rgba(251,248,243,.5)', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 16, marginLeft: 6 }}>×</button>
           </div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 600, fontSize: 15, letterSpacing: '-.015em', color: 'var(--ink)', lineHeight: 1.35, marginTop: 8 }}>{t.title}</div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 600, fontSize: 15.5, letterSpacing: '-.015em', lineHeight: 1.35, marginTop: 10 }}>{t.title}</div>
           {(t.account || t.quote) && (
-            <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 5, lineHeight: 1.5 }}>
-              {t.account && <span style={{ color: 'var(--ink)' }}>{t.account}</span>}{t.account && t.quote ? <span style={{ color: 'var(--ink-faint)' }}> · </span> : null}{t.quote}
+            <div style={{ fontSize: 12.5, color: 'rgba(251,248,243,.6)', marginTop: 6, lineHeight: 1.5 }}>
+              {t.account && <span style={{ color: 'var(--paper, #FBF8F3)' }}>{t.account}</span>}{t.account && t.quote ? ' · ' : ''}{t.quote}
             </div>
           )}
-          <span className="live-toast-bar" style={{ background: color(t.severity) }} />
+          {t.account && <div style={{ fontSize: 12, fontWeight: 600, color: color(t.severity), marginTop: 12 }}>Open account →</div>}
         </div>
       ))}
     </div>

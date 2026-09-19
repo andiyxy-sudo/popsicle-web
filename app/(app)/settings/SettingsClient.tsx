@@ -5,11 +5,42 @@
 // does not exist (no billing, no seats, no fabricated device list).
 
 import { useEffect, useState } from 'react'
+import { TimeField } from '@/components/ui/TimeField'
+import { useEscape } from '@/components/ui/useEscape'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
 
 interface SettingsClientProps { user: { email: string; id: string } }
+
+// Hoisted out of the component: a component defined inside another remounts its
+// whole subtree on every render, which replayed the entrance animation on every toggle.
+const Section = ({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) => (
+    <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingLeft: 13 }}>
+      {/* rows carry 16px of top padding, so the label matches it */}
+      <div style={{ paddingTop: 16 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
+        <div className="read-prose" style={{ color: 'var(--ink-faint)', marginTop: 4, fontSize: 'inherit' }}>{sub}</div>
+      </div>
+      <div>{children}</div>
+    </div>
+  )
+
+
+const Row = ({ label, sub, value, onClick, danger }: { label: string; sub?: string; value?: React.ReactNode; onClick?: () => void; danger?: boolean }) => (
+    <div onClick={onClick}
+      className={onClick ? 'set-row' : undefined}
+      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontSize: 15, color: danger ? 'var(--critical, #c43d2b)' : 'var(--ink)' }}>{label}</div>
+        {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 9, color: onClick ? 'var(--ink)' : 'var(--ink-muted)', fontSize: 14, whiteSpace: 'nowrap' }}>
+        {value}
+        {onClick && <span style={{ color: 'var(--accent, #E85A25)', fontSize: 16, lineHeight: 1 }}>›</span>}
+      </div>
+    </div>
+  )
 
 export function SettingsClient({ user }: SettingsClientProps) {
   const router = useRouter()
@@ -85,6 +116,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
   }
   const [sheet, setSheet] = useState<string | null>(null)
+  useEscape(!!sheet, () => setSheet(null))
   const [prefs, setPrefs] = useState<Record<string, string>>({ Appearance: 'Light', Language: 'English (US)', Currency: 'USD' })
   const [copied, setCopied] = useState(false)
 
@@ -185,31 +217,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Email support': { title: 'Email support', sub: 'support@popsicle-labs.app', rows: [['Include', 'Workspace name and the account in question'], ['Alternative', 'Ask AI for instant answers']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText('support@popsicle-labs.app'); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
   }
 
-  const Section = ({ title, sub, children }: { title: string; sub: string; children: React.ReactNode }) => (
-    <div style={{ display: 'grid', gridTemplateColumns: '190px minmax(0,1fr)', gap: 32, marginTop: 48, paddingLeft: 13 }}>
-      {/* rows carry 16px of top padding, so the label matches it */}
-      <div style={{ paddingTop: 16 }}>
-        <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>{title}</div>
-        <div className="read-prose" style={{ color: 'var(--ink-faint)', marginTop: 4, fontSize: 'inherit' }}>{sub}</div>
-      </div>
-      <div>{children}</div>
-    </div>
-  )
-
-  const Row = ({ label, sub, value, onClick, danger }: { label: string; sub?: string; value?: React.ReactNode; onClick?: () => void; danger?: boolean }) => (
-    <div onClick={onClick}
-      className={onClick ? 'set-row' : undefined}
-      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: onClick ? 'pointer' : 'default' }}>
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 15, color: danger ? 'var(--critical, #c43d2b)' : 'var(--ink)' }}>{label}</div>
-        {sub && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>}
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, color: onClick ? 'var(--ink)' : 'var(--ink-muted)', fontSize: 14, whiteSpace: 'nowrap' }}>
-        {value}
-        {onClick && <span style={{ color: 'var(--accent, #E85A25)', fontSize: 16, lineHeight: 1 }}>›</span>}
-      </div>
-    </div>
-  )
 
   return (
     <div className="dsk-screen on">
@@ -252,11 +259,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
           </div>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: 'var(--ink)' }}>
-            <input type="time" value={workHours.start} onChange={e => { const v = { ...workHours, start: e.target.value }; setWorkHours(v); saveJson('work_start', v.start) }}
-              style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+            <TimeField value={workHours.start} onChange={val => { const v = { ...workHours, start: val }; setWorkHours(v); saveJson('work_start', v.start) }} />
             <span style={{ color: 'var(--ink-faint)' }}>to</span>
-            <input type="time" value={workHours.end} onChange={e => { const v = { ...workHours, end: e.target.value }; setWorkHours(v); saveJson('work_end', v.end) }}
-              style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+            <TimeField value={workHours.end} onChange={val => { const v = { ...workHours, end: val }; setWorkHours(v); saveJson('work_end', v.end) }} />
           </span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -264,8 +269,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Morning digest</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Overnight signals and today's meetings, once a day</div>
           </div>
-          <input type="time" value={morningDigest} onChange={e => { setMorningDigest(e.target.value); saveJson('morning_digest', e.target.value) }}
-            style={{ font: 'inherit', fontSize: 13, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 8, background: 'transparent', color: 'var(--ink)' }} />
+          <TimeField value={morningDigest} onChange={val => { setMorningDigest(val); saveJson('morning_digest', val) }} />
         </div>
       </Section>
 

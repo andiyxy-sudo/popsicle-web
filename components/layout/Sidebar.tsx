@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
+import { useEscape } from '@/components/ui/useEscape'
 
 interface SidebarProps {
   user: { email: string; id: string; name?: string; role?: string; avatar_url?: string }
@@ -57,6 +58,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
 
   const [profileOpen, setProfileOpen] = useState(false)
+  useEscape(profileOpen, () => setProfileOpen(false))
   const [draftName, setDraftName] = useState(displayName)
   const [draftTz, setDraftTz] = useState('')
   const [draftRole, setDraftRole] = useState(displayRole)

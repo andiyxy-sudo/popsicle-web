@@ -19,7 +19,8 @@ const QUICK = [
   { label: 'Gone quiet', sub: 'Accounts past their cadence', q: 'Which accounts have gone quiet past their normal reply cadence?' },
 ]
 
-const DEEP: Array<{ group: string; items: string[] }> = [
+// built once, only when the empty state first renders
+const deepCatalogue = (): Array<{ group: string; items: string[] }> => [
   { group: 'Risk analysis', items: [
     'Where is executive engagement declining?',
     'Which deals show accelerating churn signals?',
@@ -39,6 +40,8 @@ const DEEP: Array<{ group: string; items: string[] }> = [
     'Which drafts should I send before the week closes?',
   ] },
 ]
+let DEEP_CACHE: Array<{ group: string; items: string[] }> | null = null
+const DEEP = () => (DEEP_CACHE ??= deepCatalogue())
 const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
 
 // ---- markdown-lite renderer -------------------------------------------------
@@ -738,7 +741,7 @@ export function AskClient() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 40, paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>Or explore</div>
             <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: 3 }}>
-              {DEEP.map((sec, i) => (
+              {DEEP().map((sec, i) => (
                 <button key={sec.group} onClick={() => setDeepGroup(i)}
                   style={{ font: 'inherit', fontSize: 12.5, fontWeight: deepGroup === i ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
                     background: deepGroup === i ? 'var(--ink)' : 'transparent', color: deepGroup === i ? '#fff' : 'var(--ink-muted)', transition: 'background .15s ease, color .15s ease' }}>
@@ -748,7 +751,7 @@ export function AskClient() {
             </div>
           </div>
           <div key={deepGroup} className="fade-in">
-            {DEEP[deepGroup].items.map(q => (
+            {DEEP()[deepGroup].items.map(q => (
               <div key={q} onClick={() => send(q)} className="ask-suggest"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '15px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 15, color: 'var(--ink)' }}>
                 <span style={{ minWidth: 0 }}>{q}</span>
