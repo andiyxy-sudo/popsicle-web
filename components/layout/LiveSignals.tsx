@@ -57,21 +57,26 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
       {toasts.map(t => (
         <div key={t.id} className="live-toast"
           onClick={() => { if (t.account) window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, contact: '', stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: '--' } })); dismiss(t.id) }}
-          style={{ pointerEvents: 'auto', background: 'var(--ink, #0E0D0B)', color: 'var(--paper, #FBF8F3)', padding: '16px 18px 16px 20px', position: 'relative', overflow: 'hidden',
-            boxShadow: '0 24px 60px -24px rgba(14,13,11,.6)', cursor: t.account ? 'pointer' : 'default', borderTop: `2px solid ${color(t.severity)}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <span className="live-dot" style={{ background: color(t.severity), boxShadow: 'none' }} />
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(251,248,243,.55)' }}>New signal · <span style={{ color: color(t.severity) }}>{word(t.severity)}</span></span>
-            <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'rgba(251,248,243,.4)' }}>{t.source ? SRC[t.source] ?? t.source : 'now'}</span>
-            <button onClick={e => { e.stopPropagation(); dismiss(t.id) }} aria-label="Dismiss" style={{ font: 'inherit', background: 'none', border: 0, color: 'rgba(251,248,243,.5)', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 16, marginLeft: 6 }}>×</button>
+          style={{ pointerEvents: 'auto', position: 'relative', overflow: 'hidden', cursor: t.account ? 'pointer' : 'default',
+            background: 'rgba(251,248,243,.86)', backdropFilter: 'blur(14px) saturate(1.2)', WebkitBackdropFilter: 'blur(14px) saturate(1.2)',
+            border: '1px solid rgba(14,13,11,.08)', boxShadow: '0 30px 60px -28px rgba(14,13,11,.32), 0 1px 0 rgba(255,255,255,.6) inset', padding: '18px 20px 16px' }}>
+          {/* a soft tint of the severity colour in the top-right corner */}
+          <span aria-hidden style={{ position: 'absolute', right: -60, top: -60, width: 180, height: 180, borderRadius: '50%', background: color(t.severity), opacity: .10, filter: 'blur(28px)', pointerEvents: 'none' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, position: 'relative' }}>
+            <span className="live-dot" style={{ background: color(t.severity) }} />
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: color(t.severity) }}>{word(t.severity)}</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>· new signal{t.source ? ` · ${SRC[t.source] ?? t.source}` : ''}</span>
+            <button onClick={e => { e.stopPropagation(); dismiss(t.id) }} aria-label="Dismiss" style={{ marginLeft: 'auto', font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 17 }}>×</button>
           </div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 600, fontSize: 15.5, letterSpacing: '-.015em', lineHeight: 1.35, marginTop: 10 }}>{t.title}</div>
-          {(t.account || t.quote) && (
-            <div style={{ fontSize: 12.5, color: 'rgba(251,248,243,.6)', marginTop: 6, lineHeight: 1.5 }}>
-              {t.account && <span style={{ color: 'var(--paper, #FBF8F3)' }}>{t.account}</span>}{t.account && t.quote ? ' · ' : ''}{t.quote}
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 16, letterSpacing: '-.02em', lineHeight: 1.3, color: 'var(--ink)', marginTop: 10, position: 'relative' }}>{t.title}</div>
+          {t.quote && <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6, lineHeight: 1.5, position: 'relative' }}>{t.quote}</div>}
+          {t.account && (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(14,13,11,.08)', position: 'relative' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{t.account}</span>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)' }}>Open account →</span>
             </div>
           )}
-          {t.account && <div style={{ fontSize: 12, fontWeight: 600, color: color(t.severity), marginTop: 12 }}>Open account →</div>}
+          <span className="live-toast-bar" style={{ background: color(t.severity) }} />
         </div>
       ))}
     </div>

@@ -2526,9 +2526,9 @@ body { background: var(--bg) !important; }
 .tbl-row:hover::before { opacity: 1; }
 
 /* v11.41: live signal toasts */
-.live-toast { animation: toastIn .42s cubic-bezier(.2,.9,.25,1.15) both; }
-@keyframes toastIn { from { opacity: 0; transform: translateY(14px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.live-toast-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; animation: toastLife 9s linear both; opacity: .35; }
+.live-toast { animation: toastIn .5s cubic-bezier(.2,.9,.25,1.1) both; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(28px) scale(.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
+.live-toast-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; transform-origin: left; animation: toastLife 9s linear both; opacity: .55; }
 @keyframes toastLife { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .live-toast, .live-toast-bar { animation: none; } }
 
