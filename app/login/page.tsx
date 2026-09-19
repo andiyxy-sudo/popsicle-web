@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+
 import { createClient } from '@/lib/supabase/client'
 
 function pendingNext(): string {
@@ -11,7 +11,6 @@ function pendingNext(): string {
 }
 
 export default function LoginPage() {
-  const router = useRouter()
   const [mode, setMode] = useState<'signin' | 'signup'>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,8 +42,7 @@ export default function LoginPage() {
           setMode('signin')
           return
         }
-        router.push(pendingNext())
-        router.refresh()
+        window.location.assign(pendingNext())
         return
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password })
@@ -55,8 +53,7 @@ export default function LoginPage() {
         const factor = (f?.totp ?? []).find(x => x.status === 'verified')
         if (factor) { setMfa({ factorId: factor.id }); setLoading(false); return }
       }
-      router.push(pendingNext())
-      router.refresh()
+      window.location.assign(pendingNext())
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
@@ -73,8 +70,7 @@ export default function LoginPage() {
       if (chErr || !ch) throw chErr ?? new Error('Could not start the check')
       const { error } = await supabase.auth.mfa.verify({ factorId: mfa.factorId, challengeId: ch.id, code: mfaCode.trim() })
       if (error) throw new Error('That code did not match. Codes rotate every 30 seconds.')
-      router.push(pendingNext())
-      router.refresh()
+      window.location.assign(pendingNext())
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally { setLoading(false) }
@@ -111,8 +107,7 @@ export default function LoginPage() {
         password: 'demo1234',
       })
       if (error) throw error
-      router.push('/pulse')
-      router.refresh()
+      window.location.assign('/pulse')
     } catch {
       setError('Demo account unavailable right now.')
     } finally {
