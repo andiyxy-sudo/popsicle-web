@@ -2570,7 +2570,10 @@ body { background: var(--bg) !important; }
 
 
 /* v11.48: sections enter with a short stagger on navigation (first six children) */
-.dsk-screen.on > * { animation: screenIn .45s var(--spring-soft, cubic-bezier(.2,.8,.2,1)) both; }
+/* fill-mode backwards: once a section has entered it carries no transform, so the
+   fixed overlays inside it (settings sheets, inbox backdrop, signal modals) are
+   positioned against the viewport, not the section */
+.dsk-screen.on > * { animation: screenIn .45s var(--spring-soft, cubic-bezier(.2,.8,.2,1)) backwards; }
 .dsk-screen.on > *:nth-child(1) { animation-delay: 0ms; }
 .dsk-screen.on > *:nth-child(2) { animation-delay: 40ms; }
 .dsk-screen.on > *:nth-child(3) { animation-delay: 80ms; }

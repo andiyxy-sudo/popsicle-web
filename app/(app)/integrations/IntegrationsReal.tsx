@@ -584,10 +584,10 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                     {on ? (
                       <button onClick={e => { e.stopPropagation(); setSheet(p); setConfirmDc(false) }}
                         className="btn-manage"
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 999, border: '1px solid rgba(232,90,37,.28)', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent, #E85A25)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 0, border: '1px solid rgba(232,90,37,.28)', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent, #E85A25)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Manage</button>
                     ) : live ? (
                       <button onClick={e => { e.stopPropagation(); connect(p) }} disabled={busy === p.key}
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>
+                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 0', width: '100%', borderRadius: 0, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', whiteSpace: 'nowrap', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: busy === p.key ? .6 : 1 }}>
                         {busy === p.key ? 'Starting...' : 'Connect'}
                       </button>
                     ) : (
@@ -646,7 +646,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                     <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{p.key === 'slack' ? 'Appends "Handled by…" to the original card' : 'Writes a Popsicle note on the matching deal'}</div>
                   </div>
                   <button onClick={async () => { await flipResToggle(p) }}
-                    style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
+                    style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
                       background: resToggles[p.key as 'slack' | 'hubspot'] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
                     <span style={{ position: 'absolute', top: 3, left: resToggles[p.key as 'slack' | 'hubspot'] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
                   </button>
@@ -658,9 +658,9 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                   <div style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.55 }}>Disconnect {p.name}? Popsicle stops reading this source. Signals already raised stay where they are.</div>
                   <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
                     <button onClick={() => { setSheet(null); doDisconnect(p) }}
-                      style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 20px', borderRadius: 999, border: 0, background: 'var(--critical, #c43d2b)', color: '#fff', cursor: 'pointer' }}>Yes, disconnect</button>
+                      style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 20px', borderRadius: 0, border: 0, background: 'var(--critical, #c43d2b)', color: '#fff', cursor: 'pointer' }}>Yes, disconnect</button>
                     <button onClick={() => setConfirmDc(false)}
-                      style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 20px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Keep it</button>
+                      style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '9px 20px', borderRadius: 0, border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Keep it</button>
                   </div>
                 </div>
               )}
@@ -669,21 +669,21 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                 {on ? (
                   <>
                     <button onClick={() => sync(p)} disabled={syncing === p.key}
-                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 24px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: syncing === p.key ? .7 : 1 }}>
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 24px', borderRadius: 0, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: syncing === p.key ? .7 : 1 }}>
                       {syncing === p.key ? 'Syncing…' : 'Sync now'}
                     </button>
                     <button onClick={() => connect(p)}
-                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>Reconnect</button>
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 0, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>Reconnect</button>
                     {p.key === 'slack' && (
                       <button onClick={() => { setSheet(null); const el = document.getElementById('slack-channels'); el?.scrollIntoView({ behavior: 'smooth' }) }}
-                        style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 22px', borderRadius: 999, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>Channels</button>
+                        style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 22px', borderRadius: 0, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>Channels</button>
                     )}
                     <button onClick={() => setConfirmDc(true)}
-                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 18px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--critical, #c43d2b)', cursor: 'pointer', marginLeft: 'auto' }}>Disconnect</button>
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 18px', borderRadius: 0, border: 0, background: 'transparent', color: 'var(--critical, #c43d2b)', cursor: 'pointer', marginLeft: 'auto' }}>Disconnect</button>
                   </>
                 ) : (
                   <button onClick={() => { setSheet(null); connect(p) }} disabled={!p.fn}
-                    style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 26px', borderRadius: 999, border: 0, background: p.fn ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--inset)', color: p.fn ? '#fff' : 'var(--ink-faint)', cursor: p.fn ? 'pointer' : 'default' }}>
+                    style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 26px', borderRadius: 0, border: 0, background: p.fn ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--inset)', color: p.fn ? '#fff' : 'var(--ink-faint)', cursor: p.fn ? 'pointer' : 'default' }}>
                     {p.fn ? `Connect ${p.name}` : 'Not available yet'}
                   </button>
                 )}

@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import type { Account, Signal } from '@/types'
+import { CountUp } from '@/components/ui/CountUp'
 import { healthTone, formatCurrency, formatRelativeTime } from '@/lib/utils'
 
 export type PulseStrip = {
@@ -22,6 +23,7 @@ interface Props {
   integrationCount: number
   demoStrip?: PulseStrip
   demoLate?: LateItem[]
+  meta?: Record<string, { role?: string; rep?: string }>
 }
 
 
@@ -617,7 +619,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
-export function PulseReal({ name, accounts, signals, integrationCount, demoStrip, demoLate }: Props) {
+export function PulseReal({ name, accounts, signals, integrationCount, demoStrip, demoLate, meta = {} }: Props) {
   // Demo rows live in the bundle, not the database: skip every client round-trip.
   const isDemoData = accounts.some(a => String(a.id).startsWith('demo-')) || signals.some(s => String(s.id).startsWith('demo-'))
   // Accounts with a meeting inside 48h (attention-formula factor).
@@ -763,11 +765,14 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const loopRows = (() => {
     const bySrc = new Set(open.map(sg => sg.source_integration).filter(Boolean))
     const openAccts = new Set(open.map(sg => sg.account_name).filter(Boolean))
+    const demo = accounts.some(a => String(a.id).startsWith('demo-'))
+    // Signals → Active cases → Actions ready → Revenue protected. Demo figures are the
+    // mobile Revenue Loop (12 · 5 · 4 · $560K); live derives from the rows.
     return [
-      { name: 'Signals', sub: bySrc.size ? `across ${Array.from(bySrc).join(' · ')}` : 'open right now', value: String(open.length), color: 'var(--critical, #c43d2b)' },
-      { name: 'Accounts flagged', sub: 'with at least one open signal', value: String(openAccts.size), color: 'var(--warn, #d38b1d)' },
-      { name: 'Handled', sub: 'actions you have taken', value: String(handled.length), color: 'var(--accent)' },
-      { name: 'Value acted on', sub: 'at-risk $ on handled signals', value: protectedVal > 0 ? formatCurrency(protectedVal) : '$0', color: 'var(--good, #2f8f5b)' },
+      { name: 'Signals', sub: bySrc.size ? `across ${Array.from(bySrc).join(' · ')}` : 'detected this week', value: demo ? '12' : String(open.length), color: 'var(--critical, #c43d2b)' },
+      { name: 'Active cases', sub: 'accounts with an open signal', value: demo ? '5' : String(openAccts.size), color: 'var(--warn, #d38b1d)' },
+      { name: 'Actions ready', sub: 'drafted and waiting for you', value: demo ? '4' : String(open.filter(sg => sg.severity === 'high').length), color: 'var(--accent)' },
+      { name: 'Revenue protected', sub: 'this quarter', value: demo ? '$560K' : (protectedVal > 0 ? formatCurrency(protectedVal) : '$0'), color: 'var(--good, #2f8f5b)' },
     ]
   })()
 
@@ -878,22 +883,22 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'}</span>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} />{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
                 <div style={sub}>{st.high} high · {st.med} med · {st.low} low</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div style={MONO}>Active signals</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.active}</span>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
-                <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
+                <div style={MONO}>Revenue protected</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} />{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={sub}>{st.saved} saved · {st.actions} actions · {st.hitPct}% hit</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div style={MONO}>Revenue protected</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--accent, #E85A25)')}>{st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'}</span>{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
-                <div style={sub}>{st.saved} saved · {st.actions} actions · {st.hitPct}% hit</div>
+                <div style={MONO}>Active signals</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={String(st.active)} style={big('var(--ink)')} />{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
               <div onClick={() => setConfOpen(true)} style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <div style={MONO}>AI confidence</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><span style={big('var(--ink)')}>{st.aiConfidence}%</span></div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={`${st.aiConfidence}%`} style={big('var(--ink)')} /></div>
                 <div style={{ ...sub, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />{st.integrations} integrations synced · {st.syncedAgo}</div>
               </div>
             </div>
@@ -908,7 +913,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           {secHead('Today', liveDot)}
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as signals arrive.</div>}
           {briefRows.map((b, i) => (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 16, lineHeight: 1.5 }}>
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, lineHeight: 1.55 }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', paddingTop: 6 }}>{String(i + 1).padStart(2, '0')}</span>
               <div className="read-prose read-prose-ink">{b.pre}<strong style={{ fontWeight: 550 }}>{b.strong}</strong></div>
             </div>
@@ -920,10 +925,10 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           {loopRows.map((l, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               <div>
-                <div style={{ fontWeight: 500, fontSize: 15, color: 'var(--ink)' }}>{l.name}</div>
-                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
+                <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{l.name}</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
               </div>
-              <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color, fontVariantNumeric: 'tabular-nums' }}>{l.value}</div>
+              <CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} />
             </div>
           ))}
         </section>
@@ -933,7 +938,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           {activityRows.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--wash, #F4F0E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
-              <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.45 }}>
+              <div style={{ flex: 1, minWidth: 0, fontSize: 15, color: 'var(--ink)', lineHeight: 1.45 }}>
                 {sg.status === 'handled' && <span style={{ color: 'var(--good)', fontWeight: 800 }}>✓ </span>}
                 {sg.account_name ? <strong style={{ fontWeight: 600 }}>{sg.account_name}</strong> : null}{sg.account_name ? ', ' : ''}{sg.title}
               </div>
@@ -984,12 +989,12 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
-                    <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.domain || ''}</div>
+                    <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)', letterSpacing: 'normal' }}>{a.value ? formatCurrency(Number(a.value)) : '--'}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, justifySelf: 'start', cursor: 'pointer',
-                    padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
+                    padding: '3px 10px', borderRadius: 0, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>

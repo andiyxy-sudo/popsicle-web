@@ -62,14 +62,6 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const [draftRole, setDraftRole] = useState(displayRole)
   const meta = user as { timezone?: string }
   const [tzPick, setTzPick] = useState(meta.timezone ?? '')
-  // Security: which sign-in methods the account has, and whether a password is set.
-  // Loaded when the sheet opens (identities are not in the session claims).
-  type PwMode = 'change' | 'set' | 'oauth' | 'loading'
-  const [pwMode, setPwMode] = useState<PwMode>('loading')
-  const [oauthName, setOauthName] = useState('')
-  const [curPw, setCurPw] = useState(''); const [newPw, setNewPw] = useState(''); const [confPw, setConfPw] = useState('')
-  const [pwState, setPwState] = useState<'idle' | 'saving' | 'saved' | 'reauth' | 'error'>('idle')
-  const [pwErr, setPwErr] = useState(''); const [nonce, setNonce] = useState('')
   const TIMEZONES = ['Asia/Jakarta', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Kolkata', 'Asia/Dubai', 'Europe/London', 'Europe/Berlin', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'Australia/Sydney']
   const [photo, setPhoto] = useState<string | null>((user as { avatar_url?: string }).avatar_url ?? null)
   const [saving, setSaving] = useState(false)
@@ -80,43 +72,11 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
       setDraftRole(displayRole)
       try { const d = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; setDraftTz(d); if (!tzPick) setTzPick(d) } catch { setDraftTz('') }
       setSaved(false)
-      setCurPw(''); setNewPw(''); setConfPw(''); setNonce(''); setPwErr(''); setPwState('idle'); setPwMode('loading')
-      supabase.auth.getUser().then(({ data }) => {
-        const u = data.user
-        if (!u) { setPwMode('set'); return }
-        const providers = (u.identities ?? []).map(i => i.provider)
-        const social = providers.find(p => p !== 'email')
-        if (social && !providers.includes('email')) { setOauthName(social); setPwMode('oauth'); return }
-        // an email identity exists: password account if we have seen one set, else magic link / OTP
-        setPwMode((u.user_metadata as { has_password?: boolean } | null)?.has_password ? 'change' : 'set')
-      }).catch(() => setPwMode('set'))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profileOpen])
 
-  async function savePassword() {
-    setPwErr('')
-    if (isDemo) { setPwErr('Password changes are off for the demo account.'); setPwState('error'); return }
-    if (newPw.length < 8) { setPwErr('Use at least 8 characters.'); setPwState('error'); return }
-    if (newPw !== confPw) { setPwErr('The two passwords do not match.'); setPwState('error'); return }
-    setPwState('saving')
-    if (pwMode === 'change') {
-      // updateUser does not verify the old password, so check it explicitly first
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password: curPw })
-      if (signErr) { setPwErr('Current password is incorrect.'); setPwState('error'); return }
-    }
-    const { error } = await supabase.auth.updateUser({ password: newPw, data: { has_password: true }, ...(nonce ? { nonce } : {}) })
-    if (error) {
-      if (/reauthentication|nonce/i.test(error.message)) {
-        // secure password change is on: Supabase wants a fresh code from the inbox
-        await supabase.auth.reauthenticate().catch(() => {})
-        setPwState('reauth'); setPwErr(''); return
-      }
-      setPwErr(error.message); setPwState('error'); return
-    }
-    await supabase.auth.signOut({ scope: 'others' }).catch(() => {})
-    setPwMode('change'); setCurPw(''); setNewPw(''); setConfPw(''); setNonce(''); setPwState('saved')
-  }
+
 
   function pickPhoto() {
     const input = document.createElement('input')
@@ -259,63 +219,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               {/* working hours, morning digest and notification toggles live on the Settings page */}
             </div>
 
-            {/* Security */}
-            <div style={{ padding: '26px 32px 0' }}>
-              <div style={{ paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)', display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Security</span>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>
-                  {pwMode === 'loading' ? 'checking sign-in method' : pwMode === 'oauth' ? `signs in with ${oauthName}` : pwMode === 'change' ? 'password set' : 'email link · no password yet'}
-                </span>
-              </div>
-              {(() => {
-                const field = (label: string, value: string, set: (v: string) => void, ph?: string) => (
-                  <label style={{ display: 'block', marginTop: 16 }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>
-                    <input type="password" autoComplete={label.startsWith('Current') ? 'current-password' : 'new-password'} value={value} onChange={e => set(e.target.value)} placeholder={ph} disabled={isDemo || pwState === 'saving'}
-                      style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0, opacity: isDemo ? .55 : 1 }} />
-                  </label>
-                )
-                const strength = newPw.length === 0 ? 0 : newPw.length < 8 ? 1 : (/[A-Z]/.test(newPw) && /[0-9]/.test(newPw) && /[^A-Za-z0-9]/.test(newPw)) ? 3 : (/[0-9]/.test(newPw) || /[A-Z]/.test(newPw)) ? 2 : 1
-                const strengthColor = ['transparent', 'var(--critical, #c43d2b)', 'var(--warn, #d38b1d)', 'var(--good, #2f8f5b)'][strength]
-                if (pwMode === 'oauth') return (
-                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 14, lineHeight: 1.6 }}>
-                    You sign in with <strong style={{ color: 'var(--ink)', fontWeight: 600 }}>{oauthName.charAt(0).toUpperCase() + oauthName.slice(1)}</strong>, so there is no Popsicle password to change. Manage it in your {oauthName === 'google' ? <a href="https://myaccount.google.com/security" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Google account</a> : oauthName === 'azure' ? <a href="https://mysignins.microsoft.com/security-info" target="_blank" rel="noreferrer" style={{ color: 'var(--accent)' }}>Microsoft account</a> : `${oauthName} account`}.
-                  </div>
-                )
-                if (pwState === 'saved') return (
-                  <div style={{ fontSize: 13.5, color: 'var(--good, #2f8f5b)', marginTop: 14, lineHeight: 1.6 }}>Password updated. Other sessions on this account were signed out.</div>
-                )
-                return (
-                  <div>
-                    {pwMode === 'set' && (
-                      <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 12, lineHeight: 1.6 }}>You currently sign in with an email link. Add a password as a second way in; the link keeps working.</div>
-                    )}
-                    {pwMode === 'change' && field('Current password', curPw, setCurPw)}
-                    {field(pwMode === 'set' ? 'New password' : 'New password', newPw, setNewPw, 'at least 8 characters')}
-                    <div style={{ display: 'flex', gap: 4, marginTop: 8 }}>
-                      {[1, 2, 3].map(i => <span key={i} style={{ flex: 1, height: 2, background: i <= strength ? strengthColor : 'var(--hairline, #EFEAE1)', transition: 'background .2s' }} />)}
-                    </div>
-                    {field('Confirm new password', confPw, setConfPw)}
-                    {pwState === 'reauth' && (
-                      <label style={{ display: 'block', marginTop: 16 }}>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--accent)' }}>Code from your email</span>
-                        <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6 }}>Your session is older than Supabase allows for password changes. We sent a code to {user.email}.</div>
-                        <input value={nonce} onChange={e => setNonce(e.target.value)} inputMode="numeric" placeholder="6-digit code"
-                          style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
-                      </label>
-                    )}
-                    {pwErr && <div style={{ fontSize: 13, color: 'var(--critical, #c43d2b)', marginTop: 12 }}>{pwErr}</div>}
-                    {isDemo && !pwErr && <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 12 }}>Password changes are off for the demo account.</div>}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-                      <button onClick={savePassword} disabled={isDemo || pwState === 'saving' || pwMode === 'loading' || !newPw || !confPw || (pwMode === 'change' && !curPw) || (pwState === 'reauth' && !nonce)}
-                        style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1px solid rgba(232,90,37,.28)', background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent, #E85A25)', cursor: 'pointer', opacity: (isDemo || pwState === 'saving' || !newPw || !confPw) ? .5 : 1 }}>
-                        {pwState === 'saving' ? 'Saving…' : pwState === 'reauth' ? 'Confirm with code' : pwMode === 'set' ? 'Set password' : 'Change password'}
-                      </button>
-                    </div>
-                  </div>
-                )
-              })()}
-            </div>
+            {/* password lives on the Settings page (Security) */}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '24px 32px 28px' }}>
               <span onClick={handleSignOut} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', color: 'var(--critical, #c43d2b)', fontWeight: 500, cursor: 'pointer' }}>Sign out</span>

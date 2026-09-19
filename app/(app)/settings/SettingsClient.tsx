@@ -233,7 +233,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         </div>
         <button onClick={() => { const el = document.querySelector('.ed-sb-user') as HTMLElement | null; el?.click() }}
           className="warm-pill"
-          style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 999, border: '1.5px solid var(--accent, #E85A25)', background: 'rgba(232,90,37,.06)', color: 'var(--accent, #E85A25)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Edit profile</button>
+          style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '9px 18px', borderRadius: 0, border: '1.5px solid var(--accent, #E85A25)', background: 'rgba(232,90,37,.06)', color: 'var(--accent, #E85A25)', cursor: 'pointer', whiteSpace: 'nowrap' }}>Edit profile</button>
       </div>
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
@@ -298,7 +298,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
             </div>
             <button onClick={() => (k === 'push' ? askPush() : toggleNotif(k))} aria-label={label}
-              style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px', marginRight: 2,
+              style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px', marginRight: 2,
                 background: notifs[k] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
               <span style={{ position: 'absolute', top: 3, left: notifs[k] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
             </button>
@@ -317,7 +317,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Off means every draft waits for your approval</div>
           </div>
           <button onClick={() => { const v = !autoSend; setAutoSend(v); saveJson('auto_send', v) }} aria-label="Send without asking"
-            style={{ width: 38, minWidth: 38, height: 22, borderRadius: 999, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
+            style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
               background: autoSend ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
             <span style={{ position: 'absolute', top: 3, left: autoSend ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
           </button>
@@ -339,32 +339,32 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <Section title="Security" sub="Access to this account.">
         <Row label="Password" sub="Change the password you sign in with"
           value={pwOpen ? 'Cancel' : 'Change'} onClick={() => { setPwOpen(!pwOpen); setPwStatus(null) }} />
-        <Row label="Two-factor authentication" sub="A second step when signing in"
-          value={<span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
-          onClick={() => setSheet('Two-factor authentication')} />
-        <Row label="Active sessions" sub={device ? `This device: ${device}` : 'Signed-in devices'}
-          value="1 device" onClick={() => setSheet('Active sessions')} />
         {pwOpen && (
           <div style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', display: 'grid', gap: 14, maxWidth: 380 }}>
             <label style={{ display: 'block' }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>New password</span>
               <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+                style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
             </label>
             <label style={{ display: 'block' }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Confirm</span>
               <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
-                style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+                style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
             </label>
             {pwStatus && <div style={{ fontSize: 13, color: pwStatus.type === 'ok' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)' }}>{pwStatus.msg}</div>}
             <div style={{ paddingBottom: 4 }}>
               <button onClick={changePassword} disabled={saving}
-                style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: saving ? .7 : 1 }}>
+                style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 0, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: saving ? .7 : 1 }}>
                 {saving ? 'Updating...' : 'Update password'}
               </button>
             </div>
           </div>
         )}
+        <Row label="Two-factor authentication" sub="A second step when signing in"
+          value={<span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
+          onClick={() => setSheet('Two-factor authentication')} />
+        <Row label="Active sessions" sub={device ? `This device: ${device}` : 'Signed-in devices'}
+          value="1 device" onClick={() => setSheet('Active sessions')} />
         {pwStatus && !pwOpen && <div style={{ fontSize: 13, color: pwStatus.type === 'ok' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', padding: '14px 0' }}>{pwStatus.msg}</div>}
       </Section>
 
@@ -434,7 +434,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 <div style={{ display: 'flex', gap: 10, marginTop: 26, flexWrap: 'wrap' }}>
                   {sh.actions.map(([label, primary, fn]) => (
                     <button key={label} onClick={fn}
-                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 999, cursor: 'pointer',
+                      style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 0, cursor: 'pointer',
                         border: primary ? 0 : '1px solid var(--border)',
                         background: primary ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--raised, #FFFDFA)',
                         color: primary ? '#fff' : 'var(--ink)',

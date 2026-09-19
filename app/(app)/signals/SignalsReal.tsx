@@ -411,13 +411,13 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   return (
     <div className="dsk-screen on">
       {/* breadcrumb */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 30 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 36 }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Live Signals <span style={{ margin: '0 8px' }}>/</span> {signals.length} active{srcCount ? ` · ${srcCount} sources` : ''}
         </div>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span className="sig-pulse" style={{ width: 6, height: 6, display: 'inline-block', borderRadius: '50%', background: 'var(--accent)' }} />
-          live{newest ? ` · ${newest}` : ''}
+          synced {initial.some(sg => String(sg.id).startsWith('demo-')) ? '2 min ago' : (newest || 'just now')}
         </div>
       </div>
 
@@ -474,12 +474,12 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       {/* section head + filter pills */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 56, paddingBottom: 14 }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All alerts</h2>
-        <div style={{ display: 'flex', gap: 4 }}>
+        <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999 }}>
           {([['all', 'All', signals.length], ['critical', 'Critical', critical.length], ['watch', 'Watch', watch.length], ['positive', 'Positive', positive.length]] as const).map(([k, lbl, n]) => (
             <button key={k} onClick={() => setFilter(k as typeof filter)} style={{
-              font: 'inherit', fontSize: 12, fontWeight: 500, padding: '6px 14px', borderRadius: 999, cursor: 'pointer', border: 0,
-              background: filter === k ? 'var(--ink)' : 'transparent', color: filter === k ? 'var(--paper, #FBF8F3)' : 'var(--ink-muted)',
-            }}>{lbl} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, opacity: .7 }}>{n}</span></button>
+              font: 'inherit', fontSize: 12.5, fontWeight: filter === k ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer',
+              background: filter === k ? 'var(--ink)' : 'transparent', color: filter === k ? '#fff' : 'var(--ink-muted)' }}>
+              {lbl} <span style={{ opacity: .55, marginLeft: 4 }}>{n}</span></button>
           ))}
         </div>
       </div>
@@ -523,10 +523,25 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
-                  <>
-                    <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
-                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
-                  </>
+                  <div style={{ display: 'inline-flex', gap: 22, alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
+                    </div>
+                    {(() => {
+                      // health impact of this signal: derived from severity and confidence unless the row carries one
+                      const explicit = (s as unknown as { health_delta?: number }).health_delta
+                      const conf = Number((s.ai_analysis as { confidence?: number } | null)?.confidence ?? 70)
+                      const hd = typeof explicit === 'number' ? explicit : s.severity === 'high' ? -Math.round(4 + conf / 12) : s.severity === 'watch' ? -Math.round(1 + conf / 30) : Math.round(2 + conf / 20)
+                      const c = hd < 0 ? (hd <= -6 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)') : 'var(--good, #2f8f5b)'
+                      return (
+                        <div style={{ minWidth: 44 }}>
+                          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: c }}>{hd > 0 ? '+' : ''}{hd}%</div>
+                          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>health</div>
+                        </div>
+                      )
+                    })()}
+                  </div>
                 ) : null}
               </div>
               <div onClick={e => e.stopPropagation()}>
@@ -538,7 +553,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                     if (kind === 'email') openDraft(s, action)
                     else { setSlotPick(0); setMapName(''); setMapRole(''); setCloseMode('done'); setCloseDate(''); setRowAction({ s, kind, label: action }) }
                   }} style={{
-                    font: 'inherit', fontSize: 12.5, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 999, border: 0, cursor: 'pointer',
+                    font: 'inherit', fontSize: 12.5, fontWeight: 500, padding: '9px 0', width: '100%', borderRadius: 0, border: 0, cursor: 'pointer',
                     background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                   }}>{action}</button>
                 )}
@@ -584,10 +599,10 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const inputStyle = { font: 'inherit', fontSize: 14, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 10, background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', width: '100%' } as const
         const primary = (text: string, go: () => void, disabled?: boolean) => (
-          <button onClick={go} disabled={disabled} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .45 : 1, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>{text}</button>
+          <button onClick={go} disabled={disabled} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 0, border: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .45 : 1, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>{text}</button>
         )
         const ghost = (text: string, go: () => void) => (
-          <button onClick={go} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 999, border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>{text}</button>
+          <button onClick={go} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 0, border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>{text}</button>
         )
         const close = () => setRowAction(null)
         const slots = (() => {
@@ -984,7 +999,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               <div style={{ padding: '44px 0', textAlign: 'center' }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', marginBottom: 8 }}>No draft was written</div>
                 <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.6, maxWidth: 420, margin: '0 auto 20px' }}>{draftErr || 'Give it another try in a moment.'}</div>
-                <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer' }}>Try again</button>
+                <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 13, fontWeight: 600, padding: '10px 22px', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer' }}>Try again</button>
               </div>
             )}
 
@@ -1032,17 +1047,17 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {/* actions */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
                   {sendState === 'needs_scope' ? (
-                    <button onClick={() => { setDraftFor(null); router.push('/integrations') }} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)' }}>Reconnect Gmail</button>
+                    <button onClick={() => { setDraftFor(null); router.push('/integrations') }} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 0, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)' }}>Reconnect Gmail</button>
                   ) : (
                     <button onClick={sendNow} disabled={sendState === 'sending' || sendState === 'sent' || !draft.to}
-                      style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 999, border: 0, cursor: sendState === 'sending' ? 'default' : 'pointer', color: '#fff',
+                      style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 34px', borderRadius: 0, border: 0, cursor: sendState === 'sending' ? 'default' : 'pointer', color: '#fff',
                         background: sendState === 'sent' ? 'var(--good, #2f8f5b)' : 'linear-gradient(135deg,#FF8A50,#FF6B35)',
                         boxShadow: '0 10px 26px -12px rgba(255,107,53,.7)', opacity: sendState === 'sending' ? .75 : 1 }}>
                       {sendState === 'sending' ? 'Sending...' : sendState === 'sent' ? 'Sent' : 'Send now'}
                     </button>
                   )}
-                  <button onClick={copyDraft} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 30px', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>{copied ? 'Copied' : 'Copy'}</button>
-                  <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 15, fontWeight: 500, padding: '15px 30px', borderRadius: 999, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Rewrite</button>
+                  <button onClick={copyDraft} style={{ font: 'inherit', fontSize: 15, fontWeight: 600, padding: '15px 30px', borderRadius: 0, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>{copied ? 'Copied' : 'Copy'}</button>
+                  <button onClick={() => openDraft(draftFor)} style={{ font: 'inherit', fontSize: 15, fontWeight: 500, padding: '15px 30px', borderRadius: 0, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Rewrite</button>
                   {sendState === 'error' && <span style={{ fontSize: 13, color: 'var(--critical, #c43d2b)' }}>{sendErr}</span>}
                 </div>
               </>

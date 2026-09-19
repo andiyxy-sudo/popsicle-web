@@ -307,7 +307,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         return (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 10, color: FAINT }}>
-              <span>#</span><span>Rep</span><span>Caught</span><span>Recovered</span><span>Protected</span><span>T2A</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
+              <span>#</span><span>Rep</span><span>Signals</span><span>Recovered</span><span>Protected</span><span>Avg response</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
               <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
@@ -379,27 +379,37 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         })}
       </div>
 
-      {/* stabilization efficiency (mobile) */}
-      {m.reps.some(r => r.stabilized != null) && (
+      {/* exposure by rep: what each rep is carrying, not how they performed */}
+      {m.reps.some(r => r.exposure != null) && (
         <>
-          <H2 title="Stabilization efficiency" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>ranked by revenue stabilized · last 7 days</span>} />
+          <H2 title="Exposure by rep" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>what each rep is carrying right now</span>} />
           {(() => {
-            const cols = 'minmax(180px,1.6fr) .8fr .8fr .8fr .9fr'
+            const cols = 'minmax(180px,1.5fr) .7fr .8fr .8fr .8fr .9fr'
             const num = { ...MONO_NUM, fontSize: 13 }
+            const maxExp = Math.max(1, ...m.reps.map(r => r.exposure ?? 0))
             return (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 10, color: FAINT }}>
-                  <span>Rep</span><span>Improved</span><span>Churn Δ</span><span>Follow-thru</span><span style={{ textAlign: 'right' }}>Stabilized</span>
+                  <span>Rep</span><span>Accounts</span><span>Pipeline ARR</span><span>Critical</span><span>Coverage</span><span style={{ textAlign: 'right' }}>Exposure</span>
                 </div>
-                {[...m.reps].sort((a, b) => (b.stabilized ?? 0) - (a.stabilized ?? 0)).map(r => (
-                  <div key={r.name} className="tbl-row" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar rep={r} size={30} /><span style={{ fontWeight: 600, color: INK }}>{r.name}</span></span>
-                    <span style={num}>{r.improvedAccts ?? '--'} accts</span>
-                    <span style={{ ...num, color: GREEN }}>{r.churnDelta}%</span>
-                    <span style={{ ...num, color: r.followThrough >= 70 ? GREEN : AMBER }}>{r.followThrough}%</span>
-                    <span style={{ ...num, color: GREEN, textAlign: 'right', fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em' }}>{formatCurrency(r.stabilized ?? 0)}</span>
-                  </div>
-                ))}
+                {[...m.reps].sort((a, b) => (b.exposure ?? 0) - (a.exposure ?? 0)).map(r => {
+                  const crit = m.queue.filter(q => q.rep === r.name && q.sev === 'critical').length
+                  const share = Math.round(((r.exposure ?? 0) / Math.max(1, r.arr)) * 100)
+                  return (
+                    <div key={r.name} className="tbl-row" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar rep={r} size={30} /><span><span style={{ fontWeight: 600, color: INK }}>{r.name}</span><span style={{ display: 'block', fontSize: 12, color: FAINT, marginTop: 2 }}>{r.accounts.join(' · ')}</span></span></span>
+                      <span style={num}>{r.accounts.length}</span>
+                      <span style={num}>{formatCurrency(r.arr)}</span>
+                      <span style={{ ...num, color: crit ? RED : FAINT }}>{crit || '--'}</span>
+                      <span style={{ ...num, color: r.ownership === 'active' ? GREEN : AMBER }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
+                      <span style={{ textAlign: 'right' }}>
+                        <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em', color: share >= 40 ? RED : share >= 25 ? AMBER : INK }}>{formatCurrency(r.exposure ?? 0)}</span>
+                        <span style={{ display: 'block', height: 3, background: HAIR, marginTop: 8, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${((r.exposure ?? 0) / maxExp) * 100}%`, background: share >= 40 ? RED : share >= 25 ? AMBER : ACCENT }} /></span>
+                        <span style={{ display: 'block', ...MONO_NUM, fontSize: 11, color: FAINT, marginTop: 6 }}>{share}% of their ARR</span>
+                      </span>
+                    </div>
+                  )
+                })}
               </>
             )
           })()}

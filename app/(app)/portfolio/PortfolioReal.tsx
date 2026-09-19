@@ -71,9 +71,11 @@ function agoDays(iso?: string | null): string {
   return d <= 0 ? 'today' : `${d}d ago`
 }
 
-export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: Account[]; demoSignals?: unknown[]; demoHead?: { headline: DemoHeadline; stats: HeadStat[] } }) {
+export type AccountMeta = Record<string, { role?: string; rep?: string; trend?: string }>
+export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { accounts: Account[]; demoSignals?: unknown[]; demoHead?: { headline: DemoHeadline; stats: HeadStat[] }; meta?: AccountMeta }) {
   const [mounted, setMounted] = useState(false)
   const [statHover, setStatHover] = useState<number | null>(null)   // strong underline follows the pointer
+  const [view, setView] = useState<'all' | 'high' | 'closing' | 'stalled'>('all')
   useEffect(() => { setMounted(true) }, [])
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
@@ -177,7 +179,9 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
             </span>
           </>
         )
+        const totalArr = accounts.reduce((a, x) => a + (Number(x.value) || 0), 0)
         const stats: HeadStat[] = demoHead?.stats ?? [
+          { n: fmtVal(totalArr), lbl: `total ARR · ${accounts.length} accounts`, tone: 'ink' },
           { n: String(high.length), lbl: `high risk · ${fmtVal(highVal)} at risk`, tone: 'critical' },
           { n: String(medium.length), lbl: `medium · ${fmtVal(mediumVal)} exposure`, tone: 'warn' },
           { n: String(closing.length), lbl: `closing or won · ${fmtVal(closingVal)}`, tone: 'good' },
@@ -189,7 +193,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
               {headline}
             </h1>
             <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
-            <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
+            <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, minmax(0,1fr))`, columnGap: 28 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -202,25 +206,46 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
           </>
         )
       })()}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 56, paddingBottom: 14 }}>
-        <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
-        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by attention</span>
-      </div>
+      {(() => {
+        const dark = (a: Account) => a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : 0
+        const isClosing = (a: Account) => /^clos/i.test(a.stage || '') && !/won/i.test(a.stage || '')
+        const isStalled = (a: Account) => !isClosing(a) && !/won/i.test(a.stage || '') && (dark(a) >= 5 || (sigMap.get(a.name) ?? []).some(x => /silent_stall|timeline_slip|deal_stage_backward/.test((x as { signal_type?: string | null }).signal_type || '')))
+        const counts = { all: accounts.length, high: accounts.filter(a => (a.risk_level || '') === 'high').length, closing: accounts.filter(isClosing).length, stalled: accounts.filter(isStalled).length }
+        return (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 56, paddingBottom: 14, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
+            <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999 }}>
+              {([['all', 'All'], ['high', 'High risk'], ['closing', 'Closing'], ['stalled', 'Stalled']] as const).map(([k, lbl]) => (
+                <button key={k} onClick={() => setView(k)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: view === k ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer', background: view === k ? 'var(--ink)' : 'transparent', color: view === k ? '#fff' : 'var(--ink-muted)' }}>
+                  {lbl} <span style={{ opacity: .55, marginLeft: 4 }}>{counts[k]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
-        const COLS = '34px minmax(104px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.8fr) minmax(84px,1.2fr) minmax(52px,.5fr) 112px'
+        const COLS = '34px minmax(120px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.75fr) minmax(84px,1.15fr) minmax(70px,.7fr) minmax(52px,.5fr) minmax(52px,.5fr) 112px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
-        const ordered = [...accounts].sort((x, y) => {
+        const dark = (a: Account) => a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : 0
+        const isClosing = (a: Account) => /^clos/i.test(a.stage || '') && !/won/i.test(a.stage || '')
+        const isStalled = (a: Account) => !isClosing(a) && !/won/i.test(a.stage || '') && (dark(a) >= 5 || (sigMap.get(a.name) ?? []).some(x => /silent_stall|timeline_slip|deal_stage_backward/.test((x as { signal_type?: string | null }).signal_type || '')))
+        const inView = accounts.filter(a => view === 'all' ? true : view === 'high' ? (a.risk_level || '') === 'high' : view === 'closing' ? isClosing(a) : isStalled(a))
+        // urgency first: lowest health at the top, healthiest at the bottom; attention score breaks ties
+        const ordered = [...inView].sort((x, y) => {
+          const hx = healthOf(x, sigMap.get(x.name) ?? []), hy = healthOf(y, sigMap.get(y.name) ?? [])
+          if (hx !== hy) return hx - hy
           const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
           const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
           return attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name)) - attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name))
         })
         return (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-              <span>Stage</span><span>Top Signal</span><span>Touch</span><span />
+              <span>Stage</span><span>Signal</span><span>Owner</span><span>Trend</span><span>Touch</span><span />
             </div>
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
@@ -233,20 +258,22 @@ export function PortfolioReal({ accounts, demoSignals, demoHead }: { accounts: A
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
-                    <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.domain || ''}</div>
+                    <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
                   </div>
                   <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink)' }}>{fmtVal(a.value)}</span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'start',
-                      padding: '3px 10px', borderRadius: 999, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
+                      padding: '3px 10px', borderRadius: 0, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>
                     <span style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none', background: riskColor[risk] }} />
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', color: riskColor[risk] }}>{risk === 'medium' ? 'MED' : risk.toUpperCase()}</span>
                   </span>
                   <span style={{ ...cell, color: 'var(--ink)' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, color: top ? (top.severity === 'high' ? riskColor.high : top.severity === 'positive' ? riskColor.low : riskColor.medium) : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-muted)' }}>{meta[a.name]?.rep ?? '--'}</span>
+                  <span style={{ ...cell, fontFamily: "'DM Mono',monospace", fontSize: 12, color: (meta[a.name]?.trend ?? '').startsWith('-') ? 'var(--critical, #c43d2b)' : (meta[a.name]?.trend ?? '').startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }}>{meta[a.name]?.trend ? `${(meta[a.name].trend!.startsWith('-') ? '↘ ' : '↗ ')}${meta[a.name].trend}` : '--'}</span>
                   <span style={{ ...cell, color: 'var(--ink-muted)' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
                   <button onClick={e => { e.stopPropagation(); if (top) router.push(`/signals?signal=${top.id}&action=reply`); else openA360(a) }}
-                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>
                 </div>

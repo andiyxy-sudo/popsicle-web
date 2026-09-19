@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS} from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_PEOPLE, DEMO_TEAM, DEMO_EXTRA } from '@/lib/demo-dataset'
 import { PortfolioReal } from './PortfolioReal'
 
 // One redesigned screen for both worlds: real users get live rows, the demo
@@ -15,7 +15,13 @@ export default async function PortfolioPage() {
 
   if (user.email === DEMO_EMAIL) {
     const acc = DEMO_ACCOUNTS as unknown as Parameters<typeof PortfolioReal>[0]['accounts']
-    return <PortfolioReal accounts={acc} demoSignals={DEMO_SIGNALS} />
+    const meta: Record<string, { role?: string; rep?: string; trend?: string }> = {}
+    for (const a of DEMO_ACCOUNTS) {
+      const rep = DEMO_TEAM.reps.find(r => r.accounts.includes(a.name))?.name
+      const role = (DEMO_PEOPLE[a.name] ?? []).find(p => p.name === a.owner)?.role
+      meta[a.name] = { role, rep, trend: DEMO_EXTRA[a.name]?.trend }
+    }
+    return <PortfolioReal accounts={acc} demoSignals={DEMO_SIGNALS} meta={meta} />
   }
 
   const { data: accounts } = await supabase

@@ -250,6 +250,12 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
               <span style={{ ...MONO_NUM, fontSize: 13, color: d.v < 0 ? GREEN : RED }}>{d.v < 0 ? '+' : ''}{fmtMoney(Math.abs(d.v))}</span>
             </Row>
           ))}
+          {m.exposureTrend && (
+            <div style={{ marginTop: 16 }}>
+              <Row pad="10px 0"><span style={{ color: MUTED }}>Peak exposure</span><span style={{ ...MONO_NUM, fontSize: 13, color: RED }}>{m.exposureTrend.peak.replace(/[()]/g, '').replace(' ', ' · ')}</span></Row>
+              <Row pad="10px 0"><span style={{ color: MUTED }}>Trajectory</span><span style={{ ...MONO_NUM, fontSize: 13, color: AMBER }}>{m.exposureTrend.trajectory}</span></Row>
+            </div>
+          )}
         </div>
         <div>
           {(() => {
@@ -389,9 +395,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
           {m.actions.map(a => (
             <div key={a.k} style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, padding: '18px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14.5, alignItems: 'center' }}>
               <span style={{ color: INK }}>{a.k}</span>
-              <span style={{ ...MONO_NUM, fontSize: 13, textAlign: 'right', color: INK }}>{a.used}</span>
-              <span style={{ ...MONO_NUM, fontSize: 13, textAlign: 'right', color: a.success >= 60 ? GREEN : AMBER }}>{a.success}%</span>
-              {hasChurn && <span style={{ ...MONO_NUM, fontSize: 13, textAlign: 'right', color: a.churn <= -15 ? GREEN : a.churn < 0 ? AMBER : INK }}>{a.churn ? `${a.churn}%` : '--'}</span>}
+              <span style={{ fontSize: 14, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: MUTED }}>{a.used}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: a.success >= 60 ? GREEN : AMBER }}>{a.success}%</span>
+              {hasChurn && <span style={{ fontSize: 14, fontWeight: 600, fontVariantNumeric: 'tabular-nums', textAlign: 'right', color: a.churn <= -15 ? GREEN : a.churn < 0 ? AMBER : INK }}>{a.churn ? `${a.churn}%` : '--'}</span>}
             </div>
           ))}
         </div>

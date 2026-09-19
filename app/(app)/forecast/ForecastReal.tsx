@@ -60,10 +60,10 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
   const atRisk = rows.filter(r => r.risky).reduce((s, r) => s + r.value, 0)
   const commit = rows.filter(r => r.w >= .75 && !r.risky).reduce((s, r) => s + r.value, 0)
 
-  const byMonth = new Map<string, { value: number; weighted: number; n: number }>()
+  const byMonth = new Map<string, { value: number; weighted: number; risk: number; n: number; deals: typeof rows }>()
   for (const r of rows) {
-    const m = byMonth.get(r.month) ?? { value: 0, weighted: 0, n: 0 }
-    m.value += r.value; m.weighted += r.weighted; m.n++
+    const m = byMonth.get(r.month) ?? { value: 0, weighted: 0, risk: 0, n: 0, deals: [] as typeof rows }
+    m.value += r.value; m.weighted += r.weighted; m.n++; if (r.risky) m.risk += r.value; m.deals.push(r)
     byMonth.set(r.month, m)
   }
   const months = Array.from(byMonth.entries()).sort()
@@ -415,21 +415,51 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         </div>
       </div>
 
-      {secHead('By close month')}
-      {months.map(([k, m]) => (
-        <div key={k} style={{ padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{monthLabel(k)}</span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{m.n} deal{m.n === 1 ? '' : 's'}</span>
-            <span style={{ marginLeft: 'auto', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: 'var(--ink)' }}>{formatCurrency(m.value)}</span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--accent)' }}>{formatCurrency(m.weighted)} wtd</span>
+      {secHead('By close month', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'inline-flex', gap: 14 }}>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, background: 'var(--accent)', marginRight: 6, verticalAlign: 'middle' }} />weighted</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, backgroundImage: 'repeating-linear-gradient(135deg, rgba(196,61,43,.75) 0 2px, rgba(196,61,43,.15) 2px 4px)', marginRight: 6, verticalAlign: 'middle' }} />at risk</span>
+        <span><span style={{ display: 'inline-block', width: 8, height: 8, background: 'rgba(232,90,37,.16)', marginRight: 6, verticalAlign: 'middle' }} />total</span>
+      </span>)}
+      {/* Each month: a proportional bar (weighted in accent, at-risk in red, the rest of the
+          total in soft ink) with the deals that make it up listed underneath, so the
+          number is explainable at a glance. */}
+      {months.map(([k, m]) => {
+        const pct = (v: number) => `${Math.max(0, Math.min(100, (v / maxMonth) * 100))}%`
+        const cover = m.value > 0 ? Math.round((m.weighted / m.value) * 100) : 0
+        return (
+          <div key={k} style={{ padding: '22px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(200px,.55fr) minmax(0,1.45fr)', gap: 32, alignItems: 'start' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.03em', color: 'var(--ink)' }}>{formatCurrency(m.value)}</span>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--accent)' }}>{formatCurrency(m.weighted)} weighted · {cover}%</span>
+                </div>
+                <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', marginTop: 8 }}>{monthLabel(k)} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, fontWeight: 400, color: 'var(--ink-faint)', marginLeft: 6 }}>{m.n} deal{m.n === 1 ? '' : 's'}{m.risk ? ` · ${formatCurrency(m.risk)} at risk` : ''}</span></div>
+              </div>
+              <div>
+                <div style={{ height: 12, background: 'var(--inset, #F4F0E8)', position: 'relative', marginTop: 6, overflow: 'hidden' }}>
+                  {/* total: a warm tint of the accent, so the weighted share reads as "filled" */}
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: pct(m.value), background: 'rgba(232,90,37,.16)' }} />
+                  {/* at risk: hatched red at the far end of the total */}
+                  {m.risk > 0 && <div style={{ position: 'absolute', top: 0, bottom: 0, left: `calc(${pct(m.value)} - ${pct(m.risk)})`, width: pct(m.risk), backgroundImage: 'repeating-linear-gradient(135deg, rgba(196,61,43,.75) 0 3px, rgba(196,61,43,.15) 3px 7px)' }} />}
+                  {/* weighted: solid accent gradient */}
+                  <div style={{ position: 'absolute', top: 0, bottom: 0, left: 0, width: pct(m.weighted), background: 'linear-gradient(90deg, #FF8A50, var(--accent, #E85A25))', boxShadow: '0 0 0 1px rgba(232,90,37,.15) inset' }} />
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
+                  {m.deals.sort((a, b) => b.value - a.value).map(d => (
+                    <span key={d.a.id} onClick={() => router.push(`/accounts/${encodeURIComponent(d.a.name)}`)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: 'var(--ink)', background: 'var(--inset, #F4F0E8)', padding: '5px 11px', cursor: 'pointer',
+                        borderLeft: `2px solid ${d.risky ? 'var(--critical, #c43d2b)' : d.w >= .6 ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'}` }}>
+                      <span style={{ fontWeight: 600 }}>{d.a.name}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-muted)' }}>{formatCurrency(d.value)} · {Math.round(d.w * 100)}%</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-          <div style={{ height: 4, background: 'var(--hairline, #EFEAE1)', marginTop: 12, position: 'relative' }}>
-            <div style={{ position: 'absolute', inset: 0, width: `${(m.value / maxMonth) * 100}%`, background: 'var(--ink)' }} />
-            <div style={{ position: 'absolute', top: 0, bottom: 0, width: `${(m.weighted / maxMonth) * 100}%`, background: 'var(--accent)' }} />
-          </div>
-        </div>
-      ))}
+        )
+      })}
 
       {secHead('Every dated deal', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by close date</span>)}
       <div style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -437,7 +467,6 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       </div>
       {rows.map(r => (
         <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
-          className="tbl-row"
           style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14 }}>
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>
