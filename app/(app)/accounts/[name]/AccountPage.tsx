@@ -143,21 +143,21 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.7fr) minmax(240px,1fr)', gap: 56, marginTop: 30 }}>
           <div>
-            <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginBottom: 26 }}>
+            <div style={{ display: 'flex', gap: 22, flexWrap: 'wrap', marginBottom: 34 }}>
               {flags.map((f, i) => (
                 <span key={i} onClick={() => setFlag(buildFlag(accountName, [f.sig], risk, href => router.push(href)))}
                   title="Why this flag"
-                  style={{ fontSize: 13.5, color: f.color, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', borderBottom: `1px solid ${f.color}33`, paddingBottom: 2 }}>
+                  style={{ fontSize: 13.5, color: f.color, display: 'inline-flex', alignItems: 'center', gap: 7, cursor: 'pointer', paddingBottom: 2 }}>
                   <span style={{ width: 5, height: 5, borderRadius: '50%', background: f.color }} />{f.label}
                 </span>
               ))}
               {flags.length === 0 && <span style={{ fontSize: 13.5, color: 'var(--ink-faint)' }}>No open flags.</span>}
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk signals</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 6 }}>AI risk signals</div>
             {demo.riskLines?.map((r, i) => {
               const c = r.tone === 'high' ? 'var(--critical, #c43d2b)' : r.tone === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
               return (
-                <div key={`rl${i}`} style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div key={`rl${i}`} style={{ display: 'flex', gap: 14, padding: '16px 0', borderTop: i === 0 ? 0 : '1px solid var(--hairline, #EFEAE1)' }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: c }} />
                   <div style={{ fontSize: 15, lineHeight: 1.6, color: 'var(--ink)' }}>{r.text}</div>
                 </div>
