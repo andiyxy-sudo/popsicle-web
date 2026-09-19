@@ -245,7 +245,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
           <>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span>ARR</span><span>Risk</span>
-              <span>Stage</span><span>Signal</span><span>Owner</span><span>Trend</span><span>Touch</span><span />
+              <span>Stage</span><span>Signal</span><span>Owner</span><span>Trend</span><span>Touch</span><span>Actions</span>
             </div>
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []

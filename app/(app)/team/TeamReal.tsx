@@ -227,7 +227,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
 
       {/* three figures */}
-      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 64 }}>
         {/* Exposure summary (mobile) or ARR */}
         {m.exposure ? (
           <div>
@@ -506,7 +506,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div style={{ height: 1, background: RULE, margin: '72px 0 30px' }} />
 
       {/* execution summary */}
-      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 48 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 64 }}>
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Revenue movement · this week</div>
           <Row pad="14px 0"><span>New critical accounts</span><span style={{ ...MONO_NUM, fontSize: 12, color: m.newCritical ? RED : INK }}>+{m.newCritical}</span></Row>

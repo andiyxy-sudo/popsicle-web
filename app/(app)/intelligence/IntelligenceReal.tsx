@@ -367,7 +367,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
               </div>
             )
           })()}
-          <div style={{ display: sits === 'By driver' || !(sits === 'By segment' ? m.bySegment : m.byHealth) ? 'grid' : 'none', gridTemplateColumns: `repeat(${Math.min(4, m.riskSits.length)}, minmax(0,1fr))`, gap: 48, marginTop: 30 }}>
+          <div style={{ display: sits === 'By driver' || !(sits === 'By segment' ? m.bySegment : m.byHealth) ? 'grid' : 'none', gridTemplateColumns: `repeat(${Math.min(4, m.riskSits.length)}, minmax(0,1fr))`, gap: 64, marginTop: 30 }}>
             {m.riskSits.map(r => (
               <div key={r.k}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
@@ -386,7 +386,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
 
       {/* ---- what's working ---- */}
       <H2 title="What's working" right={<span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>action → outcome · this quarter</span>} />
-      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 56, marginTop: 8, alignItems: 'start' }}>
+      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 96, marginTop: 8, alignItems: 'start' }}>
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 10, color: FAINT, padding: '16px 0 12px' }}>
             <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ</span>}
@@ -433,7 +433,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
 
       {/* ---- forecast / sources / renewals (only the columns that have data) ---- */}
       {(() => { const cols = [!!m.forecast, m.sources.length > 0, m.renewals.length > 0].filter(Boolean).length || 1; return (
-      <div className="g3" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: 48 }}>
+      <div className="g3" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: 72 }}>
         {m.forecast && (
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Forecast vs actual · MTD</div>
