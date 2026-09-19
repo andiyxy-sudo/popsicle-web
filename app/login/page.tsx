@@ -19,6 +19,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  // two-factor: after a password sign-in Supabase may require an authenticator code (aal2)
+  const [mfa, setMfa] = useState<{ factorId: string } | null>(null)
+  const [mfaCode, setMfaCode] = useState('')
   const supabase = createClient()
 
   async function handleSubmit(e: React.FormEvent) {
@@ -46,6 +49,12 @@ export default function LoginPage() {
       }
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+      const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal && aal.nextLevel === 'aal2' && aal.currentLevel !== 'aal2') {
+        const { data: f } = await supabase.auth.mfa.listFactors()
+        const factor = (f?.totp ?? []).find(x => x.status === 'verified')
+        if (factor) { setMfa({ factorId: factor.id }); setLoading(false); return }
+      }
       router.push(pendingNext())
       router.refresh()
     } catch (err: unknown) {
@@ -53,6 +62,22 @@ export default function LoginPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  async function handleMfa(e: React.FormEvent) {
+    e.preventDefault()
+    if (!mfa) return
+    setLoading(true); setError(null)
+    try {
+      const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId: mfa.factorId })
+      if (chErr || !ch) throw chErr ?? new Error('Could not start the check')
+      const { error } = await supabase.auth.mfa.verify({ factorId: mfa.factorId, challengeId: ch.id, code: mfaCode.trim() })
+      if (error) throw new Error('That code did not match. Codes rotate every 30 seconds.')
+      router.push(pendingNext())
+      router.refresh()
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally { setLoading(false) }
   }
 
   async function handleGoogle() {
@@ -137,6 +162,20 @@ export default function LoginPage() {
         {error && <div style={{ fontSize: 12.5, color: '#c43d2b', marginBottom: 12, lineHeight: 1.5 }}>{error}</div>}
         {notice && <div style={{ fontSize: 12.5, color: '#2f8f5b', marginBottom: 12, lineHeight: 1.5 }}>{notice}</div>}
 
+        {mfa ? (
+          <form onSubmit={handleMfa}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: '#E85A25', marginBottom: 10 }}>Two-factor check</div>
+            <div style={{ fontSize: 13.5, color: '#5C5855', lineHeight: 1.55, marginBottom: 14 }}>Enter the six-digit code from your authenticator app.</div>
+            <input autoFocus inputMode="numeric" placeholder="123 456" value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+              style={{ width: '100%', boxSizing: 'border-box', fontFamily: "'DM Mono',monospace", fontSize: 20, letterSpacing: '6px', textAlign: 'center', padding: '12px 0', border: 0, borderBottom: '1px solid #0E0D0B', background: 'transparent', color: '#0E0D0B', outline: 0 }} />
+            <button type="submit" disabled={loading || mfaCode.length !== 6} style={{
+              width: '100%', padding: '14px 0', border: 0, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12,
+              background: mfaCode.length === 6 ? '#0E0D0B' : '#E9E4DA', color: mfaCode.length === 6 ? '#FBF8F3' : '#8A857F',
+              fontSize: 14, fontWeight: 600, transition: 'background .2s',
+            }}>{loading ? 'Checking…' : 'Continue'}</button>
+            <div onClick={() => { setMfa(null); setMfaCode(''); supabase.auth.signOut() }} style={{ fontSize: 12.5, color: '#5C5855', marginTop: 14, cursor: 'pointer', textAlign: 'center' }}>Use a different account</div>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit}>
           {mode === 'signup' && (
             <input className="lg-in" style={{ marginBottom: 8 }} placeholder="Full name" value={name} onChange={e => setName(e.target.value)} />
@@ -160,6 +199,7 @@ export default function LoginPage() {
             fontSize: 14, fontWeight: 600, transition: 'background .2s',
           }}>{loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
         </form>
+        )}
 
         <div style={{ textAlign: 'center', fontSize: 13, color: '#5C5855', marginTop: 16 }}>
           {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}

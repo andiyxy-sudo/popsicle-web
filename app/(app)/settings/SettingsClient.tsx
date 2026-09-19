@@ -116,7 +116,75 @@ export function SettingsClient({ user }: SettingsClientProps) {
     await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
   }
   const [sheet, setSheet] = useState<string | null>(null)
+  // timezone
+  const TIMEZONES = ['Asia/Jakarta', 'Asia/Singapore', 'Asia/Kuala_Lumpur', 'Asia/Bangkok', 'Asia/Manila', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Kolkata', 'Asia/Dubai', 'Australia/Sydney', 'Pacific/Auckland', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Amsterdam', 'Europe/Madrid', 'Europe/Stockholm', 'Africa/Johannesburg', 'America/Sao_Paulo', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto', 'America/Mexico_City']
+  const [tzPick, setTzPick] = useState('')
+  const [tzQuery, setTzQuery] = useState('')
+  // invites
+  const [invEmail, setInvEmail] = useState(''); const [invRole, setInvRole] = useState<'admin' | 'member' | 'viewer'>('member')
+  const [invState, setInvState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle'); const [invMsg, setInvMsg] = useState('')
+  const [invites, setInvites] = useState<Array<{ id: string; email: string; role: string; status: string; created_at: string }>>([])
+  // two-factor (TOTP via Supabase MFA)
+  const [mfaFactors, setMfaFactors] = useState<Array<{ id: string; friendly_name?: string | null; status: string }>>([])
+  const [mfaEnroll, setMfaEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null)
+  const [mfaCode, setMfaCode] = useState(''); const [mfaMsg, setMfaMsg] = useState(''); const [mfaBusy, setMfaBusy] = useState(false)
+  const isDemoUser = user.email === 'demo@popsicle-labs.app'
+
+  async function loadInvites() {
+    try { const r = await fetch('/api/invite'); const j = await r.json(); setInvites(j.invites ?? []) } catch { /* ignore */ }
+  }
+  async function sendInvite() {
+    setInvState('sending'); setInvMsg('')
+    try {
+      const r = await fetch('/api/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: invEmail, role: invRole }) })
+      const j = await r.json()
+      if (!r.ok) { setInvState('error'); setInvMsg(j.error === 'invalid_email' ? 'That does not look like an email address.' : 'Could not send the invite.'); return }
+      setInvState('sent'); setInvMsg(j.demo ? 'Invites are simulated on the demo account.' : j.sent ? `Invite sent to ${invEmail}.` : (j.note ?? 'Invite recorded.'))
+      if (j.demo) setInvites(prev => [{ id: `demo-${Date.now()}`, email: invEmail, role: invRole, status: 'sent', created_at: new Date().toISOString() }, ...prev])
+      else loadInvites()
+      setInvEmail('')
+    } catch { setInvState('error'); setInvMsg('Could not send the invite.') }
+  }
+  async function loadFactors() {
+    try { const { data } = await supabase.auth.mfa.listFactors(); setMfaFactors(((data?.totp ?? []) as Array<{ id: string; friendly_name?: string | null; status: string }>)) } catch { /* ignore */ }
+  }
+  async function startEnroll() {
+    setMfaBusy(true); setMfaMsg('')
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'Authenticator app' })
+      if (error || !data) { setMfaMsg(error?.message ?? 'Could not start enrolment.'); return }
+      setMfaEnroll({ id: data.id, qr: data.totp.qr_code, secret: data.totp.secret })
+    } finally { setMfaBusy(false) }
+  }
+  async function verifyEnroll() {
+    if (!mfaEnroll) return
+    setMfaBusy(true); setMfaMsg('')
+    try {
+      const { data: ch, error: chErr } = await supabase.auth.mfa.challenge({ factorId: mfaEnroll.id })
+      if (chErr || !ch) { setMfaMsg(chErr?.message ?? 'Could not create a challenge.'); return }
+      const { error } = await supabase.auth.mfa.verify({ factorId: mfaEnroll.id, challengeId: ch.id, code: mfaCode.trim() })
+      if (error) { setMfaMsg('That code did not match. Codes rotate every 30 seconds.'); return }
+      setMfaEnroll(null); setMfaCode(''); setMfaMsg('Two-factor authentication is on. You will be asked for a code at sign-in.')
+      loadFactors()
+    } finally { setMfaBusy(false) }
+  }
+  async function disableMfa(id: string) {
+    setMfaBusy(true); setMfaMsg('')
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId: id })
+      setMfaMsg(error ? error.message : 'Two-factor authentication is off.')
+      loadFactors()
+    } finally { setMfaBusy(false) }
+  }
+
   useEscape(!!sheet, () => setSheet(null))
+  useEffect(() => {
+    if (sheet === 'Invite a teammate') loadInvites()
+    if (sheet === 'Two-factor authentication') { loadFactors(); setMfaEnroll(null); setMfaCode(''); setMfaMsg('') }
+    if (sheet === 'Timezone') { setTzQuery(''); if (!tzPick) setTzPick(tz) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sheet])
+
   const [prefs, setPrefs] = useState<Record<string, string>>({ Appearance: 'Light', Language: 'English (US)', Currency: 'USD' })
   const [copied, setCopied] = useState(false)
 
@@ -141,6 +209,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
       if (m.digest_time) setDigestTime(String(m.digest_time))
       if (m.work_start || m.work_end) setWorkHours({ start: String(m.work_start ?? '09:00'), end: String(m.work_end ?? '18:00') })
       if (m.morning_digest) setMorningDigest(String(m.morning_digest))
+      if (m.timezone) setTzPick(String(m.timezone))
+      loadFactors()
       if (m.draft_voice) setVoice(m.draft_voice as Record<string, string>)
       if (m.thresholds) setThresholds(m.thresholds as Record<string, string>)
       if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
@@ -183,7 +253,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   // Settings detail sheets (design pattern). Every row states something true
   // about this workspace; options that are not implemented say so rather than
   // pretending to switch.
-  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string }> = {
+  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode }> = {
     Workspace: { title: 'Workspace', sub: 'Popsicle Labs', rows: [['Workspace name', 'Popsicle Labs'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', '1 · invitations not enabled yet']] },
     Tone: { title: 'Tone', sub: 'How drafts read', options: [['Direct', 'Short sentences, no preamble'], ['Warm', 'Friendly, still concise'], ['Formal', 'Full sentences, measured'], ['Match the thread', 'Mirror how they write to you']] },
     Length: { title: 'Length', sub: 'How long a first draft runs', options: [['Short', 'Three or four sentences'], ['Medium', 'A paragraph and a clear ask'], ['Detailed', 'Context, evidence, then the ask']] },
@@ -193,13 +263,89 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Commitment overdue': { title: 'Commitment overdue', sub: 'Grace period before a promise is chased', options: [['1 day', 'Immediately after the date'], ['3 days', 'Balanced'], ['7 days', 'Only clear misses']] },
     'Quiet hours': { title: 'Quiet hours', sub: `Nothing interrupts you from ${quiet.From} to ${quiet.To}`, rows: [['Applies to', 'Push notifications and alerts'], ['Does not apply to', 'Signals still being detected'], ['Timezone', tz || 'your device setting']], options: [['19:00 - 08:00', 'Evenings and nights'], ['18:00 - 09:00', 'Longer window'], ['22:00 - 07:00', 'Late finish'], ['Off', 'Interrupt me any time']] },
     Members: { title: 'Members', sub: 'Who can see this workspace', rows: [['You', `${user.email} · owner`], ['Others', 'No one else has access'], ['Seats', 'Invitations not enabled yet']], note: 'Signals, accounts and drafts are visible only to you until someone is invited.' },
-    'Invite a teammate': { title: 'Invite a teammate', sub: 'Share signals and coverage', rows: [['They will see', 'Accounts you choose to share'], ['They will not see', 'Your drafts or private notes'], ['Availability', 'Invitations not enabled yet']], note: 'Team seats arrive with the next release. Tell us who you want to add and we will set it up manually in the meantime.' },
+    'Invite a teammate': { title: 'Invite a teammate', sub: 'They get an email with a sign-in link and see the accounts you share', custom: (
+      <div style={{ marginTop: 18 }}>
+        <label style={{ display: 'block' }}>
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Work email</span>
+          <input value={invEmail} onChange={e => setInvEmail(e.target.value)} placeholder="name@company.com" type="email" autoComplete="off"
+            style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+        </label>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 20 }}>Role</div>
+        {([['admin', 'Admin', 'Everything, including integrations and billing'], ['member', 'Member', 'Signals, accounts and Ask; can handle and draft'], ['viewer', 'Viewer', 'Read-only across the portal']] as const).map(([k, t, d]) => (
+          <div key={k} onClick={() => setInvRole(k)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+            <div><div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{t}</div><div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{d}</div></div>
+            {invRole === k && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>✓</span>}
+          </div>
+        ))}
+        {invMsg && <div style={{ fontSize: 13, color: invState === 'error' ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)', marginTop: 14 }}>{invMsg}</div>}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
+          <button onClick={sendInvite} disabled={invState === 'sending' || !invEmail.trim()} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', opacity: invState === 'sending' || !invEmail.trim() ? .5 : 1 }}>{invState === 'sending' ? 'Sending…' : 'Send invite'}</button>
+        </div>
+        {invites.length > 0 && (
+          <div style={{ marginTop: 26 }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 8, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Invites</div>
+            {invites.map(i => (
+              <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 14 }}>
+                <span style={{ color: 'var(--ink)' }}>{i.email} <span style={{ color: 'var(--ink-faint)', fontSize: 12.5 }}>· {i.role}</span></span>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: i.status === 'accepted' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }}>{i.status}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ) },
     'Signal visibility': { title: 'Signal visibility', sub: 'Whether teammates see your accounts', options: [['Private', 'Only you'], ['Team', 'Everyone in the workspace'], ['Owner and manager', 'You and whoever covers you']] },
     'Data & privacy': { title: 'Data & privacy', sub: 'What Popsicle reads and keeps', rows: [['Reads', 'Sales threads on your connected sources'], ['Stores', 'Signals, account state and message metadata'], ['Retention', 'Until you delete the workspace'], ['Location', 'Hosted in Singapore'], ['Shared with', 'No one outside this workspace'], ['Model training', 'Your data is never used to train models']], actions: [['Export everything', true, () => exportData('json')]] },
     'Delete workspace': { title: 'Delete workspace', sub: 'This cannot be undone', rows: [['Removes', counts ? `${counts.accounts} accounts and ${counts.signals} signals` : 'every account and signal'], ['Disconnects', `${integrations.length} source${integrations.length === 1 ? '' : 's'}`], ['Keeps', 'Nothing'], ['Timing', 'Immediate']], note: 'Deletion is handled manually while in beta so nothing is lost by accident. Email support@popsicle-labs.app from this address and it will be done within one working day.', actions: [['Export first', false, () => exportData('json')]] },
     'Plan & billing': { title: 'Plan & billing', sub: 'Beta access', rows: [['Plan', 'Beta'], ['Cost', 'No charge during beta'], ['Seats', '1 · invitations not enabled yet'], ['Sources', `${integrations.length} connected`], ['Billing contact', user.email]], note: 'Pricing starts when the beta ends. You will be told before anything is charged.' },
     'Export data': { title: 'Export data', sub: 'Your accounts and signals, downloaded now', rows: [['Accounts', counts ? String(counts.accounts) : '--'], ['Signals', counts ? String(counts.signals) : '--'], ['Includes', 'Everything this workspace holds for you'], ['Leaves Popsicle', 'Yes, the file downloads to this device']], actions: [['Download JSON', true, () => exportData('json')], [exportBusy ? 'Preparing...' : 'Download CSV', false, () => exportData('csv')]] },
-    'Two-factor authentication': { title: 'Two-factor authentication', sub: 'Currently disabled', rows: [['Status', 'Disabled'], ['Sign-in today', 'Email and password'], ['Recommended', 'Enable once available'], ['Availability', 'Not built yet']], note: 'Two-factor sign-in is on the roadmap. Until then, use a unique password for this account.' },
+    'Two-factor authentication': { title: 'Two-factor authentication', sub: mfaFactors.some(f => f.status === 'verified') ? 'On. A code from your authenticator app is required at sign-in.' : 'Off. Add an authenticator app as a second step.', custom: (
+      <div style={{ marginTop: 18 }}>
+        {isDemoUser && <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>Two-factor is locked on the demo account so nobody can lock it.</div>}
+        {!isDemoUser && mfaFactors.filter(f => f.status === 'verified').map(f => (
+          <div key={f.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{f.friendly_name || 'Authenticator app'} <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--good, #2f8f5b)', marginLeft: 8 }}>ENABLED</span></span>
+            <button onClick={() => disableMfa(f.id)} disabled={mfaBusy} style={{ font: 'inherit', fontSize: 13, color: 'var(--critical, #c43d2b)', background: 'none', border: 0, cursor: 'pointer' }}>Turn off</button>
+          </div>
+        ))}
+        {!isDemoUser && !mfaFactors.some(f => f.status === 'verified') && !mfaEnroll && (
+          <>
+            {[['1', 'Install an authenticator app', 'Google Authenticator, 1Password, Authy or similar'], ['2', 'Scan the code we show you', 'It adds Popsicle to the app'], ['3', 'Enter the six-digit code', 'That confirms the link and turns 2FA on']].map(([n, t, d]) => (
+              <div key={n} style={{ display: 'grid', gridTemplateColumns: '28px 1fr', gap: 10, padding: '10px 0' }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--accent)' }}>{n.padStart(2, '0')}</span>
+                <span><span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{t}</span><span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{d}</span></span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
+              <button onClick={startEnroll} disabled={mfaBusy} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>{mfaBusy ? 'Starting…' : 'Set up two-factor'}</button>
+            </div>
+          </>
+        )}
+        {mfaEnroll && (
+          <div>
+            <div style={{ display: 'grid', gridTemplateColumns: '168px 1fr', gap: 20, alignItems: 'start' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={mfaEnroll.qr} alt="Scan with your authenticator app" width={168} height={168} style={{ display: 'block', border: '1px solid var(--hairline, #EFEAE1)', background: '#fff' }} />
+              <div>
+                <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>Scan with your authenticator app</div>
+                <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 6, lineHeight: 1.55 }}>Or enter this key by hand:</div>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--ink)', marginTop: 6, wordBreak: 'break-all' }}>{mfaEnroll.secret}</div>
+                <label style={{ display: 'block', marginTop: 16 }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Six-digit code</span>
+                  <input value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))} inputMode="numeric" placeholder="123 456"
+                    style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 18, letterSpacing: '4px', marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+                </label>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+              <button onClick={() => { setMfaEnroll(null); setMfaCode('') }} style={{ font: 'inherit', fontSize: 13.5, padding: '11px 18px', border: '1px solid var(--border)', background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Cancel</button>
+              <button onClick={verifyEnroll} disabled={mfaBusy || mfaCode.length !== 6} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', opacity: mfaCode.length !== 6 ? .5 : 1 }}>{mfaBusy ? 'Checking…' : 'Turn on'}</button>
+            </div>
+          </div>
+        )}
+        {mfaMsg && <div style={{ fontSize: 13, color: /is on|is off/.test(mfaMsg) ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 14 }}>{mfaMsg}</div>}
+      </div>
+    ) },
     'Active sessions': { title: 'Active sessions', sub: '1 device signed in', rows: [['This device', device || 'This browser'], ['Signed in as', user.email], ['Other devices', 'None detected'], ['Sign out everywhere', 'Sign out below ends this session']], note: 'Popsicle keeps one session per browser. Signing out here ends it on this device.' },
     "What's new": { title: "What's new", sub: 'Recent changes to Popsicle', rows: [['Ask AI', 'Streaming answers, saved questions, source inspection'], ['Account 360', 'People, timeline and contracts tabs'], ['Signals', 'Evidence and pattern match on every signal'], ['Integrations', 'Resolution broadcasts to Slack and HubSpot']] },
     'Work email': { title: 'Work email', sub: user.email, rows: [['Address', user.email], ['Changing it', 'Runs through account recovery, not this screen'], ['Sending from', 'Drafts send from this address via Gmail']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText(user.email); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
@@ -207,7 +353,25 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Weekly digest': { title: 'Weekly digest', sub: `Mondays at ${digestTime}`, rows: [['Meetings this week', 'From your calendar'], ['Commitments due', 'From detected promises'], ['Gone quiet', 'Accounts past their own reply cadence'], ['Email delivery', 'Not enabled yet']], options: [['06:00', 'Before the day starts'], ['07:00', 'With your first coffee'], ['08:00', 'At your desk'], ['09:00', 'After the morning rush']], actions: [['Preview it now', true, () => router.push('/pulse?digest=1')]] },
     Appearance: { title: 'Appearance', sub: 'How the portal renders on this device', options: [['Light', 'Warm paper, the default'], ['Dark', 'Not built yet'], ['Match system', 'Not built yet']] },
     Language: { title: 'Language', sub: 'Interface and AI responses', options: [['English (US)', 'Default'], ['English (UK)', 'Spelling and dates'], ['Bahasa Indonesia', 'Not translated yet']] },
-    Timezone: { title: 'Timezone', sub: 'Used for digests, ages and time-of-day logic', rows: [['Detected', tz || 'unknown'], ['Source', 'Your browser setting'], ['Changing it', 'Change your device timezone']] },
+    Timezone: { title: 'Timezone', sub: 'Used for digests, ages and time-of-day logic', custom: (() => {
+      const active = tzPick || tz
+      const list = [...new Set([tz, ...TIMEZONES].filter(Boolean))].filter(z => !tzQuery || z.toLowerCase().includes(tzQuery.toLowerCase().replace(' ', '_')))
+      const offset = (zone: string) => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find(x => x.type === 'timeZoneName'); return p?.value ?? '' } catch { return '' } }
+      return (
+        <div style={{ marginTop: 18 }}>
+          <input value={tzQuery} onChange={e => setTzQuery(e.target.value)} placeholder="Search a city or region"
+            style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+          <div style={{ maxHeight: 300, overflowY: 'auto', marginTop: 6 }}>
+            {list.map(z => (
+              <div key={z} onClick={() => { setTzPick(z); saveJson('timezone', z); setSheet(null) }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{z.replace(/_/g, ' ')}{z === tz ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)', marginLeft: 8 }}>detected</span> : null}</span>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}><span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{offset(z)}</span>{z === active && <span style={{ color: 'var(--accent)', fontWeight: 700 }}>✓</span>}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )
+    })() },
     Currency: { title: 'Currency', sub: 'Applied to ARR, exposure and forecast', options: [['USD', 'US dollar'], ['SGD', 'Singapore dollar'], ['IDR', 'Indonesian rupiah'], ['EUR', 'Euro']] },
     'Connected sources': { title: 'Connected sources', sub: `${integrations.length} live`, rows: (integrations.length ? integrations.map(i => [i, 'Connected'] as [string, string]) : [['None', 'Connect Gmail or Slack to start']]), actions: [['Manage integrations', true, () => router.push('/integrations')]] },
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
@@ -276,7 +440,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <Section title="Preferences" sub="How the portal looks and reads.">
         <Row label="Appearance" value={prefs.Appearance} onClick={() => setSheet('Appearance')} />
         <Row label="Language" value={prefs.Language} onClick={() => setSheet('Language')} />
-        <Row label="Timezone" value={tz || '--'} onClick={() => setSheet('Timezone')} />
+        <Row label="Timezone" value={(tzPick || tz || '--').replace(/_/g, ' ')} onClick={() => setSheet('Timezone')} />
         <Row label="Currency" value={prefs.Currency} onClick={() => setSheet('Currency')} />
         <Row label="Export data" sub="Download your accounts and signals" value="JSON · CSV" onClick={() => setSheet('Export data')} />
       </Section>
@@ -365,7 +529,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
           </div>
         )}
         <Row label="Two-factor authentication" sub="A second step when signing in"
-          value={<span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
+          value={mfaFactors.some(f => f.status === 'verified') ? <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>Enabled</span> : <span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
           onClick={() => setSheet('Two-factor authentication')} />
         <Row label="Active sessions" sub={device ? `This device: ${device}` : 'Signed-in devices'}
           value="1 device" onClick={() => setSheet('Active sessions')} />
@@ -431,6 +595,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 )
               })}
 
+              {sh.custom}
               {sh.note && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', lineHeight: 1.6, marginTop: 16 }}>{sh.note}</div>}
               {copied && <div style={{ fontSize: 13, color: 'var(--good, #2f8f5b)', marginTop: 14 }}>Copied.</div>}
 
