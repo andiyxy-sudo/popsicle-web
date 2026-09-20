@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { AppShell } from '@/components/layout/AppShell'
+import { orgIdsServer } from '@/lib/org'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -19,9 +20,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     badges = { portfolio: 9, signals: 47, integrations: 4 }
   } else {
     const [accts, sigs, ints] = await Promise.all([
-      supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-      supabase.from('signals').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
-      supabase.from('integrations').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('is_active', true),
+      supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)),
+      supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
+      supabase.from('integrations').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)).eq('is_active', true),
     ])
     badges = {
       portfolio: accts.count ?? 0,

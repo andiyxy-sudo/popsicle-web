@@ -1,6 +1,6 @@
 'use client'
 
-import { healthTone } from '@/lib/utils'
+import { healthTone, formatWhen } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 
 // Account 360 as a full page, matching the design: breadcrumb, name + ARR,
@@ -331,7 +331,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         const items: ThreadItem[] = sorted.map(m => {
           const out = (m.direction || '').toLowerCase() === 'outbound'
           const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
-          return { who, via: m.integration || 'gmail', when: mounted && m.received_at ? new Date(m.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '', text: (m.content || m.subject || '').replace(/\s+/g, ' ').trim().slice(0, 600), tone: out ? 'neutral' : 'neutral', mine: out, label: m.subject && m.content ? m.subject : undefined }
+          return { who, via: m.integration || 'gmail', when: mounted && m.received_at ? formatWhen(m.received_at) : '', text: (m.content || m.subject || '').replace(/\s+/g, ' ').trim().slice(0, 600), tone: out ? 'neutral' : 'neutral', mine: out, label: m.subject && m.content ? m.subject : undefined }
         })
         return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined} />
       })()}
@@ -394,7 +394,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         if (!sorted.length) return <EmptyState line="No timeline yet." hint="Every signal, call and commitment on this account lands here in order." />
         const items: RailItem[] = sorted.map(sg => ({
           title: sg.title || 'Signal', body: sg.description || undefined,
-          when: mounted && sg.created_at ? new Date(sg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+          when: mounted && sg.created_at ? formatWhen(sg.created_at) : '',
           kind: (sg.status === 'handled' ? 'positive' : sg.severity === 'high' ? 'negative' : sg.severity === 'positive' ? 'positive' : /call|meeting/.test(sg.signal_type || '') ? 'call' : 'watch') as RailItem['kind'],
           tags: [sg.source_integration ? `via ${sg.source_integration}` : null, sg.risk_amount ? `$${Math.round(Number(sg.risk_amount) / 1000)}K at risk` : null, sg.status === 'handled' ? (sg.handled_action || 'handled') : null].filter(Boolean) as string[],
           done: sg.status === 'handled', onClick: () => router.push(`/signals?signal=${sg.id}`),

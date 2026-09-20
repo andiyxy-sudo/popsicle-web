@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_AI_CONTEXT } from '@/lib/demo-ai-context'
+import { orgIdsServer } from '@/lib/org'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -24,14 +25,14 @@ export async function POST(req: NextRequest) {
     supabase
       .from('signals')
       .select('title, severity, account_name, source_integration, ai_analysis, created_at')
-      .eq('user_id', user.id)
+      .in('user_id', await orgIdsServer(supabase, user.id))
       .eq('is_dismissed', false)
       .order('created_at', { ascending: false })
       .limit(20),
     supabase
       .from('accounts')
       .select('name, domain, health_score, value, stage, risk_level, last_contact_date')
-      .eq('user_id', user.id)
+      .in('user_id', await orgIdsServer(supabase, user.id))
       .limit(30),
   ])
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
       const { data: rows } = await supabase
         .from('messages')
         .select('sender, subject, content, received_at, direction, integration')
-        .eq('user_id', user.id)
+        .in('user_id', await orgIdsServer(supabase, user.id))
         .or(`account_name.ilike.${p},sender.ilike.${p},subject.ilike.${p}`)
         .order('received_at', { ascending: false })
         .limit(8)

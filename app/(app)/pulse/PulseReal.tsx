@@ -9,7 +9,8 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import type { Account, Signal } from '@/types'
 import { CountUp } from '@/components/ui/CountUp'
 import { useEscape } from '@/components/ui/useEscape'
-import { healthTone, formatCurrency, formatRelativeTime } from '@/lib/utils'
+import { healthTone, formatCurrency, formatRelativeTime, formatWhen } from '@/lib/utils'
+import { orgIdsBrowser } from '@/lib/org'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -57,7 +58,7 @@ function PreMeetingBrief() {
       const now = Date.now()
       const { data: ev } = await supa.from('gcal_event_state')
         .select('event_id, start_ts, summary, account_name')
-        .eq('user_id', user.id).not('account_name', 'is', null)
+        .in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date(now - 5 * 60_000).toISOString())
         .lte('start_ts', new Date(now + 30 * 60_000).toISOString())
         .order('start_ts', { ascending: true }).limit(1).maybeSingle()
@@ -65,19 +66,19 @@ function PreMeetingBrief() {
       const account = String(ev.account_name)
       const [sigRes, blRes, acctRes] = await Promise.all([
         supa.from('signals').select('id, title, severity')
-          .eq('user_id', user.id).eq('account_name', account)
+          .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account)
           .eq('is_dismissed', false)
           .or('status.is.null,status.eq.open')
           .order('created_at', { ascending: false }).limit(3),
         supa.from('account_baselines').select('last_message_at')
-          .eq('user_id', user.id).eq('account_name', account).maybeSingle(),
-        supa.from('accounts').select('id').eq('user_id', user.id).eq('name', account).maybeSingle(),
+          .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account).maybeSingle(),
+        supa.from('accounts').select('id').in('user_id', await orgIdsBrowser(supa, user.id)).eq('name', account).maybeSingle(),
       ])
       // Commitments state lives in the commitments TABLE (mobile contract #4).
       let commitments: Array<{ who?: string; what?: string }> = []
       {
         const { data: cm } = await supa.from('commitments')
-          .select('text, owner, due_at').eq('user_id', user.id).eq('account_name', account)
+          .select('text, owner, due_at').in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account)
           .eq('status', 'open').order('due_at', { ascending: true, nullsFirst: false }).limit(5)
         commitments = (cm ?? []).map((c: { text: string; owner: string | null; due_at: string | null }) => ({
           who: c.owner === 'us' ? 'We' : c.owner === 'them' ? 'They' : undefined,
@@ -376,7 +377,7 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
       const { data: { user } } = await supa.auth.getUser()
       if (!user) return
       const end = new Date(); end.setHours(23, 59, 59, 999)
-      const { data } = await supa.from('commitments').select('id, text, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+      const { data } = await supa.from('commitments').select('id, text, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
         .lte('due_at', end.toISOString()).order('due_at').limit(6)
       if (dead) return
       setItems(((data ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null }>).map(c => ({
@@ -430,11 +431,11 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
       const end = new Date(start); end.setDate(end.getDate() + 1)
       const soon = new Date(Date.now() + 48 * 3600_000)
       const [m, c, s48] = await Promise.all([
-        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').eq('user_id', user.id)
+        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').in('user_id', await orgIdsBrowser(supa, user.id))
           .gte('start_ts', start.toISOString()).lt('start_ts', end.toISOString()).neq('status', 'cancelled').order('start_ts').limit(12),
-        supa.from('commitments').select('id, text, owner, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+        supa.from('commitments').select('id, text, owner, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
           .lte('due_at', end.toISOString()).order('due_at').limit(10),
-        supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+        supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
           .gte('start_ts', new Date().toISOString()).lte('start_ts', soon.toISOString()).limit(50),
       ])
       if (dead) return
@@ -525,15 +526,15 @@ function WeekDigest() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || dead) return
-      const { data: dis } = await supa.from('digest_dismissals').select('week_start').eq('user_id', user.id).eq('week_start', weekStart).maybeSingle()
+      const { data: dis } = await supa.from('digest_dismissals').select('week_start').in('user_id', await orgIdsBrowser(supa, user.id)).eq('week_start', weekStart).maybeSingle()
       if (dis || dead) return
       const [m, c, bl] = await Promise.all([
-        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').eq('user_id', user.id)
+        supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').in('user_id', await orgIdsBrowser(supa, user.id))
           .gte('start_ts', monday.toISOString()).lt('start_ts', weekEnd.toISOString()).neq('status', 'cancelled').order('start_ts').limit(20),
-        supa.from('commitments').select('id, text, owner, due_at, account_name').eq('user_id', user.id).eq('status', 'open')
+        supa.from('commitments').select('id, text, owner, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
           .gte('due_at', monday.toISOString()).lt('due_at', weekEnd.toISOString()).order('due_at').limit(12),
         supa.from('account_baselines').select('account_name, last_message_at, avg_interval_hours, total_reply_pairs')
-          .eq('user_id', user.id).gte('total_reply_pairs', 1).not('last_message_at', 'is', null).limit(200),
+          .in('user_id', await orgIdsBrowser(supa, user.id)).gte('total_reply_pairs', 1).not('last_message_at', 'is', null).limit(200),
       ])
       if (dead) return
       const quiet: Array<{ name: string; days: number }> = []
@@ -630,9 +631,9 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     let dead = false
     if (isDemoData) return
     const supa = createClient()
-    supa.auth.getUser().then(({ data: { user } }) => {
+    supa.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+      supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
     })
@@ -651,7 +652,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       const health = computeHealth(signals, accounts)
       await supa.from('pulse_health_history').upsert({ user_id: user.id, day: today, health }, { onConflict: 'user_id,day' })
       const { data: prev } = await supa.from('pulse_health_history')
-        .select('day, health').eq('user_id', user.id).lt('day', today)
+        .select('day, health').in('user_id', await orgIdsBrowser(supa, user.id)).lt('day', today)
         .order('day', { ascending: false }).limit(1).maybeSingle()
       if (dead || !prev) return
       const pts = health - Number(prev.health)
@@ -1002,7 +1003,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   </span>
                   <span style={{ ...cell, color: 'var(--ink-muted)', textAlign: 'center' }}>{a.stage || '--'}</span>
                   <span style={{ ...cell, letterSpacing: 'normal', color: top ? riskColor[top.severity === 'high' ? 'high' : top.severity === 'positive' ? 'low' : 'medium'] : 'var(--ink-faint)' }}>{top?.title || '--'}</span>
-                  <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</span>
+                  <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{a.last_contact_date ? formatWhen(a.last_contact_date) : '--'}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts/${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>

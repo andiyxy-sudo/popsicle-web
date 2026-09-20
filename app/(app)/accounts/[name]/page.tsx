@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { AccountPage } from './AccountPage'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
+import { orgIdsServer } from '@/lib/org'
 
 // Data is fetched here, on the server, so the page arrives populated instead
 // of blank-then-fetching in the browser.
@@ -28,7 +29,7 @@ export default async function Page({ params }: { params: Promise<{ name: string 
   }
 
   const { data: acct } = await supabase.from('accounts').select('*')
-    .eq('user_id', user.id).eq('name', accountName).maybeSingle()
+    .in('user_id', await orgIdsServer(supabase, user.id)).eq('name', accountName).maybeSingle()
   if (!acct) return <AccountPage accountName={accountName} account={null} signals={[]} messages={[]} />
 
   const { data: payload } = await supabase.rpc('get_account_360', { p_account_id: acct.id })

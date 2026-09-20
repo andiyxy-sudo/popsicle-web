@@ -16,6 +16,7 @@ import { createClient } from '@/lib/supabase/client'
 import { DateField } from '@/components/ui/DateField'
 import { useEscape } from '@/components/ui/useEscape'
 import type { DEMO_PEOPLE as DemoPeopleT, DEMO_CONTRACTS as DemoContractsT } from '@/lib/demo-dataset'
+import { orgIdsBrowser } from '@/lib/org'
 
 // ---------- meeting-artifact classifier (port of _shared/messageArtifact.ts
 // per the mobile contract's 5 rule families; the DB column is informational,
@@ -87,9 +88,9 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
     if (!user) return
     const [{ data: cms }, { data: sg }] = await Promise.all([
       supa.from('commitments').select('id, text, owner, due_at, promised_at, status, done_at, source_signal_id')
-        .eq('user_id', user.id).eq('account_name', account).order('due_at', { ascending: true, nullsFirst: false }).limit(60),
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account).order('due_at', { ascending: true, nullsFirst: false }).limit(60),
       supa.from('commitment_suggestions').select('evidence_id, commitment_id, strength, span, evidence_at, evidence_source, evidence_subject')
-        .eq('user_id', user.id).eq('account_name', account).limit(30),
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account).limit(30),
     ])
     setItems((cms as Cm[]) ?? [])
     setSuggs((sg as Sugg[]) ?? [])

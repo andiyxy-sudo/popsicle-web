@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MOVERS, DEMO_FORECAST } from '@/lib/demo-dataset'
 import { ForecastReal } from './ForecastReal'
+import { orgIdsServer } from '@/lib/org'
 
 export default async function ForecastPage() {
   const supabase = await createClient()
@@ -15,8 +16,8 @@ export default async function ForecastPage() {
   }
 
   const [acc, sig] = await Promise.all([
-    supabase.from('accounts').select('*').eq('user_id', user.id),
-    supabase.from('signals').select('*').eq('user_id', user.id).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
+    supabase.from('accounts').select('*').in('user_id', await orgIdsServer(supabase, user.id)),
+    supabase.from('signals').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
   ])
   return <ForecastReal accounts={acc.data ?? []} signals={sig.data ?? []} />
 }

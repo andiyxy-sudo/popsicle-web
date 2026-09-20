@@ -12,6 +12,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { orgIdsBrowser } from '@/lib/org'
 
 type Phase = 'checking' | 'connect' | 'scanning' | 'discovering' | 'pick' | 'creating' | 'done' | 'none' | 'error'
 
@@ -188,12 +189,14 @@ export function WelcomeFlow({ name }: { name: string }) {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user) { router.replace('/login'); return }
+      // invited users join the inviter's organisation (no-op for everyone else)
+      try { await supa.rpc('join_inviter_org') } catch { /* migration not applied yet */ }
       // ?force=1 lets users with existing accounts run discovery again (it
       // already excludes tracked accounts, so re-runs only surface new ones).
       const force = new URLSearchParams(window.location.search).get('force') === '1'
       const [{ count: accCount }, { data: integ }] = await Promise.all([
-        supa.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supa.from('integrations').select('provider').eq('user_id', user.id).eq('provider', 'gmail').eq('is_active', true).maybeSingle(),
+        supa.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supa, user.id)),
+        supa.from('integrations').select('provider').in('user_id', await orgIdsBrowser(supa, user.id)).eq('provider', 'gmail').eq('is_active', true).maybeSingle(),
       ])
       if (!force && (accCount ?? 0) > 0) { router.replace('/pulse'); return }
       if (integ) runScan()

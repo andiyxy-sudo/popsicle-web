@@ -81,9 +81,36 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
   const palette = ['#c43d2b', '#d38b1d', '#FF6B35', '#5C5855']
   const riskSits = Array.from(exposure.entries()).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v], i) => ({ k: TYPE_LABELS[k] || k, pct: pct(v, expTotal), exposure: v, color: palette[i] }))
 
+  // Rules layer for live accounts (until enough closed quarters exist to measure):
+  //  - success = share of handled signals of that action whose account is no longer high risk
+  //  - churn Δ = a benchmark reduction per action type, scaled by the observed success rate
+  const BENCH: Record<string, number> = { 'exec call': -31, 'executive call': -31, 'escalation': -22, 'exec escalation': -22, 'follow-up': -18, 'draft follow-up': -18, 'sent follow-up': -18, 'invoice chase': -8, 'handled': -12 }
+  const accountRisk = new Map(accounts.map(a => [a.name, a.risk_level ?? 'low']))
   const byAction = new Map<string, { used: number; ok: number }>()
-  for (const s of handled) { const k = s.handled_action || 'Follow-up'; const r = byAction.get(k) ?? { used: 0, ok: 0 }; r.used++; r.ok++; byAction.set(k, r) }
-  const actions = Array.from(byAction.entries()).map(([k, r]) => ({ k, used: r.used, success: pct(r.ok, r.used), churn: 0 })).sort((a, b) => b.used - a.used).slice(0, 4)
+  for (const s of handled) {
+    const k = s.handled_action || 'Follow-up'; const r = byAction.get(k) ?? { used: 0, ok: 0 }
+    r.used++; if (accountRisk.get(s.account_name ?? '') !== 'high') r.ok++; byAction.set(k, r)
+  }
+  const actions = Array.from(byAction.entries()).map(([k, r]) => {
+    const success = pct(r.ok, r.used)
+    const bench = BENCH[k.toLowerCase()] ?? -12
+    return { k, used: r.used, success, churn: Math.round(bench * (success / 78)) }   // 78% is the benchmark success rate
+  }).sort((a, b) => b.used - a.used).slice(0, 4)
+  // segments from deal size (HubSpot deal property `segment` wins when present)
+  const segOf = (a: Acct & { segment?: string | null }) => a.segment || (Number(a.value) >= 500_000 ? 'Enterprise' : Number(a.value) >= 150_000 ? 'Mid-Market' : 'SMB')
+  const segExposure = new Map<string, number>()
+  for (const s of live) if ((!s.status || s.status === 'open') && s.severity !== 'positive') { const acc = accounts.find(a => a.name === s.account_name); if (acc) { const k = segOf(acc); segExposure.set(k, (segExposure.get(k) ?? 0) + amt(s)) } }
+  const SEG_COLOR: Record<string, string> = { Enterprise: '#c43d2b', 'Mid-Market': '#d38b1d', SMB: '#7C5CFC' }
+  const bySegment = Array.from(segExposure.entries()).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v, color: SEG_COLOR[k] ?? '#5C5855' }))
+  const byHealth = [
+    { k: 'Critical', n: accounts.filter(a => a.risk_level === 'high').length, color: '#c43d2b' },
+    { k: 'Monitor', n: accounts.filter(a => a.risk_level === 'medium').length, color: '#d38b1d' },
+    { k: 'Healthy', n: accounts.filter(a => a.risk_level === 'low').length, color: '#2f8f5b' },
+  ]
+  const peakWeek = weeks.reduce((best, w, i) => (w.added > weeks[best].added ? i : best), 0)
+  const lastTwo = weeks.slice(-2)
+  const wk = lastTwo.length === 2 && lastTwo[0].added > 0 ? Math.round(((lastTwo[1].added - lastTwo[0].added) / lastTwo[0].added) * 100) : 0
+  const exposureTrend = added > 0 ? { total: wLast.added, vsPrior: wLast.added - (weeks[weeks.length - 2]?.added ?? wLast.added), peak: `${fmtMoney(weeks[peakWeek].added)} (${weeks[peakWeek].label})`, trajectory: wk > 0 ? `Worsening +${wk}%/wk` : wk < 0 ? `Improving ${wk}%/wk` : 'Flat', weeks: weeks.map(w => w.label), shape: weeks.map(w => (w.added / Math.max(1, ...weeks.map(x => x.added)))) } : undefined
 
   const bySrc = new Map<string, number>()
   for (const s of live) { const k = SOURCE_LABELS[s.source_integration || ''] || (s.source_integration || 'Other'); bySrc.set(k, (bySrc.get(k) ?? 0) + 1) }
@@ -113,6 +140,7 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
     successRate: holdingPct, successTarget: 80, recovered: new Set(handled.map(s => s.account_name)).size, caughtEarly: live.length,
     fasterDays: 0, insight: actions[0] ? `${actions[0].k} carries the volume at ${actions[0].success}% effectiveness.` : '',
     forecast: undefined, sources, renewals,
+    bySegment: bySegment.length ? bySegment : undefined, byHealth: accounts.length ? byHealth : undefined, exposureTrend,
   }
 }
 
@@ -422,7 +450,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 96, marginTop: 8, alignItems: 'start' }}>
         <div>
           <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 10, color: FAINT, padding: '16px 0 12px' }}>
-            <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ</span>}
+            <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ{demo ? '' : ' est.'}</span>}
           </div>
           {m.actions.length === 0 && <EmptyState line="Nothing handled yet." hint="Mark a signal handled and its action shows up here with its outcome." compact />}
           {m.actions.map(a => (

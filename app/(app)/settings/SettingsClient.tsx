@@ -10,6 +10,7 @@ import { useEscape } from '@/components/ui/useEscape'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
+import { orgIdsBrowser } from '@/lib/org'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -82,8 +83,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
     setExportBusy(true)
     try {
       const [{ data: accts }, { data: sigs }] = await Promise.all([
-        supabase.from('accounts').select('*').eq('user_id', user.id),
-        supabase.from('signals').select('*').eq('user_id', user.id).limit(2000),
+        supabase.from('accounts').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)),
+        supabase.from('signals').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
       ])
       let blob: Blob
       let name: string
@@ -222,9 +223,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
     let dead = false
     ;(async () => {
       const [{ data: integ }, { count: sigCount }, { count: acctCount }] = await Promise.all([
-        supabase.from('integrations').select('provider').eq('user_id', user.id).eq('is_active', true),
-        supabase.from('signals').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('accounts').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('integrations').select('provider').in('user_id', await orgIdsBrowser(supabase, user.id)).eq('is_active', true),
+        supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
+        supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
       ])
       if (dead) return
       setIntegrations((integ ?? []).map(i => i.provider as string))

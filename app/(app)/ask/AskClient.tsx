@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { orgIdsBrowser } from '@/lib/org'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -473,7 +474,7 @@ export function AskClient() {
     const { data: { user } } = await supa.auth.getUser()
     if (!user) { router.push('/signals'); return }
     const { data } = await supa.from('signals').select('id, severity')
-      .eq('user_id', user.id).eq('account_name', acct).eq('is_dismissed', false)
+      .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', acct).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('created_at', { ascending: false }).limit(10)
     const rows = (data ?? []) as Array<{ id: string; severity: string | null }>
     const top = rows.find(r => r.severity === 'high') ?? rows[0]
@@ -491,11 +492,11 @@ export function AskClient() {
       const { data: { user } } = await supa.auth.getUser()
       if (!user) { if (!dead) setInspectRows([]); return }
       const msgQ = supa.from('messages').select('id, sender, subject, content, received_at')
-        .eq('user_id', user.id).eq('integration', inspect)
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('integration', inspect)
         .order('received_at', { ascending: false }).limit(6)
       if (acct) msgQ.eq('account_name', acct)
       const sigQ = supa.from('signals').select('id, title, description, created_at')
-        .eq('user_id', user.id).eq('source_integration', inspect)
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('source_integration', inspect)
         .order('created_at', { ascending: false }).limit(6)
       if (acct) sigQ.eq('account_name', acct)
       const [m1, s1] = await Promise.all([msgQ, sigQ])
@@ -515,10 +516,10 @@ export function AskClient() {
     setMountedHist(true)
     if (typeof document !== 'undefined' && document.body.dataset.demo === '1') { setSourceCount(4); return }
     const supa = createClient()
-    supa.auth.getUser().then(({ data: { user } }) => {
+    supa.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       supa.from('integrations').select('provider', { count: 'exact', head: true })
-        .eq('user_id', user.id).eq('is_active', true)
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_active', true)
         .then(({ count }) => setSourceCount(count ?? 0))
     })
   }, [])
@@ -530,7 +531,7 @@ export function AskClient() {
     if (!user) return
     const { data } = await supa.from('ask_history')
       .select('id, question, answer, pinned, created_at')
-      .eq('user_id', user.id)
+      .in('user_id', await orgIdsBrowser(supa, user.id))
       .order('pinned', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(12)
@@ -547,7 +548,7 @@ export function AskClient() {
       if (!user || dead) return
       const { data } = await supa.from('signals')
         .select('account_name, title, severity, created_at')
-        .eq('user_id', user.id).eq('is_dismissed', false).eq('severity', 'high')
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false).eq('severity', 'high')
         .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(1)
       const top = (data ?? [])[0] as { account_name: string | null; title: string | null } | undefined

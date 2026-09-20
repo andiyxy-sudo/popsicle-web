@@ -86,3 +86,32 @@ export function healthTone(score: number | null | undefined): string {
 export function churnTone(pct: number | null | undefined): string { return pct == null ? 'var(--ink-faint, #A09C97)' : healthTone(100 - Number(pct)) }
 export function riskTone(level: string | null | undefined): string { return level === 'high' ? TONE.critical : level === 'medium' ? TONE.warn : level === 'low' ? TONE.good : 'var(--ink-faint, #A09C97)' }
 export function riskFromHealth(score: number | null | undefined): 'high' | 'medium' | 'low' { const s = Number(score ?? 0); return s >= 70 ? 'low' : s >= 40 ? 'medium' : 'high' }
+
+
+// ---------------------------------------------------------------------------
+// One date rule for the app (v11.77):
+//   under 1 hour → "just now" / "Nm ago";  same day → "Nh ago";  under 14 days → "today",
+//   "yesterday", "Nd ago";  beyond → "Mon D" (with the year when it is not this year).
+// Every "when" column, age and timestamp goes through this.
+// ---------------------------------------------------------------------------
+export function formatWhen(input: string | number | Date | null | undefined, now: number = Date.now()): string {
+  if (input == null || input === '') return '--'
+  const t = input instanceof Date ? input.getTime() : typeof input === 'number' ? input : new Date(input).getTime()
+  if (Number.isNaN(t)) return '--'
+  const diff = now - t
+  if (diff < 0) {
+    const d = new Date(t)
+    return d.toLocaleDateString('en-US', d.getFullYear() === new Date(now).getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 1) return 'today'
+  if (days < 2) return 'yesterday'
+  if (days < 14) return `${days}d ago`
+  const d = new Date(t)
+  return d.toLocaleDateString('en-US', d.getFullYear() === new Date(now).getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })
+}

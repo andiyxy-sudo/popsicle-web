@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_PEOPLE, DEMO_TEAM, DEMO_EXTRA } from '@/lib/demo-dataset'
 import { PortfolioReal } from './PortfolioReal'
+import { orgIdsServer } from '@/lib/org'
 
 // One redesigned screen for both worlds: real users get live rows, the demo
 // account gets the static dataset. (Replaces the legacy demo path whose
@@ -25,7 +26,7 @@ export default async function PortfolioPage() {
   }
 
   const { data: accounts } = await supabase
-    .from('accounts').select('*').eq('user_id', user.id)
+    .from('accounts').select('*').in('user_id', await orgIdsServer(supabase, user.id))
     .order('health_score', { ascending: true })
 
   return <PortfolioReal accounts={accounts ?? []} />

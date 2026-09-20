@@ -7,6 +7,7 @@
 // the section). Never a fabricated point, never an error state for optional content.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { orgIdsServer } from '@/lib/org'
 
 const DELIBERATION = [
   /\b(our|the|this) (signal|signals|analysis|monitoring|system|model|detector|detection|alert)\b/i,
@@ -29,12 +30,12 @@ export async function POST(req: NextRequest) {
 
   const [sigs, cms, msgs] = await Promise.all([
     supabase.from('signals').select('title, description, severity, ai_analysis')
-      .eq('user_id', user.id).eq('account_name', account).eq('is_dismissed', false)
+      .in('user_id', await orgIdsServer(supabase, user.id)).eq('account_name', account).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }).limit(4),
-    supabase.from('commitments').select('text, owner, due_at').eq('user_id', user.id)
+    supabase.from('commitments').select('text, owner, due_at').in('user_id', await orgIdsServer(supabase, user.id))
       .eq('account_name', account).eq('status', 'open').limit(5),
     supabase.from('messages').select('sender, subject, content, direction')
-      .eq('user_id', user.id).eq('account_name', account)
+      .in('user_id', await orgIdsServer(supabase, user.id)).eq('account_name', account)
       .order('received_at', { ascending: false }).limit(6),
   ])
 

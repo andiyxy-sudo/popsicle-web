@@ -2,6 +2,7 @@
 
 import type { DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { formatWhen } from '@/lib/utils'
 import { DateField } from '@/components/ui/DateField'
 import { useEscape } from '@/components/ui/useEscape'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
@@ -52,13 +53,7 @@ function fmtMoney(v?: number) {
   return `$${v}`
 }
 
-function timeAgo(iso?: string) {
-  if (!iso) return ''
-  const d = (Date.now() - new Date(iso).getTime()) / 86400000
-  if (d < 1) return 'today'
-  if (d < 2) return 'yesterday'
-  return `${Math.floor(d)}d ago`
-}
+const timeAgo = (iso?: string) => (iso ? formatWhen(iso) : '')
 
 interface Draft { subject: string; body: string; to: string; cc?: string; provenance?: { grounded_in: string[]; thread_messages: number; guards: { digits: string; greeting: string; deliberation: string }; attempts: number } }
 

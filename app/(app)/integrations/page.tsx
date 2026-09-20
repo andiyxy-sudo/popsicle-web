@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { IntegrationsReal, ProviderStat } from './IntegrationsReal'
 import { DEMO_INTEGRATION_ACTIVE, DEMO_INTEGRATION_STATS } from '@/lib/demo-dataset'
+import { orgIdsServer } from '@/lib/org'
 
 export default async function IntegrationsPage() {
   const supabase = await createClient()
@@ -16,8 +17,8 @@ export default async function IntegrationsPage() {
   }
 
   const [{ data: integrations }, { data: signals }] = await Promise.all([
-    supabase.from('integrations').select('provider, is_active, connected_at, last_synced_at, team_name, metadata').eq('user_id', userId),
-    supabase.from('signals').select('source_integration, severity, created_at').eq('user_id', userId).eq('is_dismissed', false),
+    supabase.from('integrations').select('provider, is_active, connected_at, last_synced_at, team_name, metadata').in('user_id', await orgIdsServer(supabase, userId)),
+    supabase.from('signals').select('source_integration, severity, created_at').in('user_id', await orgIdsServer(supabase, userId)).eq('is_dismissed', false),
   ])
 
   const activeRows = (integrations ?? []).filter(i => i.is_active)

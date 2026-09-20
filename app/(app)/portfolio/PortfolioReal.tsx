@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
-import { healthTone } from '@/lib/utils'
+import { healthTone, formatWhen } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 import { buildA360 } from '@/lib/demo-accounts'
+import { orgIdsBrowser } from '@/lib/org'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -66,11 +67,7 @@ const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)
 const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 const numWord = (n: number) => (n >= 0 && n <= 10 ? NUMWORD[n] : String(n))
 
-function agoDays(iso?: string | null): string {
-  if (!iso) return '--'
-  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
-  return d <= 0 ? 'today' : `${d}d ago`
-}
+const agoDays = (iso?: string | null): string => (iso ? formatWhen(iso) : '--')
 
 export type AccountMeta = Record<string, { role?: string; rep?: string; trend?: string }>
 export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { accounts: Account[]; demoSignals?: unknown[]; demoHead?: { headline: DemoHeadline; stats: HeadStat[] }; meta?: AccountMeta }) {
@@ -96,15 +93,15 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       return () => { dead = true }
     }
     const supa = createClient()
-    supa.auth.getUser().then(({ data: { user } }) => {
+    supa.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
       if (demoSignals) return
-      supa.from('gcal_event_state').select('account_name').eq('user_id', user.id).not('account_name', 'is', null)
+      supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
       supa.from('signals')
         .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
-        .eq('user_id', user.id).eq('is_dismissed', false)
+        .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(400)
         .then(({ data }) => {

@@ -308,11 +308,11 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
       quote: 'Sent personalized ROI deck after 2-week silence. Open confirmed within 4 minutes. 3 page views logged.' },
   ],
   'Vertex Systems': [
-    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: '6mo ago',
+    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: 'Mar 12',
       quote: 'Shared the proposal with leadership. Everyone is on board. Just waiting for legal to finish their review.' },
-    { who: 'Chris Lee', role: 'IT Manager', via: 'Slack', tone: 'positive', when: '6mo ago',
+    { who: 'Chris Lee', role: 'IT Manager', via: 'Slack', tone: 'positive', when: 'Mar 9',
       quote: 'Completed the security review. Your platform passed everything. Recommending to VP.' },
-    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: '6mo ago',
+    { who: 'Dana Kim', role: 'VP Operations', via: 'Gmail', tone: 'positive', when: 'Mar 4',
       quote: 'Great demo last week. The workflow automation feature is exactly what we need.' },
   ],
 }
@@ -714,10 +714,10 @@ export const DEMO_TEAM: TeamModel = {
   followThrough: 78, loopClosure: 71,
   executionInsight: 'Mike Ross is 2.5x slower than team median on first action. Two critical accounts lack second-touch. Loop closure rate 13 points below team average.',
   actionsFeed: [
-    { rep: 'Andy G', account: 'Brightwave', when: '6mo ago', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
-    { rep: 'Mike Ross', account: 'Nexus AI', when: '6mo ago', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },
-    { rep: 'Jamie Torres', account: 'Meridian Labs', when: '6mo ago', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice Delay', from: 66, to: 48, recovered: 44_000 },
-    { rep: 'Andy G', account: 'Vertex Systems', when: '6mo ago', action: 'Competitive battle card delivered to champion', driver: 'Competitor Activity', from: 61, to: 38, recovered: 36_000 },
+    { rep: 'Andy G', account: 'Brightwave', when: 'Mar 18', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
+    { rep: 'Mike Ross', account: 'Nexus AI', when: 'Mar 11', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },
+    { rep: 'Jamie Torres', account: 'Meridian Labs', when: 'Mar 6', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice Delay', from: 66, to: 48, recovered: 44_000 },
+    { rep: 'Andy G', account: 'Vertex Systems', when: 'Mar 3', action: 'Competitive battle card delivered to champion', driver: 'Competitor Activity', from: 61, to: 38, recovered: 36_000 },
   ],
 }
 
