@@ -44,7 +44,8 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
         // the route skeleton is itself a .dsk-screen, so "visible" must mean real text, not grey blocks
         const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none' && (x.innerText || '').trim().length > 40)
         const pending = document.querySelector('div[hidden][id^="S:"]') != null || /<!--\$\?-->/.test(document.body.innerHTML)
-        if (visible && !pending) return
+        // v11.67: always report for 8s, so the absence of the box proves the page's JS never ran
+        if (visible && !pending) { setDiag(`js ran · ${screens.length} screen(s) with text · nothing pending · this box closes itself`); setTimeout(() => setDiag(null), 8000); return }
         const hidden = Array.from(document.querySelectorAll('div[hidden]')).map(d => (d as HTMLElement).id).filter(Boolean)
         const first = screens[0]
         const cs = first ? getComputedStyle(first) : null
@@ -119,7 +120,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.66</span>
+            <span>v11.67</span>
           </footer>
         </div>
       </div>
