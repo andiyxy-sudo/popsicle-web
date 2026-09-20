@@ -2605,3 +2605,8 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
 .ed-app { display: flex; flex-direction: row; align-items: stretch; height: 100vh; width: 100%; overflow: hidden; }
 .ed-app > .main { margin-left: 0 !important; flex: 1 1 auto; min-width: 0; height: 100vh; }
 .ed-app > .sidebar { flex: none; }
+
+
+/* v11.74: Team page toggle groups (Revenue actions feed, Unactioned signal queue) are
+   sharp-cornered. To revert to pills, change 0px to 999px here (or delete the rule). */
+.dsk-screen { --toggle-radius: 0px; }

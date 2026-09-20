@@ -194,7 +194,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         </span>
       </h1>
 
-      <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '40px 0 30px' }} />
 
       {/* commit hero + trend */}
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>

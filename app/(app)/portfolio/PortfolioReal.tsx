@@ -193,7 +193,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
             <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
               {headline}
             </h1>
-            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
             <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: `repeat(${stats.length}, minmax(0,1fr))`, columnGap: 28 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}

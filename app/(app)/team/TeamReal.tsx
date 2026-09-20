@@ -224,7 +224,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         </div>
       )}
 
-      <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '40px 0 30px' }} />
 
       {/* three figures */}
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>
@@ -371,7 +371,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 22 }}>
                 {r.accounts.map(a => (
                   <span key={a} onClick={() => router.push(`/accounts/${encodeURIComponent(a)}`)}
-                    style={{ fontSize: 12.5, color: MUTED, background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: '6px 13px', cursor: 'pointer' }}>{a}</span>
+                    style={{ fontSize: 12.5, color: MUTED, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)', padding: '6px 13px', cursor: 'pointer' }}>{a}</span>
                 ))}
               </div>
             </div>
@@ -422,10 +422,10 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         return (
           <>
             <H2 title="Revenue actions feed" right={<span style={{ ...MONO, fontSize: 10, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>{m.actionsTaken} actions taken · last 7 days</span>} />
-            <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999, margin: '18px 0 4px' }}>
+            <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)', margin: '18px 0 4px' }}>
               {ACTION_FILTERS.map(k => (
                 <button key={k} onClick={() => setFeedFilter(k)}
-                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: feedFilter === k ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer', background: feedFilter === k ? INK : 'transparent', color: feedFilter === k ? '#fff' : MUTED }}>{k}</button>
+                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: feedFilter === k ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer', background: feedFilter === k ? INK : 'transparent', color: feedFilter === k ? '#fff' : MUTED }}>{k}</button>
               ))}
             </div>
             {feed.length === 0 && <EmptyState line="No actions in this view." hint="Switch the filter, or wait for the next handled signal to appear here." compact />}
@@ -462,13 +462,13 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         </span>
       } />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, margin: '18px 0 4px', flexWrap: 'wrap' }}>
-        <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 999 }}>
+        <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)' }}>
           {['All', ...m.reps.map(r => r.name)].map(k => {
             const on = queueRep === k
             const n = k === 'All' ? m.queue.length : m.queue.filter(q => q.rep === k).length
             return (
               <button key={k} onClick={() => setQueueRep(k)}
-                style={{ font: 'inherit', fontSize: 12.5, fontWeight: on ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer',
+                style={{ font: 'inherit', fontSize: 12.5, fontWeight: on ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
                   background: on ? INK : 'transparent', color: on ? '#fff' : MUTED, fontFamily: on ? undefined : "'DM Mono',monospace" }}>
                 {k === 'All' ? `All · ${n}` : `${initials(k)} · ${n}`}
               </button>
@@ -503,7 +503,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned signals should the team prioritise?')}`)}
         style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask AI to prioritise →</div>
 
-      <div style={{ height: 1, background: RULE, margin: '72px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '72px 0 30px' }} />
 
       {/* execution summary */}
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>
@@ -523,8 +523,8 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
           <div style={{ fontSize: 13.5, color: MUTED, margin: '12px 0 6px' }}>Critical coverage <strong style={{ color: INK, fontWeight: 600 }}>{m.criticalOwned} owned</strong> · {m.activeFollowUp} with active follow-up</div>
           {m.unowned && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '4px 0 10px' }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: RED, background: 'rgba(196,61,43,.08)', borderRadius: 999, padding: '5px 11px' }}>Unowned risk: {formatCurrency(m.unowned.risk)}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: AMBER, background: 'rgba(211,139,29,.1)', borderRadius: 999, padding: '5px 11px' }}>Stale: {m.unowned.stale} accounts</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: RED, background: 'rgba(196,61,43,.08)', borderRadius: 'var(--toggle-radius, 0px)', padding: '5px 11px' }}>Unowned risk: {formatCurrency(m.unowned.risk)}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: AMBER, background: 'rgba(211,139,29,.1)', borderRadius: 'var(--toggle-radius, 0px)', padding: '5px 11px' }}>Stale: {m.unowned.stale} accounts</span>
             </div>
           )}
           {m.reps.map(r => (

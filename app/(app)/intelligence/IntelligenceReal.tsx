@@ -208,7 +208,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       )}
 
-      <div style={{ height: 1, background: RULE, margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '40px 0 30px' }} />
 
       {/* ---- risk movement spine ---- */}
       <div style={{ ...MONO, fontSize: 10, color: FAINT }}>New risk added · week {m.weekNo}</div>
@@ -429,7 +429,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       </div>
 
-      {(m.forecast || m.sources.length > 0 || m.renewals.length > 0) && <div style={{ height: 1, background: RULE, margin: '72px 0 30px' }} />}
+      {(m.forecast || m.sources.length > 0 || m.renewals.length > 0) && <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '72px 0 30px' }} />}
 
       {/* ---- forecast / sources / renewals (only the columns that have data) ---- */}
       {(() => { const cols = [!!m.forecast, m.sources.length > 0, m.renewals.length > 0].filter(Boolean).length || 1; return (

@@ -275,7 +275,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
                 <button onClick={() => setBig(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
               </div>
               <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
-              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '18px 0 18px' }} />
+              <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '18px 0 18px' }} />
 
               {mlbl('average across ' + confs.length + ' analysed signal' + (confs.length === 1 ? '' : 's'))}
               <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
@@ -881,7 +881,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         }
         return (
           <>
-            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', opacity: .7, marginTop: 40 }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 40 }} />
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>

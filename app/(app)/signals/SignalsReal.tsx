@@ -459,7 +459,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           ]
         return (
           <>
-            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
             <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}
@@ -634,7 +634,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 </div>
                 <button onClick={close} style={{ ...mlab, background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)' }}>Close</button>
               </div>
-              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '20px 28px 0' }} />
+              <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '20px 28px 0' }} />
               <div style={{ padding: '20px 28px 26px' }}>
 
                 {kind === 'schedule' && (
@@ -807,7 +807,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 </div>
                 <button onClick={() => setDetailFor(null)} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)', flex: 'none', paddingTop: 4 }}>close</button>
               </div>
-              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
+              <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '22px 30px 0' }} />
               <div style={{ padding: '20px 28px 24px' }}>
                 {conf != null && (
                   <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, marginBottom: 24 }}>
@@ -987,7 +987,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               <button onClick={() => setDraftFor(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
             </div>
             <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.035em', margin: '12px 0 0', color: 'var(--ink)' }}>{draftFor.account_name || 'Draft reply'}</h2>
-            <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 0 0' }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '22px 0 0' }} />
 
             {draftState === 'loading' && (
               <div style={{ padding: '56px 0', textAlign: 'center' }}>
