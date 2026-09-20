@@ -1005,7 +1005,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{dark != null ? (dark === 0 ? 'today' : `${dark}d ago`) : '--'}</span>
                   <button onClick={() => top ? router.push(`/signals?signal=${top.id}&action=reply`) : router.push(`/accounts/${encodeURIComponent(a.name)}`)}
                     title={top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open'}
-                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 999, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open account'}
                   </button>
                 </div>

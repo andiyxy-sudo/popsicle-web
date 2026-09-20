@@ -461,7 +461,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
                 <span style={{ color: FAINT, fontSize: 11 }}>·</span>
                 <span style={{ ...MONO_NUM, fontSize: 12, color: INK, width: 34, textAlign: 'right' }}>{pct(s.n, srcTotal)}%</span>
                 <span style={{ width: 74, height: 3, background: HAIR, position: 'relative' }}>
-                  <span style={{ position: 'absolute', inset: 0, width: `${pct(s.n, srcMax)}%`, background: INK }} />
+                  <span style={{ position: 'absolute', inset: 0, width: `${pct(s.n, srcMax)}%`, background: 'linear-gradient(90deg, #FF8A50, var(--accent, #E85A25))' }} />
                 </span>
               </span>
             </Row>
