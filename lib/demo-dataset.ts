@@ -23,50 +23,50 @@ type Extra = {
 }
 export const DEMO_EXTRA: Record<string, Extra> = {
   'Acme Corp': {
-    contact_name: 'Sarah Chen', trend: '+12%', repScore: 74, expiry: 'Dec 31',
+    contact_name: 'Sarah Chen', trend: '-15%', repScore: 36, expiry: 'Dec 31',
     flags: ['Exec Unresponsive', '8d Dark', 'Champion at Risk'],
-    breakdown: [{ k: 'Engagement', v: 32 }, { k: 'Product Fit', v: 88 }, { k: 'Legal', v: 45 }, { k: 'Financial', v: 58 }],
+    breakdown: [{ k: 'Engagement', v: 49 }, { k: 'Product Fit', v: 58 }, { k: 'Legal', v: 20 }, { k: 'Financial', v: 17 }],
   },
   'Nexus AI': {
     contact_name: 'Marcus Webb', trend: '+8%', repScore: 91, expiry: 'Jan 15',
     flags: ['Legal Clearing', 'PO Expected'], statusNote: 'On track',
-    breakdown: [{ k: 'Engagement', v: 91 }, { k: 'Product Fit', v: 95 }, { k: 'Legal', v: 72 }, { k: 'Financial', v: 96 }],
+    breakdown: [{ k: 'Engagement', v: 81 }, { k: 'Product Fit', v: 95 }, { k: 'Legal', v: 92 }, { k: 'Financial', v: 96 }],
   },
   'TechFlow Inc': {
     contact_name: 'Jamie Torres', trend: '-3%', repScore: 61, expiry: 'Feb 01',
     flags: ['Price Flinch', 'Finance Review'],
-    breakdown: [{ k: 'Engagement', v: 48 }, { k: 'Product Fit', v: 72 }, { k: 'Legal', v: 30 }, { k: 'Financial', v: 55 }],
+    breakdown: [{ k: 'Engagement', v: 40 }, { k: 'Product Fit', v: 78 }, { k: 'Legal', v: 62 }, { k: 'Financial', v: 64 }],
   },
   'Meridian Labs': {
-    contact_name: 'Alex Park', trend: '+22%', repScore: 68, expiry: 'Mar 30',
+    contact_name: 'Alex Park', trend: '-11%', repScore: 58, expiry: 'Mar 30',
     flags: ['Timeline Slip'],
-    breakdown: [{ k: 'Engagement', v: 55 }, { k: 'Product Fit', v: 82 }, { k: 'Legal', v: 15 }, { k: 'Financial', v: 78 }],
+    breakdown: [{ k: 'Engagement', v: 42 }, { k: 'Product Fit', v: 82 }, { k: 'Legal', v: 18 }, { k: 'Financial', v: 90 }],
   },
   'Brightwave': {
-    contact_name: 'Andy G', trend: '+9%', repScore: 84, expiry: 'Feb 10',
+    contact_name: 'Andy G', trend: '+9%', repScore: 82, expiry: 'Feb 10',
     flags: ['Buyer Active', 'Onboarding Interest'], statusNote: 'Re-engaged',
-    breakdown: [{ k: 'Engagement', v: 85 }, { k: 'Product', v: 72 }, { k: 'Support', v: 90 }, { k: 'Finance', v: 65 }],
+    breakdown: [{ k: 'Engagement', v: 81 }, { k: 'Product', v: 78 }, { k: 'Support', v: 92 }, { k: 'Finance', v: 77 }],
   },
   'Axion Partners': {
-    contact_name: 'Andy G', trend: '-9%', repScore: 41, expiry: 'Feb 28',
+    contact_name: 'Andy G', trend: '-9%', repScore: 38, expiry: 'Feb 28',
     flags: ['Legal Blocker', '+3-5 Weeks'],
-    breakdown: [{ k: 'Engagement', v: 52 }, { k: 'Product', v: 48 }, { k: 'Support', v: 70 }, { k: 'Finance', v: 35 }],
+    breakdown: [{ k: 'Engagement', v: 45 }, { k: 'Product', v: 56 }, { k: 'Support', v: 39 }, { k: 'Finance', v: 12 }],
   },
   'TechVault Inc': {
-    contact_name: 'Mike Ross', trend: '-2%', repScore: 58, expiry: 'Mar 15',
+    contact_name: 'Mike Ross', trend: '-2%', repScore: 59, expiry: 'Mar 15',
     flags: ['Budget Concern', 'Finance Review'],
-    breakdown: [{ k: 'Engagement', v: 68 }, { k: 'Product', v: 92 }, { k: 'Support', v: 78 }, { k: 'Finance', v: 32 }],
+    breakdown: [{ k: 'Engagement', v: 51 }, { k: 'Product', v: 88 }, { k: 'Support', v: 72 }, { k: 'Finance', v: 25 }],
   },
   'Cobalt Health': {
     contact_name: 'Jamie Torres', trend: '+14%', repScore: 95, expiry: 'Closed Dec 20',
     flags: ['Contract Signed', 'Onboarding Started'], statusNote: 'Onboarding',
-    breakdown: [{ k: 'Engagement', v: 88 }, { k: 'Product', v: 82 }, { k: 'Support', v: 95 }, { k: 'Finance', v: 90 }],
+    breakdown: [{ k: 'Engagement', v: 87 }, { k: 'Product', v: 98 }, { k: 'Support', v: 97 }, { k: 'Finance', v: 98 }],
   },
   // Vertex Systems, transcribed from the mobile Overview (v11.20).
   'Vertex Systems': {
-    contact_name: 'Dana Kim', trend: '+5%', repScore: 84, expiry: 'Jan 28',
+    contact_name: 'Dana Kim', trend: '+5%', repScore: 82, expiry: 'Jan 28',
     flags: ['Legal Review', 'Close Jan 28'],
-    breakdown: [{ k: 'Engagement', v: 84 }, { k: 'Product Fit', v: 90 }, { k: 'Legal', v: 65 }, { k: 'Financial', v: 88 }],
+    breakdown: [{ k: 'Engagement', v: 81 }, { k: 'Product Fit', v: 90 }, { k: 'Legal', v: 69 }, { k: 'Financial', v: 88 }],
   },
 }
 
