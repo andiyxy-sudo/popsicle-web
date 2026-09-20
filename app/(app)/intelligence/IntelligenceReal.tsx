@@ -175,9 +175,9 @@ function scaleDemo(base: IntelModel, range: 30 | 60 | 90): IntelModel {
 }
 
 // ---------------------------------------------------------------- pieces
-function H2({ title, right, top = 72 }: { title: string; right?: React.ReactNode; top?: number }) {
+function H2({ title, right, top = 'var(--gap-l)' as unknown as number }: { title: string; right?: React.ReactNode; top?: number }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, paddingBottom: 16, borderBottom: `1px solid ${RULE}`, marginTop: top }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, paddingBottom: 16, borderBottom: `1px solid ${RULE}`, marginTop: top as unknown as number }}>
       <h2 style={{ margin: 0, fontFamily: OUTFIT, fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: INK }}>{title}</h2>
       {right}
     </div>
@@ -249,7 +249,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       </h1>
 
       {m.bullets.length > 0 && (
-        <div className="g4" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 34 }}>
+        <div className="g4" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 'var(--gap-m)' }}>
           {m.bullets.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 12, fontSize: 13.5, lineHeight: 1.55, color: MUTED }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.tone, marginTop: 7 }} />
@@ -269,7 +269,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       )}
 
-      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
 
       {/* ---- risk movement spine ---- */}
       <div style={{ ...MONO, fontSize: 10, color: FAINT }}>New risk added · week {m.weekNo}</div>
@@ -281,7 +281,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       )}
 
-      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 34, alignItems: 'end' }}>
+      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 'var(--gap-m)', alignItems: 'end' }}>
         <div style={{ display: 'flex', gap: 56 }}>
           <div>
             <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 30, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{fmtMoney(m.stabilized)}</div>
@@ -301,7 +301,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       </div>
 
-      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 36, alignItems: 'start' }}>
+      <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 'var(--gap-m)', alignItems: 'start' }}>
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Key movement drivers</div>
           {m.drivers.length === 0 && <EmptyState line="No movement to explain yet." hint="Drivers appear once signals carry a dollar amount at risk." compact />}
@@ -478,7 +478,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
             </div>
           </div>
           {m.fasterDays > 0 && (
-            <div style={{ marginTop: 34 }}>
+            <div style={{ marginTop: 'var(--gap-m)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: FAINT }}>d</span>
@@ -490,7 +490,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       </div>
 
-      {(m.forecast || m.sources.length > 0 || m.renewals.length > 0) && <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '72px 0 30px' }} />}
+      {(m.forecast || m.sources.length > 0 || m.renewals.length > 0) && <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-l) 0 30px' }} />}
 
       {/* ---- forecast / sources / renewals (only the columns that have data) ---- */}
       {(() => { const cols = [!!m.forecast, m.sources.length > 0, m.renewals.length > 0].filter(Boolean).length || 1; return (

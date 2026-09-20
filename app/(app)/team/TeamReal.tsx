@@ -155,9 +155,9 @@ function Heat({ grid }: { grid: number[][] }) {
   )
 }
 
-function H2({ title, right, top = 64 }: { title: string; right?: React.ReactNode; top?: number }) {
+function H2({ title, right, top = 'var(--gap-l)' as unknown as number }: { title: string; right?: React.ReactNode; top?: number }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingBottom: 14, borderBottom: `1px solid ${RULE}`, marginTop: top }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingBottom: 14, borderBottom: `1px solid ${RULE}`, marginTop: top as unknown as number }}>
       <h2 style={{ margin: 0, fontFamily: OUTFIT, fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: INK }}>{title}</h2>
       {right}
     </div>
@@ -214,7 +214,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
 
       {/* takeaways */}
       {m.bullets.length > 0 && (
-        <div className="g4" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 34 }}>
+        <div className="g4" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, m.bullets.length)}, minmax(0,1fr))`, gap: 28, marginTop: 'var(--gap-m)' }}>
           {m.bullets.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px 1fr', gap: 12, fontSize: 13.5, lineHeight: 1.55, color: MUTED }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: b.tone, marginTop: 7 }} />
@@ -224,7 +224,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         </div>
       )}
 
-      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
 
       {/* three figures */}
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>
@@ -456,7 +456,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       })()}
 
       {/* unactioned queue */}
-      <H2 title="Unactioned signal queue" top={72} right={
+      <H2 title="Unactioned signal queue"  right={
         <span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
           <span style={{ color: RED }}>{m.queue.length} unactioned</span> · of {m.signalsThisWeek} this week · {m.unresolvedPct}% unresolved
         </span>
@@ -503,7 +503,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
       <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned signals should the team prioritise?')}`)}
         style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask AI to prioritise →</div>
 
-      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: '72px 0 30px' }} />
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-l) 0 30px' }} />
 
       {/* execution summary */}
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>

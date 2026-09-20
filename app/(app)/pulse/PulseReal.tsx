@@ -882,7 +882,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         }
         return (
           <>
-            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 40 }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 'var(--gap-m)' }} />
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
@@ -911,7 +911,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {confOpen && <ConfidenceRing signals={signals} forceOpen onClose={() => setConfOpen(false)} />}
 
       {/* three editorial columns */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 80 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
         <section style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as signals arrive.</div>}
@@ -954,7 +954,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {/* Accounts needing attention, design AccountTable grid (no <table>,
           never scrolls sideways; text tracks truncate before the action button) */}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
-      <div style={{ marginTop: 80 }}>
+      <div style={{ marginTop: 'var(--gap-l)' }}>
         {(() => {
           const COLS = '34px minmax(104px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.8fr) minmax(84px,1.2fr) minmax(52px,.5fr) 112px'
           const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }

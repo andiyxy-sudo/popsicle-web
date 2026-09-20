@@ -2612,3 +2612,8 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
    Edit profile) read their radius from --toggle-radius. Sharp = 0px. To revert to pills
    change 0px to 999px; for a softened look use 4px. Avatars and dots stay circular. */
 :root { --toggle-radius: 0px; }
+
+
+/* v11.78: vertical rhythm. Three steps, used for every section gap on the screens.
+   To revert to the older looser spacing set --gap-l to 72px; to tighten, 56px. */
+:root { --gap-s: 24px; --gap-m: 40px; --gap-l: 64px; }

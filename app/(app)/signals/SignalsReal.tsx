@@ -454,7 +454,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           ]
         return (
           <>
-            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '40px 0 0' }} />
+            <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: 'var(--gap-m) 0 0' }} />
             <div className="g4" onMouseLeave={() => setStatHover(null)} style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               {stats.map((st, i) => (
                 <div key={i} onMouseEnter={() => setStatHover(i)}
@@ -470,7 +470,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       })()}
 
       {/* section head + filter pills */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 56, paddingBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 'var(--gap-l)', paddingBottom: 14 }}>
         <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All alerts</h2>
         <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)' }}>
           {([['all', 'All', signals.length], ['critical', 'Critical', critical.length], ['watch', 'Watch', watch.length], ['positive', 'Positive', positive.length]] as const).map(([k, lbl, n]) => (
@@ -568,7 +568,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
       {/* Recently handled: what was done, by when, so actions have somewhere to be seen */}
       {handledList.length > 0 && (
-        <div style={{ marginTop: 52 }}>
+        <div style={{ marginTop: 'var(--gap-l)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recently handled</h2>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>

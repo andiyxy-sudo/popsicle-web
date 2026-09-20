@@ -246,7 +246,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       </div>
 
       {/* tabs */}
-      <div style={{ display: 'flex', gap: 26, marginTop: 34, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+      <div style={{ display: 'flex', gap: 26, marginTop: 'var(--gap-m)', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
         {(['overview', 'comms', 'people', 'timeline', 'contracts'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
             style={{ font: 'inherit', fontSize: 15, fontWeight: tab === t ? 600 : 400, color: tab === t ? 'var(--accent)' : 'var(--ink-muted)', background: 'none', border: 0, borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent', padding: '0 0 12px', cursor: 'pointer', textTransform: 'capitalize' }}>

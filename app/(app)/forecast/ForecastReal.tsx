@@ -71,7 +71,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
   const maxMonth = Math.max(1, ...months.map(([, m]) => m.value))
 
   const secHead = (title: string, right?: React.ReactNode) => (
-    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 64 }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 'var(--gap-l)' }}>
       <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>{title}</h2>
       {right}
     </div>
@@ -194,7 +194,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         </span>
       </h1>
 
-      <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '40px 0 30px' }} />
+      <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: 'var(--gap-m) 0 30px' }} />
 
       {/* commit hero + trend */}
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(240px,.8fr) minmax(320px,1.5fr)', gap: 48, alignItems: 'start' }}>
@@ -211,7 +211,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
             <span>{formatCurrency(weightedF)} actual</span><span>{formatCurrency(toGo)} to go</span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px 22px', marginTop: 34 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px 22px', marginTop: 'var(--gap-m)' }}>
             {[
               { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
               { n: formatCurrency(atRiskF), lbl: `pipeline exposed · ${riskyDeals} deals`, color: 'var(--critical, #c43d2b)' },
@@ -306,7 +306,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
 
       {/* what moves the number */}
       {moverCards.length > 0 && (
-        <div style={{ marginTop: 56 }}>
+        <div style={{ marginTop: 'var(--gap-l)' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
@@ -338,7 +338,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       )}
 
       {/* forecast vs actual · AI accuracy · scenario model */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48, marginTop: 44 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48, marginTop: 'var(--gap-m)' }}>
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             Forecast vs actual · MTD
