@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { useEscape } from '@/components/ui/useEscape'
 
 // Call transcript, opened from a call entry on the deal timeline. Shows the AI
 // summary, the tagged key moments (objections, commitments, next steps) and a
@@ -19,6 +20,7 @@ const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing:
 
 export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose: () => void; onAsk: (q: string) => void }) {
   const [only, setOnly] = useState<'all' | 'key'>('all')
+  useEscape(true, onClose)   // also hides the floating Ask bar while open
   const counts = useMemo(() => {
     const c: Record<string, number> = {}
     for (const m of t.moments) if (m.tag) c[m.tag] = (c[m.tag] ?? 0) + 1
@@ -28,8 +30,8 @@ export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose:
   const isUs = (who: string) => /^(Andy|Mike|Jamie|You)/.test(who)
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(14,13,11,.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '6vh 24px 24px', overflowY: 'auto' }}>
-      <div onClick={e => e.stopPropagation()} style={{ width: 'min(760px, 100%)', background: 'var(--paper, #FBF8F3)', boxShadow: '0 44px 100px -34px rgba(14,13,11,.55)' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(14,13,11,.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 24px', overflowY: 'auto' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: 'min(760px, 100%)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--paper, #FBF8F3)', boxShadow: '0 44px 100px -34px rgba(14,13,11,.55)' }}>
         {/* header */}
         <div style={{ padding: '26px 30px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 18 }}>
           <div>
@@ -65,7 +67,7 @@ export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose:
           </div>
         </div>
 
-        <div style={{ padding: '6px 30px 0' }}>
+        <div style={{ padding: '6px 30px 8px', overflowY: 'auto', flex: '1 1 auto', minHeight: 0 }}>
           {shown.map((m, i) => {
             const tag = m.tag ? TAG[m.tag] : null
             return (
@@ -83,7 +85,7 @@ export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose:
           })}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '22px 30px 28px', marginTop: 10, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '18px 30px 22px', flex: 'none', borderTop: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)' }}>
           <span style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>{t.moments.length} moments · {t.duration} minutes</span>
           <button onClick={() => { onClose(); onAsk(`From the ${t.title} with ${t.account}: what were the objections, what did they commit to, and what should I send next?`) }}
             style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>Ask AI about this call</button>
