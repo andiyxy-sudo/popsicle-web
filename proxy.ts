@@ -23,7 +23,10 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // getClaims verifies the session JWT locally; getUser was an auth-server round trip
+  // on every single request (pages, RSC fetches, API calls), most of the slow reloads
+  const { data: claims } = await supabase.auth.getClaims()
+  const user = claims ? { id: claims.claims.sub } : null
   const { pathname } = request.nextUrl
 
   const isPublic = pathname.startsWith('/login') || pathname.startsWith('/auth')
