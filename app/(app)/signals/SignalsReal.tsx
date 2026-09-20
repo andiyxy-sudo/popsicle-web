@@ -501,7 +501,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
             <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row"
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 190px 132px', alignItems: 'center', gap: 20,
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
@@ -526,7 +526,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
-                  <div style={{ display: 'inline-flex', gap: 24, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
+                  <div style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
                     <div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>

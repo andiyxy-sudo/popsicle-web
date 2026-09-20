@@ -30,6 +30,120 @@ const TYPE_LABELS: Record<string, string> = {
 }
 const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${v}`
 
+
+// ---------------------------------------------------------------------------
+// Comms thread and timeline rail, shared by demo and live branches.
+// ---------------------------------------------------------------------------
+type ThreadItem = { who: string; role?: string; via: string; when: string; text: string; tone: 'positive' | 'neutral' | 'negative' | 'internal'; mine?: boolean; label?: string }
+type RailItem = { title: string; body?: string; when: string; kind: 'positive' | 'watch' | 'negative' | 'call' | 'info'; tags?: string[]; onClick?: () => void; done?: boolean }
+
+const CHANNEL: Record<string, { label: string; glyph: string; color: string }> = {
+  gmail: { label: 'Gmail', glyph: 'M', color: '#c43d2b' }, outlook: { label: 'Outlook', glyph: 'O', color: '#2f6f9f' }, whatsapp: { label: 'WhatsApp', glyph: 'W', color: '#25a45a' },
+  slack: { label: 'Slack', glyph: 'S', color: '#7C5CFC' }, phone: { label: 'Phone', glyph: 'P', color: '#0E0D0B' }, zoom: { label: 'Zoom', glyph: 'Z', color: '#2f6f9f' },
+  linkedin: { label: 'LinkedIn', glyph: 'in', color: '#2f6f9f' }, hubspot: { label: 'HubSpot', glyph: 'H', color: '#E85A25' }, fireflies: { label: 'Fireflies', glyph: 'F', color: '#7C5CFC' }, gcal: { label: 'Calendar', glyph: 'C', color: '#2f6f9f' },
+}
+const TONE_META = {
+  positive: { c: 'var(--good, #2f8f5b)', t: 'Positive signal' },
+  neutral: { c: 'var(--warn, #d38b1d)', t: 'Neutral signal' },
+  negative: { c: 'var(--critical, #c43d2b)', t: 'Negative signal' },
+  internal: { c: 'var(--ink-faint, #A09C97)', t: 'Internal' },
+} as const
+
+function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; account: string; onAsk: (q: string) => void; onDraft?: () => void }) {
+  const viaSet = Array.from(new Set(items.map(i => CHANNEL[i.via.toLowerCase()]?.label ?? i.via)))
+  const counts = { positive: items.filter(i => i.tone === 'positive').length, negative: items.filter(i => i.tone === 'negative').length, neutral: items.filter(i => i.tone === 'neutral').length }
+  const initials = (n: string) => n.replace(/^#/, '').split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || '·'
+  return (
+    <div style={{ marginTop: 22 }}>
+      {/* summary strip */}
+      <div className="g2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap', paddingBottom: 14, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recent communications</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
+          <span>{items.length} messages</span>
+          {counts.positive > 0 && <span style={{ color: TONE_META.positive.c }}>{counts.positive} positive</span>}
+          {counts.neutral > 0 && <span style={{ color: TONE_META.neutral.c }}>{counts.neutral} neutral</span>}
+          {counts.negative > 0 && <span style={{ color: TONE_META.negative.c }}>{counts.negative} negative</span>}
+          <span>via {viaSet.join(' · ')}</span>
+        </div>
+      </div>
+      {/* thread */}
+      <div style={{ position: 'relative', marginTop: 8 }}>
+        <span aria-hidden style={{ position: 'absolute', left: 21, top: 30, bottom: 30, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+        {items.map((m, i) => {
+          const tone = TONE_META[m.tone]
+          const ch = CHANNEL[m.via.toLowerCase()] ?? { label: m.via, glyph: m.via.slice(0, 1).toUpperCase(), color: '#5C5855' }
+          return (
+            <div key={i} style={{ display: 'grid', gridTemplateColumns: '44px minmax(0,1fr)', gap: 18, padding: '22px 0', position: 'relative' }}>
+              <div style={{ position: 'relative' }}>
+                <span style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 14, color: m.mine ? '#fff' : tone.c, background: m.mine ? 'var(--ink, #0E0D0B)' : 'var(--paper, #FBF8F3)', border: `2px solid ${m.mine ? 'var(--ink, #0E0D0B)' : tone.c}`, position: 'relative', zIndex: 1 }}>{m.mine ? 'ME' : initials(m.who)}</span>
+                <span title={ch.label} style={{ position: 'absolute', right: -4, bottom: -2, width: 18, height: 18, borderRadius: 4, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 9, fontWeight: 700, zIndex: 2, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
+              </div>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{m.mine ? 'You' : m.who}</span>
+                  {m.role && <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{m.role}</span>}
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>via {ch.label}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{m.when}</span>
+                </div>
+                <div style={{ marginTop: 10, padding: '14px 18px', background: m.mine ? 'transparent' : 'var(--inset, #F4F0E8)', border: m.mine ? '1px solid var(--hairline, #EFEAE1)' : '1px solid transparent', borderLeft: `3px solid ${tone.c}`, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)', maxWidth: 720 }}>
+                  {m.label && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>{m.label}</div>}
+                  &ldquo;{m.text}&rdquo;
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: tone.c, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: tone.c }} />{tone.t}</span>
+                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask AI about this →</span>
+                  {onDraft && !m.mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 10, cursor: 'pointer' }}>Ask AI to summarise this thread →</div>
+    </div>
+  )
+}
+
+function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: string; onAsk: (q: string) => void }) {
+  const KIND = {
+    positive: { c: 'var(--good, #2f8f5b)', g: '✓' }, watch: { c: 'var(--warn, #d38b1d)', g: '!' }, negative: { c: 'var(--critical, #c43d2b)', g: '↓' },
+    call: { c: 'var(--blue, #2f6f9f)', g: '☎' }, info: { c: 'var(--ink-faint, #A09C97)', g: '·' },
+  } as const
+  return (
+    <div style={{ marginTop: 22 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingBottom: 14, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Deal timeline</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{items.length} events · newest first</div>
+      </div>
+      <div style={{ position: 'relative', marginTop: 6 }}>
+        <span aria-hidden style={{ position: 'absolute', left: 15, top: 34, bottom: 34, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+        {items.map((t, i) => {
+          const k = KIND[t.kind]
+          const tinted = t.kind === 'negative' || t.kind === 'watch'
+          return (
+            <div key={i} onClick={t.onClick} style={{ display: 'grid', gridTemplateColumns: '32px minmax(0,1fr)', gap: 18, padding: '18px 0', cursor: t.onClick ? 'pointer' : 'default' }}>
+              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--paper, #FBF8F3)', border: `2px solid ${k.c}`, color: k.c, fontSize: 13, fontWeight: 700, position: 'relative', zIndex: 1, opacity: t.done ? .55 : 1 }}>{k.g}</span>
+              <div style={{ padding: tinted ? '14px 18px' : '2px 0 0', background: tinted ? (t.kind === 'negative' ? 'rgba(196,61,43,.06)' : 'rgba(211,139,29,.08)') : 'transparent', borderLeft: tinted ? `3px solid ${k.c}` : 0, opacity: t.done ? .7 : 1 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</span>
+                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{t.when}</span>
+                </div>
+                {t.body && <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5, maxWidth: 720 }}>{t.body}</div>}
+                {t.tags && t.tags.length > 0 && (
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+                    {t.tags.map(tag => <span key={tag} style={{ fontSize: 11.5, color: 'var(--ink-muted)', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', padding: '3px 10px' }}>{tag}</span>)}
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 10, cursor: 'pointer' }}>Ask AI what changed →</div>
+    </div>
+  )
+}
+
 export function AccountPage({ accountName, account, signals, messages, demo = {} }: { accountName: string; account: Acct | null; signals: Sig[]; messages: Msg[]; demo?: DemoSlices }) {
   const router = useRouter()
   const [tab, setTab] = useState<'overview' | 'comms' | 'people' | 'timeline' | 'contracts'>('overview')
@@ -208,90 +322,20 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
 
       {/* COMMS */}
       {tab === 'comms' && demo.comms && (
-        <div style={{ marginTop: 22 }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 4 }}>Recent communications</div>
-          {demo.comms.map((c, i) => {
-            const tone = c.tone === 'positive' ? 'var(--good, #2f8f5b)' : c.tone === 'negative' ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)'
-            return (
-              <div key={i} style={{ padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{c.who}</span>
-                  <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{c.role} · via {c.via}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{c.when}</span>
-                </div>
-                <div style={{ marginTop: 9, paddingLeft: 14, borderLeft: `2px solid ${tone}`, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>&ldquo;{c.quote}&rdquo;</div>
-                <div style={{ fontSize: 12.5, color: tone, marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 7 }}>
-                  <span style={{ width: 5, height: 5, borderRadius: '50%', background: tone }} />{c.tone} signal
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined}
+          items={demo.comms.map(c => ({ who: c.who, role: c.role, via: c.via, when: c.when, text: c.quote, tone: (c.who.startsWith('#') ? 'internal' : c.tone === 'positive' ? 'positive' : c.tone === 'negative' ? 'negative' : 'neutral') as ThreadItem['tone'], mine: /^(Andy G|Mike Ross|Jamie Torres)$/.test(c.who) }))} />
       )}
       {tab === 'comms' && !demo.comms && (() => {
         const sorted = [...messages].filter(m => m.received_at).sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))
-        if (!sorted.length) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No correspondence recorded for this account.</div>
-        const dayLabel = (iso: string) => {
-          const d = new Date(iso); const t = new Date(); t.setHours(0, 0, 0, 0)
-          const y = new Date(t); y.setDate(y.getDate() - 1)
-          const dd = new Date(d); dd.setHours(0, 0, 0, 0)
-          if (dd.getTime() === t.getTime()) return 'Today'
-          if (dd.getTime() === y.getTime()) return 'Yesterday'
-          return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-        }
-        const initials = (n: string) => n.split(/[\s.@]+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
-        let lastDay = ''
-        return (
-          <div style={{ marginTop: 20 }}>
-            <div style={{ fontSize: 13.5, color: 'var(--ink-faint)', marginBottom: 8 }}>
-              {sorted.length} message{sorted.length === 1 ? '' : 's'} · newest first · {sorted.filter(m => (m.direction || '').toLowerCase() === 'outbound').length} sent by you
-            </div>
-            {sorted.map(m => {
-              const day = mounted ? dayLabel(m.received_at!) : ''
-              const showDay = !!day && day !== lastDay
-              if (showDay) lastDay = day
-              const out = (m.direction || '').toLowerCase() === 'outbound'
-              const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
-              return (
-                <div key={m.id}>
-                  {showDay && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '30px 0 14px' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{day}</span>
-                      <span style={{ flex: 1, height: 1, background: 'var(--hairline, #EFEAE1)' }} />
-                    </div>
-                  )}
-                  <div style={{ display: 'flex', gap: 14, padding: '14px 0' }}>
-                    <span style={{ width: 32, height: 32, borderRadius: '50%', flex: 'none', display: 'grid', placeItems: 'center',
-                      fontSize: 11, fontWeight: 700, letterSpacing: '.02em',
-                      background: out ? 'var(--accent, #E85A25)' : 'var(--inset, #F0EDE7)', color: out ? '#fff' : 'var(--ink-muted)' }}>
-                      {initials(who)}
-                    </span>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14.5, fontWeight: 600, color: 'var(--ink)', textTransform: 'capitalize' }}>{who}</span>
-                        <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.1px', textTransform: 'uppercase', color: out ? 'var(--accent)' : 'var(--ink-faint)' }}>
-                          {out ? 'sent' : 'received'} · {m.integration}
-                        </span>
-                        <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
-                          {mounted && m.received_at ? new Date(m.received_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : ''}
-                        </span>
-                      </div>
-                      {m.subject && <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)', marginTop: 4 }}>{m.subject}</div>}
-                      {m.content && (
-                        <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.7, marginTop: 5, paddingLeft: 14, borderLeft: `2px solid ${out ? 'rgba(232,90,37,.28)' : 'var(--hairline, #EFEAE1)'}` }}>
-                          {m.content}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )
+        if (!sorted.length) return <EmptyState line="No correspondence recorded yet." hint="Messages appear here as soon as a connected inbox or chat sees this account." />
+        const items: ThreadItem[] = sorted.map(m => {
+          const out = (m.direction || '').toLowerCase() === 'outbound'
+          const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
+          return { who, via: m.integration || 'gmail', when: mounted && m.received_at ? new Date(m.received_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '', text: (m.content || m.subject || '').replace(/\s+/g, ' ').trim().slice(0, 600), tone: out ? 'neutral' : 'neutral', mine: out, label: m.subject && m.content ? m.subject : undefined }
+        })
+        return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined} />
       })()}
 
-      {/* TIMELINE */}
       {tab === 'people' && (() => {
         if (!people.length) return <EmptyState line="No contacts mapped yet." hint="Contacts appear as Popsicle sees who writes, who is copied and who decides. You can add one from the account slide-over." />
         const badgeColor = (b: string) => /CHAMPION|SPONSOR|POWER/.test(b) ? 'var(--good, #2f8f5b)' : /BLOCKER|DECISION/.test(b) ? 'var(--critical, #c43d2b)' : /UNKNOWN/.test(b) ? 'var(--ink-faint)' : 'var(--warn, #d38b1d)'
@@ -342,95 +386,20 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       })()}
 
       {tab === 'timeline' && demo.timeline && (
-        <div style={{ marginTop: 22 }}>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>Deal timeline</div>
-          {demo.timeline.map((t, i) => {
-            const c = t.kind === 'negative' ? 'var(--critical, #c43d2b)' : t.kind === 'watch' ? 'var(--warn, #d38b1d)' : t.kind === 'call' ? 'var(--blue, #2f6f9f)' : 'var(--good, #2f8f5b)'
-            return (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <span style={{ width: 9, height: 9, borderRadius: '50%', border: `2px solid ${c}`, alignSelf: 'center' }} />
-                <div>
-                  <div style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{t.title}</div>
-                  <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.62, marginTop: 4 }}>{t.body}</div>
-                  {t.tags && (
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 9 }}>
-                      {t.tags.map(tag => (
-                        <span key={tag} style={{ fontSize: 11.5, color: 'var(--ink-muted)', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: '3px 10px' }}>{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{t.when}</span>
-              </div>
-            )
-          })}
-        </div>
+        <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)}
+          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'] }))} />
       )}
       {tab === 'timeline' && !demo.timeline && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
         if (!sorted.length) return <EmptyState line="No timeline yet." hint="Every signal, call and commitment on this account lands here in order." />
-        if (false) return <div style={{ padding: '30px 0', fontSize: 14, color: 'var(--ink-faint)' }}>No signals on this account yet.</div>
-        const monthOf = (iso?: string | null) => iso && mounted ? new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : ''
-        let lastMonth = ''
-        return (
-          <div style={{ marginTop: 20 }}>
-            {(() => {
-              const done = sorted.filter(x => x.status === 'handled')
-              if (!done.length) return null
-              return (
-                <div style={{ marginBottom: 28 }}>
-                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Actions taken on this account · {done.length}</div>
-                  {done.map(x => (
-                    <div key={`log-${x.id}`} style={{ display: 'grid', gridTemplateColumns: '58px minmax(0,1fr) auto', gap: 12, alignItems: 'baseline', padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{mounted && x.handled_at ? new Date(x.handled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
-                      <span style={{ fontSize: 14, color: 'var(--ink)' }}><span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>{x.handled_action || 'Handled'}</span><span style={{ color: 'var(--ink-faint)' }}> · </span><span style={{ color: 'var(--ink-muted)' }}>{x.title}</span></span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{x.source_integration ? `via ${x.source_integration}` : ''}</span>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
-            <div style={{ fontSize: 13.5, color: 'var(--ink-faint)', marginBottom: 6 }}>
-              {sorted.length} signal{sorted.length === 1 ? '' : 's'} · {sorted.filter(x => x.status === 'handled').length} handled · newest first
-            </div>
-            {sorted.map(sg => {
-              const c = sg.severity === 'high' ? 'var(--critical, #c43d2b)' : sg.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
-              const handled = sg.status === 'handled'
-              const mth = monthOf(sg.created_at)
-              const showMonth = !!mth && mth !== lastMonth
-              if (showMonth) lastMonth = mth
-              return (
-                <div key={sg.id}>
-                  {showMonth && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '28px 0 10px' }}>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{mth}</span>
-                      <span style={{ flex: 1, height: 1, background: 'var(--hairline, #EFEAE1)' }} />
-                    </div>
-                  )}
-                  <div onClick={() => router.push(`/signals?signal=${sg.id}`)}
-                    style={{ display: 'grid', gridTemplateColumns: '58px 14px minmax(0,1fr) auto', gap: 12, alignItems: 'baseline', padding: '15px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', opacity: handled ? .6 : 1 }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>
-                      {mounted && sg.created_at ? new Date(sg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}
-                    </span>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: handled ? 'transparent' : c, border: `2px solid ${c}`, alignSelf: 'center' }} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.4 }}>
-                        {handled && <span style={{ color: 'var(--good, #2f8f5b)' }}>✓ </span>}{sg.title}
-                      </div>
-                      {sg.description && sg.description !== sg.title && (
-                        <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6, marginTop: 4 }}>{sg.description}</div>
-                      )}
-                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 6 }}>
-                        {TYPE_LABELS[sg.signal_type || ''] || 'signal'} · {sg.source_integration || 'unknown'}
-                      </div>
-                    </div>
-                    {sg.risk_amount ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: c, whiteSpace: 'nowrap' }}>{money(sg.risk_amount)}</span> : <span />}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )
+        const items: RailItem[] = sorted.map(sg => ({
+          title: sg.title || 'Signal', body: sg.description || undefined,
+          when: mounted && sg.created_at ? new Date(sg.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
+          kind: (sg.status === 'handled' ? 'positive' : sg.severity === 'high' ? 'negative' : sg.severity === 'positive' ? 'positive' : /call|meeting/.test(sg.signal_type || '') ? 'call' : 'watch') as RailItem['kind'],
+          tags: [sg.source_integration ? `via ${sg.source_integration}` : null, sg.risk_amount ? `$${Math.round(Number(sg.risk_amount) / 1000)}K at risk` : null, sg.status === 'handled' ? (sg.handled_action || 'handled') : null].filter(Boolean) as string[],
+          done: sg.status === 'handled', onClick: () => router.push(`/signals?signal=${sg.id}`),
+        }))
+        return <TimelineRail account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />
       })()}
     </div>
   )
