@@ -2,6 +2,8 @@
 
 import { healthTone, formatWhen } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useEscape } from '@/components/ui/useEscape'
+import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
 
 // Account 360 as a full page, matching the design: breadcrumb, name + ARR,
 // four stats with a health sparkline, five tabs, and an Overview built from
@@ -14,7 +16,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 
 // Demo slices for this one account arrive as props from the server page, so
 // the client bundle never includes the whole demo dataset.
-export type DemoSlices = { people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
+export type DemoSlices = { transcript?: Transcript; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
@@ -35,7 +37,7 @@ const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixe
 // Comms thread and timeline rail, shared by demo and live branches.
 // ---------------------------------------------------------------------------
 type ThreadItem = { who: string; role?: string; via: string; when: string; text: string; tone: 'positive' | 'neutral' | 'negative' | 'internal'; mine?: boolean; label?: string }
-type RailItem = { title: string; body?: string; when: string; kind: 'positive' | 'watch' | 'negative' | 'call' | 'info'; tags?: string[]; onClick?: () => void; done?: boolean }
+type RailItem = { title: string; body?: string; when: string; kind: 'positive' | 'watch' | 'negative' | 'call' | 'info'; tags?: string[]; onClick?: () => void; done?: boolean; transcript?: Transcript }
 
 const CHANNEL: Record<string, { label: string; glyph: string; color: string }> = {
   gmail: { label: 'Gmail', glyph: 'M', color: '#c43d2b' }, outlook: { label: 'Outlook', glyph: 'O', color: '#2f6f9f' }, whatsapp: { label: 'WhatsApp', glyph: 'W', color: '#25a45a' },
@@ -129,6 +131,8 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
 }
 
 function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: string; onAsk: (q: string) => void }) {
+  const [openTr, setOpenTr] = useState<Transcript | null>(null)
+  useEscape(!!openTr, () => setOpenTr(null))
   const KIND = {
     positive: { c: 'var(--good, #2f8f5b)', g: '✓', label: 'Progress' }, watch: { c: 'var(--warn, #d38b1d)', g: '!', label: 'Watch' },
     negative: { c: 'var(--critical, #c43d2b)', g: '↓', label: 'Risk' }, call: { c: 'var(--blue, #2f6f9f)', g: '☎', label: 'Call' }, info: { c: 'var(--ink-faint, #A09C97)', g: '·', label: 'Note' },
@@ -155,14 +159,17 @@ function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: s
           const k = KIND[t.kind]
           const heavy = t.kind === 'negative' || t.kind === 'watch'
           return (
-            <div key={i} onClick={t.onClick} className="rail-row" style={{ display: 'grid', gridTemplateColumns: '68px 24px minmax(0,1fr)', gap: 22, alignItems: 'start', padding: '18px 0', cursor: t.onClick ? 'pointer' : 'default' }}>
+            <div key={i} onClick={() => { if (t.transcript) setOpenTr(t.transcript); else t.onClick?.() }} className="rail-row" style={{ display: 'grid', gridTemplateColumns: '68px 24px minmax(0,1fr)', gap: 22, alignItems: 'start', padding: '18px 0', cursor: (t.onClick || t.transcript) ? 'pointer' : 'default' }}>
               {/* date gutter, so the eye reads time down the left */}
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', textAlign: 'right', paddingTop: 5, whiteSpace: 'nowrap' }}>{t.when}</span>
               <span style={{ position: 'relative', display: 'grid', placeItems: 'center', paddingTop: 2 }}>
                 <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'grid', placeItems: 'center', background: heavy ? k.c : 'var(--paper, #FBF8F3)', border: `1.5px solid ${k.c}`, color: heavy ? '#fff' : k.c, fontSize: 11, fontWeight: 700, opacity: t.done ? .5 : 1, zIndex: 1 }}>{k.g}</span>
               </span>
               <div style={{ minWidth: 0, opacity: t.done ? .65 : 1, paddingLeft: heavy ? 16 : 0, borderLeft: heavy ? `2px solid ${k.c}` : 0 }}>
-                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</span>
+                  {t.transcript && <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)' }}>Open transcript →</span>}
+                </div>
                 {t.body && <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5, maxWidth: 640 }}>{t.body}</div>}
                 {t.tags && t.tags.length > 0 && (
                   <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 9, fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -174,6 +181,7 @@ function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: s
           )
         })}
       </div>
+      {openTr && <TranscriptModal t={openTr} onClose={() => setOpenTr(null)} onAsk={onAsk} />}
       <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI what changed →</div>
     </div>
   )
@@ -422,7 +430,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
 
       {tab === 'timeline' && demo.timeline && (
         <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)}
-          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'] }))} />
+          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'], transcript: demo.transcript && /call|zoom|meeting/i.test(t.title) ? demo.transcript : undefined }))} />
       )}
       {tab === 'timeline' && !demo.timeline && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))

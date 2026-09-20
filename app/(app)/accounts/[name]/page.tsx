@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { AccountPage } from './AccountPage'
 import { DEMO_EMAIL } from '@/lib/data'
-import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
+import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES, DEMO_TRANSCRIPT } from '@/lib/demo-dataset'
 import { orgIdsServer } from '@/lib/org'
 
 // Data is fetched here, on the server, so the page arrives populated instead
@@ -23,7 +23,7 @@ export default async function Page({ params }: { params: Promise<{ name: string 
         account={(demo ?? null) as never}
         signals={DEMO_SIGNALS.filter(s => s.account_name === accountName) as never}
         messages={DEMO_MESSAGES.filter(m => m.account_name === accountName).slice(0, 40) as never}
-        demo={{ people: DEMO_PEOPLE[accountName], contracts: DEMO_CONTRACTS[accountName], extra: DEMO_EXTRA[accountName], comms: DEMO_COMMS[accountName], timeline: DEMO_TIMELINE[accountName], riskLines: DEMO_RISK_LINES[accountName] }}
+        demo={{ transcript: DEMO_TRANSCRIPT.account === accountName ? DEMO_TRANSCRIPT : undefined, people: DEMO_PEOPLE[accountName], contracts: DEMO_CONTRACTS[accountName], extra: DEMO_EXTRA[accountName], comms: DEMO_COMMS[accountName], timeline: DEMO_TIMELINE[accountName], riskLines: DEMO_RISK_LINES[accountName] }}
       />
     )
   }
