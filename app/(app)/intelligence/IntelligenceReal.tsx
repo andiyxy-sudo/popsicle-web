@@ -9,6 +9,7 @@
 // the same IntelModel from the user's own rows.
 
 import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
 import type { IntelModel } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -205,6 +206,18 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
   const [series, setSeries] = useState<'At risk' | 'Stabilized' | 'Both'>('At risk')
   const [sits, setSits] = useState<'By driver' | 'By segment' | 'By health'>('By driver')
   const [hoverW, setHoverW] = useState<number | null>(null)   // risk chart hover index
+  // measured detection accuracy from the team's own thumbs up/down (live only)
+  const [acc, setAcc] = useState<{ rated: number; pct: number } | null>(null)
+  useEffect(() => {
+    if (demo) { setAcc({ rated: 128, pct: 91 }); return }
+    void (async () => {
+      try {
+        const { data } = await createClient().rpc('signal_accuracy')
+        const row = Array.isArray(data) ? data[0] as { rated?: number; pct?: number } : null
+        if (row && Number(row.rated) > 0) setAcc({ rated: Number(row.rated), pct: Number(row.pct) })
+      } catch { /* migration not applied yet */ }
+    })()
+  }, [demo])
   useEffect(() => { setMounted(true) }, [])
   void messages; void baselines; void mounted
 
@@ -484,6 +497,12 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: FAINT }}>d</span>
               </div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>faster response vs last quarter</div>
+            </div>
+          )}
+          {acc && (
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', marginTop: 18, paddingTop: 16, borderTop: `1px solid ${HAIR}` }}>
+              <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 26, letterSpacing: '-.03em', color: acc.pct >= 85 ? GREEN : acc.pct >= 70 ? AMBER : RED }}>{acc.pct}%</span>
+              <span style={{ fontSize: 13.5, color: MUTED }}>of signals rated useful by the team{acc.rated ? ` · ${acc.rated} rated` : ''}</span>
             </div>
           )}
           {m.insight && <div style={{ fontSize: 15, color: MUTED, lineHeight: 1.6, marginTop: 30 }}>{m.insight}</div>}

@@ -477,7 +477,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         </div>
         <span style={{ fontSize: 14, fontWeight: 600, color: RED }}>{formatCurrency(m.waitingValue)} ARR waiting</span>
       </div>
-      {queue.length === 0 && <EmptyState line="Nothing is waiting on this rep." hint="Every signal raised has been actioned. The queue refills as new ones land." compact />}
+      {queue.length === 0 && <EmptyState line={queueRep === 'All' ? 'Nothing is waiting.' : `Nothing is waiting on ${queueRep}.`} hint={queueRep === 'All' ? 'Every signal raised has been actioned. The queue refills as new ones land.' : 'Switch the filter to see the rest of the queue.'} compact />}
       {queue.map((q, i) => {
         const s = sevMeta[q.sev]
         const rep = repBy(q.rep)

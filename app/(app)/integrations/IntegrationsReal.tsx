@@ -6,6 +6,7 @@ import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/component
 import { LOGOS } from './IntegrationsShowcase'
 import { SlackChannelPicker } from './SlackChannels'
 import { PageHead } from '@/components/layout/PageHead'
+import { EmptyState } from '@/components/ui/EmptyState'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -345,6 +346,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   const PITCH = ['salesforce', 'teams', 'outlook', 'gong', 'whatsapp', 'hubspot', 'slack', 'gmail', 'gcal', 'zoom', 'fireflies']
   const missing = PROVIDERS.filter(p => !active.includes(p.key))
     .sort((a, b) => PITCH.indexOf(a.key) - PITCH.indexOf(b.key)).slice(0, 2).map(p => p.short ?? p.name)
+  const nothingLive = active.length === 0
   const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
   const numWord = (n: number) => (n >= 0 && n <= 10 ? NUMWORD[n] : String(n))
   const feeding = indexed30 > 0 ? indexed30 : indexedAll

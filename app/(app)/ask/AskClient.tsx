@@ -7,6 +7,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { EmptyState } from '@/components/ui/EmptyState'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
 

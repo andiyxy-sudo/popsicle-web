@@ -1,9 +1,12 @@
 'use client'
 
 import type { DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dataset'
+import { DEMO_TRANSCRIPTS, DEMO_THREADS } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatWhen } from '@/lib/utils'
 import { DateField } from '@/components/ui/DateField'
+import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
+import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal'
 import { useEscape } from '@/components/ui/useEscape'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
@@ -89,6 +92,22 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   const [statHover, setStatHover] = useState<number | null>(null)   // strong underline follows the pointer
   useEffect(() => { setMounted(true) }, [])
   const [modalMode, setModalMode] = useState<'view' | 'handle' | 'remove' | 'assign' | 'snooze'>('view')
+  const [srcTr, setSrcTr] = useState<Transcript | null>(null)          // the call behind a signal
+  const [srcTh, setSrcTh] = useState<ThreadSource | null>(null)        // the thread behind a signal
+  const [feedback, setFeedback] = useState<Record<string, 'up' | 'down'>>({})
+  const [receipt, setReceipt] = useState<string | null>(null)          // "posted to Slack · logged in HubSpot"
+
+  // Was this signal right? Stored per signal; feeds the accuracy figure on Intelligence.
+  async function rateSignal(s: DBSignal, v: 'up' | 'down') {
+    setFeedback(prev => ({ ...prev, [s.id]: v }))
+    if (isDemoSig(s)) return
+    try {
+      const supa = createClient()
+      const { data: { user } } = await supa.auth.getUser()
+      if (!user) return
+      await supa.from('signal_feedback').upsert({ signal_id: s.id, user_id: user.id, rating: v === 'up' ? 1 : -1, created_at: new Date().toISOString() }, { onConflict: 'signal_id,user_id' })
+    } catch { /* table optional until the migration runs */ }
+  }
   useEscape(!!detailFor || !!draftFor || !!rowAction, () => { if (rowAction) setRowAction(null); else if (draftFor) setDraftFor(null); else setDetailFor(null) })
   const [handleText, setHandleText] = useState('')
   const [acctOptions, setAcctOptions] = useState<Array<{ id: string; name: string }> | null>(null)
@@ -156,6 +175,22 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The source behind a signal: the call transcript or the message thread it came from.
+  function sourceFor(sg: DBSignal): { kind: 'call'; t: Transcript } | { kind: 'thread'; t: ThreadSource } | null {
+    if (!isDemoSig(sg)) return null
+    const acct = sg.account_name ?? ''
+    const src = (sg.source_integration ?? '').toLowerCase()
+    if (src === 'zoom' || /call|meeting/.test(sg.signal_type ?? '')) {
+      const hit = Object.entries(DEMO_TRANSCRIPTS).find(([k]) => k.startsWith(`${acct}::`))
+      if (hit) return { kind: 'call', t: hit[1] as Transcript }
+    }
+    const who = (sg.ai_analysis as { person?: string } | null)?.person
+    const thread = (who && DEMO_THREADS[`${acct}::${who}`]) || Object.entries(DEMO_THREADS).find(([k]) => k.startsWith(`${acct}::`))?.[1]
+    if (thread) return { kind: 'thread', t: thread as ThreadSource }
+    const call = Object.entries(DEMO_TRANSCRIPTS).find(([k]) => k.startsWith(`${acct}::`))
+    return call ? { kind: 'call', t: call[1] as Transcript } : null
+  }
 
   const high = signals.filter(s => s.severity === 'high')
   const watch = signals.filter(s => s.severity === 'watch')
@@ -245,6 +280,9 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     if (isDemoSig(s)) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
       setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
+      // demo: show what a real write-back would have done
+      setReceipt(`Posted to #${(s.account_name ?? 'deal').toLowerCase().replace(/[^a-z0-9]+/g, '-')} in Slack · note written on the HubSpot deal`)
+      setTimeout(() => setReceipt(null), 6000)
       setBusyId(null); return
     }
     const supa = createClient()
@@ -267,6 +305,9 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               const hsOn = (integs ?? []).some(i => i.provider === 'hubspot' && i.hubspot_log_resolutions)
               if (slackOn) fetch(`${SUPA_URL}/functions/v1/post-to-slack`, { method: 'POST', headers: hdrs, body: JSON.stringify({ signal_id: s.id, action: 'resolve', actor }) }).catch(() => {})
               if (hsOn) fetch(`${SUPA_URL}/functions/v1/oauth-hubspot`, { method: 'POST', headers: hdrs, body: JSON.stringify({ action: 'log-note', signal_id: s.id }) }).catch(() => {})
+              // tell the user what left the building
+              const parts = [slackOn ? 'Posted to Slack' : null, hsOn ? 'logged on the HubSpot deal' : null].filter(Boolean)
+              if (parts.length) { setReceipt(parts.join(' · ')); setTimeout(() => setReceipt(null), 6000) }
             })
         }
       } catch { /* broadcasts never block the local transition */ }
@@ -960,6 +1001,21 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   )
                 })()}
 
+                {/* v11.84: was this signal right? feeds the accuracy figure */}
+                {modalMode === 'view' && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Was this signal right?</span>
+                    {([['up', 'Yes, useful'], ['down', 'No, wrong call']] as const).map(([v, lbl]) => {
+                      const on = feedback[d.id] === v
+                      const c = v === 'up' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)'
+                      return (
+                        <button key={v} onClick={() => rateSignal(d, v)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: 600, padding: '6px 13px', border: `1px solid ${on ? c : 'var(--hairline, #EFEAE1)'}`, background: on ? `${v === 'up' ? 'rgba(47,143,91,.10)' : 'rgba(196,61,43,.08)'}` : 'transparent', color: on ? c : 'var(--ink-muted)', cursor: 'pointer' }}>{lbl}</button>
+                      )
+                    })}
+                    {feedback[d.id] && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>thanks · this tunes detection</span>}
+                  </div>
+                )}
+
                 {modalMode === 'view' && (
                   <div style={{ marginTop: 18 }}>
                     <div style={{ ...mlab, marginBottom: 2 }}>Suggested actions</div>
@@ -969,6 +1025,12 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                     {!inactive && actionRow('Draft a follow-up email', () => { setDetailFor(null); openDraft(d) })}
                     {!inactive && actionRow('Mark as handled', () => setModalMode('handle'))}
                     {d.signal_type?.startsWith('call') && d.source_message_id && actionRow('View full transcript', () => { setDetailFor(null); router.push(`/transcripts/${encodeURIComponent(d.source_message_id!)}`) })}
+                    {(() => {
+                      const src = sourceFor(d)
+                      if (!src) return null
+                      return actionRow(src.kind === 'call' ? `Open the call this came from · ${src.t.title}` : `Open the ${src.t.channel} thread this came from`,
+                        () => { if (src.kind === 'call') setSrcTr(src.t); else setSrcTh(src.t) })
+                    })()}
                     {d.account_name && !unmapped && actionRow('Open Account 360', () => { setDetailFor(null); open360(d) })}
                     {unmapped && !inactive && actionRow('Assign to an account', () => {
                       setModalMode('assign')
@@ -1098,6 +1160,13 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         </div>
       )}
 
+      {srcTr && <TranscriptModal t={srcTr} onClose={() => setSrcTr(null)} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />}
+      {srcTh && <ThreadModal t={srcTh} onClose={() => setSrcTh(null)} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />}
+      {receipt && (
+        <div style={{ position: 'fixed', left: '50%', bottom: 104, transform: 'translateX(-50%)', zIndex: 950, background: 'var(--ink, #0E0D0B)', color: 'var(--paper, #FBF8F3)', padding: '11px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 20px 44px -20px rgba(14,13,11,.5)' }}>
+          <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800 }}>✓</span>{receipt}
+        </div>
+      )}
     </div>
   )
 }
