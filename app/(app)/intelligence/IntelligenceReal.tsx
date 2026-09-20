@@ -116,6 +116,36 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
   }
 }
 
+function scaleDemo(base: IntelModel, range: 30 | 60 | 90): IntelModel {
+  if (range === 30) return base
+  const k = range === 60 ? 1.9 : 2.8            // volume multiplier
+  const extraWeeks = range === 60 ? 4 : 8      // weeks prepended to the chart
+  const mult = (v: number) => Math.round(v * k / 1000) * 1000
+  // earlier weeks sit lower, so the series climbs harder over the longer window
+  const first = base.weeks[0]
+  const prepended = Array.from({ length: extraWeeks }, (_, i) => {
+    const f = (i + 1) / (extraWeeks + 1)
+    return { label: '', added: Math.round(first.added * (0.62 + 0.38 * f) / 1000) * 1000, stabilized: Math.round(first.stabilized * (0.7 + 0.3 * f) / 1000) * 1000 }
+  })
+  const weeks = [...prepended, ...base.weeks].map((w, i) => ({ ...w, label: `W${i + 1}` }))
+  const firstWeekRisk = weeks[0].added
+  const riskDeltaPct = Math.round(((base.newRisk - firstWeekRisk) / firstWeekRisk) * 100)
+  return {
+    ...base,
+    riskDeltaPct, firstWeekRisk, weekNo: weeks.length, weeks,
+    stabilized: mult(base.stabilized), netChangePct: range === 60 ? 11 : 13,
+    drivers: base.drivers.map(d => ({ ...d, v: Math.round(d.v * (range === 60 ? 1.6 : 2.2) / 1000) * 1000 })),
+    riskSits: base.riskSits.map(r => ({ ...r, exposure: mult(r.exposure) })),
+    actions: base.actions.map(a => ({ ...a, used: Math.round(a.used * k) })),
+    caughtEarly: Math.round(base.caughtEarly * k), recovered: range === 60 ? 11 : 15,
+    sources: base.sources.map(x => ({ ...x, n: Math.round(x.n * k) })),
+    hero: base.hero ? { ...base.hero, caughtEarly: Math.round(base.hero.caughtEarly * k), recovered: range === 60 ? 11 : 15 } : undefined,
+    performance: base.performance ? { ...base.performance, riskChangePct: range === 60 ? 11 : 13, stabilized: mult(base.performance.stabilized) } : undefined,
+    bullets: base.bullets.map(b => ({ ...b, rest: b.rest.replace('this quarter', `in the last ${range} days`) })),
+    insight: base.insight,
+  }
+}
+
 // ---------------------------------------------------------------- pieces
 function H2({ title, right, top = 72 }: { title: string; right?: React.ReactNode; top?: number }) {
   return (
@@ -161,7 +191,10 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
     )
   }
 
-  const m = demo ?? buildLiveModel(signals, accounts, range)
+  // Demo: the 30-day model is the source of truth; 60 and 90 days widen the window
+  // (more weeks on the chart, more signals and actions, larger stabilized totals,
+  // a bigger climb since the first week). Live: the window feeds the query filter.
+  const m = demo ? scaleDemo(demo, range) : buildLiveModel(signals, accounts, range)
   const srcTotal = m.sources.reduce((a, s) => a + s.n, 0)
   const srcMax = Math.max(1, ...m.sources.map(s => s.n))
   const renewTotal = m.renewals.reduce((a, r) => a + r.value, 0)
@@ -182,8 +215,8 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {/* narrative */}
       <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
         {m.riskDeltaPct !== 0
-          ? <>New risk is being added <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}>{Math.abs(m.riskDeltaPct)}% {m.riskDeltaPct > 0 ? 'faster' : 'slower'}</span> than eight weeks ago{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
-          : <>New risk is flat on eight weeks ago.{' '}</>}
+          ? <>New risk is being added <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}>{Math.abs(m.riskDeltaPct)}% {m.riskDeltaPct > 0 ? 'faster' : 'slower'}</span> than {m.weeks.length === 8 ? 'eight' : m.weeks.length === 12 ? 'twelve' : 'sixteen'} weeks ago{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
+          : <>New risk is flat on {m.weeks.length} weeks ago.{' '}</>}
         <span style={{ color: MUTED }}>Interventions are holding at {m.holdingPct}%, and Popsicle has protected <span style={{ color: ACCENT }}>{fmtMoney(m.protectedTotal)}</span> this quarter.</span>
       </h1>
 
