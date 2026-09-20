@@ -45,7 +45,14 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
         const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none' && (x.innerText || '').trim().length > 40)
         const pending = document.querySelector('div[hidden][id^="S:"]') != null || /<!--\$\?-->/.test(document.body.innerHTML)
         // v11.67: always report for 8s, so the absence of the box proves the page's JS never ran
-        if (visible && !pending) { setDiag(`js ran · ${screens.length} screen(s) with text · nothing pending · this box closes itself`); setTimeout(() => setDiag(null), 8000); return }
+        // what is actually on top at the centre of the column, and where the screen sits
+        const r = el.getBoundingClientRect()
+        const probe = (x: number, y: number) => { const e = document.elementFromPoint(x, y) as HTMLElement | null; return e ? `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').filter(Boolean).slice(0, 3).join('.') : ''} bg=${getComputedStyle(e).backgroundColor} z=${getComputedStyle(e).zIndex} pos=${getComputedStyle(e).position}` : 'nothing' }
+        const top1 = probe(r.left + r.width / 2, r.top + r.height / 3)
+        const top2 = probe(r.left + r.width / 2, r.top + r.height * 0.7)
+        const fr = screens[0]?.getBoundingClientRect()
+        const where = `column rect top=${Math.round(r.top)} h=${Math.round(r.height)} scrollTop=${el.scrollTop} · screen rect top=${fr ? Math.round(fr.top) : '?'} h=${fr ? Math.round(fr.height) : '?'} · on top @1/3: ${top1} · on top @2/3: ${top2}`
+        if (visible && !pending) { setDiag(`js ran · ${screens.length} screen(s) with text · nothing pending\n${where}\n(closes itself in 20s, click to close)`); setTimeout(() => setDiag(null), 20000); return }
         const hidden = Array.from(document.querySelectorAll('div[hidden]')).map(d => (d as HTMLElement).id).filter(Boolean)
         const first = screens[0]
         const cs = first ? getComputedStyle(first) : null
@@ -58,6 +65,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           `hidden stream divs: ${hidden.length}${hidden.length ? ' (' + hidden.slice(0, 5).join(', ') + ')' : ''} · pending boundary markers: ${(document.body.innerHTML.match(/<!--\$\?-->/g) || []).length}`,
           `first screen text: "${(first?.innerText || '').trim().slice(0, 60)}"`,
           `body text has content: ${document.body.innerText.includes('POPSICLE LABS') ? 'footer yes' : 'footer no'}`,
+          where,
         ].join('\n')
         setDiag(info)
         fetch('/api/client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'blank-column diagnostic', stack: info, path: location.pathname, ua: navigator.userAgent }) }).catch(() => {})
@@ -120,7 +128,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.67</span>
+            <span>v11.68</span>
           </footer>
         </div>
       </div>
