@@ -33,6 +33,34 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // browser scroll anchoring + the entrance animation can otherwise leave it
   // a few pixels down on first paint.
   const contentRef = useRef<HTMLDivElement>(null)
+  // Blank-column diagnostic (v11.65): 2.5s after mount, if the content column has
+  // no visible screen, report what the DOM looks like, on screen and to /api/client-error.
+  const [diag, setDiag] = useState<string | null>(null)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        const el = contentRef.current; if (!el) return
+        const screens = Array.from(el.querySelectorAll('.dsk-screen')) as HTMLElement[]
+        const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none')
+        if (visible) return
+        const hidden = Array.from(document.querySelectorAll('div[hidden]')).map(d => (d as HTMLElement).id).filter(Boolean)
+        const first = screens[0]
+        const cs = first ? getComputedStyle(first) : null
+        const info = [
+          `path ${location.pathname}`,
+          `screens in column: ${screens.length}`,
+          first ? `first screen: class="${first.className}" display=${cs?.display} opacity=${cs?.opacity} h=${first.offsetHeight} children=${first.children.length}` : 'no .dsk-screen inside .content',
+          `column children: ${Array.from(el.children).map(c => (c as HTMLElement).className || c.tagName).join(' | ')}`,
+          `column scrollTop=${el.scrollTop} scrollHeight=${el.scrollHeight} clientHeight=${el.clientHeight} display=${getComputedStyle(el).display}`,
+          `hidden stream divs: ${hidden.length}${hidden.length ? ' (' + hidden.slice(0, 5).join(', ') + ')' : ''}`,
+          `body text has content: ${document.body.innerText.includes('POPSICLE LABS') ? 'footer yes' : 'footer no'}`,
+        ].join('\n')
+        setDiag(info)
+        fetch('/api/client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'blank-column diagnostic', stack: info, path: location.pathname, ua: navigator.userAgent }) }).catch(() => {})
+      } catch { /* ignore */ }
+    }, 2500)
+    return () => clearTimeout(t)
+  }, [pathname])
   useEffect(() => {
     // Lets client components skip database round-trips in demo mode.
     if (typeof document !== 'undefined') document.body.dataset.demo = isDemo ? '1' : '0'
@@ -73,6 +101,11 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
     <>
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
+      {diag && (
+        <pre onClick={() => setDiag(null)} style={{ position: 'fixed', left: 16, bottom: 16, zIndex: 100000, maxWidth: 'min(720px, calc(100vw - 32px))', margin: 0, padding: '12px 14px', background: '#0E0D0B', color: '#FBF8F3', fontFamily: "'DM Mono',monospace", fontSize: 11, lineHeight: 1.5, whiteSpace: 'pre-wrap', border: '1px solid #E85A25', cursor: 'pointer' }}>
+{'DIAGNOSTIC · content column looks blank · click to close · please send this text\n'}{diag}
+        </pre>
+      )}
       <CommandPalette demo={isDemo} />
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
@@ -83,7 +116,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.64</span>
+            <span>v11.65</span>
           </footer>
         </div>
       </div>
