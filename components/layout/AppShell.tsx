@@ -41,8 +41,10 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       try {
         const el = contentRef.current; if (!el) return
         const screens = Array.from(el.querySelectorAll('.dsk-screen')) as HTMLElement[]
-        const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none')
-        if (visible) return
+        // the route skeleton is itself a .dsk-screen, so "visible" must mean real text, not grey blocks
+        const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none' && (x.innerText || '').trim().length > 40)
+        const pending = document.querySelector('div[hidden][id^="S:"]') != null || /<!--\$\?-->/.test(document.body.innerHTML)
+        if (visible && !pending) return
         const hidden = Array.from(document.querySelectorAll('div[hidden]')).map(d => (d as HTMLElement).id).filter(Boolean)
         const first = screens[0]
         const cs = first ? getComputedStyle(first) : null
@@ -52,7 +54,8 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           first ? `first screen: class="${first.className}" display=${cs?.display} opacity=${cs?.opacity} h=${first.offsetHeight} children=${first.children.length}` : 'no .dsk-screen inside .content',
           `column children: ${Array.from(el.children).map(c => (c as HTMLElement).className || c.tagName).join(' | ')}`,
           `column scrollTop=${el.scrollTop} scrollHeight=${el.scrollHeight} clientHeight=${el.clientHeight} display=${getComputedStyle(el).display}`,
-          `hidden stream divs: ${hidden.length}${hidden.length ? ' (' + hidden.slice(0, 5).join(', ') + ')' : ''}`,
+          `hidden stream divs: ${hidden.length}${hidden.length ? ' (' + hidden.slice(0, 5).join(', ') + ')' : ''} · pending boundary markers: ${(document.body.innerHTML.match(/<!--\$\?-->/g) || []).length}`,
+          `first screen text: "${(first?.innerText || '').trim().slice(0, 60)}"`,
           `body text has content: ${document.body.innerText.includes('POPSICLE LABS') ? 'footer yes' : 'footer no'}`,
         ].join('\n')
         setDiag(info)
@@ -116,7 +119,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.65</span>
+            <span>v11.66</span>
           </footer>
         </div>
       </div>
