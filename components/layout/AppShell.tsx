@@ -20,8 +20,15 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const router = useRouter()
   const pathname = usePathname()
   // the section-entrance animation plays only while this is set (navigation), never on re-renders
-  const [entering, setEntering] = useState(true)
-  useEffect(() => { setEntering(true); const t = setTimeout(() => setEntering(false), 800); return () => clearTimeout(t) }, [pathname])
+  // Starts false so server-rendered HTML never carries the animation class: a full
+  // page load (first sign-in, refresh) paints the content immediately with no
+  // opacity/transform state to get stuck in. Client navigations animate.
+  const [entering, setEntering] = useState(false)
+  const firstPath = useRef(true)
+  useEffect(() => {
+    if (firstPath.current) { firstPath.current = false; return }
+    setEntering(true); const t = setTimeout(() => setEntering(false), 800); return () => clearTimeout(t)
+  }, [pathname])
   // Every route lands at the top: the scrollable column is .content, and
   // browser scroll anchoring + the entrance animation can otherwise leave it
   // a few pixels down on first paint.
@@ -76,7 +83,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.63</span>
+            <span>v11.64</span>
           </footer>
         </div>
       </div>
