@@ -33,46 +33,6 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // browser scroll anchoring + the entrance animation can otherwise leave it
   // a few pixels down on first paint.
   const contentRef = useRef<HTMLDivElement>(null)
-  // Blank-column diagnostic (v11.65): 2.5s after mount, if the content column has
-  // no visible screen, report what the DOM looks like, on screen and to /api/client-error.
-  const [diag, setDiag] = useState<string | null>(null)
-  useEffect(() => {
-    const t = setTimeout(() => {
-      try {
-        const el = contentRef.current; if (!el) return
-        const screens = Array.from(el.querySelectorAll('.dsk-screen')) as HTMLElement[]
-        // the route skeleton is itself a .dsk-screen, so "visible" must mean real text, not grey blocks
-        const visible = screens.some(x => x.offsetHeight > 0 && getComputedStyle(x).opacity !== '0' && getComputedStyle(x).display !== 'none' && (x.innerText || '').trim().length > 40)
-        const pending = document.querySelector('div[hidden][id^="S:"]') != null || /<!--\$\?-->/.test(document.body.innerHTML)
-        // v11.67: always report for 8s, so the absence of the box proves the page's JS never ran
-        // what is actually on top at the centre of the column, and where the screen sits
-        const r = el.getBoundingClientRect()
-        const probe = (x: number, y: number) => { const e = document.elementFromPoint(x, y) as HTMLElement | null; return e ? `${e.tagName.toLowerCase()}${e.id ? '#' + e.id : ''}${e.className && typeof e.className === 'string' ? '.' + e.className.split(' ').filter(Boolean).slice(0, 3).join('.') : ''} bg=${getComputedStyle(e).backgroundColor} z=${getComputedStyle(e).zIndex} pos=${getComputedStyle(e).position}` : 'nothing' }
-        const top1 = probe(r.left + r.width / 2, r.top + r.height / 3)
-        const top2 = probe(r.left + r.width / 2, r.top + r.height * 0.7)
-        const fr = screens[0]?.getBoundingClientRect()
-        const where = `column rect top=${Math.round(r.top)} h=${Math.round(r.height)} scrollTop=${el.scrollTop} · screen rect top=${fr ? Math.round(fr.top) : '?'} h=${fr ? Math.round(fr.height) : '?'} · on top @1/3: ${top1} · on top @2/3: ${top2}`
-        if (visible && !pending) { setDiag(`js ran · ${screens.length} screen(s) with text · nothing pending\n${where}\n(closes itself in 20s, click to close)`); setTimeout(() => setDiag(null), 20000); return }
-        const hidden = Array.from(document.querySelectorAll('div[hidden]')).map(d => (d as HTMLElement).id).filter(Boolean)
-        const first = screens[0]
-        const cs = first ? getComputedStyle(first) : null
-        const info = [
-          `path ${location.pathname}`,
-          `screens in column: ${screens.length}`,
-          first ? `first screen: class="${first.className}" display=${cs?.display} opacity=${cs?.opacity} h=${first.offsetHeight} children=${first.children.length}` : 'no .dsk-screen inside .content',
-          `column children: ${Array.from(el.children).map(c => (c as HTMLElement).className || c.tagName).join(' | ')}`,
-          `column scrollTop=${el.scrollTop} scrollHeight=${el.scrollHeight} clientHeight=${el.clientHeight} display=${getComputedStyle(el).display}`,
-          `hidden stream divs: ${hidden.length}${hidden.length ? ' (' + hidden.slice(0, 5).join(', ') + ')' : ''} · pending boundary markers: ${(document.body.innerHTML.match(/<!--\$\?-->/g) || []).length}`,
-          `first screen text: "${(first?.innerText || '').trim().slice(0, 60)}"`,
-          `body text has content: ${document.body.innerText.includes('POPSICLE LABS') ? 'footer yes' : 'footer no'}`,
-          where,
-        ].join('\n')
-        setDiag(info)
-        fetch('/api/client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: 'blank-column diagnostic', stack: info, path: location.pathname, ua: navigator.userAgent }) }).catch(() => {})
-      } catch { /* ignore */ }
-    }, 2500)
-    return () => clearTimeout(t)
-  }, [pathname])
   useEffect(() => {
     // Lets client components skip database round-trips in demo mode.
     if (typeof document !== 'undefined') document.body.dataset.demo = isDemo ? '1' : '0'
@@ -110,14 +70,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
 
 
   return (
-    <>
+    <div className="ed-app">
+      {/* The sidebar is position: sticky (design shell), so it must sit beside .main in a
+          flex row. Without this wrapper it stacked above .main in block flow and pushed the
+          whole content column one viewport down: sidebar visible, page blank, until a client
+          navigation scrolled the window to the new page (the "click twice" behaviour). */}
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
-      {diag && (
-        <pre onClick={() => setDiag(null)} style={{ position: 'fixed', left: 16, bottom: 16, zIndex: 100000, maxWidth: 'min(720px, calc(100vw - 32px))', margin: 0, padding: '12px 14px', background: '#0E0D0B', color: '#FBF8F3', fontFamily: "'DM Mono',monospace", fontSize: 11, lineHeight: 1.5, whiteSpace: 'pre-wrap', border: '1px solid #E85A25', cursor: 'pointer' }}>
-{'DIAGNOSTIC · content column looks blank · click to close · please send this text\n'}{diag}
-        </pre>
-      )}
       <CommandPalette demo={isDemo} />
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
@@ -128,7 +87,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.69</span>
+            <span>v11.70</span>
           </footer>
         </div>
       </div>
@@ -152,6 +111,6 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       {aiOpen && (
         <div onClick={() => setAiOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 9998 }} />
       )}
-    </>
+    </div>
   )
 }

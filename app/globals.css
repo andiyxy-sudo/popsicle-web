@@ -2597,3 +2597,10 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
   outline: 2px solid var(--accent, #E85A25) !important; outline-offset: 2px !important; border-radius: 2px;
 }
 .tbl-row { outline: none; }
+
+
+/* v11.70: the app shell is a flex row. The design sidebar is position: sticky and
+   100vh tall, which only works beside .main, never above it. */
+.ed-app { display: flex; flex-direction: row; align-items: stretch; height: 100vh; width: 100%; overflow: hidden; }
+.ed-app > .main { margin-left: 0 !important; flex: 1 1 auto; min-width: 0; height: 100vh; }
+.ed-app > .sidebar { flex: none; }
