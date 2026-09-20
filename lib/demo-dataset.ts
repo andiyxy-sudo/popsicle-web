@@ -427,7 +427,11 @@ export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; 
 }
 
 // ---------------------------------------------------------------- transcript
-export const DEMO_TRANSCRIPT = {
+export type DemoTranscript = { account: string; title: string; duration: number; when: string; analyser?: string; summary: string; moments: Array<{ t: string; who: string; tag: string | null; text: string }> }
+
+// One transcript per call event on the deal timelines. Keyed by "<account>::<timeline title>".
+export const DEMO_TRANSCRIPTS: Record<string, DemoTranscript> = {
+  'Acme Corp::Zoom Call · Discovery': {
   account: 'Acme Corp',
   title: 'Zoom Discovery Call',
   duration: 42,
@@ -444,7 +448,76 @@ export const DEMO_TRANSCRIPT = {
     { t: '32:40', who: 'Andy G', tag: null, text: 'Fully supported out of the box. We have 14 enterprise customers on Okta SAML today. I will send the security whitepaper.' },
     { t: '38:50', who: 'Sarah Chen', tag: 'NEXT STEP', text: 'Let us reconvene after the CFO review. Can you have the comparison doc and security whitepaper over by Thursday?' },
   ],
+},
+
+  'Meridian Labs::Discovery Call Completed': {
+    account: 'Meridian Labs', title: 'Discovery Call', duration: 38, when: '14 days ago', analyser: 'Zoom · AI analyzed',
+    summary: 'Alex Park walked through their current stack and the gap Popsicle would fill. Strong technical interest, but he flagged twice that budget sits with a VP who was not on the call. No decision-maker present, and no date set to get one. That gap is why this deal has since gone quiet.',
+    moments: [
+      { t: '1:52', who: 'Alex Park', tag: null, text: 'We have Gong for calls but nothing reads the email and WhatsApp side, which is where most of our deals actually happen.' },
+      { t: '8:30', who: 'Andy G', tag: null, text: 'That is the gap we built for. Every channel, same detection, and the signal reaches the rep the day it happens rather than in the weekly review.' },
+      { t: '15:10', who: 'Alex Park', tag: 'OBJECTION', text: 'The capability is clear. My concern is budget. This size of spend goes to our VP of Revenue Operations and she was not in this conversation.' },
+      { t: '19:45', who: 'Alex Park', tag: 'RISK', text: 'I should be honest that we have three tools up for renewal this quarter and she is looking to consolidate, not add.' },
+      { t: '26:20', who: 'Andy G', tag: null, text: 'Then the case has to be consolidation. If we replace two of those three, the conversation changes from cost to saving.' },
+      { t: '31:05', who: 'Alex Park', tag: 'COMMITMENT', text: 'Send me a one-pager framed that way and I will forward it to her this week.' },
+      { t: '35:40', who: 'Alex Park', tag: 'NEXT STEP', text: 'If she bites, we set up a call with her and your team. I will let you know either way by Friday.' },
+    ],
+  },
+
+  'Vertex Systems::Initial Proposal Delivered': {
+    account: 'Vertex Systems', title: 'Proposal Review Call', duration: 31, when: '15 days ago', analyser: 'Zoom · AI analyzed',
+    summary: 'Dana Kim took the 50-seat proposal line by line and pushed only on the implementation timeline, not the price. She confirmed a January 28 target and named the two people who have to sign. The cleanest call on the board this quarter.',
+    moments: [
+      { t: '2:40', who: 'Dana Kim', tag: null, text: 'Pricing is in the range we expected for fifty seats, so let us not spend time there.' },
+      { t: '9:15', who: 'Dana Kim', tag: 'OBJECTION', text: 'What worries me is implementation. We have been burned before by a six-week onboarding that turned into five months.' },
+      { t: '12:50', who: 'Andy G', tag: null, text: 'Connect the sources and signals start landing the same day. Two weeks to full coverage, and we do the integration work, not your team.' },
+      { t: '18:22', who: 'Dana Kim', tag: 'COMMITMENT', text: 'If that holds, I am comfortable putting this in front of our COO next week.' },
+      { t: '24:05', who: 'Dana Kim', tag: 'NEXT STEP', text: 'Send the contract to legal and I will chase the COO. We are still aiming to close by January 28.' },
+      { t: '29:30', who: 'Dana Kim', tag: null, text: 'One favour: put the two-week onboarding commitment in writing in the contract so I can point to it.' },
+    ],
+  },
+
+  'Nexus AI::Technical Evaluation Complete': {
+    account: 'Nexus AI', title: 'Technical Evaluation Wrap', duration: 45, when: '12 days ago', analyser: 'Zoom · AI analyzed',
+    summary: 'Marcus Webb closed out the evaluation with a clear pass. Security and the integration team both signed off, and he moved straight to talking about rollout sequencing rather than whether to buy. Expansion language appeared twice.',
+    moments: [
+      { t: '3:15', who: 'Marcus Webb', tag: null, text: 'Evaluation is done. Latency and accuracy both came in better than what we run today.' },
+      { t: '11:40', who: 'Marcus Webb', tag: 'COMMITMENT', text: 'Security has signed off and the integration team is ready to deploy. We are a yes on the technical side.' },
+      { t: '20:05', who: 'Marcus Webb', tag: null, text: 'The question now is sequencing. Do we start with the enterprise team or roll out everyone at once?' },
+      { t: '28:50', who: 'Andy G', tag: null, text: 'Start with the team carrying the most pipeline. They generate the proof the rest of the org will want to see.' },
+      { t: '34:20', who: 'Marcus Webb', tag: 'NEXT STEP', text: 'Then enterprise first. Send the deployment plan and I will get the kickoff on the calendar.' },
+      { t: '41:10', who: 'Marcus Webb', tag: 'COMMITMENT', text: 'If the first quarter goes the way I expect, we will be talking about the other two regions before renewal.' },
+    ],
+  },
+
+  'TechFlow Inc::Follow-up Call Completed': {
+    account: 'TechFlow Inc', title: 'Finance Stakeholder Demo', duration: 34, when: '3 days ago', analyser: 'Zoom · AI analyzed',
+    summary: 'Product demo for the finance side. The 3.1x ROI model landed, but their controller asked for a phased start rather than a full annual commitment, and nobody in the room could approve either. The phased option is now the live question.',
+    moments: [
+      { t: '4:05', who: 'Priya Raman', tag: null, text: 'Walk me through how you arrived at 3.1x, because that is the number my CFO will ask about first.' },
+      { t: '12:30', who: 'Andy G', tag: null, text: 'It is two lines: revenue protected from deals that would have slipped, and time returned to reps. Both come from your own numbers, not ours.' },
+      { t: '17:55', who: 'Priya Raman', tag: 'OBJECTION', text: 'The model is credible. Committing to a full year in one go is the part I cannot get through this quarter.' },
+      { t: '22:40', who: 'Priya Raman', tag: null, text: 'Is there a version where we start at sixty percent of the seats and expand once we see the return?' },
+      { t: '27:15', who: 'Andy G', tag: 'NEXT STEP', text: 'Yes. I will send a phased structure: sixty percent now, the rest on renewal once the ROI is measured.' },
+      { t: '31:50', who: 'Priya Raman', tag: 'RISK', text: 'Fair warning, our CFO has final say and he has not seen any of this yet.' },
+    ],
+  },
+
+  'TechFlow Inc::Proposal Delivered': {
+    account: 'TechFlow Inc', title: 'Proposal Walkthrough', duration: 28, when: '10 days ago', analyser: 'Zoom · AI analyzed',
+    summary: 'Three-tier pricing presented to Jamie Torres. He favoured the middle tier and asked for the annual discount in writing. No objection to the product, only to how quickly the decision can move through their finance calendar.',
+    moments: [
+      { t: '2:10', who: 'Jamie Torres', tag: null, text: 'The middle tier is where we land. The top one has seats we would not use this year.' },
+      { t: '9:35', who: 'Jamie Torres', tag: 'OBJECTION', text: 'The annual discount needs to be in the document. Verbal will not survive our procurement process.' },
+      { t: '14:20', who: 'Andy G', tag: 'COMMITMENT', text: 'I will put the discount in the proposal and resend it today.' },
+      { t: '19:45', who: 'Jamie Torres', tag: 'RISK', text: 'Our finance calendar closes for new spend in two weeks. After that we are into next quarter.' },
+      { t: '25:30', who: 'Jamie Torres', tag: 'NEXT STEP', text: 'Get me the revised document and I will start the internal approval on Monday.' },
+    ],
+  },
 }
+
+// Kept for anything still importing the single transcript.
+export const DEMO_TRANSCRIPT = DEMO_TRANSCRIPTS['Acme Corp::Zoom Call · Discovery']
 
 // ---------------------------------------------------------------- pulse
 export const DEMO_PULSE = {
@@ -875,3 +948,51 @@ export const DEMO_LATE_COMMITMENTS = [
   { id: 'demo-lc-2', text: 'Send pre-approved redline contract to Rachel Voss', account: 'Axion Partners', daysLate: 5 },
   { id: 'demo-lc-3', text: 'Book the legal check-in with Dana Kim ahead of the Jan 28 close', account: 'Vertex Systems', daysLate: 0 },
 ]
+
+// Full source threads behind the headline comms quotes. Keyed by "<account>::<who>".
+export const DEMO_THREADS: Record<string, { account: string; channel: string; subject: string; when: string; participants: string[]; messages: Array<{ who: string; role?: string; when: string; text: string; mine?: boolean; flag?: string }> }> = {
+  'Acme Corp::Sarah Chen': {
+    account: 'Acme Corp', channel: 'Gmail', subject: 'Re: Renewal pricing — FY27', when: 'last 8 days', participants: ['Sarah Chen', 'Andy G', 'James Park'],
+    messages: [
+      { who: 'Andy G', when: '8 days ago', mine: true, text: 'Hi Sarah — attaching the FY27 renewal summary ahead of Thursday. Same scope as this year, with the two seats you added in March rolled in.\n\nHappy to walk through it live if that is easier.' },
+      { who: 'Sarah Chen', role: 'CFO', when: '6 days ago', text: 'Thanks Andy. Reviewing with the team this week.' },
+      { who: 'Andy G', when: '4 days ago', mine: true, text: 'Checking in — anything you need from me before Thursday?' },
+      { who: 'Sarah Chen', role: 'CFO', when: '2 days ago', flag: 'OBJECTION', text: 'We need to discuss the new pricing structure before we can commit to renewal. Finance team has concerns about the increase relative to what we budgeted in Q3.\n\nCan we hold Thursday until I have had that conversation internally?' },
+      { who: 'Andy G', when: '2 days ago', mine: true, text: 'Understood. Let me send the year-on-year breakdown so the increase is easy to defend internally — most of it is the seats you added, not a rate change.' },
+      { who: 'Sarah Chen', role: 'CFO', when: '—', flag: 'SIGNAL', text: '(no reply · email opened 4 times since)' },
+    ],
+  },
+  'Axion Partners::Rachel Voss': {
+    account: 'Axion Partners', channel: 'Slack · #axion-deal', subject: 'Security review and redline status', when: 'last 6 days', participants: ['Rachel Voss', 'Andy G', 'Legal (Axion)'],
+    messages: [
+      { who: 'Rachel Voss', role: 'Head of Procurement', when: '6 days ago', text: 'Our legal team has flagged a few clauses in the MSA. Sending the redline over today.' },
+      { who: 'Andy G', when: '6 days ago', mine: true, text: 'Great — send it across and we will turn it around fast. Most of what comes back is standard for us.' },
+      { who: 'Rachel Voss', role: 'Head of Procurement', when: '5 days ago', flag: 'RISK', text: 'Legal hold confirmed. They want SOC2 Type II, penetration test results and a signed DPA before the PO can be raised. Realistically three to five weeks.' },
+      { who: 'Andy G', when: '5 days ago', mine: true, text: 'All three exist. Sending SOC2 and the pen test summary now, DPA follows today. If your team reviews in parallel rather than in sequence we can pull that timeline in considerably.' },
+      { who: 'Rachel Voss', role: 'Head of Procurement', when: '5 days ago', flag: 'COMMITMENT', text: 'Send them and I will push for parallel review.' },
+      { who: 'Andy G', when: '—', mine: true, flag: 'SIGNAL', text: '(pre-approved redline contract still unsent · 5 days late)' },
+    ],
+  },
+  'TechVault Inc::Kevin Cho': {
+    account: 'TechVault Inc', channel: 'WhatsApp', subject: 'Budget approval and ROI', when: 'last 5 days', participants: ['Kevin Cho', 'Andy G'],
+    messages: [
+      { who: 'Kevin Cho', role: 'VP Sales', when: '5 days ago', text: 'Demo went well with the team. Everyone liked what they saw.' },
+      { who: 'Andy G', when: '5 days ago', mine: true, text: 'Glad to hear it. What is the next step on your side?' },
+      { who: 'Kevin Cho', role: 'VP Sales', when: '4 days ago', flag: 'OBJECTION', text: 'Need to run this by our CFO first. He will want to see ROI numbers before approving the spend.' },
+      { who: 'Andy G', when: '4 days ago', mine: true, text: 'Sending an ROI package built on your own pipeline numbers rather than generic benchmarks. It should answer the question before he asks it.' },
+      { who: 'Kevin Cho', role: 'VP Sales', when: '2 days ago', flag: 'COMMITMENT', text: 'Got it, forwarding to finance today. Will come back to you once he has looked.' },
+      { who: 'Kevin Cho', role: 'VP Sales', when: '—', flag: 'SIGNAL', text: '(quiet since · CFO has not responded)' },
+    ],
+  },
+  'Meridian Labs::Alex Park': {
+    account: 'Meridian Labs', channel: 'Gmail', subject: 'Re: Consolidation one-pager', when: 'last 12 days', participants: ['Alex Park', 'Andy G'],
+    messages: [
+      { who: 'Andy G', when: '12 days ago', mine: true, text: 'Alex — the one-pager we discussed, framed as consolidation rather than new spend. It shows which two of your three renewals Popsicle replaces.' },
+      { who: 'Alex Park', role: 'Director of RevOps', when: '11 days ago', flag: 'COMMITMENT', text: 'This is exactly the framing she needs. Forwarding today.' },
+      { who: 'Andy G', when: '7 days ago', mine: true, text: 'Any read from her yet?' },
+      { who: 'Alex Park', role: 'Director of RevOps', when: '6 days ago', text: 'Not yet. She is in planning until the end of the month.' },
+      { who: 'Andy G', when: '3 days ago', mine: true, text: 'Worth me joining a short call with her directly? Happy to take the consolidation question head on.' },
+      { who: 'Alex Park', role: 'Director of RevOps', when: '—', flag: 'SIGNAL', text: '(no reply in 3 days · previously replied within a day)' },
+    ],
+  },
+}

@@ -125,6 +125,24 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [invEmail, setInvEmail] = useState(''); const [invRole, setInvRole] = useState<'admin' | 'member' | 'viewer'>('member')
   const [invState, setInvState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle'); const [invMsg, setInvMsg] = useState('')
   const [invites, setInvites] = useState<Array<{ id: string; email: string; role: string; status: string; created_at: string }>>([])
+  // organisation
+  type OrgMember = { user_id: string; role: string; email?: string; name?: string }
+  const [org, setOrg] = useState<{ id: string; name: string; owner_id: string | null } | null>(null)
+  const [members, setMembers] = useState<OrgMember[]>([])
+  const [myRole, setMyRole] = useState(''); const [meId, setMeId] = useState('')
+  const [orgMsg, setOrgMsg] = useState('')
+  async function loadOrg() {
+    try { const r = await fetch('/api/org'); const j = await r.json(); setOrg(j.org ?? null); setMembers(j.members ?? []); setMyRole(j.myRole ?? ''); setMeId(j.me ?? '') } catch { /* ignore */ }
+  }
+  async function orgAction(body: Record<string, unknown>) {
+    setOrgMsg('')
+    try {
+      const r = await fetch('/api/org', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const j = await r.json()
+      if (!r.ok || j.error) { setOrgMsg(typeof j.error === 'string' ? j.error : 'That did not work.'); return }
+      loadOrg()
+    } catch { setOrgMsg('That did not work.') }
+  }
   // two-factor (TOTP via Supabase MFA)
   const [mfaFactors, setMfaFactors] = useState<Array<{ id: string; friendly_name?: string | null; status: string }>>([])
   const [mfaEnroll, setMfaEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null)
@@ -182,6 +200,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   useEscape(!!sheet, () => setSheet(null))
   useEffect(() => {
     if (sheet === 'Invite a teammate') loadInvites()
+    if (sheet === 'Your team') loadOrg()
     if (sheet === 'Two-factor authentication') { loadFactors(); setMfaEnroll(null); setMfaCode(''); setMfaMsg('') }
     if (sheet === 'Timezone') { setTzQuery(''); if (!tzPick) setTzPick(tz) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -213,6 +232,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       if (m.morning_digest) setMorningDigest(String(m.morning_digest))
       if (m.timezone) setTzPick(String(m.timezone))
       loadFactors()
+      loadOrg()
       if (m.draft_voice) setVoice(m.draft_voice as Record<string, string>)
       if (m.thresholds) setThresholds(m.thresholds as Record<string, string>)
       if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
@@ -265,6 +285,65 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Commitment overdue': { title: 'Commitment overdue', sub: 'Grace period before a promise is chased', options: [['1 day', 'Immediately after the date'], ['3 days', 'Balanced'], ['7 days', 'Only clear misses']] },
     'Quiet hours': { title: 'Quiet hours', sub: `Nothing interrupts you from ${quiet.From} to ${quiet.To}`, rows: [['Applies to', 'Push notifications and alerts'], ['Does not apply to', 'Signals still being detected'], ['Timezone', tz || 'your device setting']], options: [['19:00 - 08:00', 'Evenings and nights'], ['18:00 - 09:00', 'Longer window'], ['22:00 - 07:00', 'Late finish'], ['Off', 'Interrupt me any time']] },
     Members: { title: 'Members', sub: 'Who can see this workspace', rows: [['You', `${user.email} · owner`], ['Others', 'No one else has access'], ['Seats', 'Invitations not enabled yet']], note: 'Signals, accounts and drafts are visible only to you until someone is invited.' },
+    'Your team': { title: 'Your team', sub: org ? `${org.name} · ${members.length} ${members.length === 1 ? 'person' : 'people'}` : 'Everyone here sees the same accounts and signals', custom: (
+      <div style={{ marginTop: 18 }}>
+        {!org && <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>No organisation yet. It is created the first time you sign in after the team update.</div>}
+        {org && (
+          <>
+            {myRole === 'admin' && (
+              <label style={{ display: 'block', marginBottom: 22 }}>
+                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Team name</span>
+                <input defaultValue={org.name} onBlur={e => { if (e.target.value.trim() && e.target.value.trim() !== org.name) orgAction({ action: 'rename', name: e.target.value }) }}
+                  style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+              </label>
+            )}
+            {members.map(mb => {
+              const isOwner = mb.user_id === org.owner_id
+              const isMe = mb.user_id === meId
+              return (
+                <div key={mb.user_id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+                    <span style={{ width: 34, height: 34, borderRadius: '50%', flex: 'none', display: 'grid', placeItems: 'center', background: 'var(--ink, #0E0D0B)', color: '#fff', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 12 }}>
+                      {(mb.name || mb.email || '?').slice(0, 2).toUpperCase()}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{mb.name || mb.email || mb.user_id.slice(0, 8)}{isMe ? ' (you)' : ''}</div>
+                      <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{mb.email && mb.name ? mb.email : isOwner ? 'Owner' : ''}</div>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
+                    {myRole === 'admin' && !isOwner ? (
+                      <select value={mb.role} onChange={e => orgAction({ action: 'role', userId: mb.user_id, role: e.target.value })}
+                        style={{ font: 'inherit', fontSize: 13.5, padding: '6px 8px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>
+                        <option value="admin">Admin</option><option value="member">Member</option><option value="viewer">Viewer</option>
+                      </select>
+                    ) : (
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isOwner ? 'Owner' : mb.role}</span>
+                    )}
+                    {myRole === 'admin' && !isOwner && !isMe && (
+                      <button onClick={() => orgAction({ action: 'remove', userId: mb.user_id })} style={{ font: 'inherit', fontSize: 13, background: 'none', border: 0, cursor: 'pointer', color: 'var(--critical, #c43d2b)' }}>Remove</button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+            {invites.filter(i => i.status !== 'accepted').length > 0 && (
+              <div style={{ marginTop: 22 }}>
+                <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 8, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Pending invites</div>
+                {invites.filter(i => i.status !== 'accepted').map(i => (
+                  <div key={i.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 14 }}>
+                    <span style={{ color: 'var(--ink-muted)' }}>{i.email} <span style={{ fontSize: 12.5, color: 'var(--ink-faint)' }}>· {i.role}</span></span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--warn, #d38b1d)' }}>{i.status}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {orgMsg && <div style={{ fontSize: 13, color: 'var(--critical, #c43d2b)', marginTop: 14 }}>{orgMsg}</div>}
+            {myRole !== 'admin' && <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 16, lineHeight: 1.6 }}>Only admins can change roles or remove people.</div>}
+          </>
+        )}
+      </div>
+    ) },
     'Invite a teammate': { title: 'Invite a teammate', sub: 'They get an email with a sign-in link and see the accounts you share', custom: (
       <div style={{ marginTop: 18 }}>
         <label style={{ display: 'block' }}>
@@ -502,6 +581,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="Team" sub="Who else can see this workspace.">
         <Row label="Members" sub="You are the only member" value="1" onClick={() => setSheet('Members')} />
+        <Row label="Your team" sub={org ? `${org.name} · everyone here sees the same accounts` : 'Who is in your organisation'} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'person' : 'people'}`} onClick={() => setSheet('Your team')} />
         <Row label="Invite a teammate" sub="Share signals and coverage" value="Invite" onClick={() => setSheet('Invite a teammate')} />
         <Row label="Signal visibility" sub="Whether teammates see your accounts" value="Private" onClick={() => setSheet('Signal visibility')} />
       </Section>

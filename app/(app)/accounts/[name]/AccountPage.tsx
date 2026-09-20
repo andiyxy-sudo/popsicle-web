@@ -4,6 +4,7 @@ import { healthTone, formatWhen } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useEscape } from '@/components/ui/useEscape'
 import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
+import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal'
 
 // Account 360 as a full page, matching the design: breadcrumb, name + ARR,
 // four stats with a health sparkline, five tabs, and an Overview built from
@@ -16,7 +17,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 
 // Demo slices for this one account arrive as props from the server page, so
 // the client bundle never includes the whole demo dataset.
-export type DemoSlices = { transcript?: Transcript; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
+export type DemoSlices = { transcripts?: Record<string, Transcript>; threads?: Record<string, ThreadSource>; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
@@ -36,7 +37,7 @@ const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixe
 // ---------------------------------------------------------------------------
 // Comms thread and timeline rail, shared by demo and live branches.
 // ---------------------------------------------------------------------------
-type ThreadItem = { who: string; role?: string; via: string; when: string; text: string; tone: 'positive' | 'neutral' | 'negative' | 'internal'; mine?: boolean; label?: string }
+type ThreadItem = { who: string; role?: string; via: string; when: string; text: string; tone: 'positive' | 'neutral' | 'negative' | 'internal'; mine?: boolean; label?: string; source?: ThreadSource }
 type RailItem = { title: string; body?: string; when: string; kind: 'positive' | 'watch' | 'negative' | 'call' | 'info'; tags?: string[]; onClick?: () => void; done?: boolean; transcript?: Transcript }
 
 const CHANNEL: Record<string, { label: string; glyph: string; color: string }> = {
@@ -62,6 +63,7 @@ function ChannelIcon({ via, size = 14 }: { via: string; size?: number }) {
 }
 
 function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; account: string; onAsk: (q: string) => void; onDraft?: () => void }) {
+  const [openSrc, setOpenSrc] = useState<ThreadSource | null>(null)
   const viaSet = Array.from(new Set(items.map(i => CHANNEL[i.via.toLowerCase()]?.label ?? i.via)))
   const counts = { positive: items.filter(i => i.tone === 'positive').length, negative: items.filter(i => i.tone === 'negative').length, neutral: items.filter(i => i.tone === 'neutral').length }
   const initials = (n: string) => n.replace(/^#/, '').split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || '·'
@@ -117,6 +119,7 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
 
                 <div className="comms-acts" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'center', gap: 16, marginTop: 9, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: tone.c }}>{tone.t}</span>
+                  {m.source && <span onClick={() => setOpenSrc(m.source!)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Open full thread</span>}
                   <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask AI →</span>
                   {onDraft && !mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
                 </div>
@@ -125,6 +128,7 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
           )
         })}
       </div>
+      {openSrc && <ThreadModal t={openSrc} onClose={() => setOpenSrc(null)} onAsk={onAsk} />}
       <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI to summarise this thread →</div>
     </div>
   )
@@ -365,8 +369,8 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
 
       {/* COMMS */}
       {tab === 'comms' && demo.comms && (
-        <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined}
-          items={demo.comms.map(c => ({ who: c.who, role: c.role, via: c.via, when: c.when, text: c.quote, tone: (c.who.startsWith('#') ? 'internal' : c.tone === 'positive' ? 'positive' : c.tone === 'negative' ? 'negative' : 'neutral') as ThreadItem['tone'], mine: /^(Andy G|Mike Ross|Jamie Torres)$/.test(c.who) }))} />
+        <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined}
+          items={demo.comms.map(c => ({ who: c.who, role: c.role, via: c.via, when: c.when, text: c.quote, tone: (c.who.startsWith('#') ? 'internal' : c.tone === 'positive' ? 'positive' : c.tone === 'negative' ? 'negative' : 'neutral') as ThreadItem['tone'], mine: /^(Andy G|Mike Ross|Jamie Torres)$/.test(c.who), source: demo.threads?.[c.who] }))} />
       )}
       {tab === 'comms' && !demo.comms && (() => {
         const sorted = [...messages].filter(m => m.received_at).sort((a, b) => String(b.received_at).localeCompare(String(a.received_at)))
@@ -376,7 +380,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
           const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
           return { who, via: m.integration || 'gmail', when: mounted && m.received_at ? formatWhen(m.received_at) : '', text: (m.content || m.subject || '').replace(/\s+/g, ' ').trim().slice(0, 600), tone: out ? 'neutral' : 'neutral', mine: out, label: m.subject && m.content ? m.subject : undefined }
         })
-        return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined} />
+        return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined} />
       })()}
 
       {tab === 'people' && (() => {
@@ -429,8 +433,8 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       })()}
 
       {tab === 'timeline' && demo.timeline && (
-        <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)}
-          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'], transcript: demo.transcript && /call|zoom|meeting/i.test(t.title) ? demo.transcript : undefined }))} />
+        <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)}
+          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'], transcript: demo.transcripts?.[t.title] }))} />
       )}
       {tab === 'timeline' && !demo.timeline && (() => {
         const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
@@ -442,7 +446,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
           tags: [sg.source_integration ? `via ${sg.source_integration}` : null, sg.risk_amount ? `$${Math.round(Number(sg.risk_amount) / 1000)}K at risk` : null, sg.status === 'handled' ? (sg.handled_action || 'handled') : null].filter(Boolean) as string[],
           done: sg.status === 'handled', onClick: () => router.push(`/signals?signal=${sg.id}`),
         }))
-        return <TimelineRail account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />
+        return <TimelineRail account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} />
       })()}
     </div>
   )

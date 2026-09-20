@@ -452,6 +452,8 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
 export function AskClient() {
   const router = useRouter()
   const params = useSearchParams()
+  // the screen the question came from: /ask?account=Acme%20Corp or ?focus=forecast
+  const focus = { account: params.get('account') || undefined, screen: params.get('from') || undefined }
   const [msgs, setMsgs] = useState<Msg[]>([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -590,7 +592,7 @@ export function AskClient() {
     try {
       const r = await fetch('/api/ask', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: next, stream: true }),
+        body: JSON.stringify({ messages: next, stream: true, focus }),
       })
       let answer = ''
       const ct = r.headers.get('content-type') || ''

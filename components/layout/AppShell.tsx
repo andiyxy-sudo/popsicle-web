@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Sidebar } from './Sidebar'
 import { LiveSignals } from './LiveSignals'
 import { CommandPalette } from './CommandPalette'
+import { Presence } from './Presence'
 import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -78,6 +79,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
       <CommandPalette demo={isDemo} />
+      <Presence userId={user.id} name={user.name || user.email?.split('@')[0] || 'Teammate'} demo={isDemo} />
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {/* warm corner wash (design shell). Lives inside the scroll column so
@@ -87,7 +89,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.82</span>
+            <span>v11.83</span>
           </footer>
         </div>
       </div>

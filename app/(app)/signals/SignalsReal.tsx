@@ -926,6 +926,40 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   </div>
                 )}
 
+                {/* v11.83: the signal's own history — detected, actioned, what happened */}
+                {modalMode === 'view' && (() => {
+                  const steps: Array<{ when: string; label: string; body?: string; tone: 'detected' | 'action' | 'outcome' | 'pending' }> = []
+                  steps.push({ when: d.created_at ? formatWhen(d.created_at) : '', label: 'Detected', tone: 'detected',
+                    body: `${d.source_integration ? `Seen on ${d.source_integration}` : 'Detected'}${typeof ai.confidence === 'number' ? ` · ${ai.confidence}% confidence` : ''}${d.risk_amount ? ` · ${fmtMoney(Number(d.risk_amount))} at risk` : ''}` })
+                  if (d.status === 'snoozed') steps.push({ when: '', label: 'Snoozed', tone: 'action', body: 'Parked for later. It returns to the queue when the snooze ends.' })
+                  if (d.status === 'handled') {
+                    steps.push({ when: d.handled_at ? formatWhen(d.handled_at) : '', label: d.handled_action || 'Handled', tone: 'action', body: 'Action taken and logged against this account.' })
+                    steps.push({ when: '', label: 'Outcome', tone: 'outcome',
+                      body: d.risk_amount ? `${fmtMoney(Number(d.risk_amount))} moved out of the at-risk column. It counts toward revenue protected on Intelligence.` : 'Counted in revenue protected on Intelligence.' })
+                  } else {
+                    steps.push({ when: '', label: 'Waiting on you', tone: 'pending', body: 'No action taken yet. Pick one below and this becomes the outcome line.' })
+                  }
+                  const C = { detected: 'var(--accent, #E85A25)', action: 'var(--good, #2f8f5b)', outcome: 'var(--good, #2f8f5b)', pending: 'var(--warn, #d38b1d)' }
+                  return (
+                    <div style={{ marginTop: 20 }}>
+                      <div style={{ ...mlab, marginBottom: 10 }}>Signal history</div>
+                      <div style={{ position: 'relative' }}>
+                        <span aria-hidden style={{ position: 'absolute', left: 5, top: 14, bottom: 14, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+                        {steps.map((st, i) => (
+                          <div key={i} style={{ display: 'grid', gridTemplateColumns: '12px minmax(0,1fr) auto', gap: 14, alignItems: 'start', padding: '9px 0' }}>
+                            <span style={{ width: 11, height: 11, borderRadius: '50%', marginTop: 4, background: st.tone === 'pending' ? 'var(--paper, #FBF8F3)' : C[st.tone], border: `2px solid ${C[st.tone]}`, zIndex: 1 }} />
+                            <div>
+                              <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{st.label}</div>
+                              {st.body && <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.55, marginTop: 3 }}>{st.body}</div>}
+                            </div>
+                            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', whiteSpace: 'nowrap', paddingTop: 2 }}>{st.when}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+
                 {modalMode === 'view' && (
                   <div style={{ marginTop: 18 }}>
                     <div style={{ ...mlab, marginBottom: 2 }}>Suggested actions</div>

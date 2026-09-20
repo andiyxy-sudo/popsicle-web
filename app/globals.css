@@ -2637,3 +2637,14 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
   .rail-row { grid-template-columns: 24px minmax(0,1fr) !important; }
   .rail-row > span:first-child { display: none; }
 }
+
+/* v11.83: skeleton blocks. Visible against paper, with a slow shimmer so a slow page
+   reads as loading rather than as an empty screen. Reduced-motion keeps the tint. */
+.sk { background: linear-gradient(90deg, #EFEAE1 0%, #F6F2EA 40%, #EFEAE1 80%); background-size: 280% 100%; animation: skShimmer 1.4s ease-in-out infinite; }
+@keyframes skShimmer { 0% { background-position: 120% 0; } 100% { background-position: -40% 0; } }
+@media (prefers-reduced-motion: reduce) { .sk { animation: none; background: #EFEAE1; } }
+
+/* v11.83: presence bar hides behind overlays and on print */
+body[data-modal="1"] .presence-bar { display: none !important; }
+@media print { .presence-bar { display: none !important; } }
+@media (max-width: 900px) { .presence-bar { left: 22px !important; } }
