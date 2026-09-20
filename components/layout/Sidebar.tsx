@@ -226,9 +226,9 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '24px 32px 28px' }}>
               <span onClick={handleSignOut} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', color: 'var(--critical, #c43d2b)', fontWeight: 500, cursor: 'pointer' }}>Sign out</span>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 999, border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Cancel</button>
+                <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '10px 18px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'transparent', color: 'var(--ink-muted)', cursor: 'pointer' }}>Cancel</button>
                 <button onClick={saveProfile} disabled={saving || !draftName.trim()}
-                  style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 999, border: 0, color: '#fff', cursor: 'pointer',
+                  style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 22px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, color: '#fff', cursor: 'pointer',
                     background: saved ? 'var(--good, #2f8f5b)' : 'linear-gradient(135deg,#FF8A50,#FF6B35)', boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)', opacity: saving ? .7 : 1 }}>
                   {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
                 </button>

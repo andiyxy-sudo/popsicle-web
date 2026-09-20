@@ -26,7 +26,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       </h1>
       <div style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 16, lineHeight: 1.6, maxWidth: 620 }}>{error.message}</div>
       {error.digest && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>ref {error.digest} · reported</div>}
-      <button onClick={reset} style={{ marginTop: 24, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 24px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer' }}>Try again</button>
+      <button onClick={reset} style={{ marginTop: 24, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 24px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer' }}>Try again</button>
     </div>
   )
 }

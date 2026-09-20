@@ -127,10 +127,10 @@ function H2({ title, right, top = 72 }: { title: string; right?: React.ReactNode
 }
 function Pills<T extends string>({ items, value, onChange }: { items: readonly T[]; value: T; onChange: (v: T) => void }) {
   return (
-    <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: 3 }}>
+    <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)', padding: 3 }}>
       {items.map(m => (
         <button key={m} onClick={() => onChange(m)}
-          style={{ font: 'inherit', fontSize: 12.5, fontWeight: value === m ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
+          style={{ font: 'inherit', fontSize: 12.5, fontWeight: value === m ? 600 : 500, padding: '6px 14px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
             background: value === m ? INK : 'transparent', color: value === m ? '#fff' : MUTED }}>{m}</button>
       ))}
     </div>
@@ -202,7 +202,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 22 }}>
           {m.storyChips.map(c => {
             const tone = /deteriorat|net risk/i.test(c) ? (/net risk/i.test(c) ? AMBER : RED) : GREEN
-            return <span key={c} style={{ fontSize: 12, fontWeight: 600, color: tone, background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: '5px 11px' }}>{c}</span>
+            return <span key={c} style={{ fontSize: 12, fontWeight: 600, color: tone, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)', padding: '5px 11px' }}>{c}</span>
           })}
           {m.performance && <span style={{ fontSize: 12, color: MUTED, alignSelf: 'center', marginLeft: 6, ...MONO_NUM }}>last 30 days · risk change +{m.performance.riskChangePct}% · success {m.performance.successRatePct}% · stabilized {fmtMoney(m.performance.stabilized)}</span>}
         </div>

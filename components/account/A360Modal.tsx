@@ -27,7 +27,7 @@ export function ModalBtn({ primary, onClick, children }: { primary?: boolean; on
     <button onClick={onClick}
       style={{
         font: 'inherit', fontFamily: "'Outfit',sans-serif", fontSize: 13.5, fontWeight: primary ? 600 : 500,
-        padding: primary ? '11px 24px' : '11px 20px', borderRadius: 999, cursor: 'pointer',
+        padding: primary ? '11px 24px' : '11px 20px', borderRadius: 'var(--toggle-radius, 0px)', cursor: 'pointer',
         border: primary ? 0 : '1px solid var(--border, #E5DFD4)',
         background: primary ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--raised, #FFFDFA)',
         color: primary ? '#fff' : 'var(--ink, #0E0D0B)',

@@ -175,10 +175,10 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
           Forecast <span style={{ margin: '0 8px' }}>/</span> {quarterLabel} <span style={{ margin: '0 8px' }}>·</span> {daysLeft} days left
         </div>
-        <div style={{ display: 'flex', background: 'var(--inset, #F0EDE7)', borderRadius: 999, padding: 3 }}>
+        <div style={{ display: 'flex', background: 'var(--inset, #F0EDE7)', borderRadius: 'var(--toggle-radius, 0px)', padding: 3 }}>
           {(['1W', '1M', '3M', 'YTD'] as const).map(w => (
             <button key={w} onClick={() => setWindow(w)}
-              style={{ font: 'inherit', fontSize: 12, fontWeight: window_ === w ? 600 : 500, padding: '6px 13px', borderRadius: 999, border: 0, cursor: 'pointer',
+              style={{ font: 'inherit', fontSize: 12, fontWeight: window_ === w ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
                 background: window_ === w ? 'var(--ink, #0E0D0B)' : 'transparent', color: window_ === w ? '#fff' : 'var(--ink-muted)' }}>{w}</button>
           ))}
         </div>

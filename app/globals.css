@@ -2607,6 +2607,8 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
 .ed-app > .sidebar { flex: none; }
 
 
-/* v11.74: Team page toggle groups (Revenue actions feed, Unactioned signal queue) are
-   sharp-cornered. To revert to pills, change 0px to 999px here (or delete the rule). */
-.dsk-screen { --toggle-radius: 0px; }
+/* v11.75: one corner rule for the app. Toggle groups, filter pills, chips and buttons on
+   every page (Pulse, Portfolio, Signals, Forecast, Intelligence, Team, Ask, Account 360,
+   Edit profile) read their radius from --toggle-radius. Sharp = 0px. To revert to pills
+   change 0px to 999px; for a softened look use 4px. Avatars and dots stay circular. */
+:root { --toggle-radius: 0px; }

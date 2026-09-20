@@ -304,15 +304,15 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
             ))}
             <div style={{ display: 'grid', gap: 10, marginTop: 30 }}>
               <button onClick={() => router.push(`/ask?q=${encodeURIComponent(`What is happening with ${acct.name} and what should I do next?`)}`)}
-                style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 8px 22px -10px rgba(255,107,53,.6)' }}>
+                style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 8px 22px -10px rgba(255,107,53,.6)' }}>
                 Ask Popsicle about this account
               </button>
               <button onClick={() => open[0] ? router.push(`/signals?signal=${open[0].id}&action=reply`) : router.push('/signals')}
-                style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 999, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>
+                style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 'var(--toggle-radius, 0px)', border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>
                 Draft email
               </button>
               <button onClick={() => setTab('timeline')}
-                style={{ font: 'inherit', fontSize: 14, fontWeight: 500, padding: '14px 0', borderRadius: 999, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>
+                style={{ font: 'inherit', fontSize: 14, fontWeight: 500, padding: '14px 0', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>
                 View timeline
               </button>
             </div>

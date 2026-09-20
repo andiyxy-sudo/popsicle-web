@@ -224,7 +224,7 @@ function ClarifyCard({ line, onAsk }: { line: string; onAsk: (q: string) => void
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {options.map(o => (
           <button key={o} onClick={() => onAsk(o)} className="ask-chip"
-            style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '9px 16px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{o}</button>
+            style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '9px 16px', borderRadius: 'var(--toggle-radius, 0px)', border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{o}</button>
         ))}
       </div>
     </div>
@@ -294,7 +294,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: 'var(--accent)' }}>{num.n.padStart(2, '0')}</span>
           <span style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 17, letterSpacing: '-.02em', color: 'var(--ink)', lineHeight: 1.3 }}>{inline(num.title, i)}</span>
-            {num.figure && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999, whiteSpace: 'nowrap' }}>{num.figure}</span>}
+            {num.figure && <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 'var(--toggle-radius, 0px)', whiteSpace: 'nowrap' }}>{num.figure}</span>}
           </span>
         </div>
       )
@@ -319,7 +319,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
           <div key={`b${i}`} className="ans-in" style={{ padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap', marginBottom: 5 }}>
               <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.015em' }}>{piped[0]}</span>
-              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 999 }}>{piped[1]}</span>
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11.5, color: 'var(--accent)', background: 'rgba(232,90,37,.07)', padding: '2px 9px', borderRadius: 'var(--toggle-radius, 0px)' }}>{piped[1]}</span>
             </div>
             <div style={{ fontSize: 14.5, lineHeight: 1.68, color: 'var(--ink-muted)' }}>{inline(piped.slice(2).join(' · '), i)}</div>
           </div>
@@ -366,7 +366,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
         {tags.length > 0 && (
           <div className="ans-in" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
             {tags.map((t, i) => (
-              <span key={i} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 999,
+              <span key={i} style={{ fontSize: 12, fontWeight: 600, padding: '4px 12px', borderRadius: 'var(--toggle-radius, 0px)',
                 color: i === 0 ? sevColor : 'var(--ink-muted)',
                 background: i === 0 ? (sevColor === 'var(--critical, #c43d2b)' ? 'rgba(196,61,43,.08)' : sevColor === 'var(--warn, #d38b1d)' ? 'rgba(211,139,29,.1)' : 'rgba(47,143,91,.08)') : 'var(--inset, #F0EDE7)' }}>{t}</span>
             ))}
@@ -415,7 +415,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
               )
             })()}
             <button onClick={() => onDraft(accountOf(text), play)}
-              style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 999, border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
+              style={{ marginTop: 13, font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '10px 20px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 6px 18px -8px rgba(255,107,53,.6)' }}>
               Draft this email
             </button>
           </div>
@@ -425,7 +425,7 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {followUps(text).map(q => (
               <button key={q} onClick={() => onAsk(q)} className="ask-chip"
-                style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 14px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{q}</button>
+                style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '8px 14px', borderRadius: 'var(--toggle-radius, 0px)', border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--paper, #FBF8F3)', color: 'var(--ink-muted)', cursor: 'pointer' }}>{q}</button>
             ))}
           </div>
         </div>
@@ -740,10 +740,10 @@ export function AskClient() {
           {/* explore: one group at a time, chosen with pills */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', marginTop: 40, paddingBottom: 12, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>Or explore</div>
-            <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 999, padding: 3 }}>
+            <div style={{ display: 'inline-flex', background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)', padding: 3 }}>
               {DEEP().map((sec, i) => (
                 <button key={sec.group} onClick={() => setDeepGroup(i)}
-                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: deepGroup === i ? 600 : 500, padding: '6px 14px', borderRadius: 999, border: 0, cursor: 'pointer',
+                  style={{ font: 'inherit', fontSize: 12.5, fontWeight: deepGroup === i ? 600 : 500, padding: '6px 14px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
                     background: deepGroup === i ? 'var(--ink)' : 'transparent', color: deepGroup === i ? '#fff' : 'var(--ink-muted)', transition: 'background .15s ease, color .15s ease' }}>
                   {sec.group}
                 </button>
@@ -802,7 +802,7 @@ export function AskClient() {
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
             {['Signals', 'Accounts', 'Email', 'Calls'].map(x => (
-              <span key={x} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink-faint)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 999, padding: '4px 12px' }}>{x}</span>
+              <span key={x} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink-faint)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 'var(--toggle-radius, 0px)', padding: '4px 12px' }}>{x}</span>
             ))}
           </div>
         </div>
@@ -814,7 +814,7 @@ export function AskClient() {
         <div style={{ position: 'relative', height: 0 }}>
           <button onClick={() => { const pane = paneRef.current; pane?.scrollTo({ top: pane.scrollHeight, behavior: 'smooth' }); setAtBottom(true) }}
             style={{ position: 'absolute', bottom: 14, left: '50%', transform: 'translateX(-50%)', font: 'inherit', fontSize: 12.5, fontWeight: 600,
-              padding: '8px 16px', borderRadius: 999, border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink-muted)',
+              padding: '8px 16px', borderRadius: 'var(--toggle-radius, 0px)', border: '1px solid var(--hairline, #EFEAE1)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink-muted)',
               cursor: 'pointer', boxShadow: '0 8px 22px -10px rgba(14,13,11,.3)', whiteSpace: 'nowrap', zIndex: 5 }}>
             ↓ Latest answer
           </button>
@@ -830,7 +830,7 @@ export function AskClient() {
           style={{ flex: 1, padding: '14px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', fontSize: 15.5, background: 'transparent', color: 'var(--ink)', outline: 'none', fontFamily: "'Outfit',sans-serif" }}
         />
         <button onClick={() => send()} disabled={busy || !input.trim()}
-          style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', border: 0, borderRadius: 999, fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", opacity: busy || !input.trim() ? .55 : 1, boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)' }}>
+          style={{ padding: '12px 28px', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', border: 0, borderRadius: 'var(--toggle-radius, 0px)', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", opacity: busy || !input.trim() ? .55 : 1, boxShadow: '0 6px 18px -6px rgba(255,107,53,.5)' }}>
           {busy ? 'Thinking' : 'Ask'}
         </button>
       </div>
