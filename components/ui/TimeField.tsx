@@ -20,14 +20,14 @@ export function TimeField({ value, onChange, disabled }: { value: string; onChan
   const col = (items: string[], cur: string, pick: (v: string) => void) => (
     <div style={{ maxHeight: 176, overflowY: 'auto', minWidth: 56 }}>
       {items.map(it => (
-        <div key={it} onClick={() => pick(it)} style={{ padding: '7px 12px', fontFamily: "'DM Mono',monospace", fontSize: 12.5, cursor: 'pointer', background: it === cur ? 'var(--ink, #0E0D0B)' : 'transparent', color: it === cur ? '#fff' : 'var(--ink)' }}>{it}</div>
+        <div key={it} onClick={() => pick(it)} style={{ padding: '7px 12px', fontSize: 14, cursor: 'pointer', background: it === cur ? 'var(--ink, #0E0D0B)' : 'transparent', color: it === cur ? '#fff' : 'var(--ink)' }}>{it}</div>
       ))}
     </div>
   )
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button type="button" disabled={disabled} onClick={() => setOpen(o => !o)}
-        style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12.5, padding: '7px 12px', border: '1px solid var(--hairline, #EFEAE1)', background: open ? 'var(--inset, #F4F0E8)' : 'transparent', color: 'var(--ink)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .5 : 1 }}>
+        style={{ font: 'inherit', fontSize: 14, padding: '7px 12px', border: '1px solid var(--hairline, #EFEAE1)', background: open ? 'var(--inset, #F4F0E8)' : 'transparent', color: 'var(--ink-muted)', cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .5 : 1, whiteSpace: 'nowrap' }}>
         {h}:{m}
       </button>
       {open && (

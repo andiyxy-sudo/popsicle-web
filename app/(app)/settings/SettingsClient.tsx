@@ -424,7 +424,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Working hours</div>
             <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
           </div>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: "'DM Mono',monospace", fontSize: 12.5, color: 'var(--ink)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-muted)' }}>
             <TimeField value={workHours.start} onChange={val => { const v = { ...workHours, start: val }; setWorkHours(v); saveJson('work_start', v.start) }} />
             <span style={{ color: 'var(--ink-faint)' }}>to</span>
             <TimeField value={workHours.end} onChange={val => { const v = { ...workHours, end: val }; setWorkHours(v); saveJson('work_end', v.end) }} />

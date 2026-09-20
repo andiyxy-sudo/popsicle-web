@@ -538,8 +538,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       {/* stats over the rule (design) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', paddingTop: 4, marginBottom: 20 }}>
         {[
-          { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--ink)' },
-          { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--ink)' },
+          { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--good, #2f8f5b)' },
+          { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--accent, #E85A25)' },
           { n: indexedAll ? indexedAll.toLocaleString() : '--', lbl: 'signals indexed · all time', color: 'var(--ink)' },
           { n: indexed30 ? indexed30.toLocaleString() : '--', lbl: 'signals indexed · 30 days', color: 'var(--ink)' },
           { n: lastSync ?? '--', lbl: 'since last sync', color: lastSync ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' },
