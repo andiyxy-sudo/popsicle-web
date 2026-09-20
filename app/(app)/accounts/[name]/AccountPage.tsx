@@ -49,89 +49,124 @@ const TONE_META = {
   internal: { c: 'var(--ink-faint, #A09C97)', t: 'Internal' },
 } as const
 
+function ChannelIcon({ via, size = 14 }: { via: string; size?: number }) {
+  const k = via.toLowerCase()
+  const st = { width: size, height: size, display: 'block' } as const
+  if (k === 'gmail' || k === 'outlook') return <svg viewBox="0 0 24 24" style={st} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="5" width="18" height="14" rx="0" /><path d="M3 7l9 6 9-6" /></svg>
+  if (k === 'slack') return <svg viewBox="0 0 24 24" style={st} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 4v16M15 4v16M4 9h16M4 15h16" /></svg>
+  if (k === 'whatsapp') return <svg viewBox="0 0 24 24" style={st} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12a9 9 0 0 1-13.5 7.8L3 21l1.2-4.5A9 9 0 1 1 21 12z" /></svg>
+  if (k === 'phone' || k === 'zoom' || k === 'fireflies') return <svg viewBox="0 0 24 24" style={st} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.6a2 2 0 0 1-.5 2.1L8.1 9.7a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.8.3 1.7.5 2.6.7a2 2 0 0 1 1.9 2z" /></svg>
+  return <svg viewBox="0 0 24 24" style={st} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9" /></svg>
+}
+
 function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; account: string; onAsk: (q: string) => void; onDraft?: () => void }) {
   const viaSet = Array.from(new Set(items.map(i => CHANNEL[i.via.toLowerCase()]?.label ?? i.via)))
   const counts = { positive: items.filter(i => i.tone === 'positive').length, negative: items.filter(i => i.tone === 'negative').length, neutral: items.filter(i => i.tone === 'neutral').length }
   const initials = (n: string) => n.replace(/^#/, '').split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || '·'
+  const total = Math.max(1, items.length)
   return (
-    <div style={{ marginTop: 22 }}>
-      {/* summary strip */}
-      <div className="g2" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap', paddingBottom: 14, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
-        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recent communications</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', display: 'flex', gap: 14, flexWrap: 'wrap' }}>
-          <span>{items.length} messages</span>
-          {counts.positive > 0 && <span style={{ color: TONE_META.positive.c }}>{counts.positive} positive</span>}
-          {counts.neutral > 0 && <span style={{ color: TONE_META.neutral.c }}>{counts.neutral} neutral</span>}
-          {counts.negative > 0 && <span style={{ color: TONE_META.negative.c }}>{counts.negative} negative</span>}
-          <span>via {viaSet.join(' · ')}</span>
+    <div style={{ marginTop: 'var(--gap-m)' }}>
+      {/* header: title, a tone meter, the channels */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recent communications</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 6 }}>{items.length} messages · via {viaSet.join(' · ')}</div>
+        </div>
+        <div style={{ minWidth: 200 }}>
+          <div style={{ display: 'flex', height: 4, overflow: 'hidden' }}>
+            {counts.positive > 0 && <span style={{ flex: counts.positive / total, background: TONE_META.positive.c }} />}
+            {counts.neutral > 0 && <span style={{ flex: counts.neutral / total, background: TONE_META.neutral.c }} />}
+            {counts.negative > 0 && <span style={{ flex: counts.negative / total, background: TONE_META.negative.c }} />}
+          </div>
+          <div style={{ display: 'flex', gap: 14, marginTop: 8, fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.6px', textTransform: 'uppercase' }}>
+            {counts.positive > 0 && <span style={{ color: TONE_META.positive.c }}>{counts.positive} positive</span>}
+            {counts.neutral > 0 && <span style={{ color: TONE_META.neutral.c }}>{counts.neutral} neutral</span>}
+            {counts.negative > 0 && <span style={{ color: TONE_META.negative.c }}>{counts.negative} negative</span>}
+          </div>
         </div>
       </div>
-      {/* thread */}
-      <div style={{ position: 'relative', marginTop: 8 }}>
-        <span aria-hidden style={{ position: 'absolute', left: 21, top: 30, bottom: 30, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+
+      {/* thread: theirs left, yours right, each on its own side of a centre line */}
+      <div style={{ position: 'relative', marginTop: 8, maxWidth: 860 }}>
         {items.map((m, i) => {
           const tone = TONE_META[m.tone]
           const ch = CHANNEL[m.via.toLowerCase()] ?? { label: m.via, glyph: m.via.slice(0, 1).toUpperCase(), color: '#5C5855' }
+          const mine = !!m.mine
           return (
-            <div key={i} style={{ display: 'grid', gridTemplateColumns: '44px minmax(0,1fr)', gap: 18, padding: '22px 0', position: 'relative' }}>
-              <div style={{ position: 'relative' }}>
-                <span style={{ width: 44, height: 44, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 14, color: m.mine ? '#fff' : tone.c, background: m.mine ? 'var(--ink, #0E0D0B)' : 'var(--paper, #FBF8F3)', border: `2px solid ${m.mine ? 'var(--ink, #0E0D0B)' : tone.c}`, position: 'relative', zIndex: 1 }}>{m.mine ? 'ME' : initials(m.who)}</span>
-                <span title={ch.label} style={{ position: 'absolute', right: -4, bottom: -2, width: 18, height: 18, borderRadius: 4, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 9, fontWeight: 700, zIndex: 2, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
+            <div key={i} className="comms-row" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', gap: 16, alignItems: 'flex-start', padding: '20px 0' }}>
+              {/* avatar with channel dot */}
+              <div style={{ position: 'relative', flex: 'none' }}>
+                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: mine ? '#fff' : tone.c, background: mine ? 'var(--ink, #0E0D0B)' : 'transparent', border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
+                <span title={ch.label} style={{ position: 'absolute', right: -3, bottom: -3, width: 17, height: 17, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 8.5, fontWeight: 700, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
               </div>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--ink)' }}>{m.mine ? 'You' : m.who}</span>
-                  {m.role && <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{m.role}</span>}
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>via {ch.label}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{m.when}</span>
+
+              <div style={{ minWidth: 0, maxWidth: 620, textAlign: mine ? 'right' : 'left' }}>
+                <div style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{mine ? 'You' : m.who}</span>
+                  {m.role && <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>{m.role}</span>}
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{m.when}</span>
                 </div>
-                <div style={{ marginTop: 10, padding: '14px 18px', background: m.mine ? 'transparent' : 'var(--inset, #F4F0E8)', border: m.mine ? '1px solid var(--hairline, #EFEAE1)' : '1px solid transparent', borderLeft: `3px solid ${tone.c}`, fontSize: 15, lineHeight: 1.65, color: 'var(--ink)', maxWidth: 720 }}>
-                  {m.label && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>{m.label}</div>}
-                  &ldquo;{m.text}&rdquo;
+
+                <div style={{ marginTop: 9, padding: '15px 19px', textAlign: 'left', background: mine ? 'transparent' : 'var(--inset, #F4F0E8)', border: mine ? '1px solid var(--hairline, #EFEAE1)' : 0, position: 'relative' }}>
+                  <span aria-hidden style={{ position: 'absolute', top: 0, bottom: 0, [mine ? 'right' : 'left']: 0, width: 2, background: tone.c } as React.CSSProperties} />
+                  {m.label && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>{m.label}</div>}
+                  <span style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>{m.text}</span>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 18, marginTop: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: tone.c, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: tone.c }} />{tone.t}</span>
-                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask AI about this →</span>
-                  {onDraft && !m.mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
+
+                <div className="comms-acts" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'center', gap: 16, marginTop: 9, flexWrap: 'wrap' }}>
+                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: tone.c }}>{tone.t}</span>
+                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask AI →</span>
+                  {onDraft && !mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
                 </div>
               </div>
             </div>
           )
         })}
       </div>
-      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 10, cursor: 'pointer' }}>Ask AI to summarise this thread →</div>
+      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI to summarise this thread →</div>
     </div>
   )
 }
 
 function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: string; onAsk: (q: string) => void }) {
   const KIND = {
-    positive: { c: 'var(--good, #2f8f5b)', g: '✓' }, watch: { c: 'var(--warn, #d38b1d)', g: '!' }, negative: { c: 'var(--critical, #c43d2b)', g: '↓' },
-    call: { c: 'var(--blue, #2f6f9f)', g: '☎' }, info: { c: 'var(--ink-faint, #A09C97)', g: '·' },
+    positive: { c: 'var(--good, #2f8f5b)', g: '✓', label: 'Progress' }, watch: { c: 'var(--warn, #d38b1d)', g: '!', label: 'Watch' },
+    negative: { c: 'var(--critical, #c43d2b)', g: '↓', label: 'Risk' }, call: { c: 'var(--blue, #2f6f9f)', g: '☎', label: 'Call' }, info: { c: 'var(--ink-faint, #A09C97)', g: '·', label: 'Note' },
   } as const
+  const risk = items.filter(t => t.kind === 'negative' || t.kind === 'watch').length
   return (
-    <div style={{ marginTop: 22 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, paddingBottom: 14, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
-        <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Deal timeline</div>
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{items.length} events · newest first</div>
+    <div style={{ marginTop: 'var(--gap-m)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        <div>
+          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Deal timeline</div>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 6 }}>{items.length} events · newest first{risk ? ` · ${risk} raised risk` : ''}</div>
+        </div>
+        <div style={{ display: 'flex', gap: 16, fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.6px', textTransform: 'uppercase' }}>
+          {(['positive', 'watch', 'negative', 'call'] as const).filter(k => items.some(t => t.kind === k)).map(k => (
+            <span key={k} style={{ color: KIND[k].c, display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: KIND[k].c }} />{KIND[k].label}</span>
+          ))}
+        </div>
       </div>
-      <div style={{ position: 'relative', marginTop: 6 }}>
-        <span aria-hidden style={{ position: 'absolute', left: 15, top: 34, bottom: 34, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
+
+      <div style={{ position: 'relative', marginTop: 4, maxWidth: 860 }}>
+        {/* the spine */}
+        <span aria-hidden style={{ position: 'absolute', left: 79, top: 26, bottom: 26, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
         {items.map((t, i) => {
           const k = KIND[t.kind]
-          const tinted = t.kind === 'negative' || t.kind === 'watch'
+          const heavy = t.kind === 'negative' || t.kind === 'watch'
           return (
-            <div key={i} onClick={t.onClick} style={{ display: 'grid', gridTemplateColumns: '32px minmax(0,1fr)', gap: 18, padding: '18px 0', cursor: t.onClick ? 'pointer' : 'default' }}>
-              <span style={{ width: 32, height: 32, borderRadius: '50%', display: 'grid', placeItems: 'center', background: 'var(--paper, #FBF8F3)', border: `2px solid ${k.c}`, color: k.c, fontSize: 13, fontWeight: 700, position: 'relative', zIndex: 1, opacity: t.done ? .55 : 1 }}>{k.g}</span>
-              <div style={{ padding: tinted ? '14px 18px' : '2px 0 0', background: tinted ? (t.kind === 'negative' ? 'rgba(196,61,43,.06)' : 'rgba(211,139,29,.08)') : 'transparent', borderLeft: tinted ? `3px solid ${k.c}` : 0, opacity: t.done ? .7 : 1 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</span>
-                  <span style={{ marginLeft: 'auto', fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{t.when}</span>
-                </div>
-                {t.body && <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5, maxWidth: 720 }}>{t.body}</div>}
+            <div key={i} onClick={t.onClick} className="rail-row" style={{ display: 'grid', gridTemplateColumns: '68px 24px minmax(0,1fr)', gap: 22, alignItems: 'start', padding: '18px 0', cursor: t.onClick ? 'pointer' : 'default' }}>
+              {/* date gutter, so the eye reads time down the left */}
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', textAlign: 'right', paddingTop: 5, whiteSpace: 'nowrap' }}>{t.when}</span>
+              <span style={{ position: 'relative', display: 'grid', placeItems: 'center', paddingTop: 2 }}>
+                <span style={{ width: 22, height: 22, borderRadius: '50%', display: 'grid', placeItems: 'center', background: heavy ? k.c : 'var(--paper, #FBF8F3)', border: `1.5px solid ${k.c}`, color: heavy ? '#fff' : k.c, fontSize: 11, fontWeight: 700, opacity: t.done ? .5 : 1, zIndex: 1 }}>{k.g}</span>
+              </span>
+              <div style={{ minWidth: 0, opacity: t.done ? .65 : 1, paddingLeft: heavy ? 16 : 0, borderLeft: heavy ? `2px solid ${k.c}` : 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--ink)', letterSpacing: '-.01em', textDecoration: t.done ? 'line-through' : 'none' }}>{t.title}</div>
+                {t.body && <div style={{ fontSize: 14.5, color: 'var(--ink-muted)', lineHeight: 1.65, marginTop: 5, maxWidth: 640 }}>{t.body}</div>}
                 {t.tags && t.tags.length > 0 && (
-                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
-                    {t.tags.map(tag => <span key={tag} style={{ fontSize: 11.5, color: 'var(--ink-muted)', background: 'var(--paper, #FBF8F3)', border: '1px solid var(--hairline, #EFEAE1)', padding: '3px 10px' }}>{tag}</span>)}
+                  <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: 9, fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                    {t.tags.map(tag => <span key={tag}>{tag}</span>)}
                   </div>
                 )}
               </div>
@@ -139,7 +174,7 @@ function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: s
           )
         })}
       </div>
-      <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 10, cursor: 'pointer' }}>Ask AI what changed →</div>
+      <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI what changed →</div>
     </div>
   )
 }

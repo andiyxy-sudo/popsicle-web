@@ -2617,3 +2617,23 @@ button:focus-visible, [role="button"]:focus-visible, a:focus-visible, .tbl-row:f
 /* v11.78: vertical rhythm. Three steps, used for every section gap on the screens.
    To revert to the older looser spacing set --gap-l to 72px; to tighten, 56px. */
 :root { --gap-s: 24px; --gap-m: 40px; --gap-l: 64px; }
+
+
+/* v11.79: Account 360 comms + timeline hover */
+.comm-row .comm-bubble { transition: transform .15s ease, box-shadow .15s ease; }
+.comm-row:hover .comm-bubble { transform: translateY(-1px); box-shadow: 0 10px 24px -16px rgba(14,13,11,.35); }
+.tl-row:hover > div:last-child { transform: translateY(-1px); box-shadow: 0 10px 24px -16px rgba(14,13,11,.35); }
+
+
+/* v11.79: Account 360 comms + timeline */
+.comms-row .comms-acts { opacity: 0; transition: opacity .18s ease; }
+.comms-row:hover .comms-acts, .comms-row:focus-within .comms-acts { opacity: 1; }
+.comms-row .comms-acts > span:first-child { opacity: 1; }   /* the tone label always shows */
+.rail-row { transition: background .15s ease; }
+.rail-row:hover { background: color-mix(in srgb, var(--inset, #F4F0E8) 60%, transparent); }
+@media (max-width: 720px) {
+  .comms-row { flex-direction: row !important; }
+  .comms-row > div:last-child { text-align: left !important; }
+  .rail-row { grid-template-columns: 24px minmax(0,1fr) !important; }
+  .rail-row > span:first-child { display: none; }
+}
