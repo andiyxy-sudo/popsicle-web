@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/components/account/A360Modal'
 import { LOGOS } from './IntegrationsShowcase'
 import { SlackChannelPicker } from './SlackChannels'
+import { SlackDigest } from './SlackDigest'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -553,6 +554,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
         ))}
       </div>
 
+      {active.includes('slack') && <SlackDigest />}
       {/* category label column + provider rows (design) */}
       {cats.map(cat => {
         const inCat = PROVIDERS.filter(p => p.cat === cat)

@@ -170,3 +170,21 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
   }
   return (aiError ? `posted a fallback reply because the ${aiError}` : `posted${acct ? ` (about ${acct.name})` : ''}${tracked ? '' : ' (channel not linked to an account)'}`) + ` · ${keyNote}`
 }
+
+/** A working Slack key belonging to this user (bot key preferred), checked with Slack first. */
+export async function tokenForUser(userId: string): Promise<string | null> {
+  const { data } = await admin().from('integrations').select('*').eq('provider', 'slack').eq('is_active', true).eq('user_id', userId)
+  const cands: Array<{ token: string; bot: boolean }> = []
+  for (const r of (data ?? []) as Row[]) for (const t of tokensIn(r)) cands.push({ token: t.token, bot: t.token.startsWith('xoxb-') })
+  cands.sort((a, b) => Number(b.bot) - Number(a.bot))
+  for (const c of cands) {
+    try { const j = await (await fetch('https://slack.com/api/auth.test', { method: 'POST', headers: { authorization: `Bearer ${c.token}` } })).json() as Row; if (j.ok) return c.token } catch { /* next */ }
+  }
+  return null
+}
+export async function postToSlack(token: string, channel: string, text: string) {
+  const r = await fetch('https://slack.com/api/chat.postMessage', { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8', authorization: `Bearer ${token}` }, body: JSON.stringify({ channel, text, unfurl_links: false, unfurl_media: false }) })
+  return r.json() as Promise<{ ok: boolean; error?: string }>
+}
+export { admin as slackAdmin }
+

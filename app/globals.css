@@ -3481,3 +3481,60 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 /* v11.127: the number popup is attached to the page where it opened: it scrolls with the content,
    and a long one runs down the page instead of scrolling inside itself */
 .xpp { position: absolute !important; max-height: none !important; overflow: visible !important; }
+
+/* v11.129 */
+/* replay: quotation marks in the accent */
+.rp3-q { color: var(--accent, #E85A25); font-weight: 700; }
+/* sidebar: a highlight glides to the page you choose; the item nudges in and its dot pops */
+.ed-sb-nav { position: relative; }
+.ed-sb-glide { position: absolute; left: 14px; right: 14px; top: 0; z-index: 0; pointer-events: none; opacity: 0;
+  background: linear-gradient(90deg, rgba(232,90,37,.22), rgba(232,90,37,.04) 70%, transparent); box-shadow: inset 2px 0 0 #E85A25;
+  transition: transform .42s cubic-bezier(.22,1,.36,1), height .3s ease, opacity .25s ease; }
+.ed-sb-glide.on { opacity: 1; }
+.ed-sb-nav .ed-sb-item { position: relative; z-index: 1; transition: color .25s ease, transform .3s cubic-bezier(.22,1,.36,1) !important; }
+.ed-sb-nav .ed-sb-item.on { transform: translateX(4px); }
+.ed-sb-nav .ed-sb-item:active { transform: translateX(4px) scale(.98); }
+.ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: sbDot .5s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes sbDot { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ed-sb-glide, .ed-sb-nav .ed-sb-item { transition: none !important; } .ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: none; } }
+
+/* ═════════ v11.129 DAILY SLACK BRIEFING (house style) ═════════ */
+.sd { margin-top: var(--gap-m, 40px); margin-bottom: var(--gap-m, 40px); }
+.sd-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 16px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.sd-head h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
+.sd-head span { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; color: var(--ink-faint, #A09C97); }
+.sd-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 40px; margin-top: 22px; }
+.sd-intro { font-size: 15px; line-height: 1.55; color: var(--ink-muted, #5C5855); margin: 0 0 18px; }
+.sd-toggle { display: flex; align-items: flex-start; gap: 12px; cursor: pointer; padding: 12px 0; font-size: 15px; font-weight: 600; }
+.sd-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.sd-toggle em { display: block; font-style: normal; font-weight: 400; font-size: 13px; color: var(--ink-faint, #A09C97); margin-top: 3px; }
+.sd-switch { flex: none; width: 36px; height: 20px; background: var(--hairline, #E6E0D6); position: relative; transition: background .2s ease; margin-top: 1px; }
+.sd-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; background: #fff; transition: transform .2s ease; }
+.sd-toggle input:checked + .sd-switch { background: var(--accent, #E85A25); }
+.sd-toggle input:checked + .sd-switch::after { transform: translateX(16px); }
+.sd-row { display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-top: 8px; }
+.sd-field { display: flex; flex-direction: column; gap: 6px; }
+.sd-field > span { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint, #A09C97); }
+.sd-field select { font: inherit; font-size: 14.5px; padding: 11px 12px; background: #fff; border: 1px solid var(--hairline, #EFEAE1); border-radius: var(--toggle-radius, 0px); color: var(--ink, #0E0D0B); outline: none; appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #A09C97 50%), linear-gradient(135deg, #A09C97 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+.sd-field select:focus { border-color: var(--accent, #E85A25); }
+.sd-tz { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; color: var(--ink-faint, #A09C97); margin: 8px 0 6px; }
+.sd-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.sd-save, .sd-test { font: inherit; font-size: 14px; font-weight: 600; padding: 11px 18px; cursor: pointer; border-radius: var(--toggle-radius, 0px); }
+.sd-save { background: var(--accent, #E85A25); color: #fff; border: 1px solid var(--accent, #E85A25); }
+.sd-save:hover:not(:disabled) { background: #C94B24; border-color: #C94B24; }
+.sd-test { background: #fff; color: var(--ink, #0E0D0B); border: 1px solid var(--hairline, #EFEAE1); }
+.sd-test:hover:not(:disabled) { border-color: var(--ink, #0E0D0B); }
+.sd-save:disabled, .sd-test:disabled { opacity: .45; cursor: default; }
+.sd-msg { font-size: 13.5px; color: var(--ink-muted, #5C5855); }
+.sd-note { font-size: 13px; color: var(--ink-faint, #A09C97); margin: 12px 0 0; line-height: 1.5; }
+.sd-prev-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint, #A09C97); margin-bottom: 10px; }
+.sd-msg-card { background: #fff; border: 1px solid var(--hairline, #EFEAE1); border-top: 2px solid var(--accent, #E85A25); padding: 16px 18px; font-family: -apple-system, 'Segoe UI', Lato, 'Helvetica Neue', sans-serif; font-size: 14.5px; line-height: 1.5; color: #1D1C1D; }
+.sd-msg-from { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sd-msg-from b { font-weight: 800; font-size: 15px; }
+.sd-msg-from em { font-style: normal; font-size: 12px; color: #616061; }
+.sd-av { width: 28px; height: 28px; background: linear-gradient(135deg, #FF8A50, #E85A25); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; border-radius: 4px; }
+.sd-msg-body a { color: #1264A3; text-decoration: none; }
+.sd-msg-body a:hover { text-decoration: underline; }
+.sd-line { min-height: 1.5em; }
+@media (max-width: 960px) { .sd-grid { grid-template-columns: 1fr; } }

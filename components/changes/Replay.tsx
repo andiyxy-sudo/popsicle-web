@@ -36,6 +36,11 @@ function narrate(p: Point, prev: Point | undefined): { lead: string; rest: strin
   return { lead: 'A quiet day.', rest: 'Nothing new came in, and nothing moved.' }
 }
 
+// quotation marks in the accent colour, for a little flair
+function Q({ text }: { text: string }) {
+  return <>{text.split(/([\u201c\u201d"])/).map((part, i) => /^[\u201c\u201d"]$/.test(part) ? <span key={i} className="rp3-q">{part}</span> : part)}</>
+}
+
 function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: number) => void }) {
   const W = 1000, H = 230, P = { l: 8, r: 16, t: 16, b: 30 }
   const maxV = Math.max(1, ...pts.map(p => Math.max(p.atRisk, p.protectedValue))) * 1.08
@@ -111,7 +116,7 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
         {pts && p && story && (
           <>
             <h2 className="rp3-date">{new Date(p.t).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}{atEnd && <span className="rp3-today">Today</span>}</h2>
-            <p className="rp3-story" key={idx}><strong>{story.lead}</strong> {story.rest}</p>
+            <p className="rp3-story" key={idx}><strong><Q text={story.lead} /></strong> <Q text={story.rest} /></p>
 
             <div className="rp3-figs">
               {figs.map(f => (

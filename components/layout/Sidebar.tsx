@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -52,7 +52,16 @@ const NAV = [
 ]
 
 export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
+  // v11.129: a highlight that glides to the page you pick, before the page has even loaded
+  const navRef = useRef<HTMLDivElement>(null)
+  const [glide, setGlide] = useState<{ top: number; h: number; on: boolean }>({ top: 0, h: 36, on: false })
+  const moveGlide = (el: HTMLElement) => setGlide({ top: el.offsetTop, h: el.offsetHeight, on: true })
+
   const pathname = usePathname()
+  useLayoutEffect(() => {
+    const el = navRef.current?.querySelector('.ed-sb-item.on') as HTMLElement | null
+    if (el) moveGlide(el); else setGlide(g => ({ ...g, on: false }))
+  }, [pathname])
   const router = useRouter()
   const supabase = createClient()
 
@@ -133,7 +142,8 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         <img src="/brand/logo-dark-smallmark.svg" alt="Popsicle Labs" />
       </div>
 
-      <div className="ed-sb-nav">
+      <div className="ed-sb-nav" ref={navRef} onClickCapture={e => { const a = (e.target as HTMLElement).closest('.ed-sb-item') as HTMLElement | null; if (a) moveGlide(a) }}>
+        <span className={`ed-sb-glide${glide.on ? ' on' : ''}`} aria-hidden style={{ transform: `translateY(${glide.top}px)`, height: glide.h }} />
         {NAV.map((group, gi) => (
           <div key={group.section}>
             <div className="ed-sb-rule" style={{ background: gi === 0 ? 'transparent' : 'rgba(251,248,243,.12)', margin: gi === 0 ? '30px 26px 0' : '20px 26px 18px' }} />
