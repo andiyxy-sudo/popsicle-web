@@ -128,7 +128,10 @@ export function AgentPopup() {
   useEffect(() => {
     if (!shown) return
     const iv = setInterval(() => { if (document.body.dataset.modal === '1') setShown(null) }, 400)
-    return () => clearInterval(iv)
+    // a click anywhere outside the card closes it
+    const onDown = (e: PointerEvent) => { const t = e.target as Element | null; if (t && !t.closest?.('.agent-card')) { setLeaving(true); setTimeout(() => setShown(null), 240) } }
+    const arm = setTimeout(() => document.addEventListener('pointerdown', onDown), 200)   // not the click that opened it
+    return () => { clearInterval(iv); clearTimeout(arm); document.removeEventListener('pointerdown', onDown) }
   }, [shown])
 
   if (!shown) return null

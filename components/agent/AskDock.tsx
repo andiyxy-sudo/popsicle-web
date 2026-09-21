@@ -49,11 +49,21 @@ export function AskDock() {
   const onPaneScroll = () => { const p = paneRef.current; if (p) followRef.current = p.scrollHeight - p.scrollTop - p.clientHeight < 48 }
   useEffect(() => { const p = paneRef.current; if (p && followRef.current) p.scrollTop = p.scrollHeight }, [msgs])
   useEffect(() => { const p = paneRef.current; if (open && p) { followRef.current = true; p.scrollTop = p.scrollHeight } }, [open])
+  const dockRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    // v11.97: a click anywhere outside the sheet and the bar folds it away.
+    // Clicks inside overlays the sheet opened (Account 360, source popups) don't count.
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node | null
+      if (!t || dockRef.current?.contains(t)) return
+      if ((t as Element).closest?.('[role="dialog"], .a360-panel, .smodal-overlay')) return
+      setOpen(false)
+    }
     document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
+    document.addEventListener('pointerdown', onDown)
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('pointerdown', onDown) }
   }, [open])
 
   useEffect(() => {
@@ -126,7 +136,7 @@ export function AskDock() {
 
   const hasConvo = msgs.length > 0 || said.length > 0
   return (
-    <div className="dock">
+    <div className="dock" ref={dockRef}>
       {open && hasConvo && (
         <div className="dock-sheet" role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
