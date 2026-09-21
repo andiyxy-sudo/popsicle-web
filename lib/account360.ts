@@ -16,6 +16,7 @@
 
 import { createClient } from '@/lib/supabase/client'
 import type { A360Data, SigItem, CommItem, PersonItem, TimelineItem } from '@/components/account/Account360'
+import { exposureOf } from '@/lib/metrics'
 
 function fmtMoney(v?: number | null): string {
   if (v == null || isNaN(Number(v)) || Number(v) === 0) return ''
@@ -145,7 +146,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
   out.contact = (topAi?.contact_name as string) || (topAi?.sender_email as string) || ''
 
   // arr: real deal value if present, else total $ at risk across signals, else --
-  const riskSum = sigs.reduce((s, x) => s + (Number(x.risk_amount) || 0), 0)
+  const riskSum = exposureOf(sigs)
   out.arr = fmtMoney(acc?.value) || (riskSum > 0 ? fmtMoney(riskSum) : '') || '--'
 
   // days dark + last touch: driven by the most recent real activity we have

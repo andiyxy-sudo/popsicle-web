@@ -5,7 +5,7 @@
 import {
   DEMO_ACCOUNTS, DEMO_EXTRA, DEMO_SIGNALS, DEMO_PEOPLE, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES,
   DEMO_CONTRACTS, DEMO_TRANSCRIPT, DEMO_PULSE, DEMO_TEAM, DEMO_INTELLIGENCE, DEMO_MOVERS, DEMO_FORECAST,
-  DEMO_INTEGRATION_STATS, DEMO_INTEGRATION_ACTIVE, DEMO_SIGNALS_HEAD,
+  DEMO_INTEGRATION_STATS, DEMO_INTEGRATION_ACTIVE, DEMO_SIGNALS_HEAD, DEMO_X, DEMO_PULSE_STRIP,
 } from './demo-dataset'
 import { MOBILE_ACCOUNT_HEADERS, MOBILE_ACCOUNT_HEADERS_ALT, MOBILE_BRIEF_COUNTS, MOBILE_PORTFOLIO_CARDS } from './demo-mobile'
 
@@ -47,7 +47,16 @@ function build(): string {
 
 FORMAT RULES (strict): no emoji anywhere. No markdown headings with #; if you need a section label write it as a short line ending with a colon, like "Not yours, but flag to reps:". Rank items as "1. Account, short headline ($figure)" on their own line, then at most three bullets under each, each bullet starting with a two-word bold lead like **Why first:** followed by one or two plain sentences. Put quotes in double quotes without asterisks. No italics. Keep the whole answer under 220 words unless asked for detail. Plain, warm, precise.`)
 
-  out.push(`\n# Pipeline pulse (today)\n- Pipeline health ${DEMO_PULSE.health}/100 (${DEMO_PULSE.delta}) · AI confidence ${DEMO_PULSE.aiConfidence}%\n- Deals ${DEMO_PULSE.deals} (${DEMO_PULSE.dealsDelta}) · Risk ${DEMO_PULSE.risk} (${DEMO_PULSE.riskDelta}) · Forecast ${money(DEMO_PULSE.forecast)} (${DEMO_PULSE.forecastDelta})\n- Revenue loop this week: ${DEMO_PULSE.loop.signals} signals → ${DEMO_PULSE.loop.cases} cases → ${DEMO_PULSE.loop.actions} actions → ${money(DEMO_PULSE.loop.impact)} impact · listening on ${DEMO_PULSE.listening} signals\n- AI brief: ${DEMO_PULSE.brief.map(b => `${b.pre}${b.strong}${b.post ?? ''}`).join(' | ')}`)
+  // v11.116: the headline figures, computed from the data by the same functions the screens use.
+  // These are authoritative: quote these, never a figure from elsewhere in this context.
+  out.push(`\n# Headline figures (authoritative, match the screens exactly)
+- Revenue at risk ${DEMO_X.atRisk.valueText}: ${DEMO_X.atRisk.parts.map(p => `${p.label} ${money(p.value ?? 0)}`).join(', ')}. Definition: ${DEMO_X.atRisk.definition}
+- Active signals ${DEMO_X.active.valueText} (${DEMO_PULSE_STRIP.critical} critical, ${DEMO_PULSE_STRIP.warn} watch, ${DEMO_PULSE_STRIP.positive} positive, ${DEMO_PULSE_STRIP.newToday} new in the last 24 hours)
+- Revenue protected ${DEMO_X.protectedRevenue.valueText}: ${DEMO_X.protectedRevenue.parts.map(p => `${p.label} ${money(p.value ?? 0)}`).join(', ')} (${DEMO_X.protectedRevenue.footnote})
+- Commit ${DEMO_X.commit.valueText}: ${DEMO_X.commit.parts.map(p => `${p.label} ${money(p.value ?? 0)}`).join(', ')}. Definition: ${DEMO_X.commit.definition}
+- Total ARR ${DEMO_X.totalArr.valueText} across ${DEMO_X.totalArr.parts.length} accounts
+- Rated precision ${DEMO_X.ratedPrecision.valueText} from ${DEMO_X.ratedPrecision.n} ratings (95% range ${Math.round((DEMO_X.ratedPrecision.interval?.[0] ?? 0) * 100)} to ${Math.round((DEMO_X.ratedPrecision.interval?.[1] ?? 0) * 100)}%)`)
+  out.push(`\n# Pipeline pulse (today)\n- Pipeline health ${DEMO_PULSE.health}/100 (${DEMO_PULSE.delta}) · rated precision ${DEMO_X.ratedPrecision.valueText} from ${DEMO_X.ratedPrecision.n} ratings\n- Deals ${DEMO_PULSE.deals} (${DEMO_PULSE.dealsDelta}) · Risk ${DEMO_PULSE.risk} (${DEMO_PULSE.riskDelta}) · Forecast ${money(DEMO_PULSE.forecast)} (${DEMO_PULSE.forecastDelta})\n- Revenue loop this week: ${DEMO_PULSE.loop.signals} signals → ${DEMO_PULSE.loop.cases} cases → ${DEMO_PULSE.loop.actions} actions → ${money(DEMO_PULSE.loop.impact)} impact · listening on ${DEMO_PULSE.listening} signals\n- AI brief: ${DEMO_PULSE.brief.map(b => `${b.pre}${b.strong}${b.post ?? ''}`).join(' | ')}`)
 
   out.push(`\n# Signals this week\n- ${DEMO_SIGNALS_HEAD.map(s => `${s.n} ${s.lbl}`).join(' · ')}`)
 

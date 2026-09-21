@@ -1,5 +1,6 @@
 // Demo dataset, transcribed from the Popsicle mobile app so the web demo tells
 // exactly the same story. Figures, names, quotes and dates are verbatim.
+import * as M from './metrics'
 import type { Account, Signal } from '@/types'
 
 // Demo clock: today at 09:00 UTC, computed once. Server and client resolve the
@@ -96,6 +97,12 @@ const S = (id: string, account: string, type: string, sev: 'high' | 'watch' | 'p
      source_integration: src, risk_amount: risk, created_at: iso(hours), is_dismissed: false,
      ai_analysis: { confidence: conf, ...(quote ? { quote } : {}), ...(rec ? { recommendation: rec } : {}) } }) as unknown as Signal
 
+// v11.116: a signal that was acted on (handled), for the protected-revenue and actions figures
+const HD = (id: string, account: string, type: string, sev: 'high' | 'watch' | 'positive', title: string, description: string,
+  src: string, hours: number, risk: number | null, conf: number, handledHoursAgo: number, action: string, quote?: string): Signal =>
+  ({ ...(S(id, account, type, sev, title, description, src, hours, risk, conf, quote) as unknown as Record<string, unknown>),
+     status: 'handled', handled_at: iso(handledHoursAgo), handled_action: action }) as unknown as Signal
+
 export const DEMO_SIGNALS: Signal[] = [
   S('demo-sg-1', 'Acme Corp', 'silent_stall', 'high', 'Exec gone dark 8 days',
     'Sarah Chen (CFO) stopped responding to all outreach. Last email opened but no reply. Escalation risk rising.',
@@ -147,6 +154,54 @@ export const DEMO_SIGNALS: Signal[] = [
     'Dana Kim opened the proposal five times this week. No meeting or next step has been set. Close date Jan 28 leaves little slack for legal.', 'gmail', 96, 175000, 78,
     'Shared the proposal with leadership. Everyone is on board. Just waiting for legal to finish their review.',
     'Book the legal check-in now so the Jan 28 close holds.'),
+  // ---- v11.116: the rest of the month's signals, so every headline figure adds up from the data ----
+  // Acme Corp: the CFO has gone quiet and the deal is drifting (critical)
+  S('demo-sg-18', 'Acme Corp', 'silent_stall', 'high', 'Renewal email opened a fourth time, no reply', 'Sarah Chen opened the FY27 renewal summary again. No reply in 8 days.', 'gmail', 2, 480000, 90, undefined, 'Send the year-on-year breakdown today'),
+  S('demo-sg-19', 'Acme Corp', 'competitor_mention', 'high', 'Gong comparison requested again', 'James Park asked for the side-by-side against Gong a second time.', 'gmail', 6, 480000, 84, 'Can you send the comparison against what we pay Gong today?'),
+  S('demo-sg-20', 'Acme Corp', 'timeline_slip', 'high', 'Thursday review postponed without a new date', 'The renewal review on Thursday was moved with no replacement slot.', 'gcal', 30, 480000, 86),
+  S('demo-sg-21', 'Acme Corp', 'price_flinch', 'high', 'Finance asked for a 15% concession', 'Procurement asked whether a 15% reduction is possible before sign-off.', 'gmail', 120, 480000, 82, 'Is there flexibility of around 15% on the renewal?'),
+  S('demo-sg-22', 'Acme Corp', 'champion_change', 'high', 'Champion left off the latest thread', 'Priya Nair was removed from the renewal thread by the CFO.', 'gmail', 190, 480000, 80),
+  S('demo-sg-23', 'Acme Corp', 'deal_stage_backward', 'high', 'Deal moved back from Negotiation to Proposal in HubSpot', 'Stage regressed after the pricing call.', 'hubspot', 260, 480000, 88),
+  // Meridian Labs: the renewal is slipping and a rival is circling (critical)
+  S('demo-sg-24', 'Meridian Labs', 'silent_stall', 'high', 'Alex Park silent for 5 days after daily replies', 'Usually replies within 4 hours. Last reply 5 days ago.', 'gmail', 1, 850000, 92, undefined, 'Ask to join the VP RevOps planning review directly'),
+  S('demo-sg-25', 'Meridian Labs', 'competitor_mention', 'high', 'Rival vendor named in #meridian-renewal', 'A competing platform was named as a consolidation option.', 'slack', 3, 850000, 87, 'Their pitch is that we could replace two tools with one.'),
+  S('demo-sg-26', 'Meridian Labs', 'timeline_slip', 'high', 'Budget decision moved to after planning month', 'VP RevOps is in planning until month end; decision deferred.', 'gmail', 7, 850000, 85, 'She is in planning until the end of the month.'),
+  S('demo-sg-27', 'Meridian Labs', 'champion_change', 'high', 'Decision owner changed to VP RevOps', 'Budget authority moved from Alex Park to the VP of Revenue Operations.', 'zoom', 80, 850000, 83),
+  S('demo-sg-28', 'Meridian Labs', 'price_flinch', 'high', 'Consolidation framed as a cost cut', 'Three renewals are due this quarter; the brief is to cut one.', 'zoom', 150, 850000, 81, 'We have three tools up for renewal and she wants to consolidate, not add.'),
+  S('demo-sg-29', 'Meridian Labs', 'silent_stall', 'high', 'One-pager forwarded, no response from the VP', 'The consolidation one-pager was forwarded 11 days ago.', 'gmail', 210, 850000, 80),
+  S('demo-sg-30', 'Meridian Labs', 'deal_stage_backward', 'high', 'Renewal moved from Q1 commit to Q2 in HubSpot', 'Close date pushed one quarter.', 'hubspot', 300, 850000, 89),
+  S('demo-sg-31', 'Meridian Labs', 'meeting_cancelled', 'high', 'Quarterly business review cancelled', 'The QBR was cancelled by the customer with no reschedule.', 'gcal', 400, 850000, 84),
+  // watch
+  S('demo-sg-32', 'TechFlow Inc', 'timeline_slip', 'watch', 'Finance calendar closes for new spend in two weeks', 'Approval has to land before the finance cutoff.', 'zoom', 29, 210000, 78, 'Our finance calendar closes for new spend in two weeks.'),
+  S('demo-sg-33', 'TechFlow Inc', 'price_flinch', 'watch', 'Asked for the discount in writing', 'Verbal discount will not pass procurement.', 'gmail', 100, 210000, 76),
+  S('demo-sg-34', 'Axion Partners', 'legal_loopin', 'watch', 'SOC2 and pen test requested before PO', 'Security documents required before procurement can proceed.', 'slack', 8, 95000, 83, '3-5 week minimum delay. No workaround without security docs.'),
+  S('demo-sg-35', 'Axion Partners', 'commitment_overdue', 'watch', 'Pre-approved redline 5 days late', 'The redline promised to Rachel Voss has not been sent.', 'gmail', 140, 95000, 88),
+  S('demo-sg-36', 'TechVault Inc', 'silent_stall', 'watch', 'CFO has not opened the ROI package', 'Forwarded to finance two days ago; not yet opened.', 'gmail', 27, 140000, 77),
+  S('demo-sg-37', 'TechVault Inc', 'price_flinch', 'watch', 'Asked to start at 60% of seats', 'Kevin Cho asked for a phased start.', 'whatsapp', 170, 140000, 75, 'Could we start at sixty percent and expand after we see the return?'),
+  S('demo-sg-38', 'Vertex Systems', 'legal_loopin', 'watch', 'Contract with legal, no reviewer named', 'Legal received the contract; no reviewer assigned yet.', 'gmail', 90, 175000, 74),
+  S('demo-sg-39', 'Nexus AI', 'legal_loopin', 'watch', 'MSA redlines returned with two clauses open', 'Liability cap and data residency still open.', 'gmail', 30, null, 72),
+  // positive
+  S('demo-sg-40', 'Nexus AI', 'call_buying_signal', 'positive', 'Rollout sequencing discussed: enterprise team first', 'Marcus Webb moved to planning the rollout.', 'zoom', 28, null, 90, 'Then enterprise first. Send the deployment plan.'),
+  S('demo-sg-41', 'Nexus AI', 'reengaged', 'positive', 'Expansion to two more regions raised', 'Expansion language appeared on the wrap call.', 'zoom', 60, null, 86),
+  S('demo-sg-42', 'Brightwave', 'call_buying_signal', 'positive', 'Finance reviewing, answer promised Friday', 'Tom Okafor opened the ROI deck three times.', 'gmail', 26, null, 84, 'Finance is reviewing, back to you Friday.'),
+  S('demo-sg-43', 'Brightwave', 'reengaged', 'positive', 'RevOps lead joined the thread', 'A second stakeholder engaged.', 'gmail', 110, null, 80),
+  S('demo-sg-44', 'Cobalt Health', 'reengaged', 'positive', 'Onboarding kickoff booked for Monday', 'Implementation lead confirmed.', 'gcal', 34, null, 88),
+  S('demo-sg-45', 'Cobalt Health', 'call_buying_signal', 'positive', 'Asked about a second business unit', 'Expansion interest after signing.', 'zoom', 200, null, 79),
+  S('demo-sg-46', 'Vertex Systems', 'call_buying_signal', 'positive', 'Dana Kim confirmed the January 28 close', 'Contract review in the final stage.', 'gmail', 40, null, 91, 'We are still aiming to close by January 28.'),
+  S('demo-sg-47', 'TechFlow Inc', 'reengaged', 'positive', 'Controller replied within the hour', 'Faster than her usual reply time.', 'gmail', 50, null, 70),
+  // handled this quarter: four saves (the $560K protected) and eight routine actions
+  HD('demo-hd-1', 'Brightwave', 'silent_stall', 'high', 'Budget freeze mentioned by the VP', 'Brightwave paused new spend pending a budget review.', 'gmail', 900, 180000, 88, 860, 'Exec call'),
+  HD('demo-hd-2', 'Vertex Systems', 'legal_loopin', 'high', 'Procurement asked to restart vendor review', 'A second vendor review was requested late in the cycle.', 'gmail', 780, 175000, 85, 740, 'Escalation'),
+  HD('demo-hd-3', 'Cobalt Health', 'price_flinch', 'high', 'Renewal pricing challenged by finance', 'Finance questioned the renewal increase.', 'zoom', 1300, 150000, 86, 1250, 'Exec call'),
+  HD('demo-hd-4', 'Nexus AI', 'timeline_slip', 'watch', 'Security questionnaire blocking the pilot extension', 'The pilot extension was on hold pending the questionnaire.', 'gmail', 600, 55000, 82, 570, 'Follow-up'),
+  HD('demo-hd-5', 'Acme Corp', 'silent_stall', 'watch', 'Technical contact quiet after demo', 'Resolved after a follow-up.', 'gmail', 700, null, 70, 680, 'Follow-up'),
+  HD('demo-hd-6', 'TechFlow Inc', 'price_flinch', 'watch', 'Asked about annual prepay', 'Answered with the prepay terms.', 'gmail', 500, null, 72, 480, 'Follow-up'),
+  HD('demo-hd-7', 'Axion Partners', 'legal_loopin', 'watch', 'DPA template requested', 'DPA sent the same day.', 'gmail', 420, null, 75, 410, 'Follow-up'),
+  HD('demo-hd-8', 'TechVault Inc', 'silent_stall', 'watch', 'No reply after the demo', 'Rebooked for the following week.', 'gmail', 380, null, 71, 360, 'Follow-up'),
+  HD('demo-hd-9', 'Meridian Labs', 'champion_change', 'watch', 'New RevOps director introduced', 'Intro call held.', 'zoom', 1100, null, 74, 1080, 'Exec call'),
+  HD('demo-hd-10', 'Vertex Systems', 'reengaged', 'positive', 'COO asked for the security summary', 'Sent.', 'gmail', 330, null, 80, 320, 'Follow-up'),
+  HD('demo-hd-11', 'Nexus AI', 'legal_loopin', 'watch', 'Data residency question', 'Answered with the region options.', 'gmail', 260, null, 73, 250, 'Escalation'),
+  HD('demo-hd-12', 'Cobalt Health', 'invoice_delay', 'watch', 'First invoice queried by AP', 'Resolved with a corrected PO number.', 'gmail', 230, null, 76, 220, 'Invoice chase'),
 ]
 
 // ---------------------------------------------------------------- people
@@ -1002,3 +1057,42 @@ export const DEMO_FOLLOWUPS = [
   { id: 'demo-fu-1', account: 'Brightwave', did: 'You sent Tom Okafor the ROI deck on Tuesday', since: 'He opened it three times and replied that finance is reviewing, back to you Friday', view: 'That is a yes forming. Leave it until Friday, then book the signing call', when: new Date(Date.now() - 2 * 86_400_000).toISOString() },
   { id: 'demo-fu-2', account: 'TechVault Inc', did: 'You sent Kevin Cho the ROI package two days ago', since: 'He forwarded it to finance. The CFO has not opened it', view: 'Waiting will not change that. Offer Kevin a fifteen-minute walkthrough with the CFO this week', when: new Date(Date.now() - 2 * 86_400_000).toISOString() },
 ]
+
+// ---------------------------------------------------------------------------
+// v11.116: the demo's headline figures, COMPUTED from the data above with the same functions
+// the screens and the explanations use. Nothing below is typed in by hand.
+// ---------------------------------------------------------------------------
+export const DEMO_RATINGS = [
+  { type: 'Silent stall', useful: 31, rated: 33 }, { type: 'Price flinch', useful: 24, rated: 27 },
+  { type: 'Competitor mention', useful: 17, rated: 19 }, { type: 'Timeline slip', useful: 15, rated: 17 },
+  { type: 'Legal loop-in', useful: 13, rated: 14 }, { type: 'Champion change', useful: 9, rated: 10 },
+  { type: 'Buying signal', useful: 7, rated: 8 },
+]
+const _acc = DEMO_ACCOUNTS as unknown as M.Acct[], _sig = DEMO_SIGNALS as unknown as M.Sig[]
+export const DEMO_X = {
+  atRisk: M.atRisk(_acc, _sig), active: M.activeSignals(_acc, _sig, DEMO_NOW), protectedRevenue: M.protectedRevenue(_acc, _sig),
+  commit: M.commit(_acc, _sig), totalArr: M.totalArr(_acc), ratedPrecision: M.ratedPrecision(DEMO_RATINGS),
+}
+{
+  const open = _sig.filter(x => !x.is_dismissed && (!x.status || x.status === 'open'))
+  const lvl = (l: string) => _acc.filter(a => a.risk_level === l).length
+  Object.assign(DEMO_PULSE_STRIP, {
+    atRisk: DEMO_X.atRisk.value, atRiskDelta: 0, high: lvl('high'), med: lvl('medium'), low: lvl('low'),
+    active: open.length, newToday: open.filter(x => x.created_at && DEMO_NOW - new Date(x.created_at).getTime() <= 24 * 3600e3).length,
+    critical: open.filter(x => x.severity === 'high').length, warn: open.filter(x => x.severity === 'watch').length, positive: open.filter(x => x.severity === 'positive').length,
+    protectedTotal: DEMO_X.protectedRevenue.value, saved: DEMO_X.protectedRevenue.parts.length, actions: _sig.filter(x => x.status === 'handled').length,
+    aiConfidence: DEMO_X.ratedPrecision.value,
+  })
+  Object.assign(DEMO_FORECAST, { commit: DEMO_X.commit.value, atRisk: DEMO_X.atRisk.value })
+  const watchOnly = [...new Set(open.filter(x => x.severity === 'watch' && Number(x.risk_amount || 0) > 0).map(x => x.account_name || ''))]
+    .filter(n => n && !open.some(x => x.account_name === n && x.severity === 'high'))
+  const watchVal = watchOnly.reduce((t, n) => t + Math.max(0, ...open.filter(x => x.account_name === n).map(x => Number(x.risk_amount || 0))), 0)
+  const posAccts = [...new Set(open.filter(x => x.severity === 'positive').map(x => x.account_name || ''))].filter(Boolean)
+  DEMO_SIGNALS_HEAD.splice(0, DEMO_SIGNALS_HEAD.length,
+    { n: String(DEMO_X.atRisk.parts.length), lbl: `critical · ${DEMO_X.atRisk.valueText} at risk`, tone: 'critical' as const },
+    { n: String(watchOnly.length), lbl: `watch · ${M.money(watchVal)} exposure`, tone: 'warn' as const },
+    { n: String(posAccts.length), lbl: 'positive · momentum', tone: 'good' as const },
+    { n: String(open.length), lbl: `open signals · ${DEMO_PULSE_STRIP.newToday} new today`, tone: 'ink' as const, strong: true } as never,
+  )
+}
+
