@@ -2795,3 +2795,14 @@ body[data-modal="1"] .agent-card { display: none; }
 .dock-pane { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: rgba(14,13,11,.18) transparent; }
 .dock-pane::-webkit-scrollbar { width: 8px; }
 .dock-pane::-webkit-scrollbar-thumb { background: rgba(14,13,11,.16); border-radius: 8px; border: 2px solid var(--paper, #FBF8F3); }
+
+/* v11.98: firmer dividers in the Ask-bar sheet and the note card, and one text size.
+   Every headline in the sheet now matches the brief's rows (14px); weight keeps the hierarchy. */
+.dock-head { border-bottom: 1px solid rgba(14,13,11,.14); }
+.dock-said, .dock-a { border-bottom: 1px solid rgba(14,13,11,.14); }
+.dock-sheet .brief-row, .agent-card .brief-row { border-top: 1px solid rgba(14,13,11,.14); }
+.agent-card-top { border-bottom: 1px solid rgba(14,13,11,.14); }
+.dock-sheet .note-head, .dock-sheet .note.compact .note-head { font-size: 14px; line-height: 1.45; letter-spacing: -.005em; margin-top: 6px; }
+.dock-sheet .brief-row-t { font-size: 14px; line-height: 1.45; }
+.dock-sheet .note-view, .dock-sheet .note-quote { font-size: 13.5px; }
+.agent-card .note-head, .agent-card .note.compact .note-head { font-size: 14px; line-height: 1.45; letter-spacing: -.005em; }
