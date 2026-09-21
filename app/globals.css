@@ -2822,3 +2822,15 @@ body[data-modal="1"] .agent-card { display: none; }
 /* rows that end in an action button: the Ask chip sits just left of it, never on top */
 .ask-offset > .ask-this { right: 142px; }
 @media (max-width: 900px) { .ask-offset > .ask-this { right: 0; } }
+
+/* v11.100: one type scale inside the Ask-bar sheet. The agent's notes, your questions and
+   the answers all read at 14px; headlines and questions in Outfit bold, body in the text face.
+   (Answers carried the Ask page's larger inline sizes: 15.5px body, 17px titles.) */
+.dock-q { font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -.005em; line-height: 1.45; }
+.dock-a p, .dock-a div, .dock-a span, .dock-a li, .dock-a strong, .dock-a em, .dock-a code { font-size: 14px !important; line-height: 1.6 !important; }
+.dock-a span[style*="Outfit"], .dock-a strong { font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: -.005em; }
+.dock-a .vb-label { font-size: 10.5px !important; }
+.dock-a .vb-word { font-size: 16px !important; line-height: 1.3 !important; }
+.dock-a .vb-reason { font-size: 14px !important; }
+.dock-sheet .note-view, .dock-sheet .note-quote, .dock-sheet .brief-row-t { font-size: 14px; line-height: 1.6; }
+.dock-sheet .note-dateline, .dock-sheet .note-quote cite { font-size: 10.5px; }
