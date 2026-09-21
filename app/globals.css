@@ -2834,3 +2834,11 @@ body[data-modal="1"] .agent-card { display: none; }
 .dock-a .vb-reason { font-size: 14px !important; }
 .dock-sheet .note-view, .dock-sheet .note-quote, .dock-sheet .brief-row-t { font-size: 14px; line-height: 1.6; }
 .dock-sheet .note-dateline, .dock-sheet .note-quote cite { font-size: 10.5px; }
+
+/* v11.101: the rule, closed properly. Every text element an answer can contain is sized in the
+   sheet, including section headings (h3, which the renderer used at 17px). */
+.dock-a h1, .dock-a h2, .dock-a h3, .dock-a h4, .dock-a h5, .dock-a h6 {
+  font-family: 'Outfit', sans-serif !important; font-size: 14px !important; font-weight: 700 !important;
+  line-height: 1.45 !important; letter-spacing: -.005em !important; margin: 14px 0 6px !important; }
+.dock-a ul, .dock-a ol, .dock-a blockquote, .dock-a a, .dock-a b, .dock-a i, .dock-a small { font-size: 14px !important; line-height: 1.6 !important; }
+.dock-a p { margin-bottom: 10px !important; }
