@@ -37,7 +37,7 @@ export async function POST(req: Request) {
     console.warn('[popsicle-slack] rejected: signature did not match. Check SLACK_SIGNING_SECRET in Vercel matches the Slack app / Supabase secret.')
     return NextResponse.json({ error: 'bad signature' }, { status: 401 })
   }
-  const body = JSON.parse(raw) as { type: string; challenge?: string; team_id?: string; event?: { type: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string; bot_id?: string } }
+  const body = JSON.parse(raw) as { type: string; challenge?: string; team_id?: string; event?: { type: string; subtype?: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string; bot_id?: string } }
 
   if (body.type === 'url_verification') return NextResponse.json({ challenge: body.challenge })
 
@@ -45,7 +45,9 @@ export async function POST(req: Request) {
   if (req.headers.get('x-slack-retry-num')) return new NextResponse(null, { status: 200 })
 
   const ev = body.event
-  if (body.type === 'event_callback' && ev?.type === 'app_mention' && !ev.bot_id && body.team_id) {
+  // a formal mention (app_mention), or a message that asks "@popsicle …" in plain text
+  const asks = !!ev && (ev.type === 'app_mention' || (ev.type === 'message' && (!ev.subtype || ev.subtype === 'thread_broadcast') && /(^|\s)@popsicle\b/i.test(ev.text || '')))
+  if (body.type === 'event_callback' && ev && asks && !ev.bot_id && body.team_id) {
     // acknowledge within Slack's 3 seconds; answer after the response is sent
     console.log('[popsicle-slack] mention received', { team: body.team_id, channel: ev.channel })
     after(() => answerMention({ team: body.team_id!, channel: ev.channel, ts: ev.ts, thread_ts: ev.thread_ts, text: ev.text, user: ev.user })
