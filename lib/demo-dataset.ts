@@ -3,11 +3,12 @@
 import * as M from './metrics'
 import type { Account, Signal } from '@/types'
 
-// Demo clock: today at 09:00 UTC, computed once. Server and client resolve the
-// same instant within a UTC day, so every derived timestamp (created_at,
-// last_contact_date, sync times) is identical on both sides and hydration can
-// never disagree about an age. Offsets below are relative to this anchor.
-export const DEMO_NOW = (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })()
+// Demo clock: the start of the current hour. An hour boundary is the same instant everywhere, so
+// server and client agree on every derived timestamp, and "today" is always the viewer's real
+// today: dates are formatted in the viewer's own time zone. (It used to be 09:00 on the UTC
+// calendar day, which showed yesterday's date for anyone ahead of UTC while the UTC date still
+// lagged theirs; in Jakarta, every night from midnight to 7am.)
+export const DEMO_NOW = Math.floor(Date.now() / 3600e3) * 3600e3
 const now = DEMO_NOW
 const iso = (h: number) => new Date(now - h * 3600000).toISOString()
 const at = (m: number, d: number) => new Date(2026, m - 1, d).toISOString()
