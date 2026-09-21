@@ -49,94 +49,98 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
     <div className="dsk-screen on rv-empty"><h1>Nothing to review</h1><p>No deals are critical or in the commit right now.</p></div>
   )
   const mine = made.filter(d => d.account_name === deal.account)
+  const closeTxt = deal.close ? new Date(deal.close).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
+  const openCount = deal.evidence.length
   return (
-    <div className="rv">
-      <header className="rv-top">
-        <div className="rv-title">
-          <span className="rv-kicker"><span className="rv-dot" />Pipeline review</span>
-          <span className="rv-date">{new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</span>
+    <div className="rv2">
+      <div className="rv2-head">
+        <div>
+          <div className="rv2-eyebrow">Pipeline review</div>
+          <div className="rv2-title">{new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
         </div>
-        <nav className="rv-agenda" aria-label="Agenda">
-          {deals.map((d, k) => (
-            <button key={d.account} className={`rv-chip${k === i ? ' on' : ''}${made.some(m => m.account_name === d.account) ? ' done' : ''} w-${d.why}`} onClick={() => setI(k)}>
-              <span className="rv-chip-n">{k + 1}</span>{d.account}
-            </button>
-          ))}
-        </nav>
-        <button className="rv-end" onClick={() => setEnding(true)}>End review{made.length ? ` · ${made.length} decision${made.length === 1 ? '' : 's'}` : ''}</button>
-      </header>
+        <button className="rv2-end" onClick={() => setEnding(true)}>End review{made.length ? <> · <b>{made.length} decision{made.length === 1 ? '' : 's'}</b></> : null}</button>
+      </div>
+      <nav className="rv2-steps" aria-label="Agenda">
+        {deals.map((d, k) => (
+          <button key={d.account} className={`rv2-step${k === i ? ' on' : ''}${made.some(m => m.account_name === d.account) ? ' done' : ''}${d.why === 'critical' ? ' crit' : ''}`} onClick={() => setI(k)}>
+            <div className="rv2-step-bar" />
+            <div className="rv2-step-l"><span className="rv2-step-dot" />{d.account}</div>
+          </button>
+        ))}
+      </nav>
 
-      <main className="rv-slide" key={deal.account}>
-        <section className="rv-main">
-          <div className={`rv-why w-${deal.why}`}>{deal.why === 'critical' ? 'Critical · on the agenda first' : 'In the commit'}</div>
-          <h1 className="rv-acct">{deal.account}</h1>
-          <div className="rv-meta">
-            <span><X m="account_arr" account={deal.account}><b>{money(deal.value)}</b></X> annual value</span>
-            {deal.stage && <span>{deal.stage}</span>}
-            {deal.health != null && <span>health <X m="account_health" account={deal.account}><b style={{ color: healthTone(deal.health) }}>{deal.health}</b></X></span>}
-            {deal.atRisk > 0 && <span className="rv-risk"><b>{money(deal.atRisk)}</b> at risk</span>}
-            {deal.contact && <span>{deal.contact}</span>}
+      <div className="rv2-grid" key={deal.account}>
+        <div className="rv2-main">
+          <span className={`rv2-tag${deal.why === 'critical' ? '' : ' commit'}`}><i />{deal.why === 'critical' ? (i === 0 ? 'Critical · first on the agenda' : 'Critical') : 'In the commit'}</span>
+          <h1 className="rv2-name">{deal.account}</h1>
+          <div className="rv2-contact">{[deal.contact, deal.stage, closeTxt && `closes ${closeTxt}`].filter(Boolean).join(' · ')}</div>
+          <div className="rv2-kpis">
+            <div className="rv2-kpi"><div className="rv2-kpi-l">Annual value</div><div className="rv2-kpi-v"><X m="account_arr" account={deal.account}>{money(deal.value)}</X></div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">At risk</div><div className="rv2-kpi-v" style={{ color: deal.atRisk > 0 ? '#D0442F' : undefined }}>{money(deal.atRisk)}</div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">Health</div><div className="rv2-kpi-v" style={{ color: deal.health != null ? healthTone(deal.health) : undefined }}>{deal.health != null ? <X m="account_health" account={deal.account}>{deal.health}</X> : '--'}</div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">This week</div><div className="rv2-kpi-v">{deal.week.length}<span className="rv2-kpi-u"> changes</span></div></div>
           </div>
 
-          <h3 className="rv-h">This week</h3>
-          {deal.week.length === 0 ? <p className="rv-quiet">Nothing new this week.</p> : (
-            <div className="rv-week">
-              {deal.week.map(e => (
-                <button key={e.id + e.kind} className="rv-wk" onClick={() => router.push(`/signals?signal=${e.id}`)}>
-                  <span className={`rv-node n-${e.kind === 'handled' ? 'done' : e.severity}`} />
-                  <span className="rv-wk-t">{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
-                  <span className="rv-wk-when">{formatWhen(e.t)}</span>
-                </button>
-              ))}
-            </div>
+          <section className="rv2-sec">
+            <div className="rv2-sec-h"><h3>This week</h3><span>{deal.week.length ? `${deal.week.length} change${deal.week.length === 1 ? '' : 's'}` : 'quiet'}</span></div>
+            {deal.week.length === 0 ? <div className="rv2-week rv2-quiet">Nothing new on this deal this week.</div> : (
+              <div className="rv2-week">
+                {deal.week.map(e => (
+                  <button key={e.id + e.kind} className="rv2-wk" onClick={() => router.push(`/signals?signal=${e.id}`)}>
+                    <i className={e.kind === 'handled' || e.severity === 'positive' ? 'g' : e.severity === 'high' ? 'h' : ''} />
+                    <span>{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
+                    <em>{formatWhen(e.t)}</em>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+
+          {openCount > 0 && (
+            <section className="rv2-sec">
+              <div className="rv2-sec-h"><h3>The evidence</h3><span>in their words</span></div>
+              <div className="rv2-evs">
+                {deal.evidence.map(ev => (
+                  <button key={ev.id} className="rv2-ev" onClick={() => router.push(`/signals?signal=${ev.id}`)}>
+                    <div className="rv2-ev-h">{ev.source && <b><i style={{ background: SRC_COLOR[ev.source] ?? '#A7A098' }} />{SRC[ev.source] ?? ev.source}</b>}{ev.at && <span>· {formatWhen(ev.at)}</span>}</div>
+                    <div className="rv2-ev-t">{ev.title}</div>
+                    {ev.quote && <div className="rv2-ev-q">{ev.quote.replace(/^["\u201c]|["\u201d]$/g, '')}</div>}
+                  </button>
+                ))}
+              </div>
+            </section>
           )}
-
-          <h3 className="rv-h">The evidence</h3>
-          <div className="rv-evs">
-            {deal.evidence.map(ev => (
-              <button key={ev.id} className={`rv-ev s-${ev.severity}`} onClick={() => router.push(`/signals?signal=${ev.id}`)}>
-                <div className="rv-ev-top">
-                  {ev.source && <span className="xp-src" style={{ background: SRC_COLOR[ev.source] ?? '#8E8983' }}>{(SRC[ev.source] ?? ev.source).charAt(0)}</span>}
-                  <span className="rv-ev-title">{ev.title}</span>
-                  {ev.at && <span className="rv-ev-when">{formatWhen(ev.at)}</span>}
-                </div>
-                {ev.quote && <div className="rv-ev-q">“{ev.quote.replace(/^["\u201c]|["\u201d]$/g, '')}”</div>}
-              </button>
-            ))}
-          </div>
 
           {deal.past.length > 0 && (
-            <>
-              <h3 className="rv-h">Decided before</h3>
-              {deal.past.map(d => <PastDecision key={d.id} d={d} />)}
-            </>
+            <section className="rv2-sec">
+              <div className="rv2-sec-h"><h3>Decided before</h3><span>with what was true then</span></div>
+              <div className="rv2-evs">{deal.past.map(d => <PastDecision key={d.id} d={d} />)}</div>
+            </section>
           )}
-        </section>
+        </div>
 
-        <aside className="rv-side">
+        <aside className="rv2-side">
           <AskBox account={deal.account} />
           <DecisionForm key={deal.account} team={team} contact={deal.contact} onRecord={record} />
           {mine.length > 0 && (
-            <div className="rv-made">
-              <div className="rv-side-h">Decided in this review</div>
+            <div className="rv2-card">
+              <h4>Decided in this review</h4>
               {mine.map(d => (
-                <div key={d.id} className="rv-made-row">
-                  <span className="rv-check">✓</span>
-                  <span><b>{d.decision}</b>{(d.owner || d.due_at) && <em>{d.owner ?? ''}{d.owner && d.due_at ? ' · ' : ''}{d.due_at ? `by ${new Date(d.due_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}` : ''}</em>}</span>
-                </div>
+                <div key={d.id} className="rv2-made"><span className="rv2-check">✓</span>
+                  <span><b>{d.decision}</b>{(d.owner || d.due_at) && <em>{d.owner ?? ''}{d.owner && d.due_at ? ' · ' : ''}{d.due_at ? `by ${new Date(d.due_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}` : ''}</em>}</span></div>
               ))}
             </div>
           )}
         </aside>
-      </main>
+      </div>
 
-      <footer className="rv-foot">
-        <button className="rv-nav" disabled={i === 0} onClick={() => setI(x => x - 1)}>← {i > 0 ? deals[i - 1].account : 'Start'}</button>
-        <span className="rv-count">Deal {i + 1} of {deals.length} · use ← → to move</span>
+      <div className="rv2-bar">
+        <button disabled={i === 0} onClick={() => setI(x => x - 1)}>← {i > 0 ? deals[i - 1].account : 'Start'}</button>
+        <span>{i + 1} of {deals.length}</span>
         {i < deals.length - 1
-          ? <button className="rv-nav rv-next" onClick={() => setI(x => x + 1)}>{deals[i + 1].account} →</button>
-          : <button className="rv-nav rv-next" onClick={() => setEnding(true)}>Wrap up →</button>}
-      </footer>
+          ? <button className="next" onClick={() => setI(x => x + 1)}>{deals[i + 1].account} →</button>
+          : <button className="next" onClick={() => setEnding(true)}>Wrap up →</button>}
+      </div>
 
       {ending && <Summary made={made} deals={deals} demo={demo} onClose={() => setEnding(false)} onDone={() => router.push('/pulse')} />}
     </div>
@@ -145,17 +149,12 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
 
 function PastDecision({ d }: { d: Decision }) {
   const f = d.evidence?.figures ?? {}
+  const lead = d.evidence?.signals?.[0]
   return (
-    <div className="rv-past">
-      <div className="rv-past-top"><b>{d.decision}</b><span className={`rv-status st-${d.status}`}>{d.status}</span></div>
-      <div className="rv-past-meta">{new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{d.by ? ` · ${d.by}` : ''}{d.owner ? ` · owner ${d.owner}` : ''}</div>
-      <div className="rv-past-then">
-        <span className="rv-then-l">At the time</span>
-        {f.health != null && <span>health {f.health}</span>}
-        {f.atRisk ? <span>{money(f.atRisk)} at risk</span> : null}
-        {f.openSignals != null && <span>{f.openSignals} open signals</span>}
-        {d.evidence?.signals?.[0] && <span className="rv-then-s">“{d.evidence.signals[0].quote ?? d.evidence.signals[0].title}”</span>}
-      </div>
+    <div className="rv2-past">
+      <div className="rv2-past-t">{d.decision}<span className={`rv2-pill st-${d.status}`}>{d.status}</span></div>
+      <div className="rv2-past-m">{new Date(d.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}{d.by ? ` · ${d.by}` : ''}{d.owner ? ` · owner ${d.owner}` : ''}</div>
+      <div className="rv2-then"><b>At the time:</b> {[f.health != null && `health ${f.health}`, f.atRisk ? `${money(f.atRisk)} at risk` : null, f.openSignals != null && `${f.openSignals} open signal${f.openSignals === 1 ? '' : 's'}`].filter(Boolean).join(', ')}.{lead ? <> Lead signal “{lead.quote ?? lead.title}”.</> : null}</div>
     </div>
   )
 }
@@ -176,14 +175,16 @@ function AskBox({ account }: { account: string }) {
   }, [account])
   const presets = [`Will ${account} close this quarter?`, 'What should we do this week?', 'What would change the outcome?']
   return (
-    <div className="rv-ask">
-      <div className="rv-side-h">Ask Popsicle, for the room</div>
-      {!asked && <div className="rv-presets">{presets.map(p => <button key={p} onClick={() => ask(p)}>{p}</button>)}</div>}
-      {asked && <div className="rv-q">{asked}</div>}
-      {asked && <div className="rv-a">{ans ? <Answer text={ans} /> : <span className="rv-thinking"><span /><span /><span /></span>}</div>}
-      <div className="rv-ask-bar">
+    <div className="rv2-card">
+      <h4>Ask Popsicle</h4>
+      <p className="s">The answer is shown to the room, with its sources.</p>
+      {!asked && presets.map(p => <button key={p} className="rv2-q" onClick={() => ask(p)}>{p}</button>)}
+      {asked && <div className="rv2-asked">{asked}</div>}
+      {asked && <div className="rv2-ans">{ans ? <Answer text={ans} /> : <span className="rv2-thinking"><span /><span /><span /></span>}</div>}
+      {asked && !busy && <div className="rv2-more">{presets.filter(p => p !== asked).map(p => <button key={p} onClick={() => ask(p)}>{p}</button>)}</div>}
+      <div className="rv2-input">
         <input value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && q.trim() && !busy) ask(q.trim()) }} placeholder={`Ask anything about ${account}`} />
-        <button disabled={!q.trim() || busy} onClick={() => ask(q.trim())}>Ask</button>
+        <button className="rv2-go" disabled={!q.trim() || busy} onClick={() => ask(q.trim())}>Ask</button>
       </div>
     </div>
   )
@@ -199,17 +200,17 @@ function DecisionForm({ team, contact, onRecord }: { team: string[]; contact: st
     if (e) setErr(e); else { setText(''); setOwner(''); setDue('') }
   }
   return (
-    <div className="rv-dec">
-      <div className="rv-side-h">Record a decision</div>
-      <textarea value={text} onChange={e => setText(e.target.value)} rows={2} placeholder={`e.g. Andy calls ${contact ?? 'the CFO'} by Thursday with the multi-year offer`} />
-      <div className="rv-dec-row">
-        <input list="rv-team" value={owner} onChange={e => setOwner(e.target.value)} placeholder="Owner" />
+    <div className="rv2-card">
+      <h4>Record a decision</h4>
+      <p className="s">Saved with today’s evidence. An owner or a date makes it a tracked commitment.</p>
+      <textarea className="rv2-field" value={text} onChange={e => setText(e.target.value)} rows={3} placeholder={`e.g. Andy calls ${contact ?? 'the CFO'} by Thursday with the multi-year offer`} />
+      <div className="rv2-row2">
+        <input className="rv2-field" list="rv-team" value={owner} onChange={e => setOwner(e.target.value)} placeholder="Owner" />
         <datalist id="rv-team">{team.map(t => <option key={t} value={t} />)}</datalist>
-        <input type="date" value={due} onChange={e => setDue(e.target.value)} aria-label="Due" />
+        <input className="rv2-field" type="date" value={due} onChange={e => setDue(e.target.value)} aria-label="Due date" />
       </div>
-      <button className="rv-dec-btn" disabled={!text.trim() || busy} onClick={submit}>{busy ? 'Recording…' : 'Record decision'}</button>
-      <p className="rv-dec-note">Saved with the evidence as it stands right now. With an owner or date, it’s tracked as a commitment.</p>
-      {err && <p className="rv-err">{err}</p>}
+      <button className="rv2-rec" disabled={!text.trim() || busy} onClick={submit}>{busy ? 'Recording…' : 'Record decision'}</button>
+      {err && <p className="rv2-err">{err}</p>}
     </div>
   )
 }
@@ -220,14 +221,14 @@ function Summary({ made, deals, demo, onClose, onDone }: { made: Decision[]; dea
     ...made.map(d => `• ${d.account_name}: ${d.decision}${d.owner ? ` (owner ${d.owner}` : ''}${d.due_at ? `${d.owner ? ', ' : ' ('}by ${new Date(d.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}${d.owner || d.due_at ? ')' : ''}`)].join('\n')
   return (
     <div className="rp2-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="rv-sum" role="dialog" aria-label="Review summary">
-        <div className="rv-kicker"><span className="rv-dot" />Review wrapped</div>
+      <div className="rv2-sum" role="dialog" aria-label="Review summary">
+        <div className="rv2-eyebrow">Review wrapped</div>
         <h2>{made.length ? `${made.length} decision${made.length === 1 ? '' : 's'}, each with its evidence` : 'No decisions recorded'}</h2>
-        <p className="rv-sum-sub">{deals.length} deals reviewed. {made.length ? 'Owners and dates are now tracked; anything that slips shows up on Pulse.' : 'You can still record decisions from any account page.'}{demo ? ' (Demo: kept for this session.)' : ''}</p>
-        <div className="rv-sum-list">
-          {made.map(d => <div key={d.id} className="rv-made-row"><span className="rv-check">✓</span><span><b>{d.account_name}</b> · {d.decision}{d.owner && <em>{d.owner}{d.due_at ? ` · by ${new Date(d.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</em>}</span></div>)}
+        <p className="rv2-sum-sub">{deals.length} deals reviewed. {made.length ? 'Owners and dates are now tracked; anything that slips shows up on Pulse.' : 'You can still record decisions from any account page.'}{demo ? ' (Demo: kept for this session.)' : ''}</p>
+        <div className="rv2-sum-list">
+          {made.map(d => <div key={d.id} className="rv2-made"><span className="rv2-check">✓</span><span><b>{d.account_name}</b> · {d.decision}{d.owner && <em>{d.owner}{d.due_at ? ` · by ${new Date(d.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}</em>}</span></div>)}
         </div>
-        <div className="rv-sum-actions">
+        <div className="rv2-sum-actions">
           <button className="sb-btn" onClick={() => { navigator.clipboard?.writeText(text).then(() => setCopied(true)).catch(() => {}) }}>{copied ? 'Copied' : 'Copy summary'}</button>
           <button className="sb-btn" onClick={onClose}>Back to the review</button>
           <button className="sb-btn sb-btn-primary" onClick={onDone}>Finish</button>

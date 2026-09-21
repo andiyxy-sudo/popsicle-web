@@ -16,7 +16,7 @@ import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import * as MX from '@/lib/metrics'
 import { SinceBar } from '@/components/changes/SinceBar'
-import { LensSwitcher, LensStrip, useLens } from '@/components/lens/Lens'
+import { LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
 
 export type PulseStrip = {
@@ -727,7 +727,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [inboxOpen, setInboxOpen] = useState(false)
   // deltas on the strip are measured against your last visit (or the start of the week), from replayed data
   const since = useChanges('pulse')
-  const [lens, setLens] = useLens(accounts.some(a => String(a.id).startsWith('demo-')))
+  const lensData = useLens()   // the view follows who is signed in; leadership sees the standard strip
 
   useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
@@ -868,7 +868,6 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         </div>
       </div>
       <SinceBar screen="pulse" />
-      <LensSwitcher lens={lens} onChange={setLens} />
 
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />
@@ -878,7 +877,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {/* Today / Needs attention card retired (v11.33): late commitments live in the panel under the headline */}
 
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
-      {lens !== 'cro' ? <LensStrip lens={lens} /> : (() => {
+      {lensData && lensData.lens !== 'cro' ? <LensStrip tiles={lensData.tiles} /> : (() => {
         const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
         const sub = { fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 12 }

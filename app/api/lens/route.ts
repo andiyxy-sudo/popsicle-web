@@ -2,16 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { loadMetricsData, myBook, scopeTo } from '@/lib/metricsData'
 import * as M from '@/lib/metrics'
+import { resolveLens, LENS_LABEL, type LensId } from '@/lib/lens'
 
 // GET /api/lens?lens=rep|manager|cfo → the four headline figures for that lens.
 // (CRO is Pulse's standard strip.) Every figure carries the metric that explains it.
 export type Tile = { label: string; valueText: string; sub: string; m: string; scope?: 'me'; tone: 'critical' | 'good' | 'accent' | 'ink' }
 
 export async function GET(req: NextRequest) {
-  const lens = req.nextUrl.searchParams.get('lens') || 'manager'
   const supabase = await createClient()
   const { data: claims } = await supabase.auth.getClaims()
   if (!claims) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // the view follows the person: their job title from their profile, else their org role
+  const meta = (claims.claims.user_metadata ?? {}) as { role?: string }
+  const isDemo = (claims.claims.email as string | undefined) === 'demo@popsicle-labs.app'
+  let orgRole: string | null = null
+  if (!meta.role && !isDemo) { const { data: m } = await supabase.from('org_members').select('role').eq('user_id', claims.claims.sub as string).maybeSingle(); orgRole = (m as { role?: string } | null)?.role ?? null }
+  const lens: LensId = resolveLens(meta.role ?? (isDemo ? 'VP of Sales' : null), orgRole)
+  if (lens === 'cro') return NextResponse.json({ lens, label: LENS_LABEL[lens], title: meta.role ?? null, tiles: [] })
   const { accts, sigs, now, demo } = await loadMetricsData(supabase, claims.claims as Record<string, unknown>)
   let tiles: Tile[] = []
   if (lens === 'rep') {
@@ -43,5 +50,5 @@ export async function GET(req: NextRequest) {
       { label: 'Caught early', valueText: caught.valueText, sub: 'risk signals this quarter', m: 'caught', tone: 'good' },
     ]
   }
-  return NextResponse.json({ lens, tiles })
+  return NextResponse.json({ lens, label: LENS_LABEL[lens], title: meta.role ?? null, tiles })
 }

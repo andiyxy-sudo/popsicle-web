@@ -93,7 +93,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.122</span>
+            <span>v11.124</span>
           </footer>
         </div>
       </div>
@@ -102,7 +102,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Account360 />
 
       {/* floating Ask bar (design shell) */}
-      {pathname !== '/ask' && (
+      {pathname !== '/ask' && !pathname?.startsWith('/review') && (
         <div className="ed-askbar-wrap">
           <div className="ed-askbar-measure">
           {AGENT_ENABLED && ASK_DOCK ? <AskDock /> : (

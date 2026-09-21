@@ -26,43 +26,50 @@ export function X({ m, account, signal, days, scope, children }: Req & { childre
 }
 
 const SRC: Record<string, string> = { gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack', zoom: 'Zoom', whatsapp: 'WhatsApp', hubspot: 'HubSpot', gcal: 'Calendar', fireflies: 'Fireflies' }
-const PALETTE = ['#E85A25', '#F2994A', '#F6C28B', '#C8B6A3', '#9D8F82', '#6F665E', '#B5533C', '#D9A066']
+const PALETTE = ['#E0582F', '#F2A677', '#8FB39A', '#C7B6A3', '#9DA7C4', '#D9A066', '#B78E8E', '#7F9A8C']
 const SRC_COLOR: Record<string, string> = { gmail: '#EA4335', outlook: '#0A64AD', slack: '#611F69', zoom: '#2D8CFF', whatsapp: '#25D366', hubspot: '#FF7A59', gcal: '#1A73E8', fireflies: '#7C5CFC' }
 const money = (v: number) => (v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`)
 
-function Node({ n, total, depth, go, color }: { n: XNode; total: number; depth: number; go: (href: string) => void; color?: string }) {
-  const [openKids, setOpenKids] = useState<boolean>(false)
-  const hasKids = !!n.children?.length
+const Chev = () => <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
+
+function Ev({ n, go }: { n: XNode; go: (href: string) => void }) {
+  const ev = n.evidence!
   const val = n.valueText ?? (n.value != null ? money(n.value) : '')
-  const share = n.value != null && total > 0 ? Math.max(2, Math.round(n.value / total * 100)) : null
-  if (n.evidence && !hasKids) {
-    const ev = n.evidence
-    return (
-      <div className="xp-ev" style={{ marginLeft: depth ? 12 : 0 }}>
-        <div className="xp-ev-top">
-          {ev.source && <span className="xp-src" style={{ background: SRC_COLOR[ev.source] ?? '#8E8983' }} title={SRC[ev.source] ?? ev.source}>{(SRC[ev.source] ?? ev.source).charAt(0)}</span>}
-          <div className="xp-ev-title" onClick={() => n.href && go(n.href)}>{ev.title}{val ? <span className="xp-ev-val">{val}</span> : null}</div>
-        </div>
-        {ev.quote && <div className="xp-ev-quote">“{ev.quote}”</div>}
-        <div className="xp-ev-meta">
-          {ev.source && <span className="xp-pill">{SRC[ev.source] ?? ev.source}</span>}
-          {ev.when && <span className="xp-meta-t">{formatWhen(ev.when)}</span>}
-          {n.note && <span className="xp-meta-t">{n.note}</span>}
-          {n.href && <span className="xp-ev-open" onClick={() => go(n.href!)}>Open →</span>}
-        </div>
-      </div>
-    )
-  }
   return (
-    <div className="xp-node" style={{ marginLeft: depth ? 12 : 0 }}>
-      <div className={`xp-row${hasKids ? ' has-kids' : ''}`} onClick={() => hasKids ? setOpenKids(o => !o) : n.href && go(n.href)}>
-        <span className="xp-row-label">{color && <span className="xp-swatch" style={{ background: color }} />}{hasKids && <svg className={`xp-chev${openKids ? ' open' : ''}`} width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}{n.label}</span>
-        <span className="xp-row-val">{val}{share != null && depth === 0 && total > 0 && <span className="xp-share">{share}%</span>}</span>
+    <div className="xpp-ev" onClick={() => n.href && go(n.href)} role="link" tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' && n.href) go(n.href) }}>
+      <div className="xpp-ev-h">
+        {ev.source && <span className="xpp-src"><i style={{ background: SRC_COLOR[ev.source] ?? '#A7A098' }} />{SRC[ev.source] ?? ev.source}</span>}
+        {ev.when && <span>· {formatWhen(ev.when)}</span>}
+        {n.note && <span>· {n.note}</span>}
+        {val && <span className="xpp-ev-val">{val}</span>}
+        <span className="xpp-ev-open">Open →</span>
       </div>
-      {share != null && depth > 0 && <div className="xp-bar"><span style={{ width: `${share}%` }} /></div>}
-      {n.note && <div className="xp-row-note">{n.note}</div>}
-      {hasKids && openKids && <div className="xp-kids">{n.children!.map(c => <Node key={c.id} n={c} total={n.value ?? 0} depth={depth + 1} go={go} />)}</div>}
+      <div className="xpp-ev-t">{ev.title}</div>
+      {ev.quote && <div className="xpp-ev-q">“{ev.quote}”</div>}
     </div>
+  )
+}
+
+function Node({ n, total, depth, go, color }: { n: XNode; total: number; depth: number; go: (href: string) => void; color?: string }) {
+  const [open, setOpen] = useState(false)
+  if (n.evidence && !n.children?.length) return <Ev n={n} go={go} />
+  const kids = n.children ?? []
+  const val = n.valueText ?? (n.value != null ? money(n.value) : '')
+  const pct = n.value != null && total > 0 && depth === 0 ? Math.round(n.value / total * 100) : null
+  return (
+    <li className={`xpp-item${open ? ' open' : ''}${depth ? ' nested' : ''}`}>
+      <button className="xpp-row" onClick={() => kids.length ? setOpen(o => !o) : n.href && go(n.href)}>
+        <span className="xpp-dot" style={{ background: color ?? 'transparent' }} />
+        <span className="xpp-name">{n.label}{kids.length > 0 && <Chev />}</span>
+        <span className="xpp-right"><span className="xpp-val">{val}</span>{pct != null && <span className="xpp-pct">{pct}%</span>}</span>
+        {n.note && <span className="xpp-sub">{n.note}</span>}
+      </button>
+      {open && kids.length > 0 && (
+        kids.some(k => k.evidence && !k.children?.length)
+          ? <div className="xpp-evs">{kids.map(k => <Node key={k.id} n={k} total={n.value ?? 0} depth={depth + 1} go={go} />)}</div>
+          : <ul className="xpp-list xpp-sub-list">{kids.map(k => <Node key={k.id} n={k} total={n.value ?? 0} depth={depth + 1} go={go} />)}</ul>
+      )}
+    </li>
   )
 }
 
@@ -93,7 +100,7 @@ export function ExplainHost() {
 
   if (!req || typeof document === 'undefined') return null
   // place under the number, kept on screen
-  const W = Math.min(440, window.innerWidth - 24)
+  const W = Math.min(400, window.innerWidth - 24)
   const left = Math.min(Math.max(12, req.rect.left), window.innerWidth - W - 12)
   const below = req.rect.bottom + 10, room = window.innerHeight - below
   const top = room > 320 ? below : Math.max(12, req.rect.top - Math.min(520, window.innerHeight * 0.7) - 10)
@@ -101,35 +108,27 @@ export function ExplainHost() {
   const total = x?.value ?? 0
 
   return createPortal(
-    <div ref={panel} className="xp-panel" style={{ left, top, width: W }} role="dialog" aria-label="Where this number comes from">
-      {!x && !err && <div className="xp-loading"><span /><span /><span /></div>}
-      {err && <div className="xp-err">{err}</div>}
-      {x && (
-        <>
-          <div className="xp-top">
-            <div className="xp-eyebrow"><span className="xp-dot" />How this is calculated</div>
-          </div>
-          <div className="xp-title">{x.label}</div>
-          <div className="xp-value">{x.valueText}</div>
-          {(() => {
-            const segs = x.parts.filter(p => (p.value ?? 0) > 0)
-            const sum = segs.reduce((t, p) => t + (p.value ?? 0), 0)
-            if (segs.length < 2 || sum <= 0) return null
-            return <div className="xp-comp" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: PALETTE[i % PALETTE.length] }} />)}</div>
-          })()}
-          <div className="xp-def"><svg width="13" height="13" viewBox="0 0 16 16" aria-hidden><circle cx="8" cy="8" r="6.5" fill="none" stroke="currentColor" strokeWidth="1.3" /><path d="M8 7v4M8 4.8v.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" /></svg><span>{x.definition}</span></div>
-          {x.n != null && (
-            <div className="xp-stat">{x.collecting ? `Collecting · ${x.n} ratings so far, shown from 30` : `${x.n} ratings · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}\u2013${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</div>
-          )}
-          <div className="xp-parts">
-            {x.parts.length === 0 && <div className="xp-empty">Nothing contributes to this yet.</div>}
-            {(() => { let k = 0; return x.parts.map(p => <Node key={p.id} n={p} total={total} depth={0} go={go} color={(p.value ?? 0) > 0 && x.parts.filter(q => (q.value ?? 0) > 0).length > 1 ? PALETTE[k++ % PALETTE.length] : undefined} />) })()}
-          </div>
-          {x.parts.some(p => p.value != null) && x.parts.length > 1 && (
-            <div className="xp-sum"><span>Total</span><span>{x.valueText}</span></div>
-          )}
-          {x.footnote && <div className="xp-foot">{x.footnote}</div>}
-        </>
-      )}
+    <div ref={panel} className="xpp" style={{ left, top, width: W }} role="dialog" aria-label="Where this number comes from">
+      {!x && !err && <div className="xpp-loading"><span /><span /><span /></div>}
+      {err && <div className="xpp-def">{err}</div>}
+      {x && (() => {
+        const segs = x.parts.filter(p => (p.value ?? 0) > 0)
+        const showBar = segs.length > 1
+        let k = 0
+        return (
+          <>
+            <div className="xpp-label">{x.label}</div>
+            <div className="xpp-num">{x.valueText}</div>
+            <p className="xpp-def">{x.definition}</p>
+            {x.n != null && <p className="xpp-stat">{x.collecting ? `Collecting · ${x.n} so far, shown from 30` : `Based on ${x.n} · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}–${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</p>}
+            {showBar && <div className="xpp-bar" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: PALETTE[i % PALETTE.length] }} />)}</div>}
+            {x.parts.length === 0
+              ? <p className="xpp-def">Nothing contributes to this yet.</p>
+              : <ul className="xpp-list">{x.parts.map(p => <Node key={p.id} n={p} total={total} depth={0} go={go} color={showBar && (p.value ?? 0) > 0 ? PALETTE[k++ % PALETTE.length] : undefined} />)}</ul>}
+            {showBar && <div className="xpp-foot">Total<b>{x.valueText}</b></div>}
+            {x.footnote && <p className="xpp-note">{x.footnote}</p>}
+          </>
+        )
+      })()}
     </div>, document.body)
 }

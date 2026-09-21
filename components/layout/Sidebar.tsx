@@ -202,6 +202,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Job title</span>
                 <input value={draftRole} onChange={e => setDraftRole(e.target.value)} placeholder="VP Sales"
                   style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
+                              <span style={{ display: 'block', fontSize: 11.5, color: 'var(--ink-faint)', marginTop: 6 }}>Sets what Pulse shows you first: reps see their own accounts, managers their team, leaders the forecast, finance the revenue at risk.</span>
               </label>
               <label style={{ display: 'block' }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Work email</span>
