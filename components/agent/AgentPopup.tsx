@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { AGENT_BRIEF_DELAY_MS, AGENT_MAX_POPUPS_PER_DAY, AGENT_NAME } from '@/lib/agent/config'
+import { AGENT_BRIEF_DELAY_MS, AGENT_MAX_POPUPS_PER_DAY, AGENT_NAME, ASK_DOCK } from '@/lib/agent/config'
+import { agentPopupsOn } from '@/lib/agent/prefs'
 import type { AgentBrief, AgentMessage } from '@/lib/agent/compose'
 import { money } from '@/lib/agent/compose'
 import { AgentNote, Dateline } from './AgentNote'
@@ -44,6 +45,7 @@ export function AgentPopup() {
   const shownRef = useRef<Shown | null>(null)
   shownRef.current = shown
   const hoverRef = useRef(false)
+  const considerRef = useRef<() => void>(() => {})
 
   useEffect(() => {
     let dead = false
@@ -53,18 +55,28 @@ export function AgentPopup() {
       if (dead || !b || !Array.isArray(b.messages)) return
       briefRef.current = b
       try { sessionStorage.setItem('agent:brief', JSON.stringify({ t: Date.now(), b })) } catch { /* ignore */ }
+      setTimeout(() => considerRef.current(), 600)
     }).catch(() => {})
     return () => { dead = true }
   }, [])
 
-  const present = (s: Shown) => { setLeaving(false); setShown(s) }
+  const dockMode = ASK_DOCK && !pathname?.startsWith('/ask')
+  const present = (s: Shown) => {
+    if (!agentPopupsOn()) return
+    if (dockMode) {
+      // the conversation pulls up out of the Ask bar; the agent talks there
+      window.dispatchEvent(new CustomEvent('agent:say', { detail: s.kind === 'brief' ? { kind: 'brief', brief: s.brief } : { kind: 'note', msg: s.msg } }))
+      return
+    }
+    setLeaving(false); setShown(s)
+  }
   const close = () => { setLeaving(true); setTimeout(() => setShown(null), 240) }
 
   // new signals, handed over by LiveSignals
   useEffect(() => {
     const onSig = (e: Event) => {
       const sig = (e as CustomEvent<LiveSig>).detail
-      if (!sig) return
+      if (!sig || !agentPopupsOn()) return
       if (shownRef.current || document.body.dataset.modal === '1') { queue.current.push(sig); return }
       present({ kind: 'signal', msg: noteFromSignal(sig), sig })
     }
@@ -83,30 +95,34 @@ export function AgentPopup() {
     return () => clearInterval(t)
   }, [shown])
 
-  // the brief and critical notes, a few seconds after a page settles
+  // the brief and critical notes: decide whether to speak
+  const consider = () => {
+    if (!agentPopupsOn()) return
+    if (pathname?.startsWith('/ask')) return
+    const b = briefRef.current
+    if (!b || shownRef.current || document.body.dataset.modal === '1') return
+    const d = today()
+    const count = Number(LS.get(`agent:count:${d}`) || 0)
+    if (count >= AGENT_MAX_POPUPS_PER_DAY) return
+    const seen = new Set((LS.get(`agent:seen:${d}`) || '').split('|').filter(Boolean))
+    let next: Shown | null = null
+    if (!LS.get(`agent:brief:${d}`) && !b.quiet) next = { kind: 'brief', brief: b }
+    else {
+      const m = b.messages.find(x => (x.priority === 'critical' || x.lane === 'commitments') && !seen.has(x.key))
+      if (m) next = { kind: 'message', msg: m }
+    }
+    if (!next) return
+    if (next.kind === 'brief') LS.set(`agent:brief:${d}`, '1')
+    else if (next.kind === 'message') { seen.add(next.msg.key); LS.set(`agent:seen:${d}`, [...seen].join('|')) }
+    LS.set(`agent:count:${d}`, String(count + 1))
+    present(next)
+  }
+  considerRef.current = consider
+  // a few seconds after each page settles
   useEffect(() => {
     if (pathname?.startsWith('/ask')) { if (shownRef.current && shownRef.current.kind !== 'signal') setShown(null); return }
-    const t = setTimeout(() => {
-      const b = briefRef.current
-      if (!b || shownRef.current || document.body.dataset.modal === '1') return
-      const d = today()
-      const count = Number(LS.get(`agent:count:${d}`) || 0)
-      if (count >= AGENT_MAX_POPUPS_PER_DAY) return
-      const seen = new Set((LS.get(`agent:seen:${d}`) || '').split('|').filter(Boolean))
-      let next: Shown | null = null
-      if (!LS.get(`agent:brief:${d}`) && !b.quiet) next = { kind: 'brief', brief: b }
-      else {
-        const m = b.messages.find(x => (x.priority === 'critical' || x.lane === 'commitments') && !seen.has(x.key))
-        if (m) next = { kind: 'message', msg: m }
-      }
-      if (!next) return
-      if (next.kind === 'brief') LS.set(`agent:brief:${d}`, '1')
-      else if (next.kind === 'message') { seen.add(next.msg.key); LS.set(`agent:seen:${d}`, [...seen].join('|')) }
-      LS.set(`agent:count:${d}`, String(count + 1))
-      present(next)
-    }, AGENT_BRIEF_DELAY_MS)
+    const t = setTimeout(() => considerRef.current(), AGENT_BRIEF_DELAY_MS)
     return () => clearTimeout(t)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
   useEffect(() => {

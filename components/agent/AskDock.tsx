@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AGENT_NAME } from '@/lib/agent/config'
 import { Answer } from '@/components/ask/AnswerText'
+import type { AgentBrief, AgentMessage } from '@/lib/agent/compose'
+import { AgentNote, Dateline } from './AgentNote'
 
 // The Ask bar that sits on every page, with the conversation pulling up out of it.
 // Ask a question from Acme's page and the answer rises above the bar, about Acme,
 // without leaving the page. Follow-ups go in the same bar. "Open in Ask" hands the
 // whole conversation to the Ask page.
 type Msg = { role: 'user' | 'assistant'; content: string }
+type Said = { id: string; kind: 'brief'; brief: AgentBrief } | { id: string; kind: 'note'; msg: AgentMessage }
 
 const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', signals: 'Signals', forecast: 'Forecast', intelligence: 'Intelligence', team: 'Team', integrations: 'Integrations', settings: 'Settings' }
 
@@ -24,6 +27,10 @@ export function AskDock() {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [streaming, setStreaming] = useState(false)
+  // what the agent has said to you this session, shown above your questions
+  const [said, setSaid] = useState<Said[]>([])
+  const [expanded, setExpanded] = useState<string | null>(null)
+  const [fresh, setFresh] = useState<string | null>(null)       // the newest item, briefly highlighted
   const gen = useRef(0)
   const ctrl = useRef<AbortController | null>(null)
   const paneRef = useRef<HTMLDivElement>(null)
@@ -43,6 +50,28 @@ export function AskDock() {
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
+
+  useEffect(() => {
+    const onSay = (e: Event) => {
+      const d = (e as CustomEvent<{ kind: 'brief'; brief: AgentBrief } | { kind: 'note'; msg: AgentMessage }>).detail
+      if (!d) return
+      const id = d.kind === 'brief' ? `brief:${d.brief.generatedAt}` : d.msg.key
+      setSaid(prev => prev.some(x => x.id === id) ? prev : [{ id, ...d } as Said, ...prev].slice(0, 6))
+      setFresh(id); setTimeout(() => setFresh(f => (f === id ? null : f)), 2600)
+      setOpen(true)
+      if (paneRef.current) paneRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+    }
+    window.addEventListener('agent:say', onSay)
+    return () => window.removeEventListener('agent:say', onSay)
+  }, [])
+
+  const act = (a: AgentMessage['actions'][number]) => {
+    if (a.href?.startsWith('a360:')) {
+      const [, name, sev] = a.href.split(':')
+      window.dispatchEvent(new CustomEvent('open-a360', { detail: { name, contact: '', stage: 'Active', risk: (sev || 'watch').toUpperCase(), arr: '--', health: '--' } }))
+    } else if (a.href) { setOpen(false); router.push(a.href) }
+    else if (a.ask) { setAsk(a.ask); setTimeout(() => inputRef.current?.focus(), 0) }
+  }
 
   async function send() {
     const q = ask.trim()
@@ -79,9 +108,9 @@ export function AskDock() {
     if (live()) { setBusy(false); setStreaming(false) }
   }
 
-  function fresh() {
+  function startFresh() {
     gen.current += 1; ctrl.current?.abort()
-    setMsgs([]); setBusy(false); setStreaming(false); setOpen(false)
+    setMsgs([]); setSaid([]); setBusy(false); setStreaming(false); setOpen(false)
     inputRef.current?.focus()
   }
   function openFull() {
@@ -90,7 +119,7 @@ export function AskDock() {
     router.push(`/ask?handoff=1${account ? `&account=${encodeURIComponent(account)}` : ''}`)
   }
 
-  const hasConvo = msgs.length > 0
+  const hasConvo = msgs.length > 0 || said.length > 0
   return (
     <div className="dock">
       {open && hasConvo && (
@@ -98,14 +127,36 @@ export function AskDock() {
           <div className="dock-head">
             <span className="agent-mark" />
             <span className="dock-from">{AGENT_NAME}</span>
-            {about && <span className="dock-about">· about {about}</span>}
+            {msgs.length === 0 && said[0]?.kind === 'brief' ? <span className="dock-about">· morning brief</span> : about && <span className="dock-about">· about {about}</span>}
             <span className="dock-head-actions">
               <button onClick={openFull} title="Continue on the Ask page">Open in Ask ↗</button>
-              <button onClick={fresh} title="Clear this conversation">Start fresh</button>
+              <button onClick={startFresh} title="Clear this conversation">Start fresh</button>
               <button onClick={() => setOpen(false)} aria-label="Close" className="dock-x">×</button>
             </span>
           </div>
           <div className="dock-pane" ref={paneRef}>
+            {said.map(item => (
+              <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
+                {item.kind === 'note' ? (
+                  <AgentNote m={item.msg} compact onAction={act} onReceipt={href => { setOpen(false); router.push(href) }} />
+                ) : (
+                  <div className="note compact">
+                    <div className="note-dateline"><span className="note-rule" style={{ background: '#E85A25' }} /><span className="note-dl-strong">MORNING BRIEF</span><span>· {item.brief.read} SIGNALS READ</span></div>
+                    <div className="note-head">{(() => { const h = new Date().getHours(); return `${h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'}, ${item.brief.greeting.split(', ')[1]?.replace(/\.$/, '') ?? ''}.` })()} {item.brief.summary}</div>
+                    <div className="brief-list">
+                      {item.brief.messages.map(m => (
+                        <div key={m.key} className="brief-row dock-brief-row" onClick={() => setExpanded(x => (x === m.key ? null : m.key))}>
+                          {expanded === m.key
+                            ? <AgentNote m={m} compact onAction={act} onReceipt={href => { setOpen(false); router.push(href) }} />
+                            : <><Dateline m={m} /><div className="brief-row-t">{m.headline}</div></>}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="dock-hint">Tap any line to open it, or reply below.</div>
+                  </div>
+                )}
+              </div>
+            ))}
             {msgs.map((m, i) => m.role === 'user' ? (
               <div key={i} className="dock-q"><span className="dock-q-label">You</span>{m.content}</div>
             ) : (
@@ -124,8 +175,8 @@ export function AskDock() {
         <input ref={inputRef} value={ask} onChange={e => setAsk(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') send() }}
           onFocus={() => { if (hasConvo) setOpen(true) }}
-          placeholder={hasConvo ? 'Ask a follow-up' : account ? `Ask about ${account}` : 'Ask Popsicle anything about your pipeline'} />
-        {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{Math.ceil(msgs.length / 2)} ↑</button>}
+          placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `Ask about ${account}` : 'Ask Popsicle anything about your pipeline'} />
+        {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={send}>Ask</button>
       </div>
     </div>

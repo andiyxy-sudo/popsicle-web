@@ -2780,3 +2780,10 @@ body[data-modal="1"] .agent-card { display: none; }
 .dock-reopen { font: inherit; font-size: 12.5px !important; font-weight: 600; padding: 7px 12px !important; background: rgba(232,90,37,.08) !important; color: #E85A25 !important; box-shadow: none !important; }
 @media (max-width: 720px) { .dock { width: 100%; } .dock-sheet { max-height: 58vh; } .dock-head-actions { gap: 10px; } }
 @media (prefers-reduced-motion: reduce) { .dock-sheet { animation: none; } .dock-caret { animation: none; } }
+
+/* v11.95: the agent talks through the Ask bar */
+.dock-said { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid rgba(14,13,11,.06); transition: background .6s ease; }
+.dock-said.fresh { background: linear-gradient(90deg, rgba(255,107,53,.06), transparent 75%); box-shadow: inset 2px 0 0 #E85A25; padding-left: 12px; }
+.dock-brief-row { cursor: pointer; }
+.dock-brief-row:hover .brief-row-t { color: #E85A25; }
+.dock-hint { font-size: 12.5px; color: var(--ink-faint, #A09C97); margin-top: 10px; }

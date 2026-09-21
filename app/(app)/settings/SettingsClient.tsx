@@ -7,6 +7,8 @@
 import { useEffect, useState } from 'react'
 import { TimeField } from '@/components/ui/TimeField'
 import { useEscape } from '@/components/ui/useEscape'
+import { agentPopupsOn, setAgentPopups } from '@/lib/agent/prefs'
+import { AGENT_ENABLED, AGENT_NAME } from '@/lib/agent/config'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
@@ -58,6 +60,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [digestTime, setDigestTime] = useState('07:00')
   const [workHours, setWorkHours] = useState<{ start: string; end: string }>({ start: '09:00', end: '18:00' })
   const [morningDigest, setMorningDigest] = useState('08:00')
+  const [agentOn, setAgentOn] = useState(true)
+  useEffect(() => { setAgentOn(agentPopupsOn()) }, [])
   const [voice, setVoice] = useState<Record<string, string>>({ Tone: 'Direct', Length: 'Short', 'Sign-off': 'Best, Andy' })
   const [autoSend, setAutoSend] = useState(false)
   const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
@@ -230,6 +234,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       if (m.digest_time) setDigestTime(String(m.digest_time))
       if (m.work_start || m.work_end) setWorkHours({ start: String(m.work_start ?? '09:00'), end: String(m.work_end ?? '18:00') })
       if (m.morning_digest) setMorningDigest(String(m.morning_digest))
+      if (typeof m.agent_popups === 'boolean') { setAgentOn(m.agent_popups); setAgentPopups(m.agent_popups) }
       if (m.timezone) setTzPick(String(m.timezone))
       loadFactors()
       loadOrg()
@@ -497,6 +502,25 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </Section>
 
       <Section title="Your day" sub="When Popsicle should work around you.">
+        {AGENT_ENABLED && (
+          <div onClick={() => { const v = !agentOn; setAgentOn(v); setAgentPopups(v); saveJson('agent_popups', v) }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+            <div>
+              <div style={{ fontSize: 15, color: 'var(--ink)' }}>{AGENT_NAME} speaks up</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{agentOn ? 'Morning brief, late promises and new signals come up through the Ask bar' : 'Off. Everything waits for you on the Ask page'}</div>
+              {agentOn && (
+                <span onClick={e => {
+                  e.stopPropagation()
+                  try { const d = new Date().toISOString().slice(0, 10); ['brief', 'count', 'seen'].forEach(k => localStorage.removeItem(`agent:${k}:${d}`)); sessionStorage.removeItem('agent:brief') } catch { /* ignore */ }
+                  router.push('/pulse')
+                }} style={{ display: 'inline-block', fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', marginTop: 6 }}>Show today&apos;s brief again</span>
+              )}
+            </div>
+            <span role="switch" aria-checked={agentOn} style={{ width: 38, height: 22, borderRadius: 999, background: agentOn ? 'var(--accent, #E85A25)' : 'var(--hairline, #EFEAE1)', position: 'relative', transition: 'background .15s ease', flex: 'none' }}>
+              <span style={{ position: 'absolute', top: 3, left: agentOn ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .15s ease', boxShadow: '0 1px 2px rgba(0,0,0,.2)' }} />
+            </span>
+          </div>
+        )}
         {/* moved here from Edit profile (v11.44) */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
           <div>
