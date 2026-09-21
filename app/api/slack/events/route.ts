@@ -59,8 +59,13 @@ export async function POST(req: Request) {
     if (error) { console.error('[popsicle-slack] could not read the question:', error.message); return NextResponse.json({ error: error.message }, { status: 500 }) }
     if (!m) return NextResponse.json({ ok: true, skipped: 'unknown or already answered' })
     console.log('[popsicle-slack] question received', { channel: m.channel })
-    after(() => answerMention({ team: String(m.team ?? ''), channel: String(m.channel), ts: String(m.ts), thread_ts: m.thread_ts ? String(m.thread_ts) : undefined, text: String(m.text ?? ''), user: m.slack_user ? String(m.slack_user) : undefined })
-      .catch(e => console.error('[popsicle-slack] failed', e)))
+    // the result, in plain words, goes back onto the same row (slack_mentions.outcome)
+    after(async () => {
+      let outcome = ''
+      try { outcome = await answerMention({ team: String(m.team ?? ''), channel: String(m.channel), ts: String(m.ts), thread_ts: m.thread_ts ? String(m.thread_ts) : undefined, text: String(m.text ?? ''), user: m.slack_user ? String(m.slack_user) : undefined }) }
+      catch (e) { outcome = `error: ${e instanceof Error ? e.message : String(e)}`; console.error('[popsicle-slack] failed', e) }
+      try { await db.from('slack_mentions').update({ outcome: outcome.slice(0, 500) }).eq('id', parsed.mention_id!) } catch { /* column may not exist yet */ }
+    })
     return NextResponse.json({ ok: true })
   }
 

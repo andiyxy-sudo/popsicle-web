@@ -42,10 +42,10 @@ async function channelName(token: string, channel: string) {
   try { const r = await fetch(`https://slack.com/api/conversations.info?channel=${channel}`, { headers: { authorization: `Bearer ${token}` } }); const j = await r.json() as Row; return ((j.channel as Row | undefined)?.name as string) ?? '' } catch { return '' }
 }
 
-export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }) {
+export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }): Promise<string> {
   const tracked = await findChannel(ev.channel)
   const ws = tracked ?? await findWorkspace(ev.team)
-  if (!ws) { console.warn('[popsicle-slack] no Slack connection found for channel', ev.channel, 'team', ev.team); return }
+  if (!ws) { console.warn('[popsicle-slack] no Slack connection found for channel', ev.channel, 'team', ev.team); return 'no Slack connection found for this channel or workspace (reconnect Slack under Integrations)' }
   console.log('[popsicle-slack] answering', { channel: ev.channel, tracked: !!tracked })
   const db = admin()
 
@@ -56,8 +56,8 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
 
   const question = ev.text.replace(/<@[A-Z0-9]+(\|[^>]+)?>/g, ' ').replace(/(^|\s)@popsicle\b[:,]?/gi, ' ').replace(/^\s*popsicle[\s,:]+/i, '').replace(/\s+/g, ' ').trim()
   if (!question) {
-    await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, for example: _is this going to close this quarter?_' })
-    return
+    const r0 = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, for example: _is this going to close this quarter?_' })
+    return r0.ok ? 'posted a prompt (the question was empty)' : `Slack refused the reply: ${r0.error}`
   }
 
   const [{ data: accounts }, { data: signals }, { data: commitments }] = await Promise.all([
@@ -97,15 +97,16 @@ ${context}
 ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the answer in one sentence, then at most three short lines of reasons, each starting with a bold two-word lead.'}`
 
   let text = ''
+  let aiError = ''
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY ?? '', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 600, system, messages: [{ role: 'user', content: question }] }),
     })
     const j = await r.json() as { content?: Array<{ type: string; text?: string }>; error?: { message?: string } }
-    if (!r.ok) console.error('[popsicle-slack] AI call failed:', r.status, j.error?.message)
+    if (!r.ok) { console.error('[popsicle-slack] AI call failed:', r.status, j.error?.message); aiError = `AI call failed (${r.status}): ${j.error?.message ?? 'unknown'}` }
     text = (j.content ?? []).filter(c => c.type === 'text').map(c => c.text ?? '').join('').trim()
-  } catch (e) { console.error('[popsicle-slack] AI call threw', e) }
+  } catch (e) { console.error('[popsicle-slack] AI call threw', e); aiError = `AI call threw: ${String(e)}` }
   if (!text) text = 'I could not answer that just now. Try again in a minute.'
 
   // never echo the trigger word, so a reply can't set itself off (it may be posted with a user token)
@@ -115,6 +116,11 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
   const link = acct ? `\n<${SITE()}/accounts/${encodeURIComponent(String(acct.name))}|Open ${acct.name} in Popsicle>` : `\n<${SITE()}/pulse|Open Popsicle>`
   const note = tracked ? '' : '\n_This channel isn\'t linked to an account in Popsicle yet. Link it under Integrations → Slack channels for sharper answers._'
   const res = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: text + link + note, unfurl_links: false, unfurl_media: false })
-  if (!res.ok) console.error('[popsicle-slack] Slack refused the reply:', res.error, '(not_in_channel = invite the bot; missing_scope = add chat:write and reinstall)')
-  else console.log('[popsicle-slack] replied')
+  if (!res.ok) {
+    console.error('[popsicle-slack] Slack refused the reply:', res.error, '(not_in_channel = invite the bot; missing_scope = add chat:write and reinstall)')
+    const hint = res.error === 'not_in_channel' ? ' (invite the bot: /invite @popsicle)' : res.error === 'missing_scope' ? ' (add chat:write to the bot scopes and reinstall)' : res.error === 'invalid_auth' || res.error === 'token_revoked' ? ' (reconnect Slack under Integrations)' : ''
+    return `Slack refused the reply: ${res.error}${hint}`
+  }
+  console.log('[popsicle-slack] replied')
+  return aiError ? `posted a fallback reply because the ${aiError}` : `posted${acct ? ` (about ${acct.name})` : ''}${tracked ? '' : ' (channel not linked to an account)'}`
 }
