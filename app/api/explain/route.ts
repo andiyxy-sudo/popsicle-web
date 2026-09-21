@@ -17,9 +17,11 @@ export async function GET(req: NextRequest) {
 
   let accts: M.Acct[] = [], sigs: M.Sig[] = [], ratings: Array<{ type: string; useful: number; rated: number }> = [], breakdown: Array<{ k: string; v: number }> | undefined
   let now = Date.now()
+  let reps: Array<{ name: string; accounts: string[] }> = []
   if ((claims.claims.email as string | undefined) === 'demo@popsicle-labs.app') {
     const d = await import('@/lib/demo-dataset')
     accts = d.DEMO_ACCOUNTS as unknown as M.Acct[]; sigs = d.DEMO_SIGNALS as unknown as M.Sig[]; ratings = d.DEMO_RATINGS; now = d.DEMO_NOW
+    reps = d.DEMO_TEAM.reps.map(r => ({ name: r.name, accounts: r.accounts }))
     breakdown = account ? (d.DEMO_EXTRA as Record<string, { breakdown?: Array<{ k: string; v: number }> }>)[account]?.breakdown : undefined
   } else {
     const ids = await orgIdsServer(supabase, claims.claims.sub as string)
@@ -46,6 +48,12 @@ export async function GET(req: NextRequest) {
     : metric === 'accounts_medium' ? M.accountGroup('medium', accts, sigs)
     : metric === 'accounts_closing' ? M.accountGroup('closing', accts, sigs)
     : metric === 'avg_health' ? M.avgHealth(accts)
+    : metric === 'caught' ? M.caughtEarly(accts, sigs)
+    : metric === 'cases' ? M.activeCases(accts, sigs)
+    : metric === 'actions_ready' ? M.actionsReady(accts, sigs)
+    : metric === 'new_today' ? M.newToday(accts, sigs, now)
+    : metric === 'team_exposure' ? M.teamExposure(reps.length ? reps : [...new Set(accts.map(a => a.owner || 'Unassigned'))].map(n => ({ name: n, accounts: accts.filter(a => (a.owner || 'Unassigned') === n).map(a => a.name) })), accts, sigs)
+    : metric === 'rep_exposure' && q.get('rep') ? (() => { const r = reps.find(x => x.name === q.get('rep')); return M.repExposure(q.get('rep')!, r?.accounts ?? accts.filter(a => a.owner === q.get('rep')).map(a => a.name), accts, sigs) })()
     : null
   if (!x) return NextResponse.json({ error: 'unknown metric' }, { status: 400 })
   return NextResponse.json(x)

@@ -165,3 +165,62 @@ export function exposureOf(sigs: Array<{ account_name?: string | null; risk_amou
   for (const s of sigs) { const k = s.account_name || '(none)'; best.set(k, Math.max(best.get(k) ?? 0, Number(s.risk_amount || 0))) }
   let t = 0; for (const v of best.values()) t += v; return t
 }
+
+/** Signals raised this quarter that flagged risk early (critical or watch, open or since acted on). */
+export function caughtEarly(accts: Acct[], sigs: Sig[]): Explanation {
+  const risk = sigs.filter(s => !s.is_dismissed && (s.severity === 'high' || s.severity === 'watch'))
+  const names = [...new Set(risk.map(s => s.account_name || ''))].filter(Boolean)
+  const parts: XNode[] = names.map(n => ({ id: `acct:${n}`, label: n, valueText: String(risk.filter(s => s.account_name === n).length), href: acctHref(n),
+    note: `${risk.filter(s => s.account_name === n && s.status === 'handled').length} acted on`,
+    children: risk.filter(s => s.account_name === n).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 5).map(s => sigNode(s, accts, false)) }))
+    .sort((a, b) => Number(b.valueText) - Number(a.valueText))
+  return { metric: 'caught', label: 'Signals caught early', value: risk.length, valueText: String(risk.length), parts,
+    definition: 'Critical and watch signals raised this quarter, whether still open or already acted on: the risks Popsicle surfaced before they showed up in the CRM.' }
+}
+
+/** Accounts with an open risk signal (the Revenue Loop's "active cases"). */
+export function activeCases(accts: Acct[], sigs: Sig[]): Explanation {
+  const open = sigs.filter(s => isOpen(s) && s.severity !== 'positive')
+  const names = [...new Set(open.map(s => s.account_name || ''))].filter(Boolean)
+  const parts: XNode[] = names.map(n => ({ id: `acct:${n}`, label: n, valueText: `${open.filter(s => s.account_name === n).length} open`, href: acctHref(n),
+    children: open.filter(s => s.account_name === n).slice(0, 5).map(s => sigNode(s, accts, false)) }))
+  return { metric: 'cases', label: 'Active cases', value: names.length, valueText: String(names.length), parts,
+    definition: 'Accounts with at least one open critical or watch signal.' }
+}
+
+/** Critical signals with a recommended next step ready (the Revenue Loop's "actions ready"). */
+export function actionsReady(accts: Acct[], sigs: Sig[]): Explanation {
+  const ready = sigs.filter(s => isOpen(s) && s.severity === 'high' && (s.ai_analysis?.recommendation as string | undefined))
+  const parts: XNode[] = ready.map(s => ({ ...sigNode(s, accts, false), note: `next step: ${String(s.ai_analysis?.recommendation)}` }))
+  return { metric: 'actions_ready', label: 'Actions ready', value: ready.length, valueText: String(ready.length), parts,
+    definition: 'Open critical signals where Popsicle has already prepared the next step for you to approve.' }
+}
+
+/** New signals in the last 24 hours. */
+export function newToday(accts: Acct[], sigs: Sig[], nowMs = Date.now()): Explanation {
+  const fresh = sigs.filter(s => isOpen(s) && s.created_at && nowMs - new Date(s.created_at).getTime() <= 24 * 3600e3)
+    .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
+  return { metric: 'new_today', label: 'New signals', value: fresh.length, valueText: String(fresh.length), parts: fresh.map(s => sigNode(s, accts)),
+    definition: 'Signals that arrived in the last 24 hours and are still open.' }
+}
+
+/** One rep's exposure: money at stake on their accounts, each account counted once. */
+export function repExposure(rep: string, repAccounts: string[], accts: Acct[], sigs: Sig[]): Explanation {
+  const open = sigs.filter(s => isOpen(s) && s.severity !== 'positive' && repAccounts.includes(s.account_name || ''))
+  const parts: XNode[] = repAccounts.map(n => {
+    const mine = open.filter(s => s.account_name === n)
+    return { id: `acct:${n}`, label: n, value: Math.max(0, ...mine.map(s => Number(s.risk_amount || 0))), note: mine.length ? `${mine.length} open signals` : 'no open risk', href: acctHref(n), children: mine.slice(0, 4).map(s => sigNode(s, accts, false)) }
+  }).filter(p => (p.value ?? 0) > 0).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+  const value = parts.reduce((t, p) => t + (p.value ?? 0), 0)
+  return { metric: 'rep_exposure', label: `${rep} · exposure`, value, valueText: money(value), parts,
+    definition: `Money at stake on ${rep}\u2019s accounts: for each account with an open critical or watch signal, its largest amount at risk, counted once.` }
+}
+
+/** Team exposure: every rep's exposure, summed. */
+export function teamExposure(reps: Array<{ name: string; accounts: string[] }>, accts: Acct[], sigs: Sig[]): Explanation {
+  const parts: XNode[] = reps.map(r => { const x = repExposure(r.name, r.accounts, accts, sigs); return { id: `rep:${r.name}`, label: r.name, value: x.value, note: `${x.parts.length} accounts at risk`, children: x.parts } })
+    .sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
+  const value = parts.reduce((t, p) => t + (p.value ?? 0), 0)
+  return { metric: 'team_exposure', label: 'Team exposure', value, valueText: money(value), parts,
+    definition: 'Each rep\u2019s exposure added together. An account appears under its owner once.' }
+}

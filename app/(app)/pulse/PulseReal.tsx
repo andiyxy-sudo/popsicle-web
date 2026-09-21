@@ -14,6 +14,9 @@ import { healthTone, formatCurrency, formatRelativeTime, formatWhen } from '@/li
 import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
+import * as MX from '@/lib/metrics'
+import { SinceBar } from '@/components/changes/SinceBar'
+import { useChanges } from '@/components/changes/useChanges'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -724,9 +727,9 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [inboxOpen, setInboxOpen] = useState(false)
-  // rated precision comes from the same place its explanation does (ratings, never model confidence)
-  const [rp, setRp] = useState<{ valueText: string; n: number } | null>(null)
-  useEffect(() => { fetch('/api/explain?metric=rated_precision').then(r => r.ok ? r.json() : null).then(j => { if (j) setRp({ valueText: j.valueText, n: j.n ?? 0 }) }).catch(() => {}) }, [])
+  // deltas on the strip are measured against your last visit (or the start of the week), from replayed data
+  const since = useChanges('pulse')
+
   useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
 
@@ -775,13 +778,15 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const bySrc = new Set(open.map(sg => sg.source_integration).filter(Boolean))
     const openAccts = new Set(open.map(sg => sg.account_name).filter(Boolean))
     const demo = accounts.some(a => String(a.id).startsWith('demo-'))
-    // Signals → Active cases → Actions ready → Revenue protected. Demo figures are the
-    // mobile Revenue Loop (12 · 5 · 4 · $560K); live derives from the rows.
+    // Signals → Active cases → Actions ready → Revenue protected, computed by lib/metrics in demo
+    // and live alike, so each figure matches its explanation exactly.
+    const nowMs = demo ? (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })() : Date.now()
+    const A = accounts as unknown as MX.Acct[], S = signals as unknown as MX.Sig[]
     return [
-      { name: 'Signals', sub: bySrc.size ? `across ${Array.from(bySrc).join(' · ')}` : 'detected this week', value: demo ? '12' : String(open.length), color: 'var(--critical, #c43d2b)' },
-      { name: 'Active cases', sub: 'accounts with an open signal', value: demo ? '5' : String(openAccts.size), color: 'var(--warn, #d38b1d)' },
-      { name: 'Actions ready', sub: 'drafted and waiting for you', value: demo ? '4' : String(open.filter(sg => sg.severity === 'high').length), color: 'var(--accent)' },
-      { name: 'Revenue protected', sub: 'this quarter', value: demo ? '$560K' : (protectedVal > 0 ? formatCurrency(protectedVal) : '$0'), color: 'var(--good, #2f8f5b)' },
+      { m: 'new_today', name: 'Signals', sub: 'new in the last 24 hours', value: String(MX.newToday(A, S, nowMs).value), color: 'var(--critical, #c43d2b)' },
+      { m: 'cases', name: 'Active cases', sub: 'accounts with an open risk signal', value: String(MX.activeCases(A, S).value), color: 'var(--warn, #d38b1d)' },
+      { m: 'actions_ready', name: 'Actions ready', sub: 'next step drafted for you', value: String(MX.actionsReady(A, S).value), color: 'var(--accent)' },
+      { m: 'protected', name: 'Revenue protected', sub: 'this quarter', value: MX.protectedRevenue(A, S).valueText, color: 'var(--good, #2f8f5b)' },
     ]
   })()
 
@@ -863,6 +868,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           </div>
         </div>
       </div>
+      <SinceBar screen="pulse" />
 
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />
@@ -892,12 +898,12 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} /></X>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} /></X>{(() => { const d = since ? since.changes.after.atRisk - since.changes.before.atRisk : 0; return d ? delta(`${d > 0 ? '+' : '\u2212'}${formatCurrency(Math.abs(d))} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, d > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)') : null })()}</div>
                 <div style={sub}>{st.high} high-risk accounts · {st.med} medium · {st.low} low</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue protected</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="protected"><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} /></X>{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="protected"><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} /></X>{(() => { const d = since ? since.changes.after.protectedValue - since.changes.before.protectedValue : 0; return d > 0 ? delta(`+${formatCurrency(d)} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, 'var(--good, #2f8f5b)') : null })()}</div>
                 <div style={sub}>{st.saved} saves · {st.actions} actions this quarter</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -905,10 +911,10 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="active"><CountUp value={String(st.active)} style={big('var(--ink)')} /></X>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
-              <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div style={MONO}>Rated precision</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="rated_precision">{rp ? (rp.valueText === 'collecting' ? <span style={{ ...big('var(--ink-faint)'), fontSize: 22 }}>collecting</span> : <CountUp value={rp.valueText} style={big('var(--ink)')} />) : <span style={big('var(--ink-faint)')}>…</span>}</X></div>
-                <div style={sub}>{rp ? (rp.n ? `${rp.n} ratings from your team` : 'no ratings yet') : ' '}</div>
+              <div onClick={() => setConfOpen(true)} className="xp-tile" style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                <div style={MONO}>AI confidence</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={`${st.aiConfidence}%`} style={big(st.aiConfidence >= 85 ? 'var(--good, #2f8f5b)' : st.aiConfidence >= 70 ? 'var(--warn, #d38b1d)' : 'var(--critical, #c43d2b)')} /></div>
+                <div style={{ ...sub, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />{st.integrations} integrations synced · {st.syncedAgo}</div>
               </div>
             </div>
           </>
@@ -937,7 +943,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--ink)' }}>{l.name}</div>
                 <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
               </div>
-              <CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} />
+              <X m={(l as { m?: string }).m ?? 'active'}><CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></X>
             </div>
           ))}
         </section>

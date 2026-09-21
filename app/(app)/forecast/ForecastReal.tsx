@@ -14,6 +14,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { X } from '@/components/explain/Explain'
 import { formatCurrency } from '@/lib/utils'
 import { AskThis } from '@/components/agent/AskThis'
+import { SinceBar } from '@/components/changes/SinceBar'
 
 const STAGE_WEIGHT: Array<[RegExp, number]> = [
   [/closed won|expansion/i, 1],
@@ -185,6 +186,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           ))}
         </div>
       </div>
+      <SinceBar screen="forecast" />
 
       {/* the narrative */}
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: 'var(--ink)' }}>
@@ -329,7 +331,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                   </div>
                   <div style={{ textAlign: 'right', flex: 'none' }}>
                     <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 24, letterSpacing: '-.04em', lineHeight: 1, color: m.swing < 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)' }}>
-                      {m.swing < 0 ? '−' : '+'}{formatCurrency(Math.abs(m.swing))}
+                      <X m="account_arr" account={m.name}>{m.swing < 0 ? '−' : '+'}{formatCurrency(Math.abs(m.swing))}</X>
                     </div>
                     <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 8 }}>{m.prob}% probability</div>
                   </div>

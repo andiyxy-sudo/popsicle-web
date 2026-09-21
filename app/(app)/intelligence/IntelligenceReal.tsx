@@ -14,6 +14,7 @@ import { PageHead } from '@/components/layout/PageHead'
 import type { IntelModel } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AskThis } from '@/components/agent/AskThis'
+import { X } from '@/components/explain/Explain'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -479,7 +480,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         <div style={{ paddingTop: 16 }}>
           <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 20 }}>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}>{fmtMoney(m.protectedTotal)}</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: ACCENT, lineHeight: 1 }}><X m="protected">{fmtMoney(m.protectedTotal)}</X></div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>protected this quarter</div>
             </div>
             <div>
@@ -487,8 +488,8 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>success rate · target {m.successTarget}%</div>
             </div>
             <div>
-              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}>{m.recovered}</div>
-              <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · {m.caughtEarly} caught early</div>
+              <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}><X m="protected">{m.recovered}</X></div>
+              <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · <X m="caught">{m.caughtEarly}</X> caught early</div>
             </div>
           </div>
           {m.fasterDays > 0 && (

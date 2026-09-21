@@ -15,6 +15,7 @@ import { formatCurrency } from '@/lib/utils'
 import type { TeamModel, TeamRep, TeamQueueItem } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AskThis } from '@/components/agent/AskThis'
+import { X } from '@/components/explain/Explain'
 
 const ACTION_FILTERS = ['All', 'Critical only', 'My accounts'] as const
 
@@ -233,7 +234,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         {m.exposure ? (
           <div>
             <div style={{ ...MONO, fontSize: 10, color: FAINT, display: 'flex', justifyContent: 'space-between' }}><span>Revenue exposure</span><span style={{ color: GREEN, display: 'inline-flex', alignItems: 'center', gap: 6 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: GREEN }} />Live</span></div>
-            <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}>{formatCurrency(m.exposure.total)}</div>
+            <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: RED }}><X m="team_exposure">{formatCurrency(m.exposure.total)}</X></div>
             <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>total exposure across {m.accountCount} accounts</div>
             <div style={{ marginTop: 25 }}>
               <Row><span>Stabilized this week</span><span style={{ ...MONO_NUM, fontSize: 12, color: GREEN }}>{formatCurrency(m.exposure.stabilizedThisWeek)}</span></Row>
@@ -404,7 +405,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
                       <span style={{ ...num, color: crit ? RED : FAINT }}>{crit || '--'}</span>
                       <span style={{ ...num, color: r.ownership === 'active' ? GREEN : AMBER }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
                       <span style={{ textAlign: 'right' }}>
-                        <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em', color: share >= 40 ? RED : share >= 25 ? AMBER : INK }}>{formatCurrency(r.exposure ?? 0)}</span>
+                        <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em', color: share >= 40 ? RED : share >= 25 ? AMBER : INK }}><X m="rep_exposure" account={r.name}>{formatCurrency(r.exposure ?? 0)}</X></span>
                         <span style={{ display: 'block', height: 3, background: HAIR, marginTop: 8, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${((r.exposure ?? 0) / maxExp) * 100}%`, background: share >= 40 ? RED : share >= 25 ? AMBER : ACCENT }} /></span>
                         <span style={{ display: 'block', ...MONO_NUM, fontSize: 11, color: FAINT, marginTop: 6 }}>{share}% of their ARR</span>
                       </span>

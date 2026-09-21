@@ -40,8 +40,10 @@ function Node({ n, total, depth, go }: { n: XNode; total: number; depth: number;
         <div className="xp-ev-title" onClick={() => n.href && go(n.href)}>{ev.title}{val ? <span className="xp-ev-val">{val}</span> : null}</div>
         {ev.quote && <div className="xp-ev-quote">“{ev.quote}”</div>}
         <div className="xp-ev-meta">
-          {[ev.who, ev.source ? SRC[ev.source] ?? ev.source : null, ev.when ? formatWhen(ev.when) : null, n.note].filter(Boolean).join(' · ')}
-          {n.href && <span className="xp-ev-open" onClick={() => go(n.href!)}>Open ↗</span>}
+          {ev.source && <span className="xp-pill">{SRC[ev.source] ?? ev.source}</span>}
+          {ev.when && <span className="xp-meta-t">{formatWhen(ev.when)}</span>}
+          {n.note && <span className="xp-meta-t">{n.note}</span>}
+          {n.href && <span className="xp-ev-open" onClick={() => go(n.href!)}>Open →</span>}
         </div>
       </div>
     )
@@ -49,7 +51,7 @@ function Node({ n, total, depth, go }: { n: XNode; total: number; depth: number;
   return (
     <div className="xp-node" style={{ marginLeft: depth ? 12 : 0 }}>
       <div className={`xp-row${hasKids ? ' has-kids' : ''}`} onClick={() => hasKids ? setOpenKids(o => !o) : n.href && go(n.href)}>
-        <span className="xp-row-label">{hasKids && <span className={`xp-chev${openKids ? ' open' : ''}`}>›</span>}{n.label}</span>
+        <span className="xp-row-label">{hasKids && <svg className={`xp-chev${openKids ? ' open' : ''}`} width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M3.5 2l3 3-3 3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}{n.label}</span>
         <span className="xp-row-val">{val}</span>
       </div>
       {share != null && <div className="xp-bar"><span style={{ width: `${share}%` }} /></div>}
@@ -71,7 +73,7 @@ export function ExplainHost() {
     const onOpen = (e: Event) => {
       const d = (e as CustomEvent<Req & { rect: DOMRect }>).detail
       setX(null); setErr(''); setReq(d)
-      const qs = new URLSearchParams({ metric: d.m }); if (d.account) qs.set('account', d.account); if (d.signal) qs.set('signal', d.signal)
+      const qs = new URLSearchParams({ metric: d.m }); if (d.account) qs.set(d.m === 'rep_exposure' ? 'rep' : 'account', d.account); if (d.signal) qs.set('signal', d.signal)
       fetch(`/api/explain?${qs}`).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(setX).catch(() => setErr('Couldn\u2019t load where this number comes from.'))
     }
     window.addEventListener('explain:open', onOpen)
@@ -99,8 +101,9 @@ export function ExplainHost() {
       {err && <div className="xp-err">{err}</div>}
       {x && (
         <>
-          <div className="xp-label">Where this comes from</div>
-          <div className="xp-head"><span className="xp-title">{x.label}</span><span className="xp-value">{x.valueText}</span></div>
+          <div className="xp-eyebrow"><span className="xp-dot" />How this is calculated</div>
+          <div className="xp-title">{x.label}</div>
+          <div className="xp-value">{x.valueText}</div>
           <div className="xp-def">{x.definition}</div>
           {x.n != null && (
             <div className="xp-stat">{x.collecting ? `Collecting · ${x.n} ratings so far, shown from 30` : `${x.n} ratings · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}\u2013${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</div>
