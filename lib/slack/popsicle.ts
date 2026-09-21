@@ -54,7 +54,7 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   let ids = [ws.ownerId]
   if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Row[]).map(r => r.user_id as string) }
 
-  const question = ev.text.replace(/<@[A-Z0-9]+>/g, '').replace(/(^|\s)@popsicle\b[:,]?/gi, ' ').replace(/\s+/g, ' ').trim()
+  const question = ev.text.replace(/<@[A-Z0-9]+(\|[^>]+)?>/g, ' ').replace(/(^|\s)@popsicle\b[:,]?/gi, ' ').replace(/^\s*popsicle[\s,:]+/i, '').replace(/\s+/g, ' ').trim()
   if (!question) {
     await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, for example: _is this going to close this quarter?_' })
     return
