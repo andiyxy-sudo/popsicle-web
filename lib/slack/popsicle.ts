@@ -110,6 +110,21 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   const guessed = [...accts].map(a => ({ a, s: score(String(a.name)) })).filter(x => x.s > 0).sort((x, y) => y.s - x.s)[0]?.a
   const acct = named ?? linked ?? guessed     // a name in the question wins, then the channel's link, then a guess
 
+  // "this deal" in a channel that isn't linked to anything: ask which deal instead of answering blind
+  const aboutPortfolio = /\b(pipeline|portfolio|all (my )?(deals|accounts)|which (deals|accounts)|what('s| is) (at risk|slipping)|this (week|quarter)'s)\b/i.test(question)
+  if (!acct && !aboutPortfolio) {
+    const top = [...accts].sort((x, y) => Number(y.value || 0) - Number(x.value || 0)).slice(0, 5).map(a => String(a.name))
+    const example = top[0] ?? 'Acme Corp'
+    const msg = [
+      `Which deal do you mean? This channel isn't linked to an account in Popsicle yet, so I can't tell which one "this" is.`,
+      top.length ? `Your biggest open ones: ${top.map(n => `*${n}*`).join(', ')}.` : '',
+      `Ask me again with the name, for example _is ${example} going to close this quarter?_`,
+      `Or link this channel once and I'll always know: <${SITE()}/integrations?slack_channels=1|link it in Popsicle>.`,
+    ].filter(Boolean).join('\n')
+    const rq = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: msg, unfurl_links: false, unfurl_media: false })
+    return rq.ok ? `asked which deal (channel not linked, no account named) · ${keyNote}` : `Slack refused the reply: ${rq.error} · ${keyNote}`
+  }
+
   const openSigs = ((signals ?? []) as Row[]).filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
   const sigs = acct ? openSigs.filter(s => s.account_name === acct.name) : openSigs.slice(0, 20)
   const cms = ((commitments ?? []) as Row[]).filter(c => !acct || c.account_name === acct.name)
@@ -123,7 +138,8 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   ].filter(Boolean).join('\n')
 
   const system = `You are Popsicle, answering a question someone asked by mentioning you in a Slack channel where their sales team discusses deals. Everyone in the channel will read your answer.
-Answer only from the context below. Never invent figures, names or events. If the context cannot answer the question, say what is missing in one line.
+Answer only from what Popsicle knows below. Never invent figures, names or events.
+Speak as a colleague who has read the team's email, calls and Slack: never mention "context", "data provided", "input" or "the information given". If something genuinely isn't known, say so plainly in one line (for example "I haven't seen a reply from the CFO since the 12th").
 Write for Slack: short lines, *single asterisks* for bold, no # headings, no emoji, no em dashes. Under 120 words.
 
 ${context}
