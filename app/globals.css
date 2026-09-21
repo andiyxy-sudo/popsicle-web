@@ -2716,3 +2716,28 @@ body[data-modal="1"] .agent-pop { display: none; }
 .agent-chip:hover { background: rgba(255,107,53,.08); }
 .agent-feed-foot { margin: 6px 0 0 57px; font-size: 13.5px; color: var(--ink-faint, #A09C97); }
 @media (max-width: 720px) { .agent-msg, .agent-feed-foot { margin-left: 0; } }
+
+/* v11.87: agent overflow fixes.
+   The peek rows are flex items with nowrap text; without min-width: 0 a flex item will
+   not shrink below its content, so long headlines ran out of the bubble. */
+.agent-pop, .agent-pop * { box-sizing: border-box; }
+.agent-pop { max-height: calc(100vh - 140px); display: flex; flex-direction: column; }
+.agent-bubble { min-width: 0; overflow: hidden; flex: 0 1 auto; overflow-y: auto; }
+.agent-peek-row { min-width: 0; }
+.agent-peek-t { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-lead, .agent-text { overflow-wrap: anywhere; word-break: break-word; }
+.agent-pop-head > div { flex: 1 1 auto; min-width: 0; }
+.agent-pop-name, .agent-pop-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agent-pop-actions { flex-wrap: wrap; flex: none; }
+.agent-msg-bubble, .agent-feed { min-width: 0; }
+.agent-msg-bubble .agent-lead, .agent-msg-bubble .agent-text, .agent-receipt { overflow-wrap: anywhere; }
+.agent-receipt { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+
+/* v11.88: live signals spoken by the agent. A thin severity line along the top of the
+   bubble says how serious it is without turning the card into an alarm. */
+.agent-pop.sev-high .agent-bubble { box-shadow: inset 0 3px 0 #c43d2b, 0 1px 2px rgba(14,13,11,.06); }
+.agent-pop.sev-watch .agent-bubble { box-shadow: inset 0 3px 0 #d38b1d, 0 1px 2px rgba(14,13,11,.06); }
+.agent-pop.sev-positive .agent-bubble { box-shadow: inset 0 3px 0 #2f8f5b, 0 1px 2px rgba(14,13,11,.06); }
+.agent-btn.ghost { background: transparent; color: var(--ink-faint, #A09C97); padding-left: 8px; padding-right: 8px; }
+.agent-btn.ghost:hover { background: transparent; color: var(--ink, #0E0D0B); }

@@ -18,7 +18,21 @@ const LS = {
   set: (k: string, v: string) => { try { localStorage.setItem(k, v) } catch { /* private mode */ } },
 }
 
-type Shown = { kind: 'brief'; brief: AgentBrief } | { kind: 'message'; msg: AgentMessage; brief: AgentBrief }
+type LiveSig = { id: string; title: string; account?: string; severity?: string; source?: string; quote?: string }
+type Shown = { kind: 'brief'; brief: AgentBrief } | { kind: 'message'; msg: AgentMessage; brief: AgentBrief } | { kind: 'signal'; sig: LiveSig }
+
+const SRC: Record<string, string> = { gmail: 'Gmail', outlook: 'Outlook', whatsapp: 'WhatsApp', slack: 'Slack', zoom: 'Zoom', hubspot: 'HubSpot', gcal: 'Calendar', fireflies: 'Fireflies' }
+// How the agent says a new signal out loud, by severity.
+function speakSignal(s: LiveSig): { lead: string; text: string; lane: string } {
+  const acct = s.account ?? 'one of your accounts'
+  const via = s.source ? ` Came in on ${SRC[s.source] ?? s.source}.` : ''
+  const q = (s.quote ?? '').trim()
+  const quote = q ? ` ${q}${/[.!?"”]$/.test(q) ? '' : '.'}` : ''
+  const title = s.title.replace(/\.$/, '')
+  if (s.severity === 'high') return { lead: `Heads up on ${acct}.`, text: `${title}.${quote}${via}`, lane: 'risk' }
+  if (s.severity === 'positive') return { lead: `Good news from ${acct}.`, text: `${title}.${quote}${via}`, lane: 'renewals' }
+  return { lead: `Worth watching at ${acct}.`, text: `${title}.${quote}${via}`, lane: 'commitments' }
+}
 
 export function AgentPopup() {
   const pathname = usePathname()
@@ -27,6 +41,38 @@ export function AgentPopup() {
   const [typing, setTyping] = useState(true)
   const [leaving, setLeaving] = useState(false)
   const briefRef = useRef<AgentBrief | null>(null)
+  const queue = useRef<LiveSig[]>([])
+  const shownRef = useRef<Shown | null>(null)
+  shownRef.current = shown
+  const hoverRef = useRef(false)
+
+  const showSignal = (sig: LiveSig) => {
+    setTyping(true); setLeaving(false); setShown({ kind: 'signal', sig })
+    setTimeout(() => setTyping(false), 900)
+  }
+  // live signals arrive here from LiveSignals; one on screen at a time, the rest wait their turn
+  useEffect(() => {
+    const onSig = (e: Event) => {
+      const sig = (e as CustomEvent<LiveSig>).detail
+      if (!sig) return
+      if (shownRef.current || document.body.dataset.modal === '1') { queue.current.push(sig); return }
+      showSignal(sig)
+    }
+    window.addEventListener('agent:signal', onSig)
+    return () => window.removeEventListener('agent:signal', onSig)
+  }, [])
+  // a signal steps aside on its own after a while, unless you are reading it
+  useEffect(() => {
+    if (!shown || shown.kind !== 'signal') return
+    const t = setInterval(() => { if (!hoverRef.current) { clearInterval(t); setLeaving(true); setTimeout(() => setShown(null), 260) } }, 14000)
+    return () => clearInterval(t)
+  }, [shown])
+  // when the current one closes, the next queued signal takes the stage
+  useEffect(() => {
+    if (shown || queue.current.length === 0) return
+    const t = setTimeout(() => { if (!shownRef.current && document.body.dataset.modal !== '1') { const n = queue.current.shift(); if (n) showSignal(n) } }, 800)
+    return () => clearTimeout(t)
+  }, [shown])
 
   // fetch once per session (10-minute cache)
   useEffect(() => {
@@ -43,7 +89,7 @@ export function AgentPopup() {
 
   // decide whether to speak, a few seconds after each page settles
   useEffect(() => {
-    if (pathname?.startsWith('/ask')) { setShown(null); return }
+    if (pathname?.startsWith('/ask')) { if (shownRef.current?.kind !== 'signal') setShown(null); return }
     const t = setTimeout(() => {
       const b = briefRef.current
       if (!b || shown) return
@@ -80,17 +126,23 @@ export function AgentPopup() {
   const close = () => { setLeaving(true); setTimeout(() => setShown(null), 260) }
   const open = (key?: string) => { close(); router.push(`/ask${key ? `?agent=${encodeURIComponent(key)}` : '?agent=brief'}`) }
 
-  const b = shown.brief
-  const lead = shown.kind === 'brief' ? localGreeting(b.greeting) : shown.msg.headline
-  const text = shown.kind === 'brief' ? b.summary : shown.msg.body
+  const spoken = shown.kind === 'signal' ? speakSignal(shown.sig) : null
+  const b = shown.kind === 'signal' ? null : shown.brief
+  const lead = shown.kind === 'signal' ? spoken!.lead : shown.kind === 'brief' ? localGreeting(b!.greeting) : shown.msg.headline
+  const text = shown.kind === 'signal' ? spoken!.text : shown.kind === 'brief' ? b!.summary : shown.msg.body
+  const openAccount = (name?: string, sev?: string) => {
+    close()
+    if (name) window.dispatchEvent(new CustomEvent('open-a360', { detail: { name, contact: '', stage: 'Active', risk: (sev || 'watch').toUpperCase(), arr: '--', health: '--' } }))
+  }
 
   return (
-    <div className={`agent-pop${leaving ? ' leaving' : ''}`} role="status" aria-live="polite">
+    <div className={`agent-pop${leaving ? ' leaving' : ''}${shown.kind === 'signal' ? ` sev-${shown.sig.severity ?? 'watch'}` : ''}`} role="status" aria-live="polite"
+      onMouseEnter={() => { hoverRef.current = true }} onMouseLeave={() => { hoverRef.current = false }}>
       <div className="agent-pop-head">
         <AgentAvatar size={38} />
         <div style={{ minWidth: 0 }}>
           <div className="agent-pop-name">{AGENT_NAME}</div>
-          <div className="agent-pop-meta">{typing ? 'typing…' : 'just now'}</div>
+          <div className="agent-pop-meta">{typing ? 'typing…' : shown.kind === 'signal' ? `just spotted this${shown.sig.source ? ` on ${SRC[shown.sig.source] ?? shown.sig.source}` : ''}` : 'just now'}</div>
         </div>
         <button className="agent-pop-x" onClick={close} aria-label="Dismiss">×</button>
       </div>
@@ -102,7 +154,7 @@ export function AgentPopup() {
           <div className="agent-bubble-in">
             <div className="agent-lead">{lead}</div>
             <div className="agent-text">{text}</div>
-            {shown.kind === 'brief' && b.messages.length > 0 && (
+            {shown.kind === 'brief' && b && b.messages.length > 0 && (
               <div className="agent-peek">
                 {b.messages.slice(0, 3).map(m => (
                   <div key={m.key} className="agent-peek-row">
@@ -118,8 +170,18 @@ export function AgentPopup() {
 
       {!typing && (
         <div className="agent-pop-actions">
-          <button className="agent-btn primary" onClick={() => open(shown.kind === 'message' ? shown.msg.key : undefined)}>{shown.kind === 'brief' ? 'Walk me through it' : 'Show me'}</button>
-          <button className="agent-btn" onClick={close}>Later</button>
+          {shown.kind === 'signal' ? (
+            <>
+              <button className="agent-btn primary" onClick={() => openAccount(shown.sig.account, shown.sig.severity)}>{shown.sig.account ? 'Open account' : 'Show me'}</button>
+              <button className="agent-btn" onClick={() => { close(); router.push(`/ask?q=${encodeURIComponent(`What should I do about this: ${shown.sig.title}${shown.sig.account ? ` at ${shown.sig.account}` : ''}?`)}${shown.sig.account ? `&account=${encodeURIComponent(shown.sig.account)}` : ''}`) }}>Ask me</button>
+              <button className="agent-btn ghost" onClick={close}>Later</button>
+            </>
+          ) : (
+            <>
+              <button className="agent-btn primary" onClick={() => open(shown.kind === 'message' ? shown.msg.key : undefined)}>{shown.kind === 'brief' ? 'Walk me through it' : 'Show me'}</button>
+              <button className="agent-btn" onClick={close}>Later</button>
+            </>
+          )}
         </div>
       )}
     </div>

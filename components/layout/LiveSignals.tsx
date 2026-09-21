@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { AGENT_ENABLED } from '@/lib/agent/config'
 
 type Toast = { id: string; title: string; account?: string; severity?: string; source?: string; quote?: string }
 
@@ -24,6 +25,8 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
 
   const dismiss = useCallback((id: string) => setToasts(t => t.filter(x => x.id !== id)), [])
   const push = useCallback((t: Toast) => {
+    // v11.88: with the agent on, the agent tells you about the signal instead of a toast
+    if (AGENT_ENABLED) { window.dispatchEvent(new CustomEvent('agent:signal', { detail: t })); return }
     setToasts(prev => [t, ...prev.filter(x => x.id !== t.id)].slice(0, 3))
     setTimeout(() => dismiss(t.id), 9000)
   }, [dismiss])
