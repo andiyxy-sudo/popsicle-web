@@ -5,7 +5,7 @@
 import {
   DEMO_ACCOUNTS, DEMO_EXTRA, DEMO_SIGNALS, DEMO_PEOPLE, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES,
   DEMO_CONTRACTS, DEMO_TRANSCRIPT, DEMO_PULSE, DEMO_TEAM, DEMO_INTELLIGENCE, DEMO_MOVERS, DEMO_FORECAST,
-  DEMO_INTEGRATION_STATS, DEMO_INTEGRATION_ACTIVE, DEMO_SIGNALS_HEAD, DEMO_X, DEMO_PULSE_STRIP,
+  DEMO_INTEGRATION_STATS, DEMO_INTEGRATION_ACTIVE, DEMO_SIGNALS_HEAD, DEMO_X, DEMO_PULSE_STRIP, DEMO_DECISIONS,
 } from './demo-dataset'
 import { MOBILE_ACCOUNT_HEADERS, MOBILE_ACCOUNT_HEADERS_ALT, MOBILE_BRIEF_COUNTS, MOBILE_PORTFOLIO_CARDS } from './demo-mobile'
 
@@ -56,6 +56,9 @@ FORMAT RULES (strict): no emoji anywhere. No markdown headings with #; if you ne
 - Commit ${DEMO_X.commit.valueText}: ${DEMO_X.commit.parts.map(p => `${p.label} ${money(p.value ?? 0)}`).join(', ')}. Definition: ${DEMO_X.commit.definition}
 - Total ARR ${DEMO_X.totalArr.valueText} across ${DEMO_X.totalArr.parts.length} accounts
 - Rated precision ${DEMO_X.ratedPrecision.valueText} from ${DEMO_X.ratedPrecision.n} ratings (95% range ${Math.round((DEMO_X.ratedPrecision.interval?.[0] ?? 0) * 100)} to ${Math.round((DEMO_X.ratedPrecision.interval?.[1] ?? 0) * 100)}%)`)
+  out.push(`\n# Decisions (the decision trail; each with what was true when it was made)
+${DEMO_DECISIONS.map(d => `- ${d.created_at.slice(0, 10)} ${d.account_name}: ${d.decision} (by ${d.by}${d.owner ? `, owner ${d.owner}` : ''}, ${d.status}). At the time: health ${d.evidence.figures.health}, ${money(d.evidence.figures.atRisk ?? 0)} at risk, ${d.evidence.figures.openSignals} open signals${d.evidence.signals[0] ? `; lead signal "${d.evidence.signals[0].title}"` : ''}.`).join('\n')}
+When asked why something was decided, answer from this trail and cite what was true at the time.`)
   out.push(`\n# Pipeline pulse (today)\n- Pipeline health ${DEMO_PULSE.health}/100 (${DEMO_PULSE.delta}) · rated precision ${DEMO_X.ratedPrecision.valueText} from ${DEMO_X.ratedPrecision.n} ratings\n- Deals ${DEMO_PULSE.deals} (${DEMO_PULSE.dealsDelta}) · Risk ${DEMO_PULSE.risk} (${DEMO_PULSE.riskDelta}) · Forecast ${money(DEMO_PULSE.forecast)} (${DEMO_PULSE.forecastDelta})\n- Revenue loop this week: ${DEMO_PULSE.loop.signals} signals → ${DEMO_PULSE.loop.cases} cases → ${DEMO_PULSE.loop.actions} actions → ${money(DEMO_PULSE.loop.impact)} impact · listening on ${DEMO_PULSE.listening} signals\n- AI brief: ${DEMO_PULSE.brief.map(b => `${b.pre}${b.strong}${b.post ?? ''}`).join(' | ')}`)
 
   out.push(`\n# Signals this week\n- ${DEMO_SIGNALS_HEAD.map(s => `${s.n} ${s.lbl}`).join(' · ')}`)
