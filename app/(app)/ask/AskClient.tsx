@@ -8,6 +8,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AgentFeed } from '@/components/agent/AgentFeed'
+import { AGENT_ENABLED } from '@/lib/agent/config'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
 
@@ -688,6 +690,7 @@ export function AskClient() {
         }}>
       {msgs.length === 0 && !busy && (
         <div>
+          {AGENT_ENABLED && <AgentFeed onAsk={q => send(q)} />}
           {opener && (
             <div onClick={() => send(opener.q)} className="ask-suggest"
               style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px', marginBottom: 26, cursor: 'pointer',
