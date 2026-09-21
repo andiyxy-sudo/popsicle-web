@@ -20,27 +20,6 @@ function verified(raw: string, ts: string | null, sig: string | null) {
   try { return crypto.timingSafeEqual(Buffer.from(mine), Buffer.from(sig)) } catch { return false }
 }
 
-// Open https://portal.popsicle-labs.app/api/slack/events in a browser to check the setup.
-// It shows which settings are present (never their values).
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    SLACK_SIGNING_SECRET: !!process.env.SLACK_SIGNING_SECRET?.trim(),
-    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? '(not set, using portal.popsicle-labs.app)',
-  })
-}
-
-// A message forwarded by the slack-events edge function, which has already verified Slack's
-// signature, carries the project's service role key. Both sides already hold that key.
-function vouched(auth: string | null) {
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
-  const given = auth?.replace(/^Bearer\s+/i, '').trim()
-  if (!key || !given) return false
-  try { return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(given)) } catch { return false }
-}
-
 export async function POST(req: Request) {
   const raw = await req.text()
 
@@ -56,21 +35,19 @@ export async function POST(req: Request) {
     const { data: m, error } = await db.from('slack_mentions').update({ answered_at: new Date().toISOString() })
       .eq('id', parsed.mention_id).is('answered_at', null).gte('created_at', since)
       .select('team, channel, ts, thread_ts, text, slack_user').maybeSingle()
-    if (error) { console.error('[popsicle-slack] could not read the question:', error.message); return NextResponse.json({ error: error.message }, { status: 500 }) }
+    if (error) { console.error('[popsicle-slack] unreadable question', error.message); return NextResponse.json({ error: error.message }, { status: 500 }) }
     if (!m) return NextResponse.json({ ok: true, skipped: 'unknown or already answered' })
-    console.log('[popsicle-slack] question received', { channel: m.channel })
     // the result, in plain words, goes back onto the same row (slack_mentions.outcome)
     after(async () => {
       let outcome = ''
       try { outcome = await answerMention({ team: String(m.team ?? ''), channel: String(m.channel), ts: String(m.ts), thread_ts: m.thread_ts ? String(m.thread_ts) : undefined, text: String(m.text ?? ''), user: m.slack_user ? String(m.slack_user) : undefined }) }
-      catch (e) { outcome = `error: ${e instanceof Error ? e.message : String(e)}`; console.error('[popsicle-slack] failed', e) }
+      catch (e) { outcome = `error: ${e instanceof Error ? e.message : String(e)}`; console.error('[popsicle-slack] unexpected', e) }
       try { await db.from('slack_mentions').update({ outcome: outcome.slice(0, 500) }).eq('id', parsed.mention_id!) } catch { /* column may not exist yet */ }
     })
     return NextResponse.json({ ok: true })
   }
 
-  if (!vouched(req.headers.get('authorization')) && !verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
-    console.warn('[popsicle-slack] rejected: neither the forwarding key nor the Slack signature matched. The service role key in Vercel must equal the Supabase project key.')
+  if (!verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
     return NextResponse.json({ error: 'bad signature' }, { status: 401 })
   }
   const body = JSON.parse(raw) as { type: string; challenge?: string; team_id?: string; event?: { type: string; subtype?: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string; bot_id?: string } }
@@ -87,9 +64,8 @@ export async function POST(req: Request) {
   const asks = !!ev && (ev.type === 'app_mention' || (ev.type === 'message' && (!ev.subtype || ev.subtype === 'thread_broadcast')))
   if (body.type === 'event_callback' && ev && asks && !ev.bot_id && body.team_id) {
     // acknowledge within Slack's 3 seconds; answer after the response is sent
-    console.log('[popsicle-slack] mention received', { team: body.team_id, channel: ev.channel })
     after(() => answerMention({ team: body.team_id!, channel: ev.channel, ts: ev.ts, thread_ts: ev.thread_ts, text: ev.text, user: ev.user })
-      .catch(e => console.error('[popsicle-slack] failed', e)))
+      .catch(e => console.error('[popsicle-slack] unexpected', e)))
   }
   return new NextResponse(null, { status: 200 })
 }

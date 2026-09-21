@@ -73,14 +73,12 @@ async function channelName(token: string, channel: string) {
 export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }): Promise<string> {
   const { pick, tried, valid, tracked } = await workingKey(ev.channel, ev.team)
   if (!pick) {
-    console.warn('[popsicle-slack] no working Slack key', { tried })
     return tried === 0
       ? 'no Slack connection found for this channel or workspace (connect Slack under Integrations)'
       : `none of the ${tried} saved Slack key${tried === 1 ? '' : 's'} is accepted by Slack any more (reconnect Slack under Integrations, then select this channel again)`
   }
   const ws = pick
   const keyNote = `using ${pick.bot ? 'the bot key' : 'a user key'} (${pick.source}); ${valid} of ${tried} saved key${tried === 1 ? '' : 's'} valid`
-  console.log('[popsicle-slack] answering', { channel: ev.channel, tracked, keyNote })
   const db = admin()
 
   // the org that owns the workspace
@@ -154,9 +152,9 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
       body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 600, system, messages: [{ role: 'user', content: question }] }),
     })
     const j = await r.json() as { content?: Array<{ type: string; text?: string }>; error?: { message?: string } }
-    if (!r.ok) { console.error('[popsicle-slack] AI call failed:', r.status, j.error?.message); aiError = `AI call failed (${r.status}): ${j.error?.message ?? 'unknown'}` }
+    if (!r.ok) { aiError = `AI call failed (${r.status}): ${j.error?.message ?? 'unknown'}` }
     text = (j.content ?? []).filter(c => c.type === 'text').map(c => c.text ?? '').join('').trim()
-  } catch (e) { console.error('[popsicle-slack] AI call threw', e); aiError = `AI call threw: ${String(e)}` }
+  } catch (e) { aiError = `AI call threw: ${String(e)}` }
   if (!text) text = 'I could not answer that just now. Try again in a minute.'
 
   // never echo the trigger word, so a reply can't set itself off (it may be posted with a user token)
@@ -167,10 +165,8 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
   const note = tracked ? '' : '\n_This channel isn\'t linked to an account in Popsicle yet. Link it under Integrations → Slack channels for sharper answers._'
   const res = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: text + link + note, unfurl_links: false, unfurl_media: false })
   if (!res.ok) {
-    console.error('[popsicle-slack] Slack refused the reply:', res.error, '(not_in_channel = invite the bot; missing_scope = add chat:write and reinstall)')
     const hint = res.error === 'not_in_channel' ? ' (invite the bot: /invite @popsicle)' : res.error === 'missing_scope' ? ' (add chat:write to the bot scopes and reinstall)' : res.error === 'invalid_auth' || res.error === 'token_revoked' ? ' (reconnect Slack under Integrations)' : ''
     return `Slack refused the reply: ${res.error}${hint} · ${keyNote}`
   }
-  console.log('[popsicle-slack] replied')
   return (aiError ? `posted a fallback reply because the ${aiError}` : `posted${acct ? ` (about ${acct.name})` : ''}${tracked ? '' : ' (channel not linked to an account)'}`) + ` · ${keyNote}`
 }
