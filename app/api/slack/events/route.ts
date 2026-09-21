@@ -31,10 +31,19 @@ export async function GET() {
   })
 }
 
+// A message forwarded by the slack-events edge function, which has already verified Slack's
+// signature, carries the project's service role key. Both sides already hold that key.
+function vouched(auth: string | null) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim()
+  const given = auth?.replace(/^Bearer\s+/i, '').trim()
+  if (!key || !given) return false
+  try { return crypto.timingSafeEqual(Buffer.from(key), Buffer.from(given)) } catch { return false }
+}
+
 export async function POST(req: Request) {
   const raw = await req.text()
-  if (!verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
-    console.warn('[popsicle-slack] rejected: signature did not match. Check SLACK_SIGNING_SECRET in Vercel matches the Slack app / Supabase secret.')
+  if (!vouched(req.headers.get('authorization')) && !verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
+    console.warn('[popsicle-slack] rejected: neither the forwarding key nor the Slack signature matched. The service role key in Vercel must equal the Supabase project key.')
     return NextResponse.json({ error: 'bad signature' }, { status: 401 })
   }
   const body = JSON.parse(raw) as { type: string; challenge?: string; team_id?: string; event?: { type: string; subtype?: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string; bot_id?: string } }
