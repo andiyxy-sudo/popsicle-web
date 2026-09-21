@@ -20,6 +20,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 // the client bundle never includes the whole demo dataset.
 export type DemoSlices = { transcripts?: Record<string, Transcript>; threads?: Record<string, ThreadSource>; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
+import { Decisions } from '@/components/account/Decisions'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -433,6 +434,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         )
       })()}
 
+      {tab === 'timeline' && <Decisions account={accountName} />}
       {tab === 'timeline' && demo.timeline && (
         <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)}
           items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'], transcript: demo.transcripts?.[t.title] }))} />

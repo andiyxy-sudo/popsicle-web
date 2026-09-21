@@ -1109,3 +1109,15 @@ export const DEMO_LOOP = {
   ready: M.actionsReady(_acc, _sig).value, protectedValue: DEMO_X.protectedRevenue.value,
 }
 
+// v11.121: past decisions, each with the evidence that existed when it was made (institutional memory)
+import { snapshotFor } from './decisions'
+import { asOf } from './replay'
+export const DEMO_DECISIONS = [
+  { id: 'demo-dec-1', account_name: 'Acme Corp', decision: 'Hold the price; offer an 8% multi-year discount only if they sign by the 30th', owner: 'Andy G', due_at: iso(-72), status: 'open' as const, source: 'review', review_id: 'demo-review-1',
+    evidence: { ...snapshotFor('Acme Corp', _acc, asOf(_sig, DEMO_NOW - 7 * 864e5), DEMO_NOW - 7 * 864e5), capturedAt: new Date(DEMO_NOW - 7 * 864e5).toISOString() }, created_at: new Date(DEMO_NOW - 7 * 864e5).toISOString(), by: 'Andy G' },
+  { id: 'demo-dec-2', account_name: 'Meridian Labs', decision: 'Escalate to the VP of RevOps directly; Jamie to request a 20-minute consolidation review', owner: 'Jamie Torres', due_at: iso(-48), status: 'open' as const, source: 'review', review_id: 'demo-review-1',
+    evidence: { ...snapshotFor('Meridian Labs', _acc, asOf(_sig, DEMO_NOW - 7 * 864e5), DEMO_NOW - 7 * 864e5), capturedAt: new Date(DEMO_NOW - 7 * 864e5).toISOString() }, created_at: new Date(DEMO_NOW - 7 * 864e5).toISOString(), by: 'Andy G' },
+  { id: 'demo-dec-3', account_name: 'Brightwave', decision: 'No discount; lead with the ROI case and wait for finance’s Friday answer', owner: 'Andy G', due_at: null, status: 'done' as const, source: 'review', review_id: 'demo-review-0',
+    evidence: { ...snapshotFor('Brightwave', _acc, asOf(_sig, DEMO_NOW - 36.5 * 864e5), DEMO_NOW - 36.5 * 864e5), capturedAt: new Date(DEMO_NOW - 36.5 * 864e5).toISOString() }, created_at: new Date(DEMO_NOW - 36.5 * 864e5).toISOString(), by: 'Andy G' },
+]
+
