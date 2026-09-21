@@ -25,6 +25,15 @@ async function findChannel(channel: string) {
   return null
 }
 
+// Fallback when the channel isn't tracked: the workspace's Slack connection, found by team id
+async function findWorkspace(team: string) {
+  const { data } = await admin().from('integrations').select('*').eq('provider', 'slack').eq('is_active', true).limit(200)
+  const rows = (data ?? []) as Row[]
+  const hit = rows.find(r => JSON.stringify(r.metadata ?? {}).includes(team) || r.team_id === team) ?? (rows.length === 1 ? rows[0] : undefined)
+  const token = hit?.access_token as string | undefined
+  return hit && token ? { token: String(token), ownerId: hit.user_id as string, channelName: '', linkedAccountId: null as string | null } : null
+}
+
 async function slack(token: string, method: string, body: Record<string, unknown>) {
   const r = await fetch(`https://slack.com/api/${method}`, { method: 'POST', headers: { 'content-type': 'application/json; charset=utf-8', authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
   return r.json() as Promise<Row>
@@ -34,8 +43,10 @@ async function channelName(token: string, channel: string) {
 }
 
 export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }) {
-  const ws = await findChannel(ev.channel)
-  if (!ws) return            // channel not tracked by anyone in Popsicle: stay silent
+  const tracked = await findChannel(ev.channel)
+  const ws = tracked ?? await findWorkspace(ev.team)
+  if (!ws) { console.warn('[popsicle-slack] no Slack connection found for channel', ev.channel, 'team', ev.team); return }
+  console.log('[popsicle-slack] answering', { channel: ev.channel, tracked: !!tracked })
   const db = admin()
 
   // the org that owns the workspace
@@ -91,13 +102,17 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
       method: 'POST', headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY ?? '', 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: 'claude-opus-4-8', max_tokens: 600, system, messages: [{ role: 'user', content: question }] }),
     })
-    const j = await r.json() as { content?: Array<{ type: string; text?: string }> }
+    const j = await r.json() as { content?: Array<{ type: string; text?: string }>; error?: { message?: string } }
+    if (!r.ok) console.error('[popsicle-slack] AI call failed:', r.status, j.error?.message)
     text = (j.content ?? []).filter(c => c.type === 'text').map(c => c.text ?? '').join('').trim()
-  } catch { /* fall through */ }
+  } catch (e) { console.error('[popsicle-slack] AI call threw', e) }
   if (!text) text = 'I could not answer that just now. Try again in a minute.'
 
   // Slack formatting: the verdict line in bold, a link back to the account
   text = text.replace(/^Verdict:\s*/i, '*Verdict:* ')
   const link = acct ? `\n<${SITE()}/accounts/${encodeURIComponent(String(acct.name))}|Open ${acct.name} in Popsicle>` : `\n<${SITE()}/pulse|Open Popsicle>`
-  await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: text + link, unfurl_links: false, unfurl_media: false })
+  const note = tracked ? '' : '\n_This channel isn\'t linked to an account in Popsicle yet. Link it under Integrations → Slack channels for sharper answers._'
+  const res = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: text + link + note, unfurl_links: false, unfurl_media: false })
+  if (!res.ok) console.error('[popsicle-slack] Slack refused the reply:', res.error, '(not_in_channel = invite the bot; missing_scope = add chat:write and reinstall)')
+  else console.log('[popsicle-slack] replied')
 }
