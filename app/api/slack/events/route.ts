@@ -46,7 +46,9 @@ export async function POST(req: Request) {
 
   const ev = body.event
   // a formal mention (app_mention), or a message that asks "@popsicle …" in plain text
-  const asks = !!ev && (ev.type === 'app_mention' || (ev.type === 'message' && (!ev.subtype || ev.subtype === 'thread_broadcast') && /(^|\s)@popsicle\b/i.test(ev.text || '')))
+  // (slack-events decides which ordinary messages are addressed to Popsicle and forwards only those;
+  //  Slack itself never sends message events here, and the signature proves it came from Slack)
+  const asks = !!ev && (ev.type === 'app_mention' || (ev.type === 'message' && (!ev.subtype || ev.subtype === 'thread_broadcast')))
   if (body.type === 'event_callback' && ev && asks && !ev.bot_id && body.team_id) {
     // acknowledge within Slack's 3 seconds; answer after the response is sent
     console.log('[popsicle-slack] mention received', { team: body.team_id, channel: ev.channel })
