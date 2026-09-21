@@ -193,15 +193,15 @@ export const DEMO_SIGNALS: Signal[] = [
   HD('demo-hd-1', 'Brightwave', 'silent_stall', 'high', 'Budget freeze mentioned by the VP', 'Brightwave paused new spend pending a budget review.', 'gmail', 900, 180000, 98, 860, 'Exec call'),
   HD('demo-hd-2', 'Vertex Systems', 'legal_loopin', 'high', 'Procurement asked to restart vendor review', 'A second vendor review was requested late in the cycle.', 'gmail', 780, 175000, 98, 740, 'Escalation'),
   HD('demo-hd-3', 'Cobalt Health', 'price_flinch', 'high', 'Renewal pricing challenged by finance', 'Finance questioned the renewal increase.', 'zoom', 1300, 150000, 98, 1250, 'Exec call'),
-  HD('demo-hd-4', 'Nexus AI', 'timeline_slip', 'watch', 'Security questionnaire blocking the pilot extension', 'The pilot extension was on hold pending the questionnaire.', 'gmail', 600, 55000, 97, 50, 'Follow-up'),
+  HD('demo-hd-4', 'Nexus AI', 'timeline_slip', 'watch', 'Security questionnaire blocking the pilot extension', 'The pilot extension was on hold pending the questionnaire.', 'gmail', 64, 55000, 97, 50, 'Follow-up'),
   HD('demo-hd-5', 'Acme Corp', 'silent_stall', 'watch', 'Technical contact quiet after demo', 'Resolved after a follow-up.', 'gmail', 700, null, 85, 680, 'Follow-up'),
   HD('demo-hd-6', 'TechFlow Inc', 'price_flinch', 'watch', 'Asked about annual prepay', 'Answered with the prepay terms.', 'gmail', 500, null, 87, 480, 'Follow-up'),
   HD('demo-hd-7', 'Axion Partners', 'legal_loopin', 'watch', 'DPA template requested', 'DPA sent the same day.', 'gmail', 420, null, 90, 410, 'Follow-up'),
   HD('demo-hd-8', 'TechVault Inc', 'silent_stall', 'watch', 'No reply after the demo', 'Rebooked for the following week.', 'gmail', 380, null, 86, 360, 'Follow-up'),
   HD('demo-hd-9', 'Meridian Labs', 'champion_change', 'watch', 'New RevOps director introduced', 'Intro call held.', 'zoom', 1100, null, 89, 1080, 'Exec call'),
-  HD('demo-hd-10', 'Vertex Systems', 'reengaged', 'positive', 'COO asked for the security summary', 'Sent.', 'gmail', 330, null, 95, 100, 'Follow-up'),
-  HD('demo-hd-11', 'Nexus AI', 'legal_loopin', 'watch', 'Data residency question', 'Answered with the region options.', 'gmail', 260, null, 88, 60, 'Escalation'),
-  HD('demo-hd-12', 'Cobalt Health', 'invoice_delay', 'watch', 'First invoice queried by AP', 'Resolved with a corrected PO number.', 'gmail', 230, null, 91, 30, 'Invoice chase'),
+  HD('demo-hd-10', 'Vertex Systems', 'reengaged', 'positive', 'COO asked for the security summary', 'Sent.', 'gmail', 112, null, 95, 100, 'Follow-up'),
+  HD('demo-hd-11', 'Nexus AI', 'legal_loopin', 'watch', 'Data residency question', 'Answered with the region options.', 'gmail', 70, null, 88, 60, 'Escalation'),
+  HD('demo-hd-12', 'Cobalt Health', 'invoice_delay', 'watch', 'First invoice queried by AP', 'Resolved with a corrected PO number.', 'gmail', 38, null, 91, 30, 'Invoice chase'),
 ]
 
 // ---------------------------------------------------------------- people

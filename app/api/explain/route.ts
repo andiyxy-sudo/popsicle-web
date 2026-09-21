@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { orgIdsServer } from '@/lib/org'
 import * as M from '@/lib/metrics'
+import * as I from '@/lib/intel'
+import { myBook, scopeTo } from '@/lib/metricsData'
 
 // GET /api/explain?metric=at_risk|active|protected|commit|total_arr|account_arr|account_health|signal|rated_precision
 //     [&account=Acme%20Corp][&signal=<id>]  → Explanation
@@ -34,6 +36,11 @@ export async function GET(req: NextRequest) {
       if (row && Number(row.rated) > 0) ratings = [{ type: 'All signal types', useful: Number(row.useful), rated: Number(row.rated) }] } catch { /* optional */ }
   }
 
+  if (q.get('scope') === 'me') {
+    const demoUser = (claims.claims.email as string | undefined) === 'demo@popsicle-labs.app'
+    const names = await myBook(demoUser, claims.claims.sub as string, accts)
+    const sc = scopeTo(names, accts, sigs); accts = sc.accts; sigs = sc.sigs
+  }
   const x: M.Explanation | null =
     metric === 'at_risk' ? M.atRisk(accts, sigs)
     : metric === 'active' ? M.activeSignals(accts, sigs, now)
@@ -48,7 +55,11 @@ export async function GET(req: NextRequest) {
     : metric === 'accounts_medium' ? M.accountGroup('medium', accts, sigs)
     : metric === 'accounts_closing' ? M.accountGroup('closing', accts, sigs)
     : metric === 'avg_health' ? M.avgHealth(accts)
-    : metric === 'caught' ? M.caughtEarly(accts, sigs)
+    : metric === 'caught' ? (q.get('days') ? I.windowed(accts, sigs, now, Number(q.get('days'))).caught : M.caughtEarly(accts, sigs))
+    : metric === 'risk_change' ? I.riskChange(accts, sigs, now, Number(q.get('days')) || 30)
+    : metric === 'holding' ? I.holding(accts, sigs, now, Number(q.get('days')) || 30)
+    : metric === 'speed' ? I.speed(accts, sigs, now, Number(q.get('days')) || 30)
+    : metric === 'saves' ? I.windowed(accts, sigs, now, Number(q.get('days')) || 30).saves
     : metric === 'cases' ? M.activeCases(accts, sigs)
     : metric === 'actions_ready' ? M.actionsReady(accts, sigs)
     : metric === 'new_today' ? M.newToday(accts, sigs, now)

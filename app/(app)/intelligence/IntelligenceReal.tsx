@@ -15,6 +15,8 @@ import type { IntelModel } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AskThis } from '@/components/agent/AskThis'
 import { X } from '@/components/explain/Explain'
+import * as MX from '@/lib/metrics'
+import * as IX from '@/lib/intel'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -237,7 +239,20 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
   // Demo: the 30-day model is the source of truth; 60 and 90 days widen the window
   // (more weeks on the chart, more signals and actions, larger stabilized totals,
   // a bigger climb since the first week). Live: the window feeds the query filter.
-  const m = demo ? scaleDemo(demo, range) : buildLiveModel(signals, accounts, range)
+  const m0 = demo ? scaleDemo(demo, range) : buildLiveModel(signals, accounts, range)
+  // v11.119: the headline figures, computed for the selected window by lib/intel (demo and live alike),
+  // so each one matches what its explanation shows
+  const m = (() => {
+    const A = accounts as unknown as MX.Acct[], S = signals as unknown as MX.Sig[]
+    const now = demo ? (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })() : Date.now()
+    const rc = IX.riskChange(A, S, now, range), h = IX.holding(A, S, now, range), sp = IX.speed(A, S, now, range), w = IX.windowed(A, S, now, range)
+    const q = MX.protectedRevenue(A, S)
+    return {
+      ...m0, riskDeltaPct: rc.value, driver: rc.driver ?? m0.driver, holdingPct: h.value, fasterDays: sp.value > 0 ? sp.value : 0,
+      protectedTotal: q.value, caughtEarly: w.caught.value, recovered: q.parts.length,
+      hero: m0.hero ? { ...m0.hero, protectedTotal: q.value, caughtEarly: w.caught.value, recovered: q.parts.length, fasterDays: sp.value > 0 ? sp.value : 0 } : m0.hero,
+    }
+  })()
   const srcTotal = m.sources.reduce((a, s) => a + s.n, 0)
   const srcMax = Math.max(1, ...m.sources.map(s => s.n))
   const renewTotal = m.renewals.reduce((a, r) => a + r.value, 0)
@@ -258,9 +273,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {/* narrative */}
       <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
         {m.riskDeltaPct !== 0
-          ? <>New risk is being added <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}>{Math.abs(m.riskDeltaPct)}% {m.riskDeltaPct > 0 ? 'faster' : 'slower'}</span> than {m.weeks.length === 8 ? 'eight' : m.weeks.length === 12 ? 'twelve' : 'sixteen'} weeks ago{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
-          : <>New risk is flat on {m.weeks.length} weeks ago.{' '}</>}
-        <span style={{ color: MUTED }}>Interventions are holding at {m.holdingPct}%, and Popsicle has protected <span style={{ color: ACCENT }}>{fmtMoney(m.protectedTotal)}</span> this quarter.</span>
+          ? <>Revenue at risk is {m.riskDeltaPct > 0 ? 'up' : 'down'} <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}><X m="risk_change" days={range}>{Math.abs(m.riskDeltaPct)}%</X></span> in the last {range} days{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
+          : <>Revenue at risk is flat over the last {range} days.{' '}</>}
+        <span style={{ color: MUTED }}>Interventions are holding at <X m="holding" days={range}>{m.holdingPct}%</X>, and Popsicle has protected <span style={{ color: ACCENT }}>{fmtMoney(m.protectedTotal)}</span> this quarter.</span>
       </h1>
 
       {m.bullets.length > 0 && (
@@ -489,13 +504,13 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
             </div>
             <div>
               <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: GREEN, lineHeight: 1 }}><X m="protected">{m.recovered}</X></div>
-              <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · <X m="caught">{m.caughtEarly}</X> caught early</div>
+              <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>deals recovered · <X m="caught" days={range}>{m.caughtEarly}</X> caught early</div>
             </div>
           </div>
           {m.fasterDays > 0 && (
             <div style={{ marginTop: 'var(--gap-m)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
-                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}>{m.fasterDays}</span>
+                <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 38, letterSpacing: '-.04em', color: INK, lineHeight: 1 }}><X m="speed" days={range}>{m.fasterDays}</X></span>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: FAINT }}>d</span>
               </div>
               <div style={{ fontSize: 12.5, color: MUTED, marginTop: 8 }}>faster response vs last quarter</div>

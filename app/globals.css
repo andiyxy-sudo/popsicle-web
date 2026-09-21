@@ -2985,3 +2985,46 @@ body[data-modal="1"] .agent-card { display: none; }
 .rp-events .since-ev { grid-template-columns: 10px 130px minmax(0,1fr) auto; }
 .rp-none { font-size: 13px; color: #8E8983; padding: 8px 0; }
 @media (max-width: 720px) { .rp-cards { grid-template-columns: repeat(2, minmax(0,1fr)); } .since-ev { grid-template-columns: 10px 1fr auto; } .since-ev-acct { display: none; } }
+
+/* v11.119: explain panel, refined */
+.xp-panel { width: min(440px, calc(100vw - 24px)) !important; padding: 18px 20px 16px; border-radius: 18px;
+  background: linear-gradient(180deg, #FFF6EF 0, #FFFDFA 132px); border: 1px solid rgba(232,90,37,.12);
+  box-shadow: 0 32px 72px -28px rgba(120,52,18,.32), 0 2px 10px rgba(14,13,11,.05); }
+.xp-top { display: flex; justify-content: space-between; align-items: center; }
+.xp-close { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; border: 0; background: rgba(14,13,11,.05); color: #6B6660; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.xp-close:hover { background: rgba(232,90,37,.12); color: #E85A25; }
+.xp-title { margin-top: 14px; font-size: 13px; font-weight: 500; color: #6B6660; }
+.xp-value { font-size: 36px; margin-top: 2px; }
+.xp-comp { display: flex; gap: 3px; height: 8px; margin-top: 14px; }
+.xp-comp > span { border-radius: 99px; min-width: 6px; }
+.xp-def { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,.7); border: 1px solid rgba(14,13,11,.05); color: #6B6660; font-size: 12.5px; line-height: 1.55; }
+.xp-def svg { flex: none; margin-top: 2px; color: #B3AAA0; }
+.xp-parts { margin-top: 8px; }
+.xp-node { padding: 11px 0; }
+.xp-swatch { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+.xp-share { margin-left: 8px; font-size: 11.5px; font-weight: 500; color: #A7A19A; }
+.xp-row-note { padding-left: 16px; }
+.xp-kids { margin-left: 16px; }
+.xp-ev { background: #fff; border: 1px solid rgba(14,13,11,.06); border-radius: 12px; padding: 11px 12px; box-shadow: 0 1px 2px rgba(14,13,11,.03); }
+.xp-ev-top { display: flex; gap: 10px; align-items: flex-start; }
+.xp-ev-top .xp-ev-title { flex: 1; min-width: 0; }
+.xp-src { width: 20px; height: 20px; border-radius: 6px; flex: none; display: grid; place-items: center; color: #fff; font-size: 10.5px; font-weight: 700; margin-top: 1px; }
+.xp-ev-quote { margin-left: 30px; }
+.xp-ev-meta { margin-left: 30px; }
+.xp-ev-meta .xp-pill { display: none; }
+.xp-sum { margin-top: 6px; }
+
+/* ═════════ v11.119 ROLE LENSES ═════════ */
+.lens { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 16px 0 2px; font-family: 'Inter', system-ui, sans-serif; }
+.lens-lbl { font-size: 12px; font-weight: 500; color: #8E8983; }
+.lens-seg { display: inline-flex; background: rgba(14,13,11,.05); border-radius: 99px; padding: 3px; }
+.lens-seg button { font: inherit; font-size: 12.5px; font-weight: 600; color: #6B6660; background: transparent; border: 0; border-radius: 99px; padding: 6px 14px; cursor: pointer; transition: background .18s ease, color .18s ease, box-shadow .18s ease; }
+.lens-seg button:hover { color: #17150F; }
+.lens-seg button.on { background: #fff; color: #17150F; box-shadow: 0 1px 3px rgba(14,13,11,.12), 0 0 0 1px rgba(14,13,11,.04); }
+.lens-q { font-size: 12.5px; color: #8E8983; }
+.lens-strip { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); column-gap: 32px; margin-top: 18px; border-top: 1px solid var(--rule-strong, #0E0D0B); animation: xpIn .3s ease both; }
+.lens-tile { padding: 22px 0 18px; border-bottom: 1px solid var(--hairline, #EFEAE1); min-width: 0; }
+.lens-tile-k { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.6px; text-transform: uppercase; color: var(--ink-faint, #A09C97); }
+.lens-tile-v { font-family: 'Outfit', sans-serif; font-weight: 700; letter-spacing: -.045em; font-size: 40px; line-height: 1; margin-top: 14px; font-variant-numeric: tabular-nums; }
+.lens-tile-s { font-size: 12.5px; color: var(--ink-muted, #5C5855); margin-top: 12px; }
+@media (max-width: 900px) { .lens-strip { grid-template-columns: repeat(2, minmax(0,1fr)); } }

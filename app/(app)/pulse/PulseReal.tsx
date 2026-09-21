@@ -16,6 +16,7 @@ import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import * as MX from '@/lib/metrics'
 import { SinceBar } from '@/components/changes/SinceBar'
+import { LensSwitcher, LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
 
 export type PulseStrip = {
@@ -358,13 +359,11 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
 
 
 // Shared health formula: 100 minus open risk, plus positive momentum.
-function computeHealth(signals: Signal[], accounts: Account[]): number {
-  const open = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
-  const nHigh = open.filter(sg => sg.severity === 'high').length
-  const nWatch = open.filter(sg => sg.severity === 'watch').length
-  const nPos = signals.filter(sg => sg.severity === 'positive').length
-  const nRiskAcct = accounts.filter(a => a.risk_level === 'high').length
-  return Math.max(20, Math.min(98, 100 - nHigh * 8 - nWatch * 3 - nRiskAcct * 6 + nPos * 2))
+// Pipeline health: the plain average of the accounts' health scores, the same figure as
+// Portfolio's "avg health" and the one its explanation breaks down (lib/metrics avgHealth).
+// (It used to subtract points per signal, which collapses to the floor at realistic volume.)
+function computeHealth(_signals: Signal[], accounts: Account[]): number {
+  return MX.avgHealth(accounts as unknown as MX.Acct[]).value
 }
 
 // Late commitments: the quiet grey panel under the headline. Demo mode shows
@@ -715,9 +714,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const highs = open.filter(sg => sg.severity === 'high')
   const positives = signals.filter(sg => sg.severity === 'positive')
   const health = computeHealth(signals, accounts)
-  const riskByAcct = new Map<string, number>()
-  for (const sg of open) if (sg.account_name && sg.risk_amount) riskByAcct.set(sg.account_name, (riskByAcct.get(sg.account_name) || 0) + Number(sg.risk_amount))
-  const atRiskTotal = Array.from(riskByAcct.values()).reduce((a, b) => a + b, 0)
+  const atRiskX = MX.atRisk(accounts as unknown as MX.Acct[], signals as unknown as MX.Sig[])
+  const atRiskTotal = atRiskX.value
   const protectedVal = exposureOf(handled)
   const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
   const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
@@ -729,19 +727,20 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [inboxOpen, setInboxOpen] = useState(false)
   // deltas on the strip are measured against your last visit (or the start of the week), from replayed data
   const since = useChanges('pulse')
+  const [lens, setLens] = useLens(accounts.some(a => String(a.id).startsWith('demo-')))
 
   useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
 
   const narrative = (() => {
     const deltaTxt = healthDelta ? `, ${healthDelta.pts > 0 ? 'up' : 'down'} ${Math.abs(healthDelta.pts)} ${healthDelta.label.replace('vs ', 'since ')}` : ''
-    const riskAccts = riskByAcct.size
+    const riskAccts = atRiskX.parts.length
     return (
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920 }}>
-        Pipeline health is <span style={{ color: 'var(--accent-hot, #FF6B35)' }}>{health}</span>{deltaTxt}.{' '}
+        Pipeline health is <span style={{ color: 'var(--accent-hot, #FF6B35)' }}><X m="avg_health">{health}</X></span>{deltaTxt}.{' '}
         <span style={{ color: 'var(--ink-muted)' }}>
           {atRiskTotal > 0 && riskAccts > 0
-            ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}>{formatCurrency(atRiskTotal)}</span> of risk{highs.length > 0 ? <> and need <span style={{ color: 'var(--good, #2f8f5b)' }}>you</span> today</> : null}.</>
+            ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}><X m="at_risk">{formatCurrency(atRiskTotal)}</X></span> of risk{highs.length > 0 ? <> and need <span style={{ color: 'var(--good, #2f8f5b)' }}>you</span> today</> : null}.</>
             : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
             : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
             : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
@@ -869,6 +868,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         </div>
       </div>
       <SinceBar screen="pulse" />
+      <LensSwitcher lens={lens} onChange={setLens} />
 
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />
@@ -878,7 +878,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {/* Today / Needs attention card retired (v11.33): late commitments live in the panel under the headline */}
 
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}
-      {(() => {
+      {lens !== 'cro' ? <LensStrip lens={lens} /> : (() => {
         const MONO = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
         const big = (color: string) => ({ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, fontVariantNumeric: 'tabular-nums' as const, color })
         const sub = { fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 12 }
@@ -898,7 +898,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} /></X>{(() => { const d = since ? since.changes.after.atRisk - since.changes.before.atRisk : 0; return d ? delta(`${d > 0 ? '+' : '\u2212'}${formatCurrency(Math.abs(d))} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, d > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)') : null })()}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big(st.atRisk > 0 ? 'var(--critical, #c43d2b)' : 'var(--ink)')} /></X>{(() => { const d = since ? since.changes.after.atRisk - since.changes.before.atRisk : 0; return d ? delta(`${d > 0 ? '+' : '\u2212'}${formatCurrency(Math.abs(d))} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, d > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)') : null })()}</div>
                 <div style={sub}>{st.high} high-risk accounts · {st.med} medium · {st.low} low</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
