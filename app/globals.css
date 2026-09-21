@@ -2806,3 +2806,19 @@ body[data-modal="1"] .agent-card { display: none; }
 .dock-sheet .brief-row-t { font-size: 14px; line-height: 1.45; }
 .dock-sheet .note-view, .dock-sheet .note-quote { font-size: 13.5px; }
 .agent-card .note-head, .agent-card .note.compact .note-head { font-size: 14px; line-height: 1.45; letter-spacing: -.005em; }
+
+
+/* v11.99: summon by hover. Any row with .askable reveals "Ask" on hover */
+.askable { position: relative; }
+.ask-this { position: absolute; right: 0; top: 50%; transform: translateY(-50%) translateX(6px); opacity: 0; pointer-events: none;
+  display: inline-flex; align-items: center; gap: 7px; font: inherit; font-size: 12px; font-weight: 600; padding: 6px 11px; cursor: pointer; z-index: 3;
+  background: var(--paper, #FBF8F3); color: #E85A25; border: 1px solid rgba(232,90,37,.35); border-radius: var(--toggle-radius, 0px);
+  box-shadow: 0 8px 20px -10px rgba(14,13,11,.35); transition: opacity .15s ease, transform .15s ease, background .15s ease; }
+.askable:hover > .ask-this, .askable:focus-within > .ask-this, .ask-this:focus-visible { opacity: 1; pointer-events: auto; transform: translateY(-50%); }
+.ask-this:hover { background: #FF6B35; color: #fff; border-color: #FF6B35; }
+.ask-this-mark { width: 6px; height: 6px; background: currentColor; flex: none; }
+@media (hover: none) { .ask-this { opacity: 1; pointer-events: auto; transform: translateY(-50%); position: static; margin-top: 8px; } }
+
+/* rows that end in an action button: the Ask chip sits just left of it, never on top */
+.ask-offset > .ask-this { right: 142px; }
+@media (max-width: 900px) { .ask-offset > .ask-this { right: 0; } }

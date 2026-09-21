@@ -18,6 +18,7 @@ type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { AskThis } from '@/components/agent/AskThis'
 
 interface DBSignal {
   id: string
@@ -536,11 +537,12 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row"
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset"
               style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
+              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this signal'}. Is this real, and what should I do?`} account={s.account_name} />
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>

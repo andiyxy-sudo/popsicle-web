@@ -12,6 +12,7 @@ import type { Account, Signal } from '@/types'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency } from '@/lib/utils'
+import { AskThis } from '@/components/agent/AskThis'
 
 const STAGE_WEIGHT: Array<[RegExp, number]> = [
   [/closed won|expansion/i, 1],
@@ -315,8 +316,9 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
             {moverCards.map(m => {
               const tone = m.tone === 'critical' ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)'
               return (
-                <div key={m.name} className="stat-cell" onClick={() => router.push(`/accounts/${encodeURIComponent(m.name)}`)}
+                <div key={m.name} className="stat-cell askable" onClick={() => router.push(`/accounts/${encodeURIComponent(m.name)}`)}
                   style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 14, padding: '22px 0 20px', cursor: 'pointer' }}>
+                  <AskThis q={`Is the ${m.name} forecast real? What would move it?`} account={m.name} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.name}</span>

@@ -88,8 +88,17 @@ export function AskDock() {
     else if (a.ask) { setAsk(a.ask); setTimeout(() => inputRef.current?.focus(), 0) }
   }
 
-  async function send() {
-    const q = ask.trim()
+  useEffect(() => {
+    const onAsk = (e: Event) => {
+      const d = (e as CustomEvent<{ q: string; account?: string }>).detail
+      if (d?.q) sendRef.current(d.q, d.account)
+    }
+    window.addEventListener('dock:ask', onAsk)
+    return () => window.removeEventListener('dock:ask', onAsk)
+  }, [])
+
+  async function send(override?: string, focusAccount?: string) {
+    const q = (override ?? ask).trim()
     if (!q || busy) return
     const next: Msg[] = [...msgs, { role: 'user', content: q }]
     setMsgs(next); setAsk(''); setOpen(true); setBusy(true); followRef.current = true
@@ -98,7 +107,7 @@ export function AskDock() {
     const live = () => gen.current === my
     try {
       const r = await fetch('/api/ask', { method: 'POST', headers: { 'content-type': 'application/json' }, signal: c.signal,
-        body: JSON.stringify({ messages: next, stream: true, focus: { account, screen } }) })
+        body: JSON.stringify({ messages: next, stream: true, focus: { account: focusAccount ?? account, screen: focusAccount ? undefined : screen } }) })
       if (!live()) return
       let answer = ''
       const ct = r.headers.get('content-type') || ''
@@ -122,6 +131,9 @@ export function AskDock() {
     }
     if (live()) { setBusy(false); setStreaming(false) }
   }
+
+  const sendRef = useRef(send)
+  sendRef.current = send
 
   function startFresh() {
     gen.current += 1; ctrl.current?.abort()
@@ -192,7 +204,7 @@ export function AskDock() {
           onFocus={() => { if (hasConvo) setOpen(true) }}
           placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `Ask about ${account}` : 'Ask Popsicle anything about your pipeline'} />
         {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
-        <button onClick={send}>Ask</button>
+        <button onClick={() => send()}>Ask</button>
       </div>
     </div>
   )

@@ -14,6 +14,7 @@ import type { Account, Signal } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import type { TeamModel, TeamRep, TeamQueueItem } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AskThis } from '@/components/agent/AskThis'
 
 const ACTION_FILTERS = ['All', 'Critical only', 'My accounts'] as const
 
@@ -432,8 +433,9 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
             {feed.map((a, i) => {
               const rep = repBy(a.rep)
               return (
-                <div key={i} className="tbl-row" onClick={() => router.push(`/accounts/${encodeURIComponent(a.account)}`)}
+                <div key={i} className="tbl-row askable" onClick={() => router.push(`/accounts/${encodeURIComponent(a.account)}`)}
                   style={{ display: 'grid', gridTemplateColumns: '32px minmax(0,1fr) auto', gap: 16, alignItems: 'start', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
+                  <AskThis q={`Did ${a.rep}'s action on ${a.account} work? What should happen next?`} account={a.account} />
                   <Avatar rep={rep} size={32} />
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>

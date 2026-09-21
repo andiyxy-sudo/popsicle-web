@@ -13,6 +13,7 @@ import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
 import type { IntelModel } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { AskThis } from '@/components/agent/AskThis'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -195,8 +196,8 @@ function Pills<T extends string>({ items, value, onChange }: { items: readonly T
     </div>
   )
 }
-const Row = ({ children, pad = '14px 0' }: { children: React.ReactNode; pad?: string }) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: pad, borderBottom: `1px solid ${HAIR}`, fontSize: 14, color: INK }}>{children}</div>
+const Row = ({ children, pad = '14px 0', ask }: { children: React.ReactNode; pad?: string; ask?: { q: string; account?: string } }) => (
+  <div className={ask ? 'askable' : undefined} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, padding: pad, borderBottom: `1px solid ${HAIR}`, fontSize: 14, color: INK }}>{children}{ask && <AskThis q={ask.q} account={ask.account} />}</div>
 )
 
 // ---------------------------------------------------------------- screen
@@ -319,7 +320,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Key movement drivers</div>
           {m.drivers.length === 0 && <EmptyState line="No movement to explain yet." hint="Drivers appear once signals carry a dollar amount at risk." compact />}
           {m.drivers.map(d => (
-            <Row key={d.k}>
+            <Row key={d.k} ask={{ q: `What is driving "${d.k}" in my risk this period, and what should I do about it?` }}>
               <span>{d.k}</span>
               <span style={{ ...MONO_NUM, fontSize: 13, color: d.v < 0 ? GREEN : RED }}>{d.v < 0 ? '+' : ''}{fmtMoney(Math.abs(d.v))}</span>
             </Row>
@@ -555,7 +556,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
           {m.renewals.map(r => {
             const s = renewMeta[r.status]
             return (
-              <Row key={r.account} pad="13px 0">
+              <Row key={r.account} pad="13px 0" ask={{ q: `Is the ${r.account} renewal safe? What could still go wrong?`, account: r.account }}>
                 <span style={{ display: 'inline-flex', alignItems: 'baseline', gap: 10, minWidth: 0 }}>
                   <span style={{ color: INK, fontWeight: 500, whiteSpace: 'nowrap' }}>{r.account}</span>
                   <span style={{ ...MONO_NUM, fontSize: 11, color: FAINT, whiteSpace: 'nowrap' }}>{r.days}d · {fmtMoney(r.value)}</span>

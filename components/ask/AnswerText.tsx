@@ -27,7 +27,33 @@ export function splitNumbered(t: string): { n: string; title: string; figure: st
   return { n: m[1], title, figure }
 }
 
-export function Answer({ text }: { text: string }) {
+// v11.99: the verdict line, rendered as the first thing you read
+const VERDICT_TONE: Array<[RegExp, string]> = [
+  [/^probably not\b/i, '#c43d2b'], [/^no\b/i, '#c43d2b'], [/^too early/i, '#d38b1d'], [/^probably\b/i, '#2f8f5b'], [/^yes\b/i, '#2f8f5b'],
+]
+export function splitVerdict(text: string): { verdict: string; reason: string; tone: string; rest: string } | null {
+  const lines = text.replace(/^\s+/, '').split('\n')
+  const m = /^\**\s*verdict\s*:?\s*\**\s*(.+)$/i.exec(lines[0] ?? '')
+  if (!m) return null
+  const body = m[1].replace(/\*\*/g, '').trim()
+  const [v, ...r] = body.split(/\s+[-–—]\s+/)
+  const tone = VERDICT_TONE.find(([re]) => re.test(v.trim()))?.[1] ?? '#0E0D0B'
+  return { verdict: v.trim().replace(/\.$/, ''), reason: r.join(' - ').trim(), tone, rest: lines.slice(1).join('\n').replace(/^\s+/, '') }
+}
+export function VerdictBanner({ verdict, reason, tone }: { verdict: string; reason: string; tone: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', padding: '12px 0 14px', marginBottom: 12, borderBottom: '1px solid rgba(14,13,11,.12)' }}>
+      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)' }}>Verdict</span>
+      <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: '-.03em', color: tone }}>{verdict}</span>
+      {reason && <span style={{ fontSize: 14.5, color: 'var(--ink-muted, #5C5855)' }}>{reason}</span>}
+    </div>
+  )
+}
+
+export function Answer({ text: raw }: { text: string }) {
+  const vd = splitVerdict(raw)
+  const text = vd ? vd.rest : raw
+  if (vd && !text) return <VerdictBanner {...vd} />
   const lines = text.split('\n')
   const out: React.ReactNode[] = []
   let para: string[] = []
@@ -66,7 +92,7 @@ export function Answer({ text }: { text: string }) {
     para.push(l)
   })
   flush(9999)
-  return <div>{out}</div>
+  return <div>{vd && <VerdictBanner {...vd} />}{out}</div>
 }
 
 

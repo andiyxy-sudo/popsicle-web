@@ -11,6 +11,7 @@ import { CountUp } from '@/components/ui/CountUp'
 import { useEscape } from '@/components/ui/useEscape'
 import { healthTone, formatCurrency, formatRelativeTime, formatWhen } from '@/lib/utils'
 import { orgIdsBrowser } from '@/lib/org'
+import { AskThis } from '@/components/agent/AskThis'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -988,7 +989,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 <span style={{ textAlign: 'center' }}>Stage</span><span>Top Signal</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span>
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
-                <div key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
+                <div className="askable ask-offset" key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
+                  <AskThis q={`Why does ${a.name} need me today, and what should I do first?`} account={a.name} />
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>

@@ -29,7 +29,8 @@ export async function proxy(request: NextRequest) {
   const user = claims ? { id: claims.claims.sub } : null
   const { pathname } = request.nextUrl
 
-  const isPublic = pathname.startsWith('/login') || pathname.startsWith('/auth')
+  // /api/slack/* is called by Slack, which has no session; those routes verify Slack's signature themselves
+  const isPublic = pathname.startsWith('/login') || pathname.startsWith('/auth') || pathname.startsWith('/api/slack/')
 
   if (!user && !isPublic && pathname !== '/') {
     // Preserve the full destination (path + query) through the login flow, so

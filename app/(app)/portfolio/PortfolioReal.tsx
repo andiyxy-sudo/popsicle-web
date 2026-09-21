@@ -11,6 +11,7 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 
 import { buildA360 } from '@/lib/demo-accounts'
 import { orgIdsBrowser } from '@/lib/org'
+import { AskThis } from '@/components/agent/AskThis'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -252,8 +253,9 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} onClick={() => openA360(a)} className="tbl-row"
+                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
+                  <AskThis q={`Is ${a.name} going to close, and what's the biggest risk?`} account={a.name} />
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}>{h}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
