@@ -11,27 +11,55 @@ const SITE = () => (process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.popsicle
 const money = (v?: unknown) => { const n = Number(v || 0); return n >= 1e6 ? `$${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${n}` }
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
-// Who owns this channel, and which account it's linked to: the same table slack-events uses
-// (slack_tracked_channels), and the bot token from integrations.access_token.
-async function findChannel(channel: string) {
-  const db = admin()
-  const { data: trackers } = await db.from('slack_tracked_channels').select('user_id, channel_name, linked_account_id').eq('channel_id', channel).eq('is_tracked', true)
-  const rows = (trackers ?? []) as Array<{ user_id: string; channel_name: string | null; linked_account_id: string | null }>
-  for (const t of rows) {
-    const { data: integ } = await db.from('integrations').select('access_token').eq('user_id', t.user_id).eq('provider', 'slack').eq('is_active', true).maybeSingle()
-    const token = (integ as { access_token?: string } | null)?.access_token
-    if (token) return { token: String(token), ownerId: t.user_id, channelName: t.channel_name ?? '', linkedAccountId: rows.find(r => r.linked_account_id)?.linked_account_id ?? null }
-  }
-  return null
+// v11.109: every Slack key that could answer in this channel, tested with Slack before use.
+// A channel can be tracked by several Popsicle users (and a workspace connected more than once),
+// and some of those keys may be old or revoked. We ask Slack which ones still work (auth.test),
+// prefer a bot key, and use that.
+type Candidate = { token: string; ownerId: string; channelName: string; linkedAccountId: string | null; source: string }
+
+function tokensIn(row: Row): Array<{ token: string; kind: string }> {
+  const m = (row.metadata ?? {}) as Row
+  const bot = (m.bot ?? {}) as Row
+  return [
+    { token: row.access_token, kind: 'access_token' }, { token: row.bot_token, kind: 'bot_token' },
+    { token: m.bot_token, kind: 'metadata.bot_token' }, { token: m.access_token, kind: 'metadata.access_token' },
+    { token: bot.bot_access_token, kind: 'metadata.bot.bot_access_token' },
+  ].filter(t => typeof t.token === 'string' && (t.token as string).trim().length > 10).map(t => ({ token: (t.token as string).trim(), kind: t.kind }))
 }
 
-// Fallback when the channel isn't tracked: the workspace's Slack connection, found by team id
-async function findWorkspace(team: string) {
-  const { data } = await admin().from('integrations').select('*').eq('provider', 'slack').eq('is_active', true).limit(200)
-  const rows = (data ?? []) as Row[]
-  const hit = rows.find(r => JSON.stringify(r.metadata ?? {}).includes(team) || r.team_id === team) ?? (rows.length === 1 ? rows[0] : undefined)
-  const token = hit?.access_token as string | undefined
-  return hit && token ? { token: String(token), ownerId: hit.user_id as string, channelName: '', linkedAccountId: null as string | null } : null
+async function candidates(channel: string, team: string): Promise<{ list: Candidate[]; tracked: boolean }> {
+  const db = admin()
+  const { data: trackers } = await db.from('slack_tracked_channels').select('user_id, channel_name, linked_account_id').eq('channel_id', channel).eq('is_tracked', true)
+  const tr = (trackers ?? []) as Array<{ user_id: string; channel_name: string | null; linked_account_id: string | null }>
+  const linked = tr.find(t => t.linked_account_id)?.linked_account_id ?? null
+  const chanName = tr.find(t => t.channel_name)?.channel_name ?? ''
+  const { data: integs } = await db.from('integrations').select('*').eq('provider', 'slack').eq('is_active', true).limit(200)
+  const rows = ((integs ?? []) as Row[])
+    // the channel's trackers first, then any connection to the same workspace
+    .filter(r => tr.some(t => t.user_id === r.user_id) || JSON.stringify(r.metadata ?? {}).includes(team) || r.team_id === team)
+    .sort((x, y) => (tr.some(t => t.user_id === y.user_id) ? 1 : 0) - (tr.some(t => t.user_id === x.user_id) ? 1 : 0)
+      || String(y.connected_at ?? y.updated_at ?? '').localeCompare(String(x.connected_at ?? x.updated_at ?? '')))
+  const list: Candidate[] = []
+  for (const r of rows) for (const t of tokensIn(r)) {
+    if (!list.some(c => c.token === t.token)) list.push({ token: t.token, ownerId: String(r.user_id), channelName: chanName, linkedAccountId: linked, source: t.kind })
+  }
+  return { list, tracked: tr.length > 0 }
+}
+
+async function workingKey(channel: string, team: string) {
+  const { list, tracked } = await candidates(channel, team)
+  let tried = 0
+  const good: Array<Candidate & { bot: boolean }> = []
+  for (const c of list) {
+    tried++
+    try {
+      const r = await fetch('https://slack.com/api/auth.test', { method: 'POST', headers: { authorization: `Bearer ${c.token}` } })
+      const j = await r.json() as Row
+      if (j.ok) good.push({ ...c, bot: !!j.bot_id || c.token.startsWith('xoxb-') })
+    } catch { /* try the next */ }
+  }
+  const pick = good.find(g => g.bot) ?? good[0]
+  return { pick, tried, valid: good.length, tracked }
 }
 
 async function slack(token: string, method: string, body: Record<string, unknown>) {
@@ -43,10 +71,16 @@ async function channelName(token: string, channel: string) {
 }
 
 export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }): Promise<string> {
-  const tracked = await findChannel(ev.channel)
-  const ws = tracked ?? await findWorkspace(ev.team)
-  if (!ws) { console.warn('[popsicle-slack] no Slack connection found for channel', ev.channel, 'team', ev.team); return 'no Slack connection found for this channel or workspace (reconnect Slack under Integrations)' }
-  console.log('[popsicle-slack] answering', { channel: ev.channel, tracked: !!tracked })
+  const { pick, tried, valid, tracked } = await workingKey(ev.channel, ev.team)
+  if (!pick) {
+    console.warn('[popsicle-slack] no working Slack key', { tried })
+    return tried === 0
+      ? 'no Slack connection found for this channel or workspace (connect Slack under Integrations)'
+      : `none of the ${tried} saved Slack key${tried === 1 ? '' : 's'} is accepted by Slack any more (reconnect Slack under Integrations, then select this channel again)`
+  }
+  const ws = pick
+  const keyNote = `using ${pick.bot ? 'the bot key' : 'a user key'} (${pick.source}); ${valid} of ${tried} saved key${tried === 1 ? '' : 's'} valid`
+  console.log('[popsicle-slack] answering', { channel: ev.channel, tracked, keyNote })
   const db = admin()
 
   // the org that owns the workspace
@@ -57,7 +91,7 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   const question = ev.text.replace(/<@[A-Z0-9]+(\|[^>]+)?>/g, ' ').replace(/(^|\s)@popsicle\b[:,]?/gi, ' ').replace(/^\s*popsicle[\s,:]+/i, '').replace(/\s+/g, ' ').trim()
   if (!question) {
     const r0 = await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, for example: _is this going to close this quarter?_' })
-    return r0.ok ? 'posted a prompt (the question was empty)' : `Slack refused the reply: ${r0.error}`
+    return r0.ok ? `posted a prompt (the question was empty) · ${keyNote}` : `Slack refused the reply: ${r0.error} · ${keyNote}`
   }
 
   const [{ data: accounts }, { data: signals }, { data: commitments }] = await Promise.all([
@@ -119,8 +153,8 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
   if (!res.ok) {
     console.error('[popsicle-slack] Slack refused the reply:', res.error, '(not_in_channel = invite the bot; missing_scope = add chat:write and reinstall)')
     const hint = res.error === 'not_in_channel' ? ' (invite the bot: /invite @popsicle)' : res.error === 'missing_scope' ? ' (add chat:write to the bot scopes and reinstall)' : res.error === 'invalid_auth' || res.error === 'token_revoked' ? ' (reconnect Slack under Integrations)' : ''
-    return `Slack refused the reply: ${res.error}${hint}`
+    return `Slack refused the reply: ${res.error}${hint} · ${keyNote}`
   }
   console.log('[popsicle-slack] replied')
-  return aiError ? `posted a fallback reply because the ${aiError}` : `posted${acct ? ` (about ${acct.name})` : ''}${tracked ? '' : ' (channel not linked to an account)'}`
+  return (aiError ? `posted a fallback reply because the ${aiError}` : `posted${acct ? ` (about ${acct.name})` : ''}${tracked ? '' : ' (channel not linked to an account)'}`) + ` · ${keyNote}`
 }
