@@ -996,3 +996,9 @@ export const DEMO_THREADS: Record<string, { account: string; channel: string; su
     ],
   },
 }
+
+// What the demo rep did recently, and what happened since: the agent's follow-through.
+export const DEMO_FOLLOWUPS = [
+  { id: 'demo-fu-1', account: 'Brightwave', did: 'You sent Tom Okafor the ROI deck on Tuesday', since: 'He opened it three times and replied that finance is reviewing, back to you Friday', view: 'That is a yes forming. Leave it until Friday, then book the signing call', when: new Date(Date.now() - 2 * 86_400_000).toISOString() },
+  { id: 'demo-fu-2', account: 'TechVault Inc', did: 'You sent Kevin Cho the ROI package two days ago', since: 'He forwarded it to finance. The CFO has not opened it', view: 'Waiting will not change that. Offer Kevin a fifteen-minute walkthrough with the CFO this week', when: new Date(Date.now() - 2 * 86_400_000).toISOString() },
+]

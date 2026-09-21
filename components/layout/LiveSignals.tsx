@@ -5,17 +5,21 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AGENT_ENABLED } from '@/lib/agent/config'
 
-type Toast = { id: string; title: string; account?: string; severity?: string; source?: string; quote?: string }
+type Toast = { id: string; title: string; account?: string; severity?: string; source?: string; quote?: string; quoteBy?: string; judgment?: string; amount?: number }
 
 // Live signal toasts. Live mode subscribes to inserts on `signals` for this user,
 // so a signal surfaces the moment it is detected. Demo mode plays a short script
 // (first one ~40s after load, then every ~90s) so the real-time claim is visible
 // during a pitch. Each toast opens Account 360 on click.
 const DEMO_SCRIPT: Toast[] = [
-  { id: 'demo-live-1', title: 'Renewal pricing email opened again, still no reply', account: 'Acme Corp', severity: 'high', source: 'gmail', quote: '4th open by Sarah Chen · 0 replies in 8 days' },
-  { id: 'demo-live-2', title: 'Kevin Cho: CFO wants ROI numbers before approving', account: 'TechVault Inc', severity: 'watch', source: 'whatsapp', quote: '"Need to run this by our CFO first"' },
-  { id: 'demo-live-3', title: 'Dana Kim confirmed the Jan 28 close target', account: 'Vertex Systems', severity: 'positive', source: 'gmail', quote: 'Contract review in final stage' },
-  { id: 'demo-live-4', title: 'Legal hold confirmed in #axion-deal', account: 'Axion Partners', severity: 'high', source: 'slack', quote: '"3-5 week minimum delay. No workaround without security docs."' },
+  { id: 'demo-live-1', title: 'Sarah Chen opened the renewal email again, still no reply', account: 'Acme Corp', severity: 'high', source: 'gmail', amount: 480_000,
+    judgment: 'That is the fourth open in eight days. Repeated opens without a reply usually mean it is being discussed without you. Send the year-on-year breakdown today so the conversation has your numbers in it.' },
+  { id: 'demo-live-4', title: 'Legal hold confirmed in #axion-deal', account: 'Axion Partners', severity: 'high', source: 'slack', amount: 95_000,
+    quote: '3-5 week minimum delay. No workaround without security docs.', quoteBy: 'Rachel Voss',
+    judgment: 'Redlines that stall past day five add 18 days to close on average. The pre-approved redline is already five days late. Send it with SOC2 and the pen test summary in one message.' },
+  { id: 'demo-live-3', title: 'Dana Kim confirmed the January 28 close', account: 'Vertex Systems', severity: 'positive', source: 'gmail', amount: 175_000,
+    quote: 'Contract review is in the final stage. We are still aiming for the 28th.', quoteBy: 'Dana Kim',
+    judgment: 'On track. Put the two-week onboarding commitment in the contract as she asked, and this closes clean.' },
 ]
 const SRC: Record<string, string> = { gmail: 'Gmail', whatsapp: 'WhatsApp', slack: 'Slack', zoom: 'Zoom', hubspot: 'HubSpot', gcal: 'Calendar', fireflies: 'Fireflies' }
 
@@ -33,10 +37,10 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
 
   useEffect(() => {
     if (demo) {
-      let i = 0
-      const first = setTimeout(() => { push(DEMO_SCRIPT[i++ % DEMO_SCRIPT.length]) }, 40000)
-      const loop = setInterval(() => { push(DEMO_SCRIPT[i++ % DEMO_SCRIPT.length]) }, 90000)
-      return () => { clearTimeout(first); clearInterval(loop) }
+      // a colleague with judgment: three notes across a session, not a stream
+      const at = [45_000, 210_000, 420_000]
+      const timers = at.map((ms, i) => setTimeout(() => push(DEMO_SCRIPT[i]), ms))
+      return () => timers.forEach(clearTimeout)
     }
     const supabase = createClient()
     const channel = supabase

@@ -20,6 +20,7 @@ export async function GET() {
       firstName: 'Andy',
       accounts: d.DEMO_ACCOUNTS as never, signals: d.DEMO_SIGNALS as never,
       commitments: d.DEMO_LATE_COMMITMENTS.map(c => ({ id: c.id, text: c.text, account: c.account, daysLate: c.daysLate })),
+      followups: d.DEMO_FOLLOWUPS, read: d.DEMO_PULSE_STRIP.active,
     }))
   }
 
@@ -27,12 +28,26 @@ export async function GET() {
   const end = new Date(); end.setHours(23, 59, 59, 999)
   const [{ data: accounts }, { data: signals }, { data: cms }] = await Promise.all([
     supabase.from('accounts').select('id, name, value, risk_level, health_score, last_contact_date, close_date, owner').in('user_id', ids).limit(300),
-    supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(300),
+    supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(300),
     supabase.from('commitments').select('id, text, due_at, account_name').in('user_id', ids).eq('status', 'open').lte('due_at', end.toISOString()).limit(20),
   ])
   const commitments = ((cms ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null }>).map(c => ({
     id: c.id, text: c.text, account: c.account_name,
     daysLate: c.due_at ? Math.max(0, Math.floor((Date.now() - new Date(c.due_at).getTime()) / 86_400_000)) : 0,
   }))
-  return NextResponse.json(composeAgent({ firstName, accounts: (accounts ?? []) as never, signals: (signals ?? []) as never, commitments }))
+  // follow-through: signals handled in the last three days, and what the account did since
+  const sigs = (signals ?? []) as Array<{ id: string; account_name: string | null; title: string | null; status: string | null; created_at: string | null; handled_at?: string | null; handled_action?: string | null }>
+  const cutoff = Date.now() - 3 * 86_400_000
+  const followups = sigs.filter(s => s.status === 'handled' && s.handled_at && new Date(s.handled_at).getTime() > cutoff && s.account_name).slice(0, 3).map(s => {
+    const after = sigs.find(x => x.account_name === s.account_name && x.id !== s.id && x.created_at && s.handled_at && x.created_at > s.handled_at)
+    return {
+      id: s.id, account: s.account_name!, when: s.handled_at!,
+      did: `You ${String(s.handled_action || 'handled').toLowerCase()} on ${s.account_name}: ${s.title ?? 'a signal'}`,
+      since: after ? `Since then: ${after.title}` : 'Nothing back from them yet',
+      view: after ? 'Worth looking at before you reply again' : 'Give it a day before chasing',
+    }
+  })
+  const since = new Date(Date.now() - 86_400_000).toISOString()
+  const read = sigs.filter(s => s.created_at && s.created_at > since).length
+  return NextResponse.json(composeAgent({ firstName, accounts: (accounts ?? []) as never, signals: (signals ?? []) as never, commitments, followups, read }))
 }
