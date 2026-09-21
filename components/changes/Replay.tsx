@@ -144,6 +144,7 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
 
             <section className="rp3-day">
               <div className="rp3-sec-h"><h3>That day</h3><span>{p.events.length ? `${p.events.length} change${p.events.length === 1 ? '' : 's'}` : 'quiet'}</span></div>
+              <div className="rp3-day-list">
               {p.events.length === 0 && <div className="rp3-quiet">Nothing came in, and nothing moved.</div>}
               {p.events.map(e => (
                 <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose(); router.push(`/signals?signal=${e.id}`) }}>
@@ -153,6 +154,7 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
                   <span className="rp3-ev-m">{e.amount ? money(e.amount) : ''}</span>
                 </button>
               ))}
+              </div>
             </section>
           </>
         )}

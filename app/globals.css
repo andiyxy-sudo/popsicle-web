@@ -3459,3 +3459,21 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rp3-loading span:nth-child(2) { animation-delay: .15s; } .rp3-loading span:nth-child(3) { animation-delay: .3s; }
 @media (max-width: 760px) { .rp3 { padding: 20px; } .rp3-figs { grid-template-columns: repeat(2, minmax(0,1fr)); } .rp3-ev { grid-template-columns: 10px 1fr auto; } .rp3-ev-a { display: none; } }
 @media (prefers-reduced-motion: reduce) { .rp3, .rp3-story, .rp3-ev { animation: none; } }
+
+/* v11.126 */
+/* the number popup holds its place; scrolling inside a long one never drags the page behind it */
+.xpp { overscroll-behavior: contain; }
+/* review: the Ask button in the accent */
+.rv2-go { background: var(--accent, #E85A25) !important; color: #fff !important; }
+.rv2-go:not(:disabled):hover { background: #C94B24 !important; }
+/* the replay keeps one size from the first day to the last: fixed height, the story held to two
+   lines, and only the day's events scroll */
+.rp3 { height: min(900px, 92vh); display: flex; flex-direction: column; overflow: hidden !important; }
+.rp3 > * { flex: none; }
+.rp3-date { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-wrap: nowrap; }
+.rp3-story { min-height: 0; height: 3em; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.rp3-day { flex: 1 1 auto !important; min-height: 0; display: flex; flex-direction: column; }
+.rp3-day > .rp3-sec-h { flex: none; }
+.rp3-day-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
+.rp3-day-list::-webkit-scrollbar { display: none; }
+.rp3-loading { flex: 1 1 auto !important; }

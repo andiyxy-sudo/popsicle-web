@@ -64,7 +64,7 @@ function topSignalOf(sigs: SigLite[]): SigLite | null {
   const rank = (sv: string | null) => sv === 'high' ? 0 : sv === 'watch' ? 1 : 2
   return [...sigs].sort((x, y) => rank(x.severity) - rank(y.severity) || String(y.created_at).localeCompare(String(x.created_at)))[0] ?? null
 }
-type HeadStat = { n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean; m?: string }
+type HeadStat = { n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean; m?: string; color?: string }
 type DemoHeadline = { highCount: number; highValue: number; darkHours: number; closingName: string; healthyCount: number }
 const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink, #0E0D0B)' } as const
 const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -187,7 +187,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
           { n: String(high.length), lbl: `high risk · ${fmtVal(highVal)}`, tone: 'critical', m: 'accounts_high' },
           { n: String(medium.length), lbl: `medium · ${fmtVal(mediumVal)} exposure`, tone: 'warn', m: 'accounts_medium' },
           { n: String(closing.length), lbl: `closing or won · ${fmtVal(closingVal)}`, tone: 'good', m: 'accounts_closing' },
-          { n: avgHealth != null ? String(avgHealth) : '--', lbl: 'avg health', tone: 'ink', strong: true, m: 'avg_health' },
+          { n: avgHealth != null ? String(avgHealth) : '--', lbl: 'avg health', tone: 'ink', strong: true, m: 'avg_health', color: avgHealth != null ? healthTone(avgHealth) : undefined },
         ]
         return (
           <>
@@ -200,7 +200,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--rule-strong, #0E0D0B)', opacity: (statHover ?? stats.length - 1) === i ? 1 : 0, transition: 'opacity .18s ease' }} />
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.m ? <X m={st.m}>{st.n}</X> : st.n}</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color ?? TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.m ? <X m={st.m}>{st.n}</X> : st.n}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
               ))}
