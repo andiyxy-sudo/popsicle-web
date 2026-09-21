@@ -45,19 +45,20 @@ export function Presence({ userId, name, demo }: { userId: string; name: string;
   const initials = (n: string) => n.split(/\s+/).slice(0, 2).map(x => x[0]).join('').toUpperCase()
   const where = (p: Peer) => p.account ? p.account : (LABEL[p.screen] ?? p.screen)
 
+  // v11.91: lives in the ink sidebar, just above your own profile, instead of floating over content
   return (
-    <div className="presence-bar" style={{ position: 'fixed', left: 'calc(var(--sidebar-w, 216px) + 22px)', bottom: 22, zIndex: 40, display: 'flex', alignItems: 'center', gap: 10, pointerEvents: 'none' }}>
-      <div style={{ display: 'flex' }}>
-        {peers.slice(0, 4).map((p, i) => (
-          <span key={p.id} title={`${p.name} · ${where(p)}`}
-            style={{ width: 26, height: 26, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 10, color: '#fff', background: 'var(--ink, #0E0D0B)', border: '2px solid var(--paper, #FBF8F3)', marginLeft: i ? -8 : 0 }}>
-            {initials(p.name)}
+    <div className="sb-presence" aria-label="Teammates online">
+      <div className="sb-presence-label"><span className="sb-presence-live" />Online now</div>
+      {peers.slice(0, 4).map(p => (
+        <div key={p.id} className="sb-presence-row" title={`${p.name} · ${where(p)}`}>
+          <span className="sb-presence-av">{initials(p.name)}</span>
+          <span className="sb-presence-txt">
+            <span className="sb-presence-name">{p.name}</span>
+            <span className="sb-presence-where">{where(p)}</span>
           </span>
-        ))}
-      </div>
-      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.8px', color: 'var(--ink-faint)' }}>
-        {peers.length === 1 ? `${peers[0].name} · ${where(peers[0])}` : `${peers.length} teammates online`}
-      </span>
+        </div>
+      ))}
+      {peers.length > 4 && <div className="sb-presence-more">+{peers.length - 4} more</div>}
     </div>
   )
 }

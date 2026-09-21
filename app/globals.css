@@ -2711,3 +2711,18 @@ body[data-modal="1"] .agent-card { display: none; }
 .ask-fresh:hover { border-color: var(--ink, #0E0D0B); background: var(--paper, #FBF8F3); }
 .ask-fresh.danger { color: #fff; background: var(--ink, #0E0D0B); border-color: var(--ink, #0E0D0B); }
 .ask-fresh.danger:hover { background: #c43d2b; border-color: #c43d2b; }
+
+
+/* v11.91: teammates online, in the ink sidebar above your profile */
+.presence-bar { display: none !important; }
+.sb-presence { margin-top: auto; padding: 14px 24px 14px; border-top: 1px solid rgba(251,248,243,.1); color: #FBF8F3; animation: cardIn .4s ease both; }
+.sb-presence + .ed-sb-user { margin-top: 0 !important; }
+.sb-presence-label { display: flex; align-items: center; gap: 8px; font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: rgba(251,248,243,.45); margin-bottom: 10px; }
+.sb-presence-live { width: 6px; height: 6px; border-radius: 50%; background: #2f8f5b; box-shadow: 0 0 0 3px rgba(47,143,91,.2); }
+.sb-presence-row { display: flex; align-items: center; gap: 10px; padding: 5px 0; min-width: 0; }
+.sb-presence-av { width: 24px; height: 24px; border-radius: 50%; flex: none; display: grid; place-items: center; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 9.5px; color: #0E0D0B; background: #FBF8F3; position: relative; }
+.sb-presence-av::after { content: ''; position: absolute; right: -1px; bottom: -1px; width: 7px; height: 7px; border-radius: 50%; background: #2f8f5b; border: 1.5px solid #0E0D0B; }
+.sb-presence-txt { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
+.sb-presence-name { font-size: 12.5px; color: #FBF8F3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-presence-where { font-size: 11px; color: rgba(251,248,243,.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sb-presence-more { font-size: 11px; color: rgba(251,248,243,.45); margin-top: 4px; }
