@@ -30,6 +30,9 @@ export function AskDock() {
   // what the agent has said to you this session, shown above your questions
   const [said, setSaid] = useState<Said[]>([])
   const [expanded, setExpanded] = useState<string | null>(null)
+  // v11.112: questions worth asking about the page you're on
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const cacheRef = useRef<Record<string, string[]>>({})
   const [fresh, setFresh] = useState<string | null>(null)       // the newest item, briefly highlighted
   const gen = useRef(0)
   const ctrl = useRef<AbortController | null>(null)
@@ -41,6 +44,20 @@ export function AskDock() {
   const account = seg[0] === 'accounts' && seg[1] ? decodeURIComponent(seg[1]) : undefined
   const screen = account ? undefined : seg[0]
   const about = account ?? (screen ? LABEL[screen] ?? screen : undefined)
+
+  useEffect(() => {
+    const key = `${screen ?? ''}|${account ?? ''}`
+    if (cacheRef.current[key]) { setSuggestions(cacheRef.current[key]); return }
+    setSuggestions([])
+    let dead = false
+    const qs = new URLSearchParams({ screen: account ? 'account' : (screen || 'pulse') })
+    if (account) qs.set('account', account)
+    fetch(`/api/ask/suggest?${qs}`).then(r => r.ok ? r.json() : null).then((j: { questions?: string[] } | null) => {
+      if (dead || !j?.questions) return
+      cacheRef.current[key] = j.questions; setSuggestions(j.questions)
+    }).catch(() => {})
+    return () => { dead = true }
+  }, [screen, account])
 
   useEffect(() => { if (!loaded.current) return; try { sessionStorage.setItem('ask:dock', JSON.stringify(msgs.slice(-20))) } catch { /* ignore */ } }, [msgs])
   // follow a streaming answer only while you are reading at the bottom. The moment you
@@ -147,9 +164,10 @@ export function AskDock() {
   }
 
   const hasConvo = msgs.length > 0 || said.length > 0
+  const showSuggest = suggestions.length > 0 && !ask.trim() && !busy && !streaming
   return (
     <div className="dock" ref={dockRef}>
-      {open && hasConvo && (
+      {open && (hasConvo || showSuggest) && (
         <div className="dock-sheet" role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
             <span className="agent-mark" />
@@ -162,6 +180,16 @@ export function AskDock() {
             </span>
           </div>
           <div className="dock-pane" ref={paneRef} onScroll={onPaneScroll}>
+            {!hasConvo && showSuggest && (
+              <div className="dock-suggest">
+                <div className="dock-suggest-label">{account ? `Ask about ${account}` : `Ask about ${about ?? 'this page'}`}</div>
+                {suggestions.map(q => (
+                  <button key={q} className="dock-suggest-q" onClick={() => send(q)}>
+                    <span>{q}</span><span aria-hidden className="dock-suggest-go">↗</span>
+                  </button>
+                ))}
+              </div>
+            )}
             {said.map(item => (
               <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
                 {item.kind === 'note' ? (
@@ -192,6 +220,14 @@ export function AskDock() {
                 {streaming && i === msgs.length - 1 && <span className="dock-caret" />}
               </div>
             ))}
+            {hasConvo && showSuggest && (
+              <div className="dock-next">
+                <span className="dock-next-label">Ask next</span>
+                {suggestions.filter(q => !msgs.some(m => m.role === 'user' && m.content === q)).map(q => (
+                  <button key={q} className="dock-next-q" onClick={() => send(q)}>{q}</button>
+                ))}
+              </div>
+            )}
             {busy && <div className="dock-thinking"><span /><span /><span />Reading your {account ? `${account} signals` : 'signals'}…</div>}
           </div>
         </div>
@@ -201,7 +237,7 @@ export function AskDock() {
         <span className="ed-askdot"><span /><span /></span>
         <input ref={inputRef} value={ask} onChange={e => setAsk(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') send() }}
-          onFocus={() => { if (hasConvo) setOpen(true) }}
+          onFocus={() => { if (hasConvo || suggestions.length) setOpen(true) }}
           placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `Ask about ${account}` : 'Ask Popsicle anything about your pipeline'} />
         {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={() => send()}>Ask</button>

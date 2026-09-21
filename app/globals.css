@@ -2842,3 +2842,20 @@ body[data-modal="1"] .agent-card { display: none; }
   line-height: 1.45 !important; letter-spacing: -.005em !important; margin: 14px 0 6px !important; }
 .dock-a ul, .dock-a ol, .dock-a blockquote, .dock-a a, .dock-a b, .dock-a i, .dock-a small { font-size: 14px !important; line-height: 1.6 !important; }
 .dock-a p { margin-bottom: 10px !important; }
+
+/* v11.112: page-aware questions in the Ask bar sheet */
+.dock-suggest { padding: 2px 0 4px; }
+.dock-suggest-label, .dock-next-label { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint, #A09C97); }
+.dock-suggest-label { margin-bottom: 8px; }
+.dock-suggest-q { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 14px; text-align: left; cursor: pointer;
+  font: inherit; font-family: 'Outfit', sans-serif; font-size: 14px; font-weight: 700; letter-spacing: -.005em; line-height: 1.45; color: var(--ink, #0E0D0B);
+  background: none; border: 0; border-top: 1px solid rgba(14,13,11,.14); padding: 12px 2px; transition: color .15s ease; }
+.dock-suggest-q:last-child { border-bottom: 1px solid rgba(14,13,11,.14); }
+.dock-suggest-q:hover { color: #E85A25; }
+.dock-suggest-go { color: #E85A25; opacity: 0; transition: opacity .15s ease; flex: none; }
+.dock-suggest-q:hover .dock-suggest-go, .dock-suggest-q:focus-visible .dock-suggest-go { opacity: 1; }
+.dock-next { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; margin-top: 4px; border-top: 1px solid rgba(14,13,11,.14); }
+.dock-next-label { margin-right: 2px; }
+.dock-next-q { font: inherit; font-size: 12.5px; font-weight: 600; color: #E85A25; background: rgba(255,107,53,.07); border: 1px solid rgba(232,90,37,.25);
+  border-radius: var(--toggle-radius, 0px); padding: 6px 11px; cursor: pointer; text-align: left; line-height: 1.35; transition: background .15s ease; }
+.dock-next-q:hover { background: rgba(255,107,53,.14); }
