@@ -779,7 +779,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const demo = accounts.some(a => String(a.id).startsWith('demo-'))
     // Signals → Active cases → Actions ready → Revenue protected, computed by lib/metrics in demo
     // and live alike, so each figure matches its explanation exactly.
-    const nowMs = demo ? (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })() : Date.now()
+    const nowMs = demo ? Math.floor(Date.now() / 3600e3) * 3600e3 : Date.now()
     const A = accounts as unknown as MX.Acct[], S = signals as unknown as MX.Sig[]
     return [
       { m: 'new_today', name: 'Signals', sub: 'new in the last 24 hours', value: String(MX.newToday(A, S, nowMs).value), color: 'var(--critical, #c43d2b)' },

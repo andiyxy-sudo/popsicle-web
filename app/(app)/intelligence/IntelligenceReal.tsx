@@ -244,7 +244,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
   // so each one matches what its explanation shows
   const m = (() => {
     const A = accounts as unknown as MX.Acct[], S = signals as unknown as MX.Sig[]
-    const now = demo ? (() => { const d = new Date(); d.setUTCHours(9, 0, 0, 0); return d.getTime() })() : Date.now()
+    const now = demo ? Math.floor(Date.now() / 3600e3) * 3600e3 : Date.now()
     const rc = IX.riskChange(A, S, now, range), h = IX.holding(A, S, now, range), sp = IX.speed(A, S, now, range), w = IX.windowed(A, S, now, range)
     const q = MX.protectedRevenue(A, S)
     return {

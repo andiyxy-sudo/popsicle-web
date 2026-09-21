@@ -94,8 +94,8 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
   const figs = p && first ? [
     { k: 'Revenue at risk', v: money(p.atRisk), d: p.atRisk - first.atRisk, fmt: money, c: 'var(--critical, #c43d2b)', bad: true },
     { k: 'Revenue protected', v: money(p.protectedValue), d: p.protectedValue - first.protectedValue, fmt: money, c: 'var(--good, #2f8f5b)', bad: false },
-    { k: 'Open signals', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: 'var(--info, #2f6f9f)', bad: true },
-    { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: 'var(--accent, #E85A25)', bad: true },
+    { k: 'Open signals', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: 'var(--accent, #E85A25)', bad: true },
+    { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: 'var(--critical, #c43d2b)', bad: true },
   ] : []
 
   const body = (

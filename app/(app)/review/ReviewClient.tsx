@@ -25,6 +25,9 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
   const [ending, setEnding] = useState(false)
   const reviewId = useMemo(() => `review-${new Date(now).toISOString().slice(0, 10)}-${Math.random().toString(36).slice(2, 7)}`, [now])
   const deal = deals[i]
+  // the date comes from the viewer's own clock and time zone, never the server's
+  const [today, setToday] = useState('')
+  useEffect(() => { setToday(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })) }, [])
 
   // ← → move between deals (not while typing)
   useEffect(() => {
@@ -57,7 +60,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
       <div className="rv2-head">
         <div>
           <div className="rv2-eyebrow">Pipeline review</div>
-          <div className="rv2-title">{new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}</div>
+          <div className="rv2-title">{today || '\u00a0'}</div>
         </div>
         <button className="rv2-end" onClick={() => setEnding(true)}>End review{made.length ? <> · <b>{made.length} decision{made.length === 1 ? '' : 's'}</b></> : null}</button>
       </div>
@@ -79,7 +82,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
             <div className="rv2-kpi"><div className="rv2-kpi-l">Annual value</div><div className="rv2-kpi-v" style={{ color: 'var(--good, #2f8f5b)' }}><X m="account_arr" account={deal.account}>{money(deal.value)}</X></div></div>
             <div className="rv2-kpi"><div className="rv2-kpi-l">At risk</div><div className="rv2-kpi-v" style={{ color: deal.atRisk > 0 ? '#D0442F' : undefined }}>{money(deal.atRisk)}</div></div>
             <div className="rv2-kpi"><div className="rv2-kpi-l">Health</div><div className="rv2-kpi-v" style={{ color: deal.health != null ? healthTone(deal.health) : undefined }}>{deal.health != null ? <X m="account_health" account={deal.account}>{deal.health}</X> : '--'}</div></div>
-            <div className="rv2-kpi"><div className="rv2-kpi-l">This week</div><div className="rv2-kpi-v" style={{ color: 'var(--defer, #6b4fbb)' }}>{deal.week.length}<span className="rv2-kpi-u"> changes</span></div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">This week</div><div className="rv2-kpi-v" style={{ color: 'var(--ink, #0E0D0B)' }}>{deal.week.length}<span className="rv2-kpi-u"> changes</span></div></div>
           </div>
 
           <section className="rv2-sec">
