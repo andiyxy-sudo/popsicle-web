@@ -12,6 +12,8 @@ export function AgentFeed({ onAsk }: { onAsk: (q: string) => void }) {
   const params = useSearchParams()
   const focusKey = params.get('agent')
   const [brief, setBrief] = useState<AgentBrief | null>(null)
+  // v11.92: the notes stay folded until asked for; arriving from the pop-up opens them
+  const [open, setOpen] = useState(!!focusKey)
   const refs = useRef<Record<string, HTMLDivElement | null>>({})
 
   useEffect(() => {
@@ -38,7 +40,15 @@ export function AgentFeed({ onAsk }: { onAsk: (q: string) => void }) {
       <div className="desk-head">
         <div className="note-dateline"><span className="agent-mark" /><span className="note-dl-strong">{AGENT_NAME.toUpperCase()}</span><span>· {now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' }).toUpperCase()}</span><span>· {brief.read} SIGNALS READ</span></div>
         <div className="desk-title">{hello} {brief.summary}</div>
+        {brief.messages.length > 0 && (
+          <button className="desk-toggle" onClick={() => setOpen(o => !o)} aria-expanded={open}>
+            {open ? 'Hide the notes' : `Show ${brief.needYou === 1 ? 'the note' : `the ${brief.needYou} notes`}${follow.length ? ` and ${follow.length} follow-up${follow.length === 1 ? '' : 's'}` : ''}`}
+            <span aria-hidden className={`desk-chev${open ? ' up' : ''}`}>↓</span>
+          </button>
+        )}
       </div>
+
+      {open && <>
 
       {actionNotes.map((m, i) => (
         <div key={m.key} ref={el => { refs.current[m.key] = el }} className={`desk-item${focusKey === m.key ? ' focused' : ''}`} style={{ animationDelay: `${i * 60}ms` }}>
@@ -58,6 +68,7 @@ export function AgentFeed({ onAsk }: { onAsk: (q: string) => void }) {
       )}
 
       <div className="desk-foot">{brief.watching > 0 ? `${brief.watching} more I'm watching. I'll bring them to you if they move.` : 'Nothing else is moving.'}</div>
+      </>}
     </div>
   )
 }
