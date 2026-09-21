@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AgentFeed } from '@/components/agent/AgentFeed'
+import { Answer, inline, splitNumbered } from '@/components/ask/AnswerText'
 import { AGENT_ENABLED } from '@/lib/agent/config'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
@@ -50,78 +51,6 @@ const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking
 
 // ---- markdown-lite renderer -------------------------------------------------
 // Emoji status markers the model sometimes adds become quiet coloured dots.
-const EMOJI_DOT: Record<string, string> = { '🔴': 'var(--critical, #c43d2b)', '🟠': 'var(--warn, #d38b1d)', '🟡': 'var(--warn, #d38b1d)', '🟢': 'var(--good, #2f8f5b)', '🔵': 'var(--blue, #2f6f9f)', '⚪': 'var(--ink-faint)' }
-function inline(text: string, key: number) {
-  // **bold**, *italic* / _italic_, `code`, and status emoji
-  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*\n]+\*|_[^_\n]+_|`[^`]+`|[🔴🟠🟡🟢🔵⚪])/g).filter(Boolean)
-  return (
-    <span key={key}>
-      {parts.map((p, i) => {
-        if (p.startsWith('**') && p.endsWith('**')) return <strong key={i} style={{ fontWeight: 600, color: 'var(--ink)' }}>{p.slice(2, -2)}</strong>
-        if ((p.startsWith('*') && p.endsWith('*') && p.length > 2) || (p.startsWith('_') && p.endsWith('_') && p.length > 2)) return <em key={i} style={{ fontStyle: 'italic', color: 'var(--ink)' }}>{p.slice(1, -1)}</em>
-        if (p.startsWith('`') && p.endsWith('`')) return <code key={i} style={{ fontFamily: "'DM Mono',monospace", fontSize: '.92em', background: 'var(--inset, #F4F0E8)', padding: '1px 6px', borderRadius: 5 }}>{p.slice(1, -1)}</code>
-        if (EMOJI_DOT[p]) return <span key={i} style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: EMOJI_DOT[p], marginLeft: 6, verticalAlign: 'middle', position: 'relative', top: -1 }} />
-        return <span key={i}>{p}</span>
-      })}
-    </span>
-  )
-}
-// Numbered items ("1. Acme Corp - CFO silent 8 days ($480K)") become titled rows.
-function splitNumbered(t: string): { n: string; title: string; figure: string | null } | null {
-  const m = t.match(/^(\d+)[.)]\s+(.*)$/)
-  if (!m) return null
-  let title = m[2].replace(/\*\*/g, '').trim()
-  const fig = title.match(/\(([^)]*[$\d][^)]*)\)\s*([🔴🟠🟡🟢🔵⚪])?\s*$/)
-  let figure: string | null = null
-  if (fig) { figure = fig[1]; title = title.slice(0, fig.index).trim() + (fig[2] ? ` ${fig[2]}` : '') }
-  return { n: m[1], title, figure }
-}
-
-function Answer({ text }: { text: string }) {
-  const lines = text.split('\n')
-  const out: React.ReactNode[] = []
-  let para: string[] = []
-  const flush = (k: number) => {
-    if (!para.length) return
-    out.push(
-      <p key={`p${k}`} style={{ margin: '0 0 16px', fontSize: 16, lineHeight: 1.65, color: 'var(--ink-muted)' }}>
-        {inline(para.join(' '), k)}
-      </p>
-    )
-    para = []
-  }
-  lines.forEach((raw, i) => {
-    const l = raw.trim()
-    if (!l) { flush(i); return }
-    if (/^#{1,6}\s/.test(l)) {
-      flush(i)
-      out.push(
-        <h3 key={`h${i}`} style={{ margin: '26px 0 12px', fontSize: 17, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)' }}>
-          {l.replace(/^#{1,6}\s/, '')}
-        </h3>
-      )
-      return
-    }
-    if (/^([-*•]|\d+[.)])\s/.test(l)) {
-      flush(i)
-      const body = l.replace(/^([-*•]|\d+[.)])\s/, '')
-      out.push(
-        <div key={`b${i}`} className="ans-in" style={{ display: 'grid', gridTemplateColumns: '14px 1fr', gap: 10, padding: '7px 0', fontSize: 15.5, lineHeight: 1.55, color: 'var(--ink-muted)' }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', marginTop: 9 }} />
-          <div>{inline(body, i)}</div>
-        </div>
-      )
-      return
-    }
-    para.push(l)
-  })
-  flush(9999)
-  return <div>{out}</div>
-}
-
-
-
-// Small source marks for the answer footer, matching the activity feed set.
 const SRC_MARK: Record<string, React.ReactNode> = {
   gmail: <svg width="17" height="13" viewBox="0 0 24 18"><rect width="24" height="18" rx="2" fill="#fff"/><rect x=".5" y=".5" width="23" height="17" rx="1.5" fill="none" stroke="#ddd" strokeWidth=".5"/><path d="M2 2l10 7.5L22 2" stroke="#EA4335" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/><path d="M2 2v14h20V2" stroke="#EA4335" strokeWidth="1.2" fill="none" strokeLinejoin="round" opacity=".25"/></svg>,
   slack: <svg width="14" height="14" viewBox="0 0 24 24"><path d="M9.5 2a2 2 0 100 4h2V4a2 2 0 00-2-2zM9.5 7h-5a2 2 0 100 4h5a2 2 0 100-4z" fill="#36C5F0"/><path d="M22 9.5a2 2 0 10-4 0v2h2a2 2 0 002-2zM17 9.5v-5a2 2 0 10-4 0v5a2 2 0 104 0z" fill="#2EB67D"/><path d="M14.5 22a2 2 0 100-4h-2v2a2 2 0 002 2zM14.5 17h5a2 2 0 100-4h-5a2 2 0 100 4z" fill="#ECB22E"/><path d="M2 14.5a2 2 0 104 0v-2H4a2 2 0 00-2 2zM7 14.5v5a2 2 0 104 0v-5a2 2 0 10-4 0z" fill="#E01E5A"/></svg>,
@@ -654,6 +583,12 @@ export function AskClient() {
   }
 
   useEffect(() => {
+    // v11.94: a conversation started in the Ask bar on another page continues here
+    if (params.get('handoff') && !fired.current) {
+      fired.current = true
+      try { const raw = sessionStorage.getItem('ask:handoff'); if (raw) { const m = JSON.parse(raw) as Msg[]; if (Array.isArray(m) && m.length) setMsgs(m) } sessionStorage.removeItem('ask:handoff') } catch { /* ignore */ }
+      return
+    }
     const q = params.get('q')
     if (q && !fired.current) { fired.current = true; send(q) }
     // eslint-disable-next-line react-hooks/exhaustive-deps

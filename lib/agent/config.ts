@@ -12,3 +12,7 @@ export const AGENT_NAME = 'Popsicle'          // rename here, once, when the nam
 export const AGENT_MAX_POPUPS_PER_DAY = 3
 export const AGENT_BRIEF_DELAY_MS = 2600      // after the page settles
 export const AGENT_CRITICAL_USD = 250_000     // interrupt threshold
+
+// The Ask bar on every page opens the conversation in place, as a sheet that pulls up
+// from the bar. Set to false to go back to the bar sending you to the Ask page.
+export const ASK_DOCK = true

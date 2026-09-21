@@ -5,7 +5,8 @@ import { Sidebar } from './Sidebar'
 import { LiveSignals } from './LiveSignals'
 import { CommandPalette } from './CommandPalette'
 import { AgentPopup } from '@/components/agent/AgentPopup'
-import { AGENT_ENABLED } from '@/lib/agent/config'
+import { AGENT_ENABLED, ASK_DOCK } from '@/lib/agent/config'
+import { AskDock } from '@/components/agent/AskDock'
 import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -90,7 +91,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.92</span>
+            <span>v11.94</span>
           </footer>
         </div>
       </div>
@@ -102,11 +103,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       {pathname !== '/ask' && (
         <div className="ed-askbar-wrap">
           <div className="ed-askbar-measure">
+          {AGENT_ENABLED && ASK_DOCK ? <AskDock /> : (
           <div className="ed-askbar">
             <span className="ed-askdot"><span /><span /></span>
             <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitAsk() }} placeholder="Ask Popsicle anything about your pipeline" />
             <button onClick={submitAsk}>Ask</button>
           </div>
+          )}
           </div>
         </div>
       )}

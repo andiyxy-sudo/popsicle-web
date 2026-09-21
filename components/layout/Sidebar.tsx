@@ -182,12 +182,14 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               <button onClick={() => setProfileOpen(false)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
             </div>
 
-            <div style={{ padding: '14px 32px 0', display: 'flex', gap: 16 }}>
-              <span onClick={pickPhoto} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>{photo ? 'Change photo' : 'Add photo'}</span>
-              {photo && <span onClick={() => setPhoto(null)} style={{ fontSize: 13, color: 'var(--ink-faint)', cursor: 'pointer' }}>Remove</span>}
-            </div>
+            {/* the pen on the avatar changes the photo; only removal needs its own control */}
+            {photo && (
+              <div style={{ padding: '12px 32px 0' }}>
+                <span onClick={() => setPhoto(null)} style={{ fontSize: 13, color: 'var(--ink-faint)', cursor: 'pointer' }}>Remove photo</span>
+              </div>
+            )}
 
-            <div style={{ padding: '26px 32px 0', display: 'grid', gap: 20 }}>
+            <div style={{ padding: photo ? '22px 32px 0' : '26px 32px 0', display: 'grid', gap: 20 }}>
               <label style={{ display: 'block' }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Display name</span>
                 <input value={draftName} onChange={e => setDraftName(e.target.value)}
