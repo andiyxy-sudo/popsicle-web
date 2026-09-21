@@ -579,6 +579,18 @@ export function AskClient() {
   const endRef = useRef<HTMLDivElement>(null)
   const paneRef = useRef<HTMLDivElement>(null)
   const fired = useRef(false)
+  // v11.90: a clean slate. Bumping the generation cancels any answer still streaming.
+  const gen = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
+  const [confirmClear, setConfirmClear] = useState(false)
+  function startFresh() {
+    gen.current += 1
+    abortRef.current?.abort()
+    abortRef.current = null
+    setMsgs([]); setInput(''); setBusy(false); setStreamingIdx(null); setConfirmClear(false)
+    fired.current = true                       // don't re-ask the ?q= question from the URL
+    router.replace('/ask')                     // drop ?q, ?account and ?agent so the page is truly fresh
+  }
 
   // rotate the thinking line so it never looks frozen
   useEffect(() => {
@@ -591,12 +603,16 @@ export function AskClient() {
     const question = (q ?? input).trim()
     if (!question || busy) return
     const next: Msg[] = [...msgs, { role: 'user', content: question }]
-    setMsgs(next); setInput(''); setBusy(true)
+    setMsgs(next); setInput(''); setBusy(true); setConfirmClear(false)
+    const myGen = gen.current
+    const ctrl = new AbortController(); abortRef.current = ctrl
+    const live = () => gen.current === myGen
     try {
       const r = await fetch('/api/ask', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: next, stream: true, focus }),
+        body: JSON.stringify({ messages: next, stream: true, focus }), signal: ctrl.signal,
       })
+      if (!live()) return
       let answer = ''
       const ct = r.headers.get('content-type') || ''
       if (r.body && ct.includes('text/plain')) {
@@ -608,13 +624,15 @@ export function AskClient() {
         setBusy(false)
         for (;;) {
           const { done, value } = await reader.read()
-          if (done) break
+          if (done || !live()) break
           answer += dec.decode(value, { stream: true })
           setMsgs([...next, { role: 'assistant', content: answer }])
         }
+        if (!live()) return
       } else {
         const j = await r.json().catch(() => ({}))
         answer = j.content || j.error || 'No answer came back. Try rephrasing the question.'
+        if (!live()) return
         setMsgs([...next, { role: 'assistant', content: answer }])
       }
       setStreamingIdx(null)
@@ -628,10 +646,11 @@ export function AskClient() {
         })
       }
     } catch {
+      if (!live()) return
       setStreamingIdx(null)
       setMsgs([...next, { role: 'assistant', content: 'Could not reach the co-pilot. Try again in a moment.' }])
     }
-    setBusy(false)
+    if (live()) setBusy(false)
   }
 
   useEffect(() => {
@@ -878,9 +897,19 @@ export function AskClient() {
           {sourceCount != null ? `${sourceCount} sources live` : 'grounded in your data'}
         </span>
         {started ? (
-          <button onClick={() => { setMsgs([]); setInput('') }} className="ask-ghost"
-            style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>new question</button>
-        ) : <span style={{ opacity: 0 }}>new question</span>}
+          confirmClear ? (
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ color: 'var(--ink-muted)' }}>Clear this conversation?</span>
+              <button onClick={startFresh} className="ask-fresh danger">Yes, clear</button>
+              <button onClick={() => setConfirmClear(false)} className="ask-ghost"
+                style={{ font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0 }}>Cancel</button>
+            </span>
+          ) : (
+            <button onClick={() => (msgs.length > 2 ? setConfirmClear(true) : startFresh())} className="ask-fresh" title="Clear the conversation and start again">
+              <span aria-hidden style={{ fontSize: 14, lineHeight: 1 }}>↺</span> Start fresh
+            </button>
+          )
+        ) : <span style={{ opacity: 0 }}>Start fresh</span>}
       </div>}
     </div>
   )
