@@ -3477,3 +3477,7 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rp3-day-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; overscroll-behavior: contain; }
 .rp3-day-list::-webkit-scrollbar { display: none; }
 .rp3-loading { flex: 1 1 auto !important; }
+
+/* v11.127: the number popup is attached to the page where it opened: it scrolls with the content,
+   and a long one runs down the page instead of scrolling inside itself */
+.xpp { position: absolute !important; max-height: none !important; overflow: visible !important; }

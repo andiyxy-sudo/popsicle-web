@@ -15,7 +15,7 @@ import { useEscape } from '@/components/ui/useEscape'
 type Req = { m: string; account?: string; signal?: string; days?: number; scope?: 'me' }
 
 export function X({ m, account, signal, days, scope, children }: Req & { children: React.ReactNode }) {
-  const open = (el: HTMLElement) => window.dispatchEvent(new CustomEvent('explain:open', { detail: { m, account, signal, days, scope, rect: el.getBoundingClientRect().toJSON() } }))
+  const open = (el: HTMLElement) => window.dispatchEvent(new CustomEvent('explain:open', { detail: { m, account, signal, days, scope, el, rect: el.getBoundingClientRect().toJSON() } }))
   return (
     <span className="xp" role="button" tabIndex={0} aria-label="Where this number comes from"
       onClick={e => { e.stopPropagation(); e.preventDefault(); open(e.currentTarget) }}
@@ -75,7 +75,7 @@ function Node({ n, total, depth, go, color }: { n: XNode; total: number; depth: 
 
 export function ExplainHost() {
   const router = useRouter()
-  const [req, setReq] = useState<(Req & { rect: DOMRect }) | null>(null)
+  const [req, setReq] = useState<(Req & { rect: DOMRect; el?: HTMLElement }) | null>(null)
   const [x, setX] = useState<Explanation | null>(null)
   const [err, setErr] = useState('')
   const panel = useRef<HTMLDivElement>(null)
@@ -83,7 +83,7 @@ export function ExplainHost() {
 
   useEffect(() => {
     const onOpen = (e: Event) => {
-      const d = (e as CustomEvent<Req & { rect: DOMRect }>).detail
+      const d = (e as CustomEvent<Req & { rect: DOMRect; el?: HTMLElement }>).detail
       setX(null); setErr(''); setReq(d)
       const qs = new URLSearchParams({ metric: d.m }); if (d.account) qs.set(d.m === 'rep_exposure' ? 'rep' : 'account', d.account); if (d.signal) qs.set('signal', d.signal); if (d.days) qs.set('days', String(d.days)); if (d.scope) qs.set('scope', d.scope)
       fetch(`/api/explain?${qs}`).then(r => r.ok ? r.json() : Promise.reject(r.status)).then(setX).catch(() => setErr('Couldn\u2019t load where this number comes from.'))
@@ -99,11 +99,25 @@ export function ExplainHost() {
   }, [req])
 
   if (!req || typeof document === 'undefined') return null
-  // place under the number, kept on screen
-  const W = Math.min(400, window.innerWidth - 24)
-  const left = Math.min(Math.max(12, req.rect.left), window.innerWidth - W - 12)
-  const below = req.rect.bottom + 10, room = window.innerHeight - below
-  const top = room > 320 ? below : Math.max(12, req.rect.top - Math.min(520, window.innerHeight * 0.7) - 10)
+  // Attach the popup to the page that scrolls, just under the number. It then moves with the page
+  // like any other content, and a long popup simply runs down the page: scroll to read the rest.
+  const scroller = (() => {
+    let n: HTMLElement | null = req.el?.parentElement ?? null
+    while (n && n !== document.body) {
+      const oy = getComputedStyle(n).overflowY
+      if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) return n
+      n = n.parentElement
+    }
+    return document.scrollingElement as HTMLElement ?? document.documentElement
+  })()
+  const host = scroller === document.scrollingElement || scroller === document.documentElement ? document.body : scroller
+  if (host !== document.body && getComputedStyle(host).position === 'static') host.style.position = 'relative'
+  const hostRect = host === document.body ? { top: -window.scrollY, left: -window.scrollX } as DOMRect : host.getBoundingClientRect()
+  const anchor = req.el?.getBoundingClientRect() ?? req.rect
+  const W = Math.min(400, (host === document.body ? window.innerWidth : host.clientWidth) - 24)
+  const maxLeft = (host === document.body ? window.innerWidth : host.clientWidth) - W - 12
+  const left = Math.min(Math.max(12, anchor.left - hostRect.left + (host === document.body ? 0 : host.scrollLeft)), Math.max(12, maxLeft))
+  const top = anchor.bottom - hostRect.top + (host === document.body ? 0 : host.scrollTop) + 10
   const go = (href: string) => { setReq(null); router.push(href) }
   const total = x?.value ?? 0
 
@@ -130,5 +144,5 @@ export function ExplainHost() {
           </>
         )
       })()}
-    </div>, document.body)
+    </div>, host)
 }
