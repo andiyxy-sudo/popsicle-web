@@ -7,8 +7,10 @@ export type Sig = { id: string; account_name?: string | null; signal_type?: stri
   handled_at?: string | null; handled_action?: string | null; ai_analysis?: Record<string, unknown> | null }
 export type Acct = { name: string; value?: number | null; stage?: string | null; risk_level?: string | null; health_score?: number | null; owner?: string | null; close_date?: string | null }
 export type Evidence = { signalId: string; quote?: string; who?: string; source?: string; when?: string; title: string }
-export type XNode = { id: string; label: string; value?: number; valueText?: string; note?: string; href?: string; children?: XNode[]; evidence?: Evidence }
-export type Explanation = { metric: string; label: string; value: number; valueText: string; definition: string; parts: XNode[]; n?: number; interval?: [number, number]; collecting?: boolean; footnote?: string }
+export type XNode = { id: string; label: string; value?: number; valueText?: string; note?: string; href?: string; children?: XNode[]; evidence?: Evidence; color?: string }
+/** The app-wide health scale: 70+ healthy (green), 40-69 watch (amber), below 40 critical (red). */
+export const healthColor = (h: number) => (h >= 70 ? '#2f8f5b' : h >= 40 ? '#d38b1d' : '#c43d2b')
+export type Explanation = { metric: string; label: string; value: number; valueText: string; definition: string; parts: XNode[]; n?: number; interval?: [number, number]; collecting?: boolean; footnote?: string; color?: string }
 
 export const money = (v: number) => (v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`)
 const isOpen = (s: Sig) => !s.is_dismissed && (!s.status || s.status === 'open')
@@ -101,10 +103,10 @@ export function accountArr(name: string, accts: Acct[], sigs: Sig[]): Explanatio
 export function accountHealth(name: string, accts: Acct[], sigs: Sig[], breakdown?: Array<{ k: string; v: number }>): Explanation {
   const a = accts.find(x => x.name === name)
   const value = Number(a?.health_score ?? 0)
-  const parts: XNode[] = (breakdown ?? []).map(b => ({ id: `hb:${b.k}`, label: b.k, valueText: String(b.v) }))
+  const parts: XNode[] = (breakdown ?? []).map(b => ({ id: `hb:${b.k}`, label: b.k, valueText: String(b.v), color: healthColor(b.v) }))
   const moving = sigs.filter(s => isOpen(s) && s.account_name === name).slice(0, 5)
   if (moving.length) parts.push({ id: 'moving', label: 'Signals moving it', valueText: String(moving.length), children: moving.map(s => sigNode(s, accts, false)) })
-  return { metric: 'account_health', label: `${name} · health`, value, valueText: String(value), parts,
+  return { metric: 'account_health', label: `${name} · health`, value, valueText: String(value), color: healthColor(value), parts,
     definition: breakdown?.length ? `The average of four components: ${breakdown.map(b => b.k.toLowerCase()).join(', ')}. 70 and above is healthy, below 40 is critical.` : 'Health score from the account record. 70 and above is healthy, below 40 is critical.' }
 }
 
@@ -154,8 +156,8 @@ export function accountGroup(kind: 'high' | 'medium' | 'closing', accts: Acct[],
 export function avgHealth(accts: Acct[]): Explanation {
   const withH = accts.filter(a => a.health_score != null)
   const value = withH.length ? Math.round(withH.reduce((t, a) => t + Number(a.health_score), 0) / withH.length) : 0
-  const parts: XNode[] = [...withH].sort((a, b) => Number(a.health_score) - Number(b.health_score)).map(a => ({ id: `acct:${a.name}`, label: a.name, valueText: String(a.health_score), note: a.risk_level ? `${a.risk_level} risk` : undefined, href: acctHref(a.name) }))
-  return { metric: 'avg_health', label: 'Average health', value, valueText: String(value), parts, definition: `The plain average of ${withH.length} accounts\u2019 health scores, lowest first below.` }
+  const parts: XNode[] = [...withH].sort((a, b) => Number(a.health_score) - Number(b.health_score)).map(a => ({ id: `acct:${a.name}`, label: a.name, valueText: String(a.health_score), color: healthColor(Number(a.health_score)), note: a.risk_level ? `${a.risk_level} risk` : undefined, href: acctHref(a.name) }))
+  return { metric: 'avg_health', label: 'Pipeline health', value, valueText: String(value), color: healthColor(value), parts, definition: `The plain average of ${withH.length} accounts\u2019 health scores, lowest first below.` }
 }
 
 /** Money at stake across signals, counting each account once (its largest amount). Several signals

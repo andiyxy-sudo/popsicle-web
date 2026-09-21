@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Answer } from '@/components/ask/AnswerText'
 import { X } from '@/components/explain/Explain'
+import { DateField } from '@/components/ui/DateField'
 import { formatWhen, healthTone } from '@/lib/utils'
 import type { ChangeEvent } from '@/lib/replay'
 import type { Decision } from '@/lib/decisions'
@@ -75,10 +76,10 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
           <h1 className="rv2-name">{deal.account}</h1>
           <div className="rv2-contact">{[deal.contact, deal.stage, closeTxt && `closes ${closeTxt}`].filter(Boolean).join(' · ')}</div>
           <div className="rv2-kpis">
-            <div className="rv2-kpi"><div className="rv2-kpi-l">Annual value</div><div className="rv2-kpi-v"><X m="account_arr" account={deal.account}>{money(deal.value)}</X></div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">Annual value</div><div className="rv2-kpi-v" style={{ color: 'var(--info, #2f6f9f)' }}><X m="account_arr" account={deal.account}>{money(deal.value)}</X></div></div>
             <div className="rv2-kpi"><div className="rv2-kpi-l">At risk</div><div className="rv2-kpi-v" style={{ color: deal.atRisk > 0 ? '#D0442F' : undefined }}>{money(deal.atRisk)}</div></div>
             <div className="rv2-kpi"><div className="rv2-kpi-l">Health</div><div className="rv2-kpi-v" style={{ color: deal.health != null ? healthTone(deal.health) : undefined }}>{deal.health != null ? <X m="account_health" account={deal.account}>{deal.health}</X> : '--'}</div></div>
-            <div className="rv2-kpi"><div className="rv2-kpi-l">This week</div><div className="rv2-kpi-v">{deal.week.length}<span className="rv2-kpi-u"> changes</span></div></div>
+            <div className="rv2-kpi"><div className="rv2-kpi-l">This week</div><div className="rv2-kpi-v" style={{ color: 'var(--defer, #6b4fbb)' }}>{deal.week.length}<span className="rv2-kpi-u"> changes</span></div></div>
           </div>
 
           <section className="rv2-sec">
@@ -134,13 +135,15 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
         </aside>
       </div>
 
-      <div className="rv2-bar">
-        <button disabled={i === 0} onClick={() => setI(x => x - 1)}>← {i > 0 ? deals[i - 1].account : 'Start'}</button>
-        <span>{i + 1} of {deals.length}</span>
+      <nav className="rv2-nav" aria-label="Move between deals">
+        <button className="rv2-prev" disabled={i === 0} onClick={() => setI(x => x - 1)}>
+          <span className="rv2-nav-k">Previous</span><span className="rv2-nav-v">← {i > 0 ? deals[i - 1].account : 'Start of the agenda'}</span>
+        </button>
+        <span className="rv2-nav-c">Deal {i + 1} of {deals.length} · ← → to move</span>
         {i < deals.length - 1
-          ? <button className="next" onClick={() => setI(x => x + 1)}>{deals[i + 1].account} →</button>
-          : <button className="next" onClick={() => setEnding(true)}>Wrap up →</button>}
-      </div>
+          ? <button className="rv2-next" onClick={() => setI(x => x + 1)}><span className="rv2-nav-k">Next</span><span className="rv2-nav-v">{deals[i + 1].account} →</span></button>
+          : <button className="rv2-next" onClick={() => setEnding(true)}><span className="rv2-nav-k">Last deal</span><span className="rv2-nav-v">Wrap up the review →</span></button>}
+      </nav>
 
       {ending && <Summary made={made} deals={deals} demo={demo} onClose={() => setEnding(false)} onDone={() => router.push('/pulse')} />}
     </div>
@@ -207,7 +210,7 @@ function DecisionForm({ team, contact, onRecord }: { team: string[]; contact: st
       <div className="rv2-row2">
         <input className="rv2-field" list="rv-team" value={owner} onChange={e => setOwner(e.target.value)} placeholder="Owner" />
         <datalist id="rv-team">{team.map(t => <option key={t} value={t} />)}</datalist>
-        <input className="rv2-field" type="date" value={due} onChange={e => setDue(e.target.value)} aria-label="Due date" />
+        <div className="rv2-date"><DateField value={due} onChange={setDue} placeholder="Due date" min={new Date().toISOString().slice(0, 10)} /></div>
       </div>
       <button className="rv2-rec" disabled={!text.trim() || busy} onClick={submit}>{busy ? 'Recording…' : 'Record decision'}</button>
       {err && <p className="rv2-err">{err}</p>}

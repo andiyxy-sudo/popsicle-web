@@ -59,9 +59,9 @@ function Node({ n, total, depth, go, color }: { n: XNode; total: number; depth: 
   return (
     <li className={`xpp-item${open ? ' open' : ''}${depth ? ' nested' : ''}`}>
       <button className="xpp-row" onClick={() => kids.length ? setOpen(o => !o) : n.href && go(n.href)}>
-        <span className="xpp-dot" style={{ background: color ?? 'transparent' }} />
+        <span className="xpp-dot" style={{ background: color ?? n.color ?? 'transparent' }} />
         <span className="xpp-name">{n.label}{kids.length > 0 && <Chev />}</span>
-        <span className="xpp-right"><span className="xpp-val">{val}</span>{pct != null && <span className="xpp-pct">{pct}%</span>}</span>
+        <span className="xpp-right"><span className="xpp-val" style={n.color ? { color: n.color } : undefined}>{val}</span>{pct != null && <span className="xpp-pct">{pct}%</span>}</span>
         {n.note && <span className="xpp-sub">{n.note}</span>}
       </button>
       {open && kids.length > 0 && (
@@ -118,7 +118,7 @@ export function ExplainHost() {
         return (
           <>
             <div className="xpp-label">{x.label}</div>
-            <div className="xpp-num">{x.valueText}</div>
+            <div className="xpp-num" style={x.color ? { color: x.color } : undefined}>{x.valueText}</div>
             <p className="xpp-def">{x.definition}</p>
             {x.n != null && <p className="xpp-stat">{x.collecting ? `Collecting · ${x.n} so far, shown from 30` : `Based on ${x.n} · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}–${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</p>}
             {showBar && <div className="xpp-bar" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: PALETTE[i % PALETTE.length] }} />)}</div>}

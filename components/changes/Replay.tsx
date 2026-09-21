@@ -37,118 +37,127 @@ function narrate(p: Point, prev: Point | undefined): { lead: string; rest: strin
 }
 
 function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: number) => void }) {
-  const W = 800, H = 200, P = { l: 8, r: 8, t: 18, b: 26 }
-  const maxV = Math.max(1, ...pts.map(p => Math.max(p.atRisk, p.protectedValue)))
+  const W = 1000, H = 230, P = { l: 8, r: 16, t: 16, b: 30 }
+  const maxV = Math.max(1, ...pts.map(p => Math.max(p.atRisk, p.protectedValue))) * 1.08
   const x = (i: number) => P.l + (i / Math.max(1, pts.length - 1)) * (W - P.l - P.r)
   const y = (v: number) => P.t + (1 - v / maxV) * (H - P.t - P.b)
-  const path = (vals: number[], upto: number) => vals.slice(0, upto + 1).map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('')
+  const line = (vals: number[], upto: number) => vals.slice(0, upto + 1).map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('')
   const risk = pts.map(p => p.atRisk), prot = pts.map(p => p.protectedValue)
-  const area = `${path(risk, idx)}L${x(idx).toFixed(1)},${(H - P.b).toFixed(1)}L${x(0).toFixed(1)},${(H - P.b).toFixed(1)}Z`
+  const base = (H - P.b).toFixed(1)
+  const area = (vals: number[], upto: number) => `${line(vals, upto)}L${x(upto).toFixed(1)},${base}L${x(0).toFixed(1)},${base}Z`
   const ref = useRef<SVGSVGElement>(null)
-  const pick = (clientX: number) => { const r = ref.current?.getBoundingClientRect(); if (!r) return; const f = (clientX - r.left) / r.width; onPick(Math.round(Math.min(1, Math.max(0, (f * W - P.l) / (W - P.l - P.r))) * (pts.length - 1))) }
+  const pick = (cx: number) => { const r = ref.current?.getBoundingClientRect(); if (!r) return; onPick(Math.round(Math.min(1, Math.max(0, (cx - r.left) / r.width)) * (pts.length - 1))) }
   return (
-    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="rp2-chart" preserveAspectRatio="none"
+    <svg ref={ref} viewBox={`0 0 ${W} ${H}`} className="rp3-chart" preserveAspectRatio="none"
       onPointerDown={e => { (e.target as Element).setPointerCapture?.(e.pointerId); pick(e.clientX) }} onPointerMove={e => { if (e.buttons) pick(e.clientX) }}>
-      <defs>
-        <linearGradient id="rp2Risk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#E0533D" stopOpacity=".28" /><stop offset="1" stopColor="#E0533D" stopOpacity="0" /></linearGradient>
-      </defs>
-      {[0.25, 0.5, 0.75].map(f => <line key={f} x1={P.l} x2={W - P.r} y1={P.t + f * (H - P.t - P.b)} y2={P.t + f * (H - P.t - P.b)} stroke="rgba(14,13,11,.06)" />)}
-      {pts.map((p, i) => i % 7 === 0 ? <text key={i} x={x(i)} y={H - 6} textAnchor={i === 0 ? 'start' : 'middle'} className="rp2-tick">{new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</text> : null)}
-      <path d={path(risk, pts.length - 1)} fill="none" stroke="rgba(224,83,61,.14)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeDasharray="3 4" />
-      <path d={path(prot, pts.length - 1)} fill="none" stroke="rgba(47,143,91,.14)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeDasharray="3 4" />
-      <path d={area} fill="url(#rp2Risk)" />
-      <path d={path(risk, idx)} fill="none" stroke="#E0533D" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-      <path d={path(prot, idx)} fill="none" stroke="#2f8f5b" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
-      {pts.map((p, i) => p.events.some(e => e.kind === 'new' && e.severity === 'high') ? <circle key={`c${i}`} cx={x(i)} cy={H - P.b + 1} r="2.6" fill={i <= idx ? '#E0533D' : 'rgba(224,83,61,.3)'} /> : null)}
-      <line x1={x(idx)} x2={x(idx)} y1={P.t - 8} y2={H - P.b} stroke="#17150F" strokeWidth="1" vectorEffect="non-scaling-stroke" strokeDasharray="2 3" />
-      <circle cx={x(idx)} cy={y(risk[idx])} r="5" fill="#fff" stroke="#E0533D" strokeWidth="2.5" />
-      <circle cx={x(idx)} cy={y(prot[idx])} r="5" fill="#fff" stroke="#2f8f5b" strokeWidth="2.5" />
+      {[0, 0.25, 0.5, 0.75].map(f => <line key={f} x1={0} x2={W} y1={P.t + f * (H - P.t - P.b)} y2={P.t + f * (H - P.t - P.b)} stroke="#EFEAE1" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
+      <line x1={0} x2={W} y1={H - P.b} y2={H - P.b} stroke="#0E0D0B" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      {pts.map((p, i) => (i % 7 === 0 && pts.length - 1 - i > 4) || i === pts.length - 1 ? <text key={i} x={x(i)} y={H - 9} textAnchor={i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle'} className="rp3-tick">{new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}</text> : null)}
+      <path d={area(risk, pts.length - 1)} fill="rgba(196,61,43,.05)" />
+      <path d={line(risk, pts.length - 1)} fill="none" stroke="rgba(196,61,43,.22)" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+      <path d={line(prot, pts.length - 1)} fill="none" stroke="rgba(47,143,91,.22)" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+      <path d={area(risk, idx)} fill="rgba(196,61,43,.14)" />
+      <path d={line(risk, idx)} fill="none" stroke="#c43d2b" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      <path d={line(prot, idx)} fill="none" stroke="#2f8f5b" strokeWidth="2.5" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+      {pts.map((p, i) => p.events.some(e => e.kind === 'new' && e.severity === 'high') ? <rect key={`c${i}`} x={x(i) - 3} y={H - P.b + 4} width="6" height="6" fill={i <= idx ? '#c43d2b' : 'rgba(196,61,43,.25)'} /> : null)}
+      <line x1={x(idx)} x2={x(idx)} y1={P.t - 6} y2={H - P.b} stroke="#E85A25" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+      <rect x={x(idx) - 5} y={y(risk[idx]) - 5} width="10" height="10" fill="#fff" stroke="#c43d2b" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+      <rect x={x(idx) - 5} y={y(prot[idx]) - 5} width="10" height="10" fill="#fff" stroke="#2f8f5b" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
     </svg>
   )
 }
 
-export function Replay({ onClose }: { onClose: () => void }) {
-  const [pts, setPts] = useState<Point[] | null>(null)
-  const [idx, setIdx] = useState(0)
+export function Replay({ onClose, initial }: { onClose: () => void; initial?: Point[] }) {
+  const [pts, setPts] = useState<Point[] | null>(initial ?? null)
+  const [idx, setIdx] = useState(initial ? initial.length - 1 : 0)
   const [playing, setPlaying] = useState(false)
-  const [speed, setSpeed] = useState<1 | 2>(1)
+  const [fast, setFast] = useState(false)
   const router = useRouter()
   useEscape(true, onClose)
 
   useEffect(() => {
-    fetch('/api/timeline?days=56').then(r => r.ok ? r.json() : null).then(j => { if (j?.points) { setPts(j.points); setIdx(0); setTimeout(() => setPlaying(true), 450) } }).catch(() => {})
-  }, [])
+    if (initial) return
+    fetch('/api/timeline?days=56').then(r => r.ok ? r.json() : null).then(j => { if (j?.points) { setPts(j.points); setIdx(0); setTimeout(() => setPlaying(true), 700) } }).catch(() => {})
+  }, [initial])
   useEffect(() => {
     if (!playing || !pts) return
-    const t = setInterval(() => setIdx(i => { if (i >= pts.length - 1) { setPlaying(false); return i } return i + 1 }), speed === 1 ? 220 : 110)
+    // slow by default: about 0.7s a day, long enough to read each day's sentence
+    const t = setInterval(() => setIdx(i => { if (i >= pts.length - 1) { setPlaying(false); return i } return i + 1 }), fast ? 280 : 720)
     return () => clearInterval(t)
-  }, [playing, pts, speed])
+  }, [playing, pts, fast])
 
   const p = pts?.[idx], prev = idx > 0 ? pts?.[idx - 1] : undefined, first = pts?.[0]
   const story = useMemo(() => (p ? narrate(p, prev) : null), [p, prev])
-  if (typeof document === 'undefined') return null
+  if (typeof document === 'undefined' && !initial) return null
   const atEnd = !!pts && idx === pts.length - 1
-  const tiles = p && first ? [
-    { k: 'Revenue at risk', v: money(p.atRisk), d: p.atRisk - first.atRisk, fmt: money, c: '#E0533D' },
-    { k: 'Revenue protected', v: money(p.protectedValue), d: p.protectedValue - first.protectedValue, fmt: money, c: '#2f8f5b' },
-    { k: 'Open signals', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: '#17150F' },
-    { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: '#C98A1E' },
+  const since = first ? new Date(first.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
+  const figs = p && first ? [
+    { k: 'Revenue at risk', v: money(p.atRisk), d: p.atRisk - first.atRisk, fmt: money, c: 'var(--critical, #c43d2b)', bad: true },
+    { k: 'Revenue protected', v: money(p.protectedValue), d: p.protectedValue - first.protectedValue, fmt: money, c: 'var(--good, #2f8f5b)', bad: false },
+    { k: 'Open signals', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: 'var(--info, #2f6f9f)', bad: true },
+    { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: 'var(--accent, #E85A25)', bad: true },
   ] : []
-  const week = pts && p ? Math.floor(idx / 7) + 1 : 0
 
-  return createPortal(
-    <div className="rp2-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="rp2" role="dialog" aria-label="Replay the last eight weeks">
-        <header className="rp2-head">
-          <div className="rp2-kicker"><span className="rp2-live" />Replay · Week {week} of 8</div>
-          <button className="rp2-x" onClick={onClose} aria-label="Close"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg></button>
+  const body = (
+    <div className="rp3-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}>
+      <div className="rp3" role="dialog" aria-label="Replay the last eight weeks">
+        <header className="rp3-top">
+          <span className="rp3-k">Replay{pts ? ` · week ${Math.floor(idx / 7) + 1} of ${Math.ceil(pts.length / 7)} · day ${idx + 1} of ${pts.length}` : ''}</span>
+          <button className="rp3-x" onClick={onClose} aria-label="Close">
+            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+          </button>
         </header>
-        {!pts && <div className="rp2-loading"><span /><span /><span /></div>}
+        {!pts && <div className="rp3-loading"><span /><span /><span /></div>}
         {pts && p && story && (
           <>
-            <div className="rp2-date">
-              {new Date(p.t).toLocaleDateString('en-US', { weekday: 'long' })}
-              <span>{new Date(p.t).toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}{atEnd ? ' · today' : ''}</span>
-            </div>
-            <p className="rp2-story" key={idx}><b>{story.lead}</b> {story.rest}</p>
+            <h2 className="rp3-date">{new Date(p.t).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}{atEnd && <span className="rp3-today">Today</span>}</h2>
+            <p className="rp3-story" key={idx}><strong>{story.lead}</strong> {story.rest}</p>
 
-            <div className="rp2-legend"><span><i style={{ background: '#E0533D' }} />Revenue at risk</span><span><i style={{ background: '#2f8f5b' }} />Revenue protected</span><span><i className="dot" />A critical signal arrived</span></div>
-            <Chart pts={pts} idx={idx} onPick={i => { setPlaying(false); setIdx(i) }} />
-
-            <div className="rp2-controls">
-              <button className="rp2-play" onClick={() => { if (atEnd) setIdx(0); setPlaying(v => !v) }} aria-label={playing ? 'Pause' : 'Play'}>
-                {playing
-                  ? <svg width="14" height="14" viewBox="0 0 14 14"><rect x="3" y="2" width="3" height="10" rx="1" fill="currentColor" /><rect x="8" y="2" width="3" height="10" rx="1" fill="currentColor" /></svg>
-                  : <svg width="14" height="14" viewBox="0 0 14 14"><path d="M4 2.2v9.6c0 .5.5.8 1 .5l7-4.8c.4-.3.4-.8 0-1.1l-7-4.7c-.5-.3-1 0-1 .5z" fill="currentColor" /></svg>}
-              </button>
-              <span className="rp2-ctl-l">{playing ? 'Playing' : atEnd ? 'Replay again' : 'Paused'} · drag the chart to any day</span>
-              <button className="rp2-chip" onClick={() => setSpeed(s => (s === 1 ? 2 : 1))}>{speed}×</button>
-              <button className="rp2-chip" onClick={() => { setPlaying(false); setIdx(pts.length - 1) }}>Today</button>
-            </div>
-
-            <div className="rp2-tiles">
-              {tiles.map(t => (
-                <div key={t.k} className="rp2-tile">
-                  <span className="rp2-tk">{t.k}</span>
-                  <span className="rp2-tv" style={{ color: t.c }}>{t.v}</span>
-                  <span className="rp2-td">{t.d === 0 ? 'unchanged since the start' : `${t.d > 0 ? '+' : '\u2212'}${t.fmt(Math.abs(t.d))} since the start`}</span>
+            <div className="rp3-figs">
+              {figs.map(f => (
+                <div key={f.k} className="rp3-fig">
+                  <div className="rp3-fig-k">{f.k}</div>
+                  <div className="rp3-fig-v" style={{ color: f.c }}>{f.v}</div>
+                  <div className="rp3-fig-d">{f.d === 0 ? `no change since ${since}` : `${f.d > 0 ? '+' : '\u2212'}${f.fmt(Math.abs(f.d))} since ${since}`}</div>
                 </div>
               ))}
             </div>
 
-            <div className="rp2-feed">
-              <div className="rp2-feed-h">That day</div>
-              {p.events.length === 0 && <div className="rp2-quiet">Nothing came in. A good day to get ahead.</div>}
+            <div className="rp3-chart-wrap">
+              <div className="rp3-legend"><span><i style={{ background: '#c43d2b' }} />Revenue at risk</span><span><i style={{ background: '#2f8f5b' }} />Revenue protected</span><span><i className="sq" />A critical signal arrived</span></div>
+              <Chart pts={pts} idx={idx} onPick={i => { setPlaying(false); setIdx(i) }} />
+            </div>
+
+            <div className="rp3-controls">
+              <button className="rp3-play" onClick={() => { if (atEnd) setIdx(0); setPlaying(v => !v) }}>
+                {playing
+                  ? <><svg width="12" height="12" viewBox="0 0 12 12"><rect x="2" y="1.5" width="3" height="9" fill="currentColor" /><rect x="7" y="1.5" width="3" height="9" fill="currentColor" /></svg>Pause</>
+                  : <><svg width="12" height="12" viewBox="0 0 12 12"><path d="M3 1.5v9l7.5-4.5z" fill="currentColor" /></svg>{atEnd ? 'Play from the start' : 'Play'}</>}
+              </button>
+              <div className="rp3-seg" role="group" aria-label="Speed">
+                <button className={!fast ? 'on' : ''} onClick={() => setFast(false)}>Slow</button>
+                <button className={fast ? 'on' : ''} onClick={() => setFast(true)}>Faster</button>
+              </div>
+              <span className="rp3-hint">Drag across the chart to any day</span>
+              <button className="rp3-ghost" onClick={() => { setPlaying(false); setIdx(pts.length - 1) }}>Jump to today</button>
+            </div>
+
+            <section className="rp3-day">
+              <div className="rp3-sec-h"><h3>That day</h3><span>{p.events.length ? `${p.events.length} change${p.events.length === 1 ? '' : 's'}` : 'quiet'}</span></div>
+              {p.events.length === 0 && <div className="rp3-quiet">Nothing came in, and nothing moved.</div>}
               {p.events.map(e => (
-                <button key={e.id + e.kind} className={`rp2-ev s-${e.kind === 'handled' ? 'done' : e.severity}`} onClick={() => { onClose(); router.push(`/signals?signal=${e.id}`) }}>
-                  <span className="rp2-ev-acct">{e.account}</span>
-                  <span className="rp2-ev-title">{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
-                  {e.amount ? <span className="rp2-ev-amt">{money(e.amount)}</span> : <span />}
+                <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose(); router.push(`/signals?signal=${e.id}`) }}>
+                  <i className={`sev-${e.kind === 'handled' ? 'done' : e.severity}`} />
+                  <span className="rp3-ev-a">{e.account}</span>
+                  <span className="rp3-ev-t">{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
+                  <span className="rp3-ev-m">{e.amount ? money(e.amount) : ''}</span>
                 </button>
               ))}
-            </div>
+            </section>
           </>
         )}
       </div>
-    </div>, document.body)
+    </div>
+  )
+  return typeof document === 'undefined' ? body : createPortal(body, document.body)
 }
