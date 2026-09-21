@@ -9,9 +9,11 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import type { Account, Signal } from '@/types'
 import { CountUp } from '@/components/ui/CountUp'
 import { useEscape } from '@/components/ui/useEscape'
+import { X } from '@/components/explain/Explain'
 import { healthTone, formatCurrency, formatRelativeTime, formatWhen } from '@/lib/utils'
 import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
+import { exposureOf } from '@/lib/metrics'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -713,7 +715,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const riskByAcct = new Map<string, number>()
   for (const sg of open) if (sg.account_name && sg.risk_amount) riskByAcct.set(sg.account_name, (riskByAcct.get(sg.account_name) || 0) + Number(sg.risk_amount))
   const atRiskTotal = Array.from(riskByAcct.values()).reduce((a, b) => a + b, 0)
-  const protectedVal = handled.reduce((a, sg) => a + (Number(sg.risk_amount) || 0), 0)
+  const protectedVal = exposureOf(handled)
   const confs = signals.map(sg => (sg.ai_analysis as { confidence?: number } | null)?.confidence).filter((c): c is number => typeof c === 'number')
   const aiConf = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : null
   // Anything derived from the current clock renders after mount only: the
@@ -722,6 +724,9 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [mounted, setMounted] = useState(false)
   useEffect(() => { setMounted(true) }, [])
   const [inboxOpen, setInboxOpen] = useState(false)
+  // rated precision comes from the same place its explanation does (ratings, never model confidence)
+  const [rp, setRp] = useState<{ valueText: string; n: number } | null>(null)
+  useEffect(() => { fetch('/api/explain?metric=rated_precision').then(r => r.ok ? r.json() : null).then(j => { if (j) setRp({ valueText: j.valueText, n: j.n ?? 0 }) }).catch(() => {}) }, [])
   useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
 
@@ -887,23 +892,23 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} />{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
-                <div style={sub}>{st.high} high · {st.med} med · {st.low} low</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big('var(--ink)')} /></X>{st.atRiskDelta ? delta(`${st.atRiskDelta > 0 ? '+' : '-'}${formatCurrency(Math.abs(st.atRiskDelta))}`, 'var(--critical, #c43d2b)') : null}</div>
+                <div style={sub}>{st.high} high-risk accounts · {st.med} medium · {st.low} low</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue protected</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} />{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
-                <div style={sub}>{st.saved} saved · {st.actions} actions · {st.hitPct}% hit</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="protected"><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} /></X>{st.protectedDeltaPct ? delta(`+${st.protectedDeltaPct}% vs Q3`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={sub}>{st.saved} saves · {st.actions} actions this quarter</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Active signals</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={String(st.active)} style={big('var(--ink)')} />{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="active"><CountUp value={String(st.active)} style={big('var(--ink)')} /></X>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
-              <div onClick={() => setConfOpen(true)} style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
-                <div style={MONO}>AI confidence</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><CountUp value={`${st.aiConfidence}%`} style={big('var(--ink)')} /></div>
-                <div style={{ ...sub, display: 'inline-flex', alignItems: 'center', gap: 7 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--good, #2f8f5b)' }} />{st.integrations} integrations synced · {st.syncedAgo}</div>
+              <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div style={MONO}>Rated precision</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="rated_precision">{rp ? (rp.valueText === 'collecting' ? <span style={{ ...big('var(--ink-faint)'), fontSize: 22 }}>collecting</span> : <CountUp value={rp.valueText} style={big('var(--ink)')} />) : <span style={big('var(--ink-faint)')}>…</span>}</X></div>
+                <div style={sub}>{rp ? (rp.n ? `${rp.n} ratings from your team` : 'no ratings yet') : ' '}</div>
               </div>
             </div>
           </>

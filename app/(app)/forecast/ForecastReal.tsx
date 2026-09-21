@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import type { Account, Signal } from '@/types'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { X } from '@/components/explain/Explain'
 import { formatCurrency } from '@/lib/utils'
 import { AskThis } from '@/components/agent/AskThis'
 
@@ -202,8 +203,8 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Commit · {quarterLabel.split(' ')[0]}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 12 }}>
-            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}>{formatCurrency(commitF)}</span>
-            {commitProgress > 0 && <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--good, #2f8f5b)' }}>+{demoFigures?.commitDeltaPct ?? (commitProgress - 100 > 0 ? commitProgress - 100 : Math.max(1, Math.round(commitProgress / 8)))}%</span>}
+            <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)' }}><X m="commit">{formatCurrency(commitF)}</X></span>
+            
           </div>
           <div style={{ height: 3, background: 'var(--hairline, #EFEAE1)', marginTop: 22, position: 'relative' }}>
             <div style={{ position: 'absolute', inset: 0, width: `${commitProgress}%`, background: 'var(--good, #2f8f5b)' }} />
@@ -215,12 +216,12 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '26px 22px', marginTop: 'var(--gap-m)' }}>
             {[
               { n: formatCurrency(bestCase), lbl: `best case · ${rows.length} deals weighted`, color: 'var(--ink)' },
-              { n: formatCurrency(atRiskF), lbl: `pipeline exposed · ${riskyDeals} deals`, color: 'var(--critical, #c43d2b)' },
+              { n: formatCurrency(atRiskF), lbl: `pipeline exposed · ${riskyDeals} deals`, color: 'var(--critical, #c43d2b)', m: 'at_risk' },
               { n: String(dealsToClose), lbl: 'deals to close · 30 days', color: 'var(--ink)' },
               { n: `${accuracyPct}%`, lbl: demoFigures ? 'AI accuracy · ▲ 3%/qtr' : 'AI accuracy · estimate until 2 closed quarters', color: 'var(--ink)' },
             ].map((st, i) => (
               <div key={i}>
-                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: '-.04em', lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{(st as { m?: string }).m ? <X m={(st as { m?: string }).m!}>{st.n}</X> : st.n}</div>
                 <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 8, lineHeight: 1.4 }}>{st.lbl}</div>
               </div>
             ))}

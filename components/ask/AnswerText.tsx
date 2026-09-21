@@ -50,10 +50,60 @@ export function VerdictBanner({ verdict, reason, tone }: { verdict: string; reas
   )
 }
 
+// v11.115: a verdict answer, laid out as its parts instead of one run-on block:
+// the verdict, the one-line reason, each point on its own row with its label, then the sources.
+export function parseVerdictBody(rest: string) {
+  const lines = rest.split('\n')
+  const srcLine = lines.find(l => /^\s*\**\s*sources\s*:?\**/i.test(l))
+  const sources = srcLine ? srcLine.replace(/^\s*\**\s*sources\s*:?\s*\**\s*/i, '').replace(/\.$/, '').split(/\s*[,;·]\s*/).map(x => x.trim()).filter(Boolean) : []
+  const body = lines.filter(l => l !== srcLine).join(' ').replace(/\s+/g, ' ').trim()
+    // a label the model forgot to bold ("The signal: …" at a sentence start) still gets its own row
+    .replace(/(^|[.!?]\s+)(?!\*\*)([A-Z][A-Za-z]+(?: [A-Za-z]+){0,2}):\s+/g, '$1**$2:** ')
+  const rows: Array<{ lead: string; text: string }> = []
+  const re = /\*\*([^*]{2,40}?):?\*\*:?\s*([\s\S]*?)(?=\s*\*\*[^*]{2,40}?:?\*\*:?|$)/g
+  const first = body.search(/\*\*[^*]{2,40}?:?\*\*/)
+  const intro = first > 0 ? body.slice(0, first).trim() : first === -1 ? body : ''
+  let m: RegExpExecArray | null
+  while ((m = re.exec(body.slice(Math.max(0, first)))) && first !== -1) {
+    const lead = m[1].replace(/:$/, '').trim(); const text = m[2].trim()
+    if (lead && text) rows.push({ lead, text })
+    if (m.index === re.lastIndex) re.lastIndex++
+  }
+  return { intro, rows, sources }
+}
+
+export function VerdictAnswer({ vd }: { vd: { verdict: string; reason: string; tone: string; rest: string } }) {
+  const { intro, rows, sources } = parseVerdictBody(vd.rest)
+  return (
+    <div className="va">
+      <div className="va-label">Verdict</div>
+      <div className="va-verdict" style={{ color: vd.tone }}>{vd.verdict}</div>
+      {vd.reason && <div className="va-reason">{vd.reason}</div>}
+      {intro && <p className="va-intro">{inline(intro, 0)}</p>}
+      {rows.length > 0 && (
+        <div className="va-rows">
+          {rows.map((r, i) => (
+            <div key={i} className="va-row">
+              <span className="va-lead">{r.lead}</span>
+              <span className="va-text">{inline(r.text, i + 1)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {sources.length > 0 && (
+        <div className="va-sources">
+          <span className="va-label">Sources</span>
+          {sources.map((x, i) => <span key={i} className="va-src">{x}</span>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Answer({ text: raw }: { text: string }) {
   const vd = splitVerdict(raw)
-  const text = vd ? vd.rest : raw
-  if (vd && !text) return <VerdictBanner {...vd} />
+  if (vd) return <VerdictAnswer vd={vd} />
+  const text = raw
   const lines = text.split('\n')
   const out: React.ReactNode[] = []
   let para: string[] = []
@@ -92,7 +142,7 @@ export function Answer({ text: raw }: { text: string }) {
     para.push(l)
   })
   flush(9999)
-  return <div>{vd && <VerdictBanner {...vd} />}{out}</div>
+  return <div>{out}</div>
 }
 
 

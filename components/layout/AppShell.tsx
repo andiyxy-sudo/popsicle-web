@@ -7,6 +7,7 @@ import { CommandPalette } from './CommandPalette'
 import { AgentPopup } from '@/components/agent/AgentPopup'
 import { AGENT_ENABLED, ASK_DOCK } from '@/lib/agent/config'
 import { AskDock } from '@/components/agent/AskDock'
+import { ExplainHost } from '@/components/explain/Explain'
 import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
 
@@ -81,6 +82,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
       <CommandPalette demo={isDemo} />
+      <ExplainHost />
       {AGENT_ENABLED && <AgentPopup />}
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
@@ -91,7 +93,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.114</span>
+            <span>v11.116</span>
           </footer>
         </div>
       </div>

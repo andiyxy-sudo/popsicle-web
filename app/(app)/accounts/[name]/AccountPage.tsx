@@ -2,6 +2,7 @@
 
 import { healthTone, formatWhen } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { X } from '@/components/explain/Explain'
 import { useEscape } from '@/components/ui/useEscape'
 import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
 import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal'
@@ -280,7 +281,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       {/* stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))', gap: 28 }}>
         {stat('Health', <>
-          <span style={{ color: riskColor }}>{health}</span>
+          <span style={{ color: riskColor }}><X m="account_health" account={accountName}>{health}</X></span>
           <svg width="120" height="34" viewBox="0 0 120 34" style={{ overflow: 'visible' }}>
             <path d={`M${spark}`} fill="none" stroke={riskColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -288,7 +289,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         {stat('Churn risk', `${Math.max(0, Math.min(100, 100 - health))}%`, health >= 70 ? 'low' : health >= 40 ? 'medium' : 'high', healthTone(health))}
         {stat('Renewal', extra?.expiry ?? (acct.close_date && mounted ? new Date(acct.close_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--'), acct.stage || '')}
         {extra && stat('Trend', extra.trend, `rep score ${extra.repScore}`, extra.trend.startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)')}
-        {stat('Exposure', money(open.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)), `${open.filter(s => s.severity === 'high').length} critical`, riskColor)}
+        {stat('Exposure', <X m="account_arr" account={accountName}>{money(Math.max(0, ...open.filter(s => s.severity !== 'positive').map(s => Number(s.risk_amount) || 0)))}</X>, `${open.filter(s => s.severity === 'high').length} critical`, riskColor)}
         {stat('Last touch', daysDark != null ? (daysDark === 0 ? 'today' : `${daysDark}d ago`) : '--', acct.owner ? `owner ${acct.owner}` : '')}
       </div>
 

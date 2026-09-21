@@ -5,6 +5,7 @@ import { DEMO_TRANSCRIPTS, DEMO_THREADS } from '@/lib/demo-dataset'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatWhen } from '@/lib/utils'
 import { DateField } from '@/components/ui/DateField'
+import { X } from '@/components/explain/Explain'
 import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
 import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal'
 import { useEscape } from '@/components/ui/useEscape'
@@ -19,6 +20,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
+import { exposureOf } from '@/lib/metrics'
 
 interface DBSignal {
   id: string
@@ -196,7 +198,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   const high = signals.filter(s => s.severity === 'high')
   const watch = signals.filter(s => s.severity === 'watch')
   const positive = signals.filter(s => s.severity === 'positive')
-  const totalRisk = high.concat(watch).reduce((sum, s) => sum + (s.risk_amount || 0), 0)
+  const totalRisk = exposureOf(high.concat(watch))
 
   function open360(s: DBSignal) {
     if (s.account_name) router.push(`/accounts/${encodeURIComponent(s.account_name)}`)
@@ -432,8 +434,8 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   }
 
   const critical = high
-  const totalWatchRisk = watch.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
-  const posValue = positive.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
+  const totalWatchRisk = exposureOf(watch)
+  const posValue = exposureOf(positive)
   const newest = mounted && signals[0]?.created_at ? timeAgo(signals[0].created_at) : ''
   const srcCount = new Set(signals.map(x => x.source_integration).filter(Boolean)).size
   // handled signals leave the live list and collect in the Recently handled strip below
@@ -485,7 +487,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         const weekN = isDemo && demoHead ? demoHead.week.signals : week.length
         const newN = isDemo && demoHead ? demoHead.week.fresh : fresh.length
         const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink)' } as const
-        const highRisk = critical.reduce((a, x) => a + (Number(x.risk_amount) || 0), 0)
+        const highRisk = exposureOf(critical)
         const stats: Array<{ n: string; lbl: string; color: string; strong?: boolean }> = isDemo && demoHead
           ? demoHead.head.map(st => ({ n: st.n, lbl: st.lbl, color: TONE[st.tone], strong: st.strong }))
           : [
@@ -502,7 +504,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--rule-strong, #0E0D0B)', opacity: (statHover ?? stats.length - 1) === i ? 1 : 0, transition: 'opacity .18s ease' }} />
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: st.color, fontVariantNumeric: 'tabular-nums' }}>{i === 0 ? <X m="at_risk">{st.n}</X> : i === stats.length - 1 ? <X m="active">{st.n}</X> : st.n}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
               ))}
@@ -566,7 +568,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 ) : money ? (
                   <div style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
                     <div>
-                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}>{money}</div>
+                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
                     </div>
                     {(() => {

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { attentionScore } from '@/lib/attention'
 import { healthTone, formatWhen } from '@/lib/utils'
+import { X } from '@/components/explain/Explain'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 
@@ -62,7 +63,7 @@ function topSignalOf(sigs: SigLite[]): SigLite | null {
   const rank = (sv: string | null) => sv === 'high' ? 0 : sv === 'watch' ? 1 : 2
   return [...sigs].sort((x, y) => rank(x.severity) - rank(y.severity) || String(y.created_at).localeCompare(String(x.created_at)))[0] ?? null
 }
-type HeadStat = { n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean }
+type HeadStat = { n: string; lbl: string; tone: 'critical' | 'warn' | 'good' | 'ink'; strong?: boolean; m?: string }
 type DemoHeadline = { highCount: number; highValue: number; darkHours: number; closingName: string; healthyCount: number }
 const TONE = { critical: 'var(--critical, #c43d2b)', warn: 'var(--warn, #d38b1d)', good: 'var(--good, #2f8f5b)', ink: 'var(--ink, #0E0D0B)' } as const
 const NUMWORD = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
@@ -180,11 +181,11 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         )
         const totalArr = accounts.reduce((a, x) => a + (Number(x.value) || 0), 0)
         const stats: HeadStat[] = demoHead?.stats ?? [
-          { n: fmtVal(totalArr), lbl: `total ARR · ${accounts.length} accounts`, tone: 'ink' },
-          { n: String(high.length), lbl: `high risk · ${fmtVal(highVal)} at risk`, tone: 'critical' },
-          { n: String(medium.length), lbl: `medium · ${fmtVal(mediumVal)} exposure`, tone: 'warn' },
-          { n: String(closing.length), lbl: `closing or won · ${fmtVal(closingVal)}`, tone: 'good' },
-          { n: avgHealth != null ? String(avgHealth) : '--', lbl: 'avg health', tone: 'ink', strong: true },
+          { n: fmtVal(totalArr), lbl: `total ARR · ${accounts.length} accounts`, tone: 'ink', m: 'total_arr' },
+          { n: String(high.length), lbl: `high risk · ${fmtVal(highVal)}`, tone: 'critical', m: 'accounts_high' },
+          { n: String(medium.length), lbl: `medium · ${fmtVal(mediumVal)} exposure`, tone: 'warn', m: 'accounts_medium' },
+          { n: String(closing.length), lbl: `closing or won · ${fmtVal(closingVal)}`, tone: 'good', m: 'accounts_closing' },
+          { n: avgHealth != null ? String(avgHealth) : '--', lbl: 'avg health', tone: 'ink', strong: true, m: 'avg_health' },
         ]
         return (
           <>
@@ -197,7 +198,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                 <div key={i} onMouseEnter={() => setStatHover(i)}
                   style={{ paddingTop: 22, paddingBottom: 18, position: 'relative', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: -1, height: 2, background: 'var(--rule-strong, #0E0D0B)', opacity: (statHover ?? stats.length - 1) === i ? 1 : 0, transition: 'opacity .18s ease' }} />
-                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.n}</div>
+                  <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.045em', fontSize: 40, lineHeight: 1, color: TONE[st.tone], fontVariantNumeric: 'tabular-nums' }}>{st.m ? <X m={st.m}>{st.n}</X> : st.n}</div>
                   <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 10 }}>{st.lbl}</div>
                 </div>
               ))}
@@ -256,12 +257,12 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                 <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
                   <AskThis q={`Is ${a.name} going to close, and what's the biggest risk?`} account={a.name} />
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}>{h}</span>
+                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
                     <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
                   </div>
-                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)', textAlign: 'center' }}>{fmtVal(a.value)}</span>
+                  <span style={{ ...cell, fontSize: 13.5, fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)', textAlign: 'center' }}><X m="account_arr" account={a.name}>{fmtVal(a.value)}</X></span>
                   <span onClick={e => { e.stopPropagation(); setFlag(buildFlag(a.name, sigs, risk, href => router.push(href))) }} title="Why this risk"
                     style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', justifySelf: 'center',
                       padding: '3px 10px', borderRadius: 0, background: risk === 'high' ? 'rgba(196,61,43,.10)' : risk === 'medium' ? 'rgba(211,139,29,.12)' : 'rgba(47,143,91,.10)' }}>

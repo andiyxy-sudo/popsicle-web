@@ -7,6 +7,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { exposureOf } from '@/lib/metrics'
 
 export interface RiskFlag {
   account: string
@@ -97,7 +98,7 @@ export function buildFlag(
   const confs = sigs.map(s => (s.ai_analysis as { confidence?: number } | null)?.confidence).filter((x): x is number => typeof x === 'number')
   const confidence = confs.length ? Math.round(confs.reduce((a, b) => a + b, 0) / confs.length) : 70
   const top = sigs.find(s => s.severity === 'high') ?? sigs[0]
-  const exposure = sigs.reduce((a, s) => a + (Number(s.risk_amount) || 0), 0)
+  const exposure = exposureOf(sigs)
   const patterns: Record<string, string> = {
     silent_stall: 'Accounts that go dark past their own reply cadence stall far more often than they close.',
     competitor_mention: 'A named competitor in the thread usually means an evaluation is already running.',
