@@ -54,9 +54,9 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   let ids = [ws.ownerId]
   if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Row[]).map(r => r.user_id as string) }
 
-  const question = ev.text.replace(/<@[A-Z0-9]+>/g, '').replace(/\s+/g, ' ').trim()
+  const question = ev.text.replace(/<@[A-Z0-9]+>/g, '').replace(/(^|\s)@popsicle\b[:,]?/gi, ' ').replace(/\s+/g, ' ').trim()
   if (!question) {
-    await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, e.g. _@popsicle is this going to close this quarter?_' })
+    await slack(ws.token, 'chat.postMessage', { channel: ev.channel, thread_ts: ev.thread_ts ?? ev.ts, text: 'Ask me about a deal, for example: _is this going to close this quarter?_' })
     return
   }
 
@@ -108,6 +108,8 @@ ${wantsVerdict(question) ? VERDICT_RULES.replace(/\*\*/g, '*') : 'Lead with the 
   } catch (e) { console.error('[popsicle-slack] AI call threw', e) }
   if (!text) text = 'I could not answer that just now. Try again in a minute.'
 
+  // never echo the trigger word, so a reply can't set itself off (it may be posted with a user token)
+  text = text.replace(/@popsicle/gi, 'Popsicle')
   // Slack formatting: the verdict line in bold, a link back to the account
   text = text.replace(/^Verdict:\s*/i, '*Verdict:* ')
   const link = acct ? `\n<${SITE()}/accounts/${encodeURIComponent(String(acct.name))}|Open ${acct.name} in Popsicle>` : `\n<${SITE()}/pulse|Open Popsicle>`
