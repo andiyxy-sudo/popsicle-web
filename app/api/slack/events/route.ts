@@ -12,16 +12,29 @@ import { answerMention } from '@/lib/slack/popsicle'
 export const runtime = 'nodejs'
 
 function verified(raw: string, ts: string | null, sig: string | null) {
-  const secret = process.env.SLACK_SIGNING_SECRET
+  const secret = process.env.SLACK_SIGNING_SECRET?.trim()     // a pasted secret often carries a trailing newline
   if (!secret || !ts || !sig) return false
   if (Math.abs(Date.now() / 1000 - Number(ts)) > 60 * 5) return false          // replay protection
   const mine = 'v0=' + crypto.createHmac('sha256', secret).update(`v0:${ts}:${raw}`).digest('hex')
   try { return crypto.timingSafeEqual(Buffer.from(mine), Buffer.from(sig)) } catch { return false }
 }
 
+// Open https://portal.popsicle-labs.app/api/slack/events in a browser to check the setup.
+// It shows which settings are present (never their values).
+export async function GET() {
+  return NextResponse.json({
+    ok: true,
+    SLACK_SIGNING_SECRET: !!process.env.SLACK_SIGNING_SECRET?.trim(),
+    SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    ANTHROPIC_API_KEY: !!process.env.ANTHROPIC_API_KEY,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? '(not set, using portal.popsicle-labs.app)',
+  })
+}
+
 export async function POST(req: Request) {
   const raw = await req.text()
   if (!verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
+    console.warn('[popsicle-slack] rejected: signature did not match. Check SLACK_SIGNING_SECRET in Vercel matches the Slack app / Supabase secret.')
     return NextResponse.json({ error: 'bad signature' }, { status: 401 })
   }
   const body = JSON.parse(raw) as { type: string; challenge?: string; team_id?: string; event?: { type: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string; bot_id?: string } }
@@ -34,7 +47,9 @@ export async function POST(req: Request) {
   const ev = body.event
   if (body.type === 'event_callback' && ev?.type === 'app_mention' && !ev.bot_id && body.team_id) {
     // acknowledge within Slack's 3 seconds; answer after the response is sent
-    after(() => answerMention({ team: body.team_id!, channel: ev.channel, ts: ev.ts, thread_ts: ev.thread_ts, text: ev.text, user: ev.user }).catch(() => {}))
+    console.log('[popsicle-slack] mention received', { team: body.team_id, channel: ev.channel })
+    after(() => answerMention({ team: body.team_id!, channel: ev.channel, ts: ev.ts, thread_ts: ev.thread_ts, text: ev.text, user: ev.user })
+      .catch(e => console.error('[popsicle-slack] failed', e)))
   }
   return new NextResponse(null, { status: 200 })
 }
