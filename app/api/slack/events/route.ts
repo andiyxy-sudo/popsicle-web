@@ -1,6 +1,7 @@
 import { NextResponse, after } from 'next/server'
 import crypto from 'node:crypto'
 import { answerMention } from '@/lib/slack/popsicle'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 
 // Slack Events API endpoint for @popsicle. Sits alongside the existing post-to-slack edge
 // function and replaces nothing. Setup (once, in the Slack app config):
@@ -42,6 +43,27 @@ function vouched(auth: string | null) {
 
 export async function POST(req: Request) {
   const raw = await req.text()
+
+  // v11.107: the slack-events edge function saved a question in slack_mentions and sends only its id.
+  // Reading it back from the database is the proof it's genuine: only the project's own
+  // service role can write that table. Claiming the row (answered_at) makes each question
+  // answered exactly once. No key or secret has to match between Supabase and Vercel.
+  let parsed: { mention_id?: string } = {}
+  try { parsed = JSON.parse(raw) } catch { /* not JSON */ }
+  if (parsed.mention_id && /^[0-9a-f-]{36}$/i.test(parsed.mention_id)) {
+    const db = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(), { auth: { autoRefreshToken: false, persistSession: false } })
+    const since = new Date(Date.now() - 10 * 60_000).toISOString()
+    const { data: m, error } = await db.from('slack_mentions').update({ answered_at: new Date().toISOString() })
+      .eq('id', parsed.mention_id).is('answered_at', null).gte('created_at', since)
+      .select('team, channel, ts, thread_ts, text, slack_user').maybeSingle()
+    if (error) { console.error('[popsicle-slack] could not read the question:', error.message); return NextResponse.json({ error: error.message }, { status: 500 }) }
+    if (!m) return NextResponse.json({ ok: true, skipped: 'unknown or already answered' })
+    console.log('[popsicle-slack] question received', { channel: m.channel })
+    after(() => answerMention({ team: String(m.team ?? ''), channel: String(m.channel), ts: String(m.ts), thread_ts: m.thread_ts ? String(m.thread_ts) : undefined, text: String(m.text ?? ''), user: m.slack_user ? String(m.slack_user) : undefined })
+      .catch(e => console.error('[popsicle-slack] failed', e)))
+    return NextResponse.json({ ok: true })
+  }
+
   if (!vouched(req.headers.get('authorization')) && !verified(raw, req.headers.get('x-slack-request-timestamp'), req.headers.get('x-slack-signature'))) {
     console.warn('[popsicle-slack] rejected: neither the forwarding key nor the Slack signature matched. The service role key in Vercel must equal the Supabase project key.')
     return NextResponse.json({ error: 'bad signature' }, { status: 401 })
