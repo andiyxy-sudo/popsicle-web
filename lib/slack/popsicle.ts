@@ -11,18 +11,18 @@ const SITE = () => (process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.popsicle
 const money = (v?: unknown) => { const n = Number(v || 0); return n >= 1e6 ? `$${(n / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : n >= 1e3 ? `$${Math.round(n / 1e3)}K` : `$${n}` }
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim()
 
-// find the Slack integration row for this workspace, whatever shape the OAuth function stored it in
-async function findWorkspace(teamId: string) {
+// Who owns this channel, and which account it's linked to: the same table slack-events uses
+// (slack_tracked_channels), and the bot token from integrations.access_token.
+async function findChannel(channel: string) {
   const db = admin()
-  const { data } = await db.from('integrations').select('*').eq('provider', 'slack').eq('is_active', true).limit(200)
-  const row = ((data ?? []) as Row[]).find(r => {
-    const m = (r.metadata ?? {}) as Row
-    return r.team_id === teamId || m.team_id === teamId || (m.team as Row | undefined)?.id === teamId
-  })
-  if (!row) return null
-  const m = (row.metadata ?? {}) as Row
-  const token = (row.bot_token ?? row.access_token ?? m.bot_token ?? m.access_token ?? (m.bot as Row | undefined)?.bot_access_token) as string | undefined
-  return token ? { token, ownerId: row.user_id as string } : null
+  const { data: trackers } = await db.from('slack_tracked_channels').select('user_id, channel_name, linked_account_id').eq('channel_id', channel).eq('is_tracked', true)
+  const rows = (trackers ?? []) as Array<{ user_id: string; channel_name: string | null; linked_account_id: string | null }>
+  for (const t of rows) {
+    const { data: integ } = await db.from('integrations').select('access_token').eq('user_id', t.user_id).eq('provider', 'slack').eq('is_active', true).maybeSingle()
+    const token = (integ as { access_token?: string } | null)?.access_token
+    if (token) return { token: String(token), ownerId: t.user_id, channelName: t.channel_name ?? '', linkedAccountId: rows.find(r => r.linked_account_id)?.linked_account_id ?? null }
+  }
+  return null
 }
 
 async function slack(token: string, method: string, body: Record<string, unknown>) {
@@ -34,8 +34,8 @@ async function channelName(token: string, channel: string) {
 }
 
 export async function answerMention(ev: { team: string; channel: string; ts: string; thread_ts?: string; text: string; user?: string }) {
-  const ws = await findWorkspace(ev.team)
-  if (!ws) return
+  const ws = await findChannel(ev.channel)
+  if (!ws) return            // channel not tracked by anyone in Popsicle: stay silent
   const db = admin()
 
   // the org that owns the workspace
@@ -57,10 +57,13 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
   const accts = (accounts ?? []) as Row[]
 
   // which account: named in the question, else the channel's name (#acme-renewal → Acme Corp)
-  const chan = slug(await channelName(ws.token, ev.channel))
+  const chan = slug(ws.channelName || await channelName(ws.token, ev.channel))
   const qn = slug(question)
   const score = (name: string) => { const n = slug(name); const first = n.split(' ')[0]; return qn.includes(n) ? 3 : (first.length > 2 && qn.includes(first)) ? 2 : (chan.includes(n) || (first.length > 2 && chan.split(' ').includes(first))) ? 1 : 0 }
-  const acct = [...accts].map(a => ({ a, s: score(String(a.name)) })).filter(x => x.s > 0).sort((x, y) => y.s - x.s)[0]?.a
+  const named = [...accts].map(a => ({ a, s: score(String(a.name)) })).filter(x => x.s >= 2).sort((x, y) => y.s - x.s)[0]?.a
+  const linked = ws.linkedAccountId ? accts.find(a => a.id === ws.linkedAccountId) : undefined
+  const guessed = [...accts].map(a => ({ a, s: score(String(a.name)) })).filter(x => x.s > 0).sort((x, y) => y.s - x.s)[0]?.a
+  const acct = named ?? linked ?? guessed     // a name in the question wins, then the channel's link, then a guess
 
   const openSigs = ((signals ?? []) as Row[]).filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
   const sigs = acct ? openSigs.filter(s => s.account_name === acct.name) : openSigs.slice(0, 20)
