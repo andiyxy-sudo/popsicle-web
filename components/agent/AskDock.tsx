@@ -43,7 +43,12 @@ export function AskDock() {
   const about = account ?? (screen ? LABEL[screen] ?? screen : undefined)
 
   useEffect(() => { if (!loaded.current) return; try { sessionStorage.setItem('ask:dock', JSON.stringify(msgs.slice(-20))) } catch { /* ignore */ } }, [msgs])
-  useEffect(() => { const p = paneRef.current; if (p) p.scrollTo({ top: p.scrollHeight, behavior: 'smooth' }) }, [msgs, open])
+  // follow a streaming answer only while you are reading at the bottom. The moment you
+  // scroll up, it stops pulling you down (it used to snap back on every new word).
+  const followRef = useRef(true)
+  const onPaneScroll = () => { const p = paneRef.current; if (p) followRef.current = p.scrollHeight - p.scrollTop - p.clientHeight < 48 }
+  useEffect(() => { const p = paneRef.current; if (p && followRef.current) p.scrollTop = p.scrollHeight }, [msgs])
+  useEffect(() => { const p = paneRef.current; if (open && p) { followRef.current = true; p.scrollTop = p.scrollHeight } }, [open])
   useEffect(() => {
     if (!open) return
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
@@ -77,7 +82,7 @@ export function AskDock() {
     const q = ask.trim()
     if (!q || busy) return
     const next: Msg[] = [...msgs, { role: 'user', content: q }]
-    setMsgs(next); setAsk(''); setOpen(true); setBusy(true)
+    setMsgs(next); setAsk(''); setOpen(true); setBusy(true); followRef.current = true
     const my = ++gen.current
     const c = new AbortController(); ctrl.current = c
     const live = () => gen.current === my
@@ -134,7 +139,7 @@ export function AskDock() {
               <button onClick={() => setOpen(false)} aria-label="Close" className="dock-x">×</button>
             </span>
           </div>
-          <div className="dock-pane" ref={paneRef}>
+          <div className="dock-pane" ref={paneRef} onScroll={onPaneScroll}>
             {said.map(item => (
               <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
                 {item.kind === 'note' ? (
