@@ -2859,3 +2859,15 @@ body[data-modal="1"] .agent-card { display: none; }
 .dock-next-q { font: inherit; font-size: 12.5px; font-weight: 600; color: #E85A25; background: rgba(255,107,53,.07); border: 1px solid rgba(232,90,37,.25);
   border-radius: var(--toggle-radius, 0px); padding: 6px 11px; cursor: pointer; text-align: left; line-height: 1.35; transition: background .15s ease; }
 .dock-next-q:hover { background: rgba(255,107,53,.14); }
+
+/* v11.113: no visible scrollbar in the Ask bar sheet; it still scrolls with the wheel, trackpad and touch */
+.dock-pane { scrollbar-width: none !important; -ms-overflow-style: none; }
+.dock-pane::-webkit-scrollbar { display: none !important; width: 0 !important; height: 0 !important; }
+
+/* v11.114: "there's more below" fade at the foot of the Ask bar sheet. Shows only while there is
+   unread content beneath; fades away once you reach the end. Doesn't block clicks. */
+.dock-sheet { position: relative; }
+.dock-sheet::after { content: ''; position: absolute; left: 1px; right: 1px; bottom: 0; height: 56px; pointer-events: none;
+  border-radius: 0 0 22px 22px; background: linear-gradient(to bottom, rgba(251,248,243,0), var(--paper, #FBF8F3) 88%);
+  opacity: 0; transition: opacity .25s ease; }
+.dock-sheet.more-below::after { opacity: 1; }

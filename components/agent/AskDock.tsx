@@ -63,9 +63,13 @@ export function AskDock() {
   // follow a streaming answer only while you are reading at the bottom. The moment you
   // scroll up, it stops pulling you down (it used to snap back on every new word).
   const followRef = useRef(true)
-  const onPaneScroll = () => { const p = paneRef.current; if (p) followRef.current = p.scrollHeight - p.scrollTop - p.clientHeight < 48 }
+  // v11.114: a soft fade at the foot of the sheet whenever there's more below
+  const [moreBelow, setMoreBelow] = useState(false)
+  const measure = () => { const p = paneRef.current; setMoreBelow(!!p && p.scrollHeight - p.scrollTop - p.clientHeight > 8) }
+  const onPaneScroll = () => { const p = paneRef.current; if (p) followRef.current = p.scrollHeight - p.scrollTop - p.clientHeight < 48; measure() }
   useEffect(() => { const p = paneRef.current; if (p && followRef.current) p.scrollTop = p.scrollHeight }, [msgs])
   useEffect(() => { const p = paneRef.current; if (open && p) { followRef.current = true; p.scrollTop = p.scrollHeight } }, [open])
+  useEffect(() => { const id = requestAnimationFrame(measure); return () => cancelAnimationFrame(id) })   // after every render
   const dockRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!open) return
@@ -168,7 +172,7 @@ export function AskDock() {
   return (
     <div className="dock" ref={dockRef}>
       {open && (hasConvo || showSuggest) && (
-        <div className="dock-sheet" role="dialog" aria-label={`${AGENT_NAME} conversation`}>
+        <div className={`dock-sheet${moreBelow ? ' more-below' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
             <span className="agent-mark" />
             <span className="dock-from">{AGENT_NAME}</span>
