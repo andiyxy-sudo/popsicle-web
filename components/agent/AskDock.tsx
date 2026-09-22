@@ -52,6 +52,7 @@ export function AskDock() {
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [suggKey, setSuggKey] = useState('')   // which page the questions above belong to
   const cacheRef = useRef<Record<string, string[]>>({})
+  const [loadingKey, setLoadingKey] = useState('')   // a page whose questions are still loading
   const [fresh, setFresh] = useState<string | null>(null)       // the newest item, briefly highlighted
   const gen = useRef(0)
   const ctrl = useRef<AbortController | null>(null)
@@ -67,17 +68,30 @@ export function AskDock() {
   useEffect(() => {
     const key = `${screen ?? ''}|${account ?? ''}`
     if (cacheRef.current[key]) { setSuggestions(cacheRef.current[key]); setSuggKey(key); return }
-    setSuggestions([]); setSuggKey(key)
+    setLoadingKey(key)
     let dead = false
     const qs = new URLSearchParams({ screen: account ? 'account' : (screen || 'pulse') })
     if (account) qs.set('account', account)
     fetch(`/api/ask/suggest?${qs}`).then(r => r.ok ? r.json() : null).then((j: { questions?: string[] } | null) => {
-      if (dead || !j?.questions) return
-      cacheRef.current[key] = j.questions; setSuggestions(j.questions); setSuggKey(key)
-    }).catch(() => {})
+      if (dead) return
+      const q = j?.questions ?? []
+      cacheRef.current[key] = q; setSuggestions(q); setSuggKey(key); setLoadingKey(k => (k === key ? '' : k))
+    }).catch(() => { if (!dead) setLoadingKey(k => (k === key ? '' : k)) })
     return () => { dead = true }
   }, [screen, account])
   useEffect(() => { setOpen(false) }, [screen, account])
+  useEffect(() => {
+    const pages = ['pulse', 'portfolio', 'signals', 'forecast', 'intelligence', 'team', 'integrations', 'settings']
+    let dead = false
+    ;(async () => {
+      for (const pg of pages) {
+        const key = `${pg}|`
+        if (dead || cacheRef.current[key]) continue
+        try { const j = await (await fetch(`/api/ask/suggest?screen=${pg}`)).json(); if (!dead && Array.isArray(j?.questions) && !cacheRef.current[key]) cacheRef.current[key] = j.questions } catch { /* ignore */ }
+      }
+    })()
+    return () => { dead = true }
+  }, [])
 
   useEffect(() => { if (!loaded.current) return; try { sessionStorage.setItem('ask:dock', JSON.stringify(msgs.slice(-20))) } catch { /* ignore */ } }, [msgs])
   // follow a streaming answer only while you are reading at the bottom. The moment you
@@ -225,7 +239,8 @@ export function AskDock() {
     return 'What should I check next?'
   })()
   const pageKey = `${screen ?? ''}|${account ?? ''}`
-  const pageQs = suggKey === pageKey ? suggestions : []          // never another page's questions, not even for one frame
+  const pageQs = cacheRef.current[pageKey] ?? (suggKey === pageKey ? suggestions : [])   // this page's own questions, read instantly when cached
+  const qsPending = !cacheRef.current[pageKey] && (loadingKey === pageKey || suggKey !== pageKey)   // still loading: show nothing, not a stand-in
   const pool = msgs.length && open ? (followUp ? [followUp] : []) : pageQs   // closed or new page: the page's own questions
   const poolKey = pool.join('|')
   const rot = rotState.key === poolKey ? rotState.n : 0          // a new list always starts at its first question
@@ -335,7 +350,7 @@ export function AskDock() {
           }}
           onFocus={() => { setFocused(true); if (hasConvo) setOpen(true) }}
           onBlur={() => setFocused(false)}
-          placeholder={focused ? '' : showLive ? '' : (open && msgs.length ? 'Ask a follow-up' : open && said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline'))} />
+          placeholder={focused ? '' : showLive ? '' : (qsPending && !(open && msgs.length)) ? '' : (open && msgs.length ? 'Ask a follow-up' : open && said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline'))} />
         {showLive && (
           <div className="dock-live" key={current} aria-hidden={false}>
             <span className="dock-live-q">{current}</span>
