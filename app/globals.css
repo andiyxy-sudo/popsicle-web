@@ -3601,3 +3601,7 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rv2-replay { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; font-weight: 600; color: var(--accent, #E85A25);
   background: #fff; border: 1px solid rgba(232,90,37,.4); padding: 11px 16px; cursor: pointer; border-radius: var(--toggle-radius, 0px); transition: background .15s ease, color .15s ease, border-color .15s ease; }
 .rv2-replay:hover { background: var(--accent, #E85A25); border-color: var(--accent, #E85A25); color: #fff; }
+
+/* v11.135: the briefing window fills the content area only; the sidebar stays visible beside it */
+.sdw { left: var(--sidebar-w, 216px) !important; right: 0 !important; top: 0 !important; bottom: 0 !important; inset: auto; box-shadow: -1px 0 0 var(--hairline, #EFEAE1); }
+@media (max-width: 900px) { .sdw { left: 0 !important; } }
