@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { Snapshot, ChangeEvent } from '@/lib/replay'
 import { useEscape } from '@/components/ui/useEscape'
+import { track } from '@/lib/analytics'
 
 // The last eight weeks, replayed day by day from the real data, and narrated: each day reads as
 // a sentence, the chart draws itself up to that day, and that day's events sit underneath.
@@ -89,6 +90,7 @@ export function ReplayView({ onClose, initial, days: daysProp = 56, inline = fal
   const [fast, setFast] = useState(false)
   const router = useRouter()
   useEscape(!inline && !!onClose, () => onClose?.())
+  useEffect(() => { track('replay_opened', { days: daysProp, inline }) }, [daysProp, inline])
   // "That day": one scroll only. When changes are hidden below, a fade and "N more" say so.
   const listRef = useRef<HTMLDivElement>(null)
   const [below, setBelow] = useState(0)

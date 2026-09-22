@@ -18,6 +18,7 @@ import * as MX from '@/lib/metrics'
 import { LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
 import { useSettings } from '@/lib/useSettings'
+import { FirstRun } from '@/components/onboarding/FirstRun'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -871,6 +872,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           </div>
         </div>
       </div>
+      {!accounts.some(a => String(a.id).startsWith('demo-')) && <FirstRun />}
 
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />

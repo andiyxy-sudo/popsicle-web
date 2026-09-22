@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { orgIdsServer } from '@/lib/org'
 import * as M from '@/lib/metrics'
 import * as I from '@/lib/intel'
-import { myBook, scopeTo } from '@/lib/metricsData'
+import { myBook, scopeTo, loadMetricsData } from '@/lib/metricsData'
 import { repsFromAccounts } from '@/lib/team'
 
 // GET /api/explain?metric=at_risk|active|protected|commit|total_arr|account_arr|account_health|signal|rated_precision
@@ -27,12 +27,8 @@ export async function GET(req: NextRequest) {
     reps = d.DEMO_TEAM.reps.map(r => ({ name: r.name, accounts: r.accounts }))
     breakdown = account ? (d.DEMO_EXTRA as Record<string, { breakdown?: Array<{ k: string; v: number }> }>)[account]?.breakdown : undefined
   } else {
-    const ids = await orgIdsServer(supabase, claims.claims.sub as string)
-    const [{ data: a }, { data: s }] = await Promise.all([
-      supabase.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date, user_id').in('user_id', ids).limit(500),
-      supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(800),
-    ])
-    accts = (a ?? []) as M.Acct[]; sigs = (s ?? []) as M.Sig[]
+    const loaded = await loadMetricsData(supabase, claims.claims as Record<string, unknown>)
+    accts = loaded.accts; sigs = loaded.sigs
     try { const { data: r } = await supabase.rpc('signal_accuracy'); const row = Array.isArray(r) ? r[0] as { rated?: number; useful?: number } : null
       if (row && Number(row.rated) > 0) ratings = [{ type: 'All signal types', useful: Number(row.useful), rated: Number(row.rated) }] } catch { /* optional */ }
   }

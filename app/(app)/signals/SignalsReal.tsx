@@ -69,6 +69,7 @@ const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[]; demoHead?: DemoHead }) {
   const mySettings = useSettings()
   const [showSmall, setShowSmall] = useState(false)
+  const [listLimit, setListLimit] = useState(60)   // render in batches so very large lists stay quick
   const router = useRouter()
   const [signals, setSignals] = useState<DBSignal[]>(initial)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -537,7 +538,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           </button>
         )}
         {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New signals land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
-        {shown.map(s => {
+        {shown.slice(0, listLimit).map(s => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
           const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
           const label = TYPE_LABELS[s.signal_type || ''] || 'Signal'
@@ -612,6 +613,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
             </div>
           )
         })}
+        {shown.length > listLimit && (
+          <button onClick={() => setListLimit(n => n + 60)} style={{ font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--accent, #E85A25)', background: 'none', border: 0, padding: '16px 0', cursor: 'pointer' }}>
+            Show {Math.min(60, shown.length - listLimit)} more of {shown.length - listLimit} remaining
+          </button>
+        )}
       </div>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, fontSize: 13 }}>

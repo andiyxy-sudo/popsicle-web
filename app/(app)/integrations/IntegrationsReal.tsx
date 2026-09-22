@@ -9,6 +9,7 @@ import { BriefingWindow } from './SlackDigest'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useEscape } from '@/components/ui/useEscape'
+import { track } from '@/lib/analytics'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -251,6 +252,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   // + platform=web), then send the browser there. The function will 302 back to
   // /integrations/callback when done.
   async function connect(p: Provider) {
+    track('source_connect_started', { source: p.key, available: !!p.fn })
     if (p.key === 'fireflies') {
       setModal({
         title: 'Connect Fireflies',

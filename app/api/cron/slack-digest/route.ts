@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { buildDigest, buildDealUpdate } from '@/lib/slack/digest'
 import { tokenForUser, postToSlack, slackAdmin } from '@/lib/slack/popsicle'
 import type * as M from '@/lib/metrics'
+import { fetchAll } from '@/lib/fetchAll'
 
 // Called every hour by Supabase (pg_cron). Sends each team's briefing at their chosen local hour,
 // once a day, and (if they asked) a daily update to each linked deal channel where something changed.
@@ -35,11 +36,10 @@ export async function GET(req: NextRequest) {
     const { data: mem } = await db.from('org_members').select('org_id').eq('user_id', r.user_id).maybeSingle()
     let ids = [r.user_id]
     if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Array<{ user_id: string }>).map(x => x.user_id) }
-    const [{ data: a }, { data: s }] = await Promise.all([
-      db.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date').in('user_id', ids).limit(500),
-      db.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(1500),
+    const [accts, sigs] = await Promise.all([
+      fetchAll<M.Acct>(async (from, to) => db.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date').in('user_id', ids).range(from, to) as never, { max: 5000 }),
+      fetchAll<M.Sig>(async (from, to) => db.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(from, to) as never, { max: 20000 }),
     ])
-    const accts = (a ?? []) as M.Acct[], sigs = (s ?? []) as M.Sig[]
     if (briefingDue) {
       const res = await postToSlack(token, r.channel_id!, buildDigest(accts, sigs, now.getTime(), r.timezone))
       report.push({ user: r.user_id, briefing: res.ok ? 'sent' : res.error })

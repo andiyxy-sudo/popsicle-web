@@ -10,6 +10,7 @@ import { ReplayView } from '@/components/changes/Replay'
 import { formatWhen, healthTone } from '@/lib/utils'
 import type { ChangeEvent } from '@/lib/replay'
 import type { Decision } from '@/lib/decisions'
+import { track } from '@/lib/analytics'
 
 export type ReviewDeal = {
   account: string; why: 'critical' | 'commit'; value: number; stage: string | null; health: number | null; contact: string | null; close: string | null; atRisk: number
@@ -25,7 +26,8 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
   const [i, setI] = useState(0)
   const [made, setMade] = useState<Decision[]>([])
   const [ending, setEnding] = useState(false)
-  const [replayOpen, setReplayOpen] = useState(false)   // "Replay this week", opened on request in its own window
+  const [replayOpen, setReplayOpen] = useState(false)
+  useEffect(() => { track('review_opened', { deals: deals.length }) }, [deals.length])   // "Replay this week", opened on request in its own window
   const reviewId = useMemo(() => `review-${new Date(now).toISOString().slice(0, 10)}-${Math.random().toString(36).slice(2, 7)}`, [now])
   const deal = deals[i]
   // the date comes from the viewer's own clock and time zone, never the server's
@@ -48,6 +50,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
     const j = await r.json().catch(() => ({}))
     if (!r.ok || !j.decision) return j.error ?? 'Couldn\u2019t record that decision.'
     setMade(m => [j.decision, ...m])
+    track('decision_recorded', { with_owner: !!owner, with_due: !!due })
     if (demo) { try { const k = 'demo:decisions'; const cur = JSON.parse(localStorage.getItem(k) || '[]'); localStorage.setItem(k, JSON.stringify([j.decision, ...cur].slice(0, 50))) } catch { /* ignore */ } }
     return null
   }

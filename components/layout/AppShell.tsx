@@ -14,6 +14,7 @@ import { APP_VERSION } from '@/lib/version'
 import { CurrencyLayer } from '@/components/currency/CurrencyLayer'
 import { ThemeSync } from './ThemeSync'
 import { EasyRead } from './EasyRead'
+import { Analytics } from '@/components/analytics/Analytics'
 
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
@@ -40,6 +41,9 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // Every route lands at the top: the scrollable column is .content, and
   // browser scroll anchoring + the entrance animation can otherwise leave it
   // a few pixels down on first paint.
+  // narrow screens: the sidebar becomes a drawer behind a menu button, closing on every page change
+  const [navOpen, setNavOpen] = useState(false)
+  useEffect(() => { setNavOpen(false) }, [pathname])
   const contentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     // Lets client components skip database round-trips in demo mode.
@@ -78,7 +82,11 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
 
 
   return (
-    <div className="ed-app">
+    <div className="ed-app" data-nav-open={navOpen ? '1' : '0'}>
+      <button className="mnav-btn" aria-label={navOpen ? 'Close menu' : 'Open menu'} aria-expanded={navOpen} onClick={() => setNavOpen(v => !v)}>
+        <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden>{navOpen ? <path d="M4 4l10 10M14 4L4 14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /> : <path d="M3 5h12M3 9h12M3 13h12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />}</svg>
+      </button>
+      <div className="mnav-scrim" onClick={() => setNavOpen(false)} aria-hidden />
       {/* The sidebar is position: sticky (design shell), so it must sit beside .main in a
           flex row. Without this wrapper it stacked above .main in block flow and pushed the
           whole content column one viewport down: sidebar visible, page blank, until a client
@@ -90,6 +98,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <CurrencyLayer />
       <ThemeSync />
       <EasyRead />
+      <Analytics userId={user.id} role={(user as { role?: string }).role} demo={isDemo} />
       {AGENT_ENABLED && <AgentPopup />}
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>

@@ -48,11 +48,54 @@ export function changesBetween(accts: M.Acct[], sigs: M.Sig[], since: number, no
 }
 
 export function timeline(accts: M.Acct[], sigs: M.Sig[], now: number, days = 56): Array<Snapshot & { events: ChangeEvent[] }> {
+  // Each day's events are bucketed in ONE pass over the signals (previously every day rescanned them all),
+  // so a year of a large account stays fast.
+  const start = now - days * 864e5
+  const buckets: ChangeEvent[][] = Array.from({ length: days + 1 }, () => [])
+  const dayOf = (t: number) => Math.ceil((t - start) / 864e5)   // the snapshot at the end of that day
+  for (const s of sigs) {
+    const c = s.created_at ? new Date(s.created_at).getTime() : NaN
+    if (c > start - 864e5 && c <= now) { const i = Math.max(0, dayOf(c)); if (i <= days) buckets[i].push({ t: s.created_at!, kind: 'new', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined }) }
+    const h = s.status === 'handled' && s.handled_at ? new Date(s.handled_at).getTime() : NaN
+    if (h > start - 864e5 && h <= now) { const i = Math.max(0, dayOf(h)); if (i <= days) buckets[i].push({ t: s.handled_at!, kind: 'handled', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined, action: s.handled_action ?? undefined }) }
+  }
+  // Lean daily snapshots: the same figures as snapshot() (open = created by then and not yet acted on;
+  // at risk = the largest open non-positive amount per account that has an open critical signal, summed;
+  // protected = acted-on high/watch saves with an amount, on accounts not at high risk), computed in one
+  // pass per day over pre-parsed numbers, with no copying of signals.
+  const n = sigs.length
+  const acctIx = new Map<string, number>(); const acctOf = new Int32Array(n)
+  const created = new Float64Array(n), handled = new Float64Array(n), amount = new Float64Array(n), sev = new Uint8Array(n), dismissed = new Uint8Array(n), savable = new Uint8Array(n)
+  const highRiskAcct = new Set(accts.filter(a => a.risk_level === 'high').map(a => a.name))
+  for (let k = 0; k < n; k++) {
+    const s = sigs[k], name = s.account_name ?? ''
+    let ix = acctIx.get(name); if (ix === undefined) { ix = acctIx.size; acctIx.set(name, ix) }
+    acctOf[k] = ix
+    created[k] = s.created_at ? new Date(s.created_at).getTime() : Infinity
+    handled[k] = s.status === 'handled' && s.handled_at ? new Date(s.handled_at).getTime() : Infinity
+    amount[k] = Number(s.risk_amount || 0)
+    sev[k] = s.severity === 'high' ? 2 : s.severity === 'watch' ? 1 : s.severity === 'positive' ? 3 : 0
+    dismissed[k] = s.is_dismissed ? 1 : 0
+    savable[k] = amount[k] > 0 && (sev[k] === 2 || sev[k] === 1) && !highRiskAcct.has(name) ? 1 : 0   // counts toward protected once acted on
+  }
+  const A = acctIx.size, maxAmt = new Float64Array(A), hasCrit = new Uint8Array(A)
   const out: Array<Snapshot & { events: ChangeEvent[] }> = []
-  for (let i = days; i >= 0; i--) {
-    const t = now - i * 864e5
-    const snap = snapshot(accts, sigs, t)
-    out.push({ ...snap, events: changesBetween(accts, sigs, t - 864e5, t).events.slice(0, 8) })
+  for (let i = 0; i <= days; i++) {
+    const t = start + i * 864e5
+    maxAmt.fill(0); hasCrit.fill(0)
+    let active = 0, critical = 0, prot = 0
+    for (let k = 0; k < n; k++) {
+      if (created[k] > t) continue
+      if (handled[k] <= t) { if (savable[k]) prot += amount[k]; continue }   // acted on by then
+      if (dismissed[k]) continue
+      active++
+      const ix = acctOf[k]
+      if (sev[k] === 2) { critical++; hasCrit[ix] = 1 }
+      if (sev[k] !== 3 && amount[k] > maxAmt[ix]) maxAmt[ix] = amount[k]
+    }
+    let risk = 0
+    for (const [name, ix] of acctIx) if (name && hasCrit[ix]) risk += maxAmt[ix]
+    out.push({ t, atRisk: risk, active, protectedValue: prot, critical, events: buckets[i].sort((a, b) => b.t.localeCompare(a.t)).slice(0, 8) })
   }
   return out
 }

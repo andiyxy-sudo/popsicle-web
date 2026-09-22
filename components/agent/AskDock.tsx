@@ -8,6 +8,7 @@ import type { AgentBrief, AgentMessage } from '@/lib/agent/compose'
 import { AgentNote, Dateline } from './AgentNote'
 import { getSettingsNow, useSettings } from '@/lib/useSettings'
 import { inQuietHours, inWorkingHours, pastMorningDigest } from '@/lib/settings'
+import { track } from '@/lib/analytics'
 
 // The Ask bar that sits on every page, with the conversation pulling up out of it.
 // Ask a question from Acme's page and the answer rises above the bar, about Acme,
@@ -169,6 +170,7 @@ export function AskDock() {
   }, [])
 
   async function send(override?: string, focusAccount?: string) {
+    track('question_asked', { via: override && override === current ? 'ask_this' : override ? 'suggested' : 'typed', page: account ? 'account' : (screen ?? 'pulse') })
     setAlertOnly(false)
     setLatestOnly(true)
     const q = (override ?? ask).trim()

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { Explanation, XNode } from '@/lib/metrics'
 import { formatWhen } from '@/lib/utils'
 import { useEscape } from '@/components/ui/useEscape'
+import { track } from '@/lib/analytics'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Every number can explain itself. Wrap a figure in <X m="at_risk">…</X> and it stays exactly as
@@ -15,7 +16,7 @@ import { useEscape } from '@/components/ui/useEscape'
 type Req = { m: string; account?: string; signal?: string; days?: number; scope?: 'me' }
 
 export function X({ m, account, signal, days, scope, children }: Req & { children: React.ReactNode }) {
-  const open = (el: HTMLElement) => window.dispatchEvent(new CustomEvent('explain:open', { detail: { m, account, signal, days, scope, el, rect: el.getBoundingClientRect().toJSON() } }))
+  const open = (el: HTMLElement) => { track('number_explained', { metric: m }); window.dispatchEvent(new CustomEvent('explain:open', { detail: { m, account, signal, days, scope, el, rect: el.getBoundingClientRect().toJSON() } })) }
   return (
     <span className="xp" role="button" tabIndex={0} aria-label="Where this number comes from"
       onClick={e => { e.stopPropagation(); e.preventDefault(); open(e.currentTarget) }}

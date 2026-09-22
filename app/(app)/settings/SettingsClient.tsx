@@ -16,6 +16,7 @@ import { orgIdsBrowser } from '@/lib/org'
 import { APP_VERSION } from '@/lib/version'
 import { CURRENCIES } from '@/lib/currency'
 import { applyTheme } from '@/lib/theme'
+import { track } from '@/lib/analytics'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -78,6 +79,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [customQuiet, setCustomQuiet] = useState<Record<string, string>>({ From: '20:00', To: '07:00' })
 
   async function saveJson(key: string, value: unknown) {
+    track('setting_changed', { setting: key })
     await supabase.auth.updateUser({ data: { [key]: value } }).catch(() => {})
     window.dispatchEvent(new Event('settings:changed'))
   }
@@ -624,7 +626,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
       )
     })() },
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
-    'Ask Popsicle': { title: 'Ask Popsicle', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask Popsicle', true, () => router.push('/ask')]] },
     'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask Popsicle', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
     'About Popsicle': { title: 'About Popsicle', titleNode: (
       <span style={{ display: 'block', padding: '4px 0 2px' }} aria-label="Popsicle Labs">
@@ -813,7 +814,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="More" sub="Product information.">
         <Row label="What's new" sub="Recent changes to Popsicle" value={APP_VERSION} onClick={() => setSheet("What's new")} />
-        <Row label="Ask Popsicle" sub="Answers grounded in your own data" value="Open" onClick={() => setSheet('Ask Popsicle')} />
         <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => setSheet('Help & support')} />
         <Row label="About Popsicle" value={APP_VERSION} onClick={() => setSheet('About Popsicle')} />
         <Row label="Data & privacy" sub="What Popsicle reads, stores and for how long" value="Read" onClick={() => setSheet('Data & privacy')} />
