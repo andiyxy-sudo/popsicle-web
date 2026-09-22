@@ -38,7 +38,7 @@ const word = (n: number) => (n >= 0 && n <= 10 ? WORDS[n] : String(n))
 const fmtH = (h: number) => `${h.toFixed(1)}h`
 
 // ---------------------------------------------------------------- live model
-function buildLiveModel(accounts: Account[], signals: Signal[], me: string): TeamModel {
+function buildLiveModel(accounts: Account[], signals: Signal[], me: string, repNames?: Record<string, string>): TeamModel {
   const live = signals.filter(s => !s.is_dismissed && s.status !== 'deleted')
   const open = live.filter(s => !s.status || s.status === 'open')
   const handled = live.filter(s => s.status === 'handled')
@@ -51,7 +51,8 @@ function buildLiveModel(accounts: Account[], signals: Signal[], me: string): Tea
 
   type R = { name: string; accounts: Account[]; open: Signal[]; handled: Signal[]; value: number; protectedValue: number }
   const byRep = new Map<string, R>()
-  const repOf = (a: Account) => a.owner || me
+  // the rep is the Popsicle user who owns the account, not the buyer named in `owner`
+  const repOf = (a: Account) => repNames?.[(a as Account & { user_id?: string }).user_id ?? ''] ?? me
   for (const a of accounts) {
     const k = repOf(a)
     const r = byRep.get(k) ?? { name: k, accounts: [], open: [], handled: [], value: 0, protectedValue: 0 }
@@ -171,14 +172,14 @@ const Row = ({ children, pad = '11px 0' }: { children: React.ReactNode; pad?: st
 )
 
 // ---------------------------------------------------------------- screen
-export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[]; signals: Signal[]; me: string; integrations?: string[]; demo?: TeamModel }) {
+export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: Account[]; signals: Signal[]; me: string; integrations?: string[]; demo?: TeamModel; repNames?: Record<string, string> }) {
   const [mounted, setMounted] = useState(false)
   const [queueRep, setQueueRep] = useState<string>('All')
   const [feedFilter, setFeedFilter] = useState<typeof ACTION_FILTERS[number]>('All')
   useEffect(() => { setMounted(true) }, [])
   const router = useRouter()
 
-  const m = demo ?? buildLiveModel(accounts, signals, me)
+  const m = demo ?? buildLiveModel(accounts, signals, me, repNames)
   const repBy = (n: string) => m.reps.find(r => r.name === n) ?? { name: n, color: '#A09C97' }
   const respColor = (h: number) => {
     const best = Math.min(...m.reps.map(r => r.avgResp))

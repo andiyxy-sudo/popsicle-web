@@ -4,6 +4,7 @@ import { orgIdsServer } from '@/lib/org'
 import * as M from '@/lib/metrics'
 import * as I from '@/lib/intel'
 import { myBook, scopeTo } from '@/lib/metricsData'
+import { repsFromAccounts } from '@/lib/team'
 
 // GET /api/explain?metric=at_risk|active|protected|commit|total_arr|account_arr|account_health|signal|rated_precision
 //     [&account=Acme%20Corp][&signal=<id>]  → Explanation
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
   } else {
     const ids = await orgIdsServer(supabase, claims.claims.sub as string)
     const [{ data: a }, { data: s }] = await Promise.all([
-      supabase.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date').in('user_id', ids).limit(500),
+      supabase.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date, user_id').in('user_id', ids).limit(500),
       supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(800),
     ])
     accts = (a ?? []) as M.Acct[]; sigs = (s ?? []) as M.Sig[]
@@ -63,8 +64,8 @@ export async function GET(req: NextRequest) {
     : metric === 'cases' ? M.activeCases(accts, sigs)
     : metric === 'actions_ready' ? M.actionsReady(accts, sigs)
     : metric === 'new_today' ? M.newToday(accts, sigs, now)
-    : metric === 'team_exposure' ? M.teamExposure(reps.length ? reps : [...new Set(accts.map(a => a.owner || 'Unassigned'))].map(n => ({ name: n, accounts: accts.filter(a => (a.owner || 'Unassigned') === n).map(a => a.name) })), accts, sigs)
-    : metric === 'rep_exposure' && q.get('rep') ? (() => { const r = reps.find(x => x.name === q.get('rep')); return M.repExposure(q.get('rep')!, r?.accounts ?? accts.filter(a => a.owner === q.get('rep')).map(a => a.name), accts, sigs) })()
+    : metric === 'team_exposure' ? M.teamExposure(reps.length ? reps : await repsFromAccounts(accts as Array<{ name: string; user_id?: string | null }>), accts, sigs)
+    : metric === 'rep_exposure' && q.get('rep') ? await (async () => { const all = reps.length ? reps : await repsFromAccounts(accts as Array<{ name: string; user_id?: string | null }>); const r = all.find(x => x.name === q.get('rep')); return M.repExposure(q.get('rep')!, r?.accounts ?? [], accts, sigs) })()
     : null
   if (!x) return NextResponse.json({ error: 'unknown metric' }, { status: 400 })
   return NextResponse.json(x)

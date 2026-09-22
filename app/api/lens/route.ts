@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { loadMetricsData, myBook, scopeTo } from '@/lib/metricsData'
 import * as M from '@/lib/metrics'
 import { resolveLens, LENS_LABEL, type LensId } from '@/lib/lens'
+import { repsFromAccounts } from '@/lib/team'
 
 // GET /api/lens?lens=rep|manager|cfo → the four headline figures for that lens.
 // (CRO is Pulse's standard strip.) Every figure carries the metric that explains it.
@@ -41,7 +42,7 @@ export async function GET(req: NextRequest) {
     ]
   } else {
     const reps = demo ? (await import('@/lib/demo-dataset')).DEMO_TEAM.reps.map(r => ({ name: r.name, accounts: r.accounts }))
-      : [...new Set(accts.map(a => a.owner || 'Unassigned'))].map(n => ({ name: n, accounts: accts.filter(a => (a.owner || 'Unassigned') === n).map(a => a.name) }))
+      : await repsFromAccounts(accts as Array<{ name: string; user_id?: string | null }>)   // reps are Popsicle users, not the buyer in `owner`
     const exp = M.teamExposure(reps, accts, sigs), cases = M.activeCases(accts, sigs), ready = M.actionsReady(accts, sigs), caught = M.caughtEarly(accts, sigs)
     tiles = [
       { label: 'Team exposure', valueText: exp.valueText, sub: `${exp.parts.filter(p => (p.value ?? 0) > 0).length} reps carrying risk`, m: 'team_exposure', tone: exp.value > 0 ? 'critical' : 'ink' },

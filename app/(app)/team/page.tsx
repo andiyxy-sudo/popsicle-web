@@ -3,6 +3,7 @@ import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_TEAM } from '@/lib/demo-dataset'
 import { TeamReal } from './TeamReal'
 import { orgIdsServer } from '@/lib/org'
+import { teammateNames } from '@/lib/team'
 
 export default async function TeamPage() {
   const supabase = await createClient()
@@ -20,8 +21,11 @@ export default async function TeamPage() {
     supabase.from('signals').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false),
     supabase.from('integrations').select('provider').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_active', true),
   ])
+  // reps are the Popsicle users who own the accounts (accounts.user_id), with their names
+  const repNames = await teammateNames([...new Set((acc.data ?? []).map(a => (a as { user_id?: string }).user_id).filter(Boolean) as string[])])
   return (
     <TeamReal
+      repNames={repNames}
       accounts={acc.data ?? []}
       signals={sig.data ?? []}
       me={(user.user_metadata?.name as string) || user.email!.split('@')[0]}
