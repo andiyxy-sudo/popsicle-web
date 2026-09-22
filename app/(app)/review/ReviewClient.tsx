@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import { Answer } from '@/components/ask/AnswerText'
 import { X } from '@/components/explain/Explain'
@@ -235,6 +236,7 @@ function Summary({ made, deals, demo, onClose, onDone }: { made: Decision[]; dea
   const text = [`Pipeline review, ${new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}`, `${deals.length} deals reviewed, ${made.length} decisions.`, '',
     ...made.map(d => `• ${d.account_name}: ${d.decision}${d.owner ? ` (owner ${d.owner}` : ''}${d.due_at ? `${d.owner ? ', ' : ' ('}by ${new Date(d.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}${d.owner || d.due_at ? ')' : ''}`)].join('\n')
   return (
+    typeof document === 'undefined' ? null : createPortal(
     <div className="rp2-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}>
       <div className="rv2-sum" role="dialog" aria-label="Review summary">
         <div className="rv2-eyebrow">Review wrapped</div>
@@ -249,6 +251,6 @@ function Summary({ made, deals, demo, onClose, onDone }: { made: Decision[]; dea
           <button className="sb-btn sb-btn-primary" onClick={onDone}>Finish</button>
         </div>
       </div>
-    </div>
+    </div>, document.body)
   )
 }
