@@ -3769,3 +3769,13 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .dock-head-actions button { color: rgba(255,255,255,.92) !important; }
 .dock-head-actions button:hover { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
 .dock-head-actions .dock-x { color: rgba(255,255,255,.85) !important; }
+
+/* v11.160: typing fields have no orange outline or glow (the Ask bar keeps its own look). Focus is shown by the
+   field's line darkening a little. Buttons and links keep their keyboard focus ring for accessibility. */
+input:focus-visible, textarea:focus-visible, select:focus-visible, [contenteditable]:focus-visible { outline: none !important; }
+input:focus, textarea:focus, select:focus { box-shadow: none !important; }
+input:not([type="checkbox"]):not([type="radio"]):focus, textarea:focus, select:focus { border-color: var(--ink-muted, #5C5855) !important; }
+.login-input:focus { border-color: var(--ink-muted, #5C5855) !important; box-shadow: none !important; }
+.rv-ask-bar input:focus, .rv-dec textarea:focus, .rv-dec input:focus,
+.rv2-input input:focus, .rv2-field:focus, .sd-field select:focus { border-color: var(--ink-muted, #5C5855) !important; box-shadow: none !important; background: #fff; }
+.ed-askbar input:focus { border: 0 !important; }

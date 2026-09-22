@@ -470,13 +470,17 @@ export function SettingsClient({ user }: SettingsClientProps) {
     Language: { title: 'Language', sub: 'Interface and AI responses', options: [['English (US)', 'Default'], ['English (UK)', 'British spelling in answers and drafts'], ['Bahasa Indonesia', 'Answers and drafts in Bahasa; the interface stays in English']] },
     Timezone: { title: 'Timezone', sub: 'Used for digests, ages and time-of-day logic', custom: (() => {
       const active = tzPick || tz
-      const list = [...new Set([tz, ...TIMEZONES].filter(Boolean))].filter(z => !tzQuery || z.toLowerCase().includes(tzQuery.toLowerCase().replace(' ', '_')))
       const offset = (zone: string) => { try { const p = new Intl.DateTimeFormat('en-US', { timeZone: zone, timeZoneName: 'shortOffset' }).formatToParts(new Date()).find(x => x.type === 'timeZoneName'); return p?.value ?? '' } catch { return '' } }
+      // every time zone the browser knows (about 400), searchable by city, region or offset (e.g. "jakarta", "europe", "gmt+7")
+      const allZones: string[] = (() => { try { return (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? TIMEZONES } catch { return TIMEZONES } })()
+      const q = tzQuery.trim().toLowerCase()
+      const list = [...new Set([tz, ...allZones].filter(Boolean))].filter(z => !q || z.toLowerCase().replace(/_/g, ' ').includes(q) || offset(z).toLowerCase().replace(/\s/g, '').includes(q.replace(/\s/g, '')))
       return (
         <div style={{ marginTop: 18 }}>
-          <input value={tzQuery} onChange={e => setTzQuery(e.target.value)} placeholder="Search a city or region"
+          <input value={tzQuery} onChange={e => setTzQuery(e.target.value)} placeholder="Search a city, region or offset (GMT+7)"
             style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0 }} />
-          <div style={{ maxHeight: 300, overflowY: 'auto', marginTop: 6 }}>
+          <div style={{ height: 320, overflowY: 'auto', marginTop: 6 }}>   {/* fixed height: the window never jumps while you type */}
+            {list.length === 0 && <div style={{ fontSize: 14, color: 'var(--ink-faint)', padding: '18px 0' }}>No time zone matches \u201c{tzQuery}\u201d. Try a city, a region or an offset like GMT+7.</div>}
             {list.map(z => (
               <div key={z} onClick={() => { setTzPick(z); saveJson('timezone', z); setSheet(null) }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{z.replace(/_/g, ' ')}{z === tz ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)', marginLeft: 8 }}>detected</span> : null}</span>

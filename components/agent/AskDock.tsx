@@ -43,6 +43,10 @@ export function AskDock() {
   // when a new signal pops up, the sheet shows just that one; everything else is one click away
   const [alertOnly, setAlertOnly] = useState(false)
   useEffect(() => { if (!open) setAlertOnly(false) }, [open])   // reopening later shows everything
+  // after you ask, only that question and its answer show; earlier ones stay (for follow-ups) behind one line
+  const [latestOnly, setLatestOnly] = useState(false)
+  const lastQIdx = Math.max(0, msgs.map(m => m.role).lastIndexOf('user'))
+  const earlierCount = msgs.slice(0, lastQIdx).filter(m => m.role === 'user').length
   const [expanded, setExpanded] = useState<string | null>(null)
   // v11.112: questions worth asking about the page you're on
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -152,6 +156,7 @@ export function AskDock() {
 
   async function send(override?: string, focusAccount?: string) {
     setAlertOnly(false)
+    setLatestOnly(true)
     const q = (override ?? ask).trim()
     if (!q || busy) return
     const next: Msg[] = [...msgs, { role: 'user', content: q }]
@@ -258,13 +263,13 @@ export function AskDock() {
                 ))}
               </div>
             )}
-            {!alertOnly && said.length > 1 && (
+            {!alertOnly && !latestOnly && said.length > 1 && (
               <button className="dock-earlier" onClick={() => setShowEarlier(v => !v)} aria-expanded={showEarlier}>
                 {showEarlier ? 'Hide earlier updates' : `${said.length - 1} earlier update${said.length - 1 === 1 ? '' : 's'}`}
                 <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ transform: showEarlier ? 'rotate(180deg)' : undefined, transition: 'transform .2s ease' }}><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
               </button>
             )}
-            {(showEarlier && !alertOnly ? said : said.slice(0, 1)).map(item => (
+            {(latestOnly && msgs.length ? [] : showEarlier && !alertOnly ? said : said.slice(0, 1)).map(item => (
               <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
                 {item.kind === 'note' ? (
                   <AgentNote m={item.msg} compact onAction={act} onReceipt={href => { setOpen(false); router.push(href) }} />
@@ -292,14 +297,20 @@ export function AskDock() {
                 <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
               </button>
             )}
-            {!alertOnly && msgs.map((m, i) => m.role === 'user' ? (
+            {!alertOnly && latestOnly && (earlierCount > 0 || said.length > 0) && (
+              <button className="dock-earlier" onClick={() => setLatestOnly(false)}>
+                {[earlierCount > 0 && `${earlierCount} earlier question${earlierCount === 1 ? '' : 's'}`, said.length > 0 && `${said.length} update${said.length === 1 ? '' : 's'}`].filter(Boolean).join(' and ')}
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            )}
+            {!alertOnly && (latestOnly ? msgs.slice(lastQIdx) : msgs).map((m, j) => { const i = latestOnly ? lastQIdx + j : j; return m.role === 'user' ? (
               <div key={i} className="dock-q"><span className="dock-q-label">You</span>{m.content}</div>
             ) : (
               <div key={i} className="dock-a">
                 {m.content ? <Answer text={m.content} /> : null}
                 {streaming && i === msgs.length - 1 && <span className="dock-caret" />}
               </div>
-            ))}
+            ) })}
             {!alertOnly && hasConvo && showSuggest && (
               <div className="dock-next">
                 <span className="dock-next-label">Ask next</span>
@@ -332,7 +343,7 @@ export function AskDock() {
           </div>
         )}
         </div>
-        {hasConvo && !open && <button className="dock-reopen" onClick={() => { setAlertOnly(false); setOpen(true) }} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
+        {hasConvo && !open && <button className="dock-reopen" onClick={() => { setAlertOnly(false); setLatestOnly(false); setOpen(true) }} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={() => send()}>Ask</button>
       </div>
     </div>

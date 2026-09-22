@@ -76,7 +76,8 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   const supabase = createClient()
 
   const displayName = isDemo ? 'Andy G' : (user.name || user.email.split('@')[0])
-  const displayRole = isDemo ? 'Online · VP Sales' : 'Online'
+  // the person's job title (what sets their Pulse view); no online/offline status in a business tool
+  const displayRole = user.role?.trim() || (isDemo ? 'VP of Sales' : '')
   const initials = isDemo ? 'AG' : getInitials(user.name || user.email.split('@')[0])
 
   const [profileOpen, setProfileOpen] = useState(false)
@@ -133,7 +134,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
     setSaving(true)
     // Name lives on the auth user's metadata; email changes are an auth flow,
     // so this panel shows the address rather than pretending to edit it.
-    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, timezone: tzPick || draftTz } }).catch(() => {})
+    await supabase.auth.updateUser({ data: { name: draftName.trim(), role: draftRole.trim(), avatar_url: photo ?? null, } }).catch(() => {})
     setSaving(false); setSaved(true)
     router.refresh()
     setTimeout(() => setProfileOpen(false), 700)
@@ -181,7 +182,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         <div className="ed-sb-avatar" style={photo ? { background: `center/cover url(${photo})`, color: 'transparent' } : undefined}>{photo ? '' : initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontWeight: 500, fontSize: 14 }}>{displayName}</div>
-          <div style={{ fontSize: 11.5, color: 'rgba(251,248,243,.45)' }}>{displayRole}</div>
+          {displayRole && <div style={{ fontSize: 11.5, color: 'rgba(251,248,243,.45)' }}>{displayRole}</div>}
         </div>
       </div>
       {profileOpen && typeof document !== 'undefined' && createPortal((
@@ -227,12 +228,6 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Work email</span>
                 <input value={user.email} readOnly title="Email changes go through account recovery"
                   style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--hairline, #EFEAE1)', background: 'transparent', color: 'var(--ink-muted, #5C5855)', outline: 0 }} />
-              </label>
-              <label style={{ display: 'block' }}>
-                <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Timezone</span>
-                <select value={tzPick || draftTz} onChange={e => setTzPick(e.target.value)} style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 15, marginTop: 8, padding: '10px 0', border: 0, borderRadius: 0, appearance: 'none', WebkitAppearance: 'none', borderBottom: '1px solid var(--ink, #0E0D0B)', background: 'transparent', color: 'var(--ink)', outline: 0, cursor: 'pointer' }}>
-                  {[...new Set([draftTz, ...TIMEZONES].filter(Boolean))].map(z => <option key={z} value={z}>{z}{z === draftTz ? ' (detected)' : ''}</option>)}
-                </select>
               </label>
             </div>
 
