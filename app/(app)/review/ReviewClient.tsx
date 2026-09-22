@@ -62,7 +62,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
     <div className="dsk-screen on rv2">
       {/* first row on the logo's line, like every page: mono breadcrumb left, actions right (36px row) */}
       <div className="rv2-head">
-        <div className="rv2-crumb">Pipeline review <span style={{ margin: '0 8px' }}>/</span> {today || '\u00a0'} <span style={{ margin: '0 8px' }}>/</span> {deals.length} deal{deals.length === 1 ? '' : 's'}</div>
+        <div className="rv2-crumb">Pipeline review <span style={{ margin: '0 8px' }}>/</span> {today ? <>{today.replace(/\s*\d+$/, '')} <span className="rv2-crumb-day">{/\d+$/.exec(today)?.[0]}</span></> : '\u00a0'} <span style={{ margin: '0 8px' }}>/</span> {deals.length} deal{deals.length === 1 ? '' : 's'}</div>
         <div className="rv2-head-actions">
         <button className="rv2-replay" onClick={() => setReplayOpen(true)}>
           <svg width="11" height="12" viewBox="0 0 11 12" aria-hidden><path d="M1.5 1v10l8.5-5z" fill="currentColor" /></svg>
@@ -146,13 +146,11 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
       </div>
 
       <nav className="rv2-nav" aria-label="Move between deals">
-        <button className="rv2-prev" disabled={i === 0} onClick={() => setI(x => x - 1)}>
-          <span className="rv2-nav-k">Previous</span><span className="rv2-nav-v">← {i > 0 ? deals[i - 1].account : 'Start of the agenda'}</span>
-        </button>
+        <button className="rv2-prev" disabled={i === 0} onClick={() => setI(x => x - 1)}>← {i > 0 ? deals[i - 1].account : 'Start'}</button>
         <span className="rv2-nav-c">Deal {i + 1} of {deals.length} · ← → to move</span>
         {i < deals.length - 1
-          ? <button className="rv2-next" onClick={() => setI(x => x + 1)}><span className="rv2-nav-k">Next</span><span className="rv2-nav-v">{deals[i + 1].account} →</span></button>
-          : <button className="rv2-next" onClick={() => setEnding(true)}><span className="rv2-nav-k">Last deal</span><span className="rv2-nav-v">Wrap up the review →</span></button>}
+          ? <button className="rv2-next" onClick={() => setI(x => x + 1)}>Next: {deals[i + 1].account} →</button>
+          : <button className="rv2-next" onClick={() => setEnding(true)}>Wrap up the review →</button>}
       </nav>
 
       {replayOpen && <ReplayView days={7} msPerDay={2600} title="This week, replayed" onClose={() => setReplayOpen(false)} />}
