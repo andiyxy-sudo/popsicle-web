@@ -37,6 +37,9 @@ export function AskDock() {
   const [said, setSaid] = useState<Said[]>([])
   // only the newest alert shows; earlier ones fold behind a quiet "N earlier" line
   const [showEarlier, setShowEarlier] = useState(false)
+  // when a new signal pops up, the sheet shows just that one; everything else is one click away
+  const [alertOnly, setAlertOnly] = useState(false)
+  useEffect(() => { if (!open) setAlertOnly(false) }, [open])   // reopening later shows everything
   const [expanded, setExpanded] = useState<string | null>(null)
   // v11.112: questions worth asking about the page you're on
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -103,6 +106,7 @@ export function AskDock() {
       const id = d.kind === 'brief' ? `brief:${d.brief.generatedAt}` : d.msg.key
       setSaid(prev => prev.some(x => x.id === id) ? prev : [{ id, ...d } as Said, ...prev].slice(0, 6))
       setShowEarlier(false)
+      setAlertOnly(true)
       setFresh(id); setTimeout(() => setFresh(f => (f === id ? null : f)), 2600)
       setOpen(true)
       if (paneRef.current) paneRef.current.scrollTo({ top: 0, behavior: 'smooth' })
@@ -129,6 +133,7 @@ export function AskDock() {
   }, [])
 
   async function send(override?: string, focusAccount?: string) {
+    setAlertOnly(false)
     const q = (override ?? ask).trim()
     if (!q || busy) return
     const next: Msg[] = [...msgs, { role: 'user', content: q }]
@@ -222,7 +227,7 @@ export function AskDock() {
             </span>
           </div>
           <div className="dock-pane" ref={paneRef} onScroll={onPaneScroll}>
-            {!hasConvo && showSuggest && (
+            {!alertOnly && !hasConvo && showSuggest && (
               <div className="dock-suggest">
                 <div className="dock-suggest-label">{account ? `Ask about ${account}` : `Ask about ${about ?? 'this page'}`}</div>
                 {suggestions.map(q => (
@@ -232,13 +237,13 @@ export function AskDock() {
                 ))}
               </div>
             )}
-            {said.length > 1 && (
+            {!alertOnly && said.length > 1 && (
               <button className="dock-earlier" onClick={() => setShowEarlier(v => !v)} aria-expanded={showEarlier}>
                 {showEarlier ? 'Hide earlier updates' : `${said.length - 1} earlier update${said.length - 1 === 1 ? '' : 's'}`}
                 <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ transform: showEarlier ? 'rotate(180deg)' : undefined, transition: 'transform .2s ease' }}><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
               </button>
             )}
-            {(showEarlier ? said : said.slice(0, 1)).map(item => (
+            {(showEarlier && !alertOnly ? said : said.slice(0, 1)).map(item => (
               <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
                 {item.kind === 'note' ? (
                   <AgentNote m={item.msg} compact onAction={act} onReceipt={href => { setOpen(false); router.push(href) }} />
@@ -260,7 +265,13 @@ export function AskDock() {
                 )}
               </div>
             ))}
-            {msgs.map((m, i) => m.role === 'user' ? (
+            {alertOnly && (said.length > 1 || msgs.length > 0) && (
+              <button className="dock-earlier dock-seeall" onClick={() => setAlertOnly(false)}>
+                {[said.length > 1 && `${said.length - 1} earlier update${said.length - 1 === 1 ? '' : 's'}`, msgs.length > 0 && 'your conversation'].filter(Boolean).join(' and ')}
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            )}
+            {!alertOnly && msgs.map((m, i) => m.role === 'user' ? (
               <div key={i} className="dock-q"><span className="dock-q-label">You</span>{m.content}</div>
             ) : (
               <div key={i} className="dock-a">
@@ -268,7 +279,7 @@ export function AskDock() {
                 {streaming && i === msgs.length - 1 && <span className="dock-caret" />}
               </div>
             ))}
-            {hasConvo && showSuggest && (
+            {!alertOnly && hasConvo && showSuggest && (
               <div className="dock-next">
                 <span className="dock-next-label">Ask next</span>
                 {suggestions.filter(q => !msgs.some(m => m.role === 'user' && m.content === q)).map(q => (
@@ -300,7 +311,7 @@ export function AskDock() {
           </div>
         )}
         </div>
-        {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
+        {hasConvo && !open && <button className="dock-reopen" onClick={() => { setAlertOnly(false); setOpen(true) }} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={() => send()}>Ask</button>
       </div>
     </div>
