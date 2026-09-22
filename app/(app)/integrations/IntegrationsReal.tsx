@@ -697,8 +697,14 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                     <button onClick={() => connect(p)}
                       style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', borderRadius: 0, border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>Reconnect</button>
                     {p.key === 'slack' && (
-                      <button onClick={() => { setSheet(null); const el = document.getElementById('slack-channels'); el?.scrollIntoView({ behavior: 'smooth' }) }}
+                      <button onClick={() => { setSheet(null); setTimeout(() => openSlackChannels(p), 60) }}
                         style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 22px', borderRadius: 0, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink-muted)', cursor: 'pointer' }}>Channels</button>
+                    )}
+                    {p.key === 'slack' && (
+                      <button onClick={() => { setSheet(null); setTimeout(() => setBriefingOpen(true), 60) }}
+                        style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 22px', borderRadius: 0, border: 0, background: 'var(--inset, #F0EDE7)', color: 'var(--ink)', cursor: 'pointer' }}>
+                        Daily briefing
+                      </button>
                     )}
                     <button onClick={() => setConfirmDc(true)}
                       style={{ font: 'inherit', fontSize: 13.5, fontWeight: 500, padding: '11px 18px', borderRadius: 0, border: 0, background: 'transparent', color: 'var(--critical, #c43d2b)', cursor: 'pointer', marginLeft: 'auto' }}>Disconnect</button>
