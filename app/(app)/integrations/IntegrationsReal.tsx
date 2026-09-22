@@ -8,6 +8,7 @@ import { SlackChannelPicker } from './SlackChannels'
 import { BriefingWindow } from './SlackDigest'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useEscape } from '@/components/ui/useEscape'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -212,6 +213,8 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
   const [syncing, setSyncing] = useState<string | null>(null)
   const [sheet, setSheet] = useState<Provider | null>(null)
   const [confirmDc, setConfirmDc] = useState(false)
+  // the provider panel marks itself open (the Ask bar hides) and closes on Escape, like Settings' panels
+  useEscape(!!sheet, () => { setSheet(null); setConfirmDc(false) })
 
   // Arriving from a fresh Slack connect (?slack_channels=1): open the channel
   // picker immediately so the first-run user is never stranded with a

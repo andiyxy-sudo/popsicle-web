@@ -3611,3 +3611,17 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 @keyframes rvFade { from { opacity: 0; } to { opacity: 1; } }
 .rv2 { animation: rvFade .3s ease both !important; }
 .rv2-grid { animation: rvFade .35s ease both !important; }
+
+/* v11.138: the End review summary in the house style (it now sits on the screen layer, outside .rv2) */
+.rv2-sum, .rv2-sum * { font-family: var(--font-sans, 'Outfit', system-ui, sans-serif) !important; }
+.rv2-sum { border-radius: var(--toggle-radius, 0px) !important; background: var(--paper, #FBF8F3) !important; border-top: 3px solid var(--accent, #E85A25); padding: 28px 30px 26px !important; color: var(--ink, #0E0D0B); }
+.rv2-sum .rv2-eyebrow { font-family: var(--font-mono, 'DM Mono', monospace) !important; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent, #E85A25); }
+.rv2-sum h2 { font-size: 28px !important; font-weight: 700 !important; letter-spacing: -.03em !important; line-height: 1.2; margin: 10px 0 8px !important; }
+.rv2-sum-sub { font-size: 14.5px !important; line-height: 1.55 !important; color: var(--ink-muted, #5C5855) !important; margin: 0 0 18px !important; padding-bottom: 16px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.rv2-sum .rv2-made { font-size: 15px; line-height: 1.5; padding: 12px 0; border-top: 0 !important; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.rv2-sum .rv2-made b { font-weight: 700; }
+.rv2-sum .rv2-made em { font-size: 13px; color: var(--ink-faint, #A09C97); }
+.rv2-sum .sb-btn { border-radius: var(--toggle-radius, 0px) !important; font-size: 14px !important; font-weight: 600 !important; padding: 11px 18px !important; background: #fff; border: 1px solid var(--hairline, #EFEAE1) !important; color: var(--ink, #0E0D0B) !important; box-shadow: none !important; }
+.rv2-sum .sb-btn:hover { border-color: var(--ink, #0E0D0B) !important; }
+.rv2-sum .sb-btn-primary { background: var(--accent, #E85A25) !important; border-color: var(--accent, #E85A25) !important; color: #fff !important; }
+.rv2-sum .sb-btn-primary:hover { background: #C94B24 !important; border-color: #C94B24 !important; }
