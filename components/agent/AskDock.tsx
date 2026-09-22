@@ -303,7 +303,7 @@ export function AskDock() {
           }}
           onFocus={() => { setFocused(true); if (hasConvo) setOpen(true) }}
           onBlur={() => setFocused(false)}
-          placeholder={focused ? '' : showLive ? '' : (msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline'))} />
+          placeholder={focused ? '' : showLive ? '' : (open && msgs.length ? 'Ask a follow-up' : open && said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline'))} />
         {showLive && (
           <div className="dock-live" key={current} aria-hidden={false}>
             <span className="dock-live-q">{current}</span>
