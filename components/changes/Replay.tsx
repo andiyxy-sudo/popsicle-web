@@ -72,28 +72,38 @@ function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: nu
   )
 }
 
-export function Replay({ onClose, initial }: { onClose: () => void; initial?: Point[] }) {
+// The replay can sit inline on a page (Intelligence, the review opener) or open as a window.
+export function ReplayView({ onClose, initial, days = 56, inline = false, msPerDay = 720, title = 'Replay', footer, autoplay = true }: {
+  onClose?: () => void; initial?: Point[]; days?: number; inline?: boolean; msPerDay?: number; title?: string; footer?: React.ReactNode; autoplay?: boolean
+}) {
   const [pts, setPts] = useState<Point[] | null>(initial ?? null)
   const [idx, setIdx] = useState(initial ? initial.length - 1 : 0)
   const [playing, setPlaying] = useState(false)
   const [fast, setFast] = useState(false)
   const router = useRouter()
-  useEscape(true, onClose)
+  useEscape(!inline && !!onClose, () => onClose?.())
 
   useEffect(() => {
     if (initial) return
-    fetch('/api/timeline?days=56').then(r => r.ok ? r.json() : null).then(j => { if (j?.points) { setPts(j.points); setIdx(0); setTimeout(() => setPlaying(true), 700) } }).catch(() => {})
-  }, [initial])
+    let dead = false
+    setPts(null); setPlaying(false)
+    fetch(`/api/timeline?days=${days}`).then(r => r.ok ? r.json() : null).then(j => {
+      if (dead || !j?.points) return
+      setPts(j.points)
+      if (autoplay) { setIdx(0); setTimeout(() => { if (!dead) setPlaying(true) }, 700) } else setIdx(j.points.length - 1)
+    }).catch(() => {})
+    return () => { dead = true }
+  }, [initial, days, autoplay])
   useEffect(() => {
     if (!playing || !pts) return
     // slow by default: about 0.7s a day, long enough to read each day's sentence
-    const t = setInterval(() => setIdx(i => { if (i >= pts.length - 1) { setPlaying(false); return i } return i + 1 }), fast ? 280 : 720)
+    const t = setInterval(() => setIdx(i => { if (i >= pts.length - 1) { setPlaying(false); return i } return i + 1 }), fast ? Math.round(msPerDay * 0.4) : msPerDay)
     return () => clearInterval(t)
-  }, [playing, pts, fast])
+  }, [playing, pts, fast, msPerDay])
 
   const p = pts?.[idx], prev = idx > 0 ? pts?.[idx - 1] : undefined, first = pts?.[0]
   const story = useMemo(() => (p ? narrate(p, prev) : null), [p, prev])
-  if (typeof document === 'undefined' && !initial) return null
+  if (typeof document === 'undefined' && !initial && !inline) return null
   const atEnd = !!pts && idx === pts.length - 1
   const since = first ? new Date(first.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''
   const figs = p && first ? [
@@ -103,14 +113,15 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
     { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: 'var(--critical, #c43d2b)', bad: true },
   ] : []
 
-  const body = (
-    <div className="rp3-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose() }}>
-      <div className="rp3" role="dialog" aria-label="Replay the last eight weeks">
+  const card = (
+      <div className={`rp3${inline ? ' rp3-inline' : ''}`} role={inline ? 'region' : 'dialog'} aria-label={title}>
         <header className="rp3-top">
-          <span className="rp3-k">Replay{pts ? ` · week ${Math.floor(idx / 7) + 1} of ${Math.ceil(pts.length / 7)} · day ${idx + 1} of ${pts.length}` : ''}</span>
-          <button className="rp3-x" onClick={onClose} aria-label="Close">
-            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
-          </button>
+          <span className="rp3-k">{title}{pts ? (pts.length > 8 ? ` · week ${Math.floor(idx / 7) + 1} of ${Math.ceil(pts.length / 7)} · day ${idx + 1} of ${pts.length}` : ` · day ${idx + 1} of ${pts.length}`) : ''}</span>
+          {onClose && !inline && (
+            <button className="rp3-x" onClick={onClose} aria-label="Close">
+              <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+            </button>
+          )}
         </header>
         {!pts && <div className="rp3-loading"><span /><span /><span /></div>}
         {pts && p && story && (
@@ -145,6 +156,7 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
               </div>
               <span className="rp3-hint">Drag across the chart to any day</span>
               <button className="rp3-ghost" onClick={() => { setPlaying(false); setIdx(pts.length - 1) }}>Jump to today</button>
+              {footer}
             </div>
 
             <section className="rp3-day">
@@ -152,7 +164,7 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
               <div className="rp3-day-list">
               {p.events.length === 0 && <div className="rp3-quiet">Nothing came in, and nothing moved.</div>}
               {p.events.map(e => (
-                <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose(); router.push(`/signals?signal=${e.id}`) }}>
+                <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose?.(); router.push(`/signals?signal=${e.id}`) }}>
                   <i className={`sev-${e.kind === 'handled' ? 'done' : e.severity}`} />
                   <span className="rp3-ev-a">{e.account}</span>
                   <span className="rp3-ev-t">{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
@@ -164,7 +176,11 @@ export function Replay({ onClose, initial }: { onClose: () => void; initial?: Po
           </>
         )}
       </div>
-    </div>
   )
+  if (inline) return card
+  const body = <div className="rp3-back" onPointerDown={e => { if (e.target === e.currentTarget) onClose?.() }}>{card}</div>
   return typeof document === 'undefined' ? body : createPortal(body, document.body)
 }
+
+/** The replay as a window (kept for anything that still opens it that way). */
+export function Replay(props: { onClose: () => void; initial?: Point[] }) { return <ReplayView {...props} /> }
