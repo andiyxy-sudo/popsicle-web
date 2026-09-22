@@ -195,7 +195,7 @@ function AskBox({ account }: { account: string }) {
   const presets = [`Will ${account} close this quarter?`, 'What should we do this week?', 'What would change the outcome?']
   return (
     <div className="rv2-card">
-      <h4>Ask Popsicle</h4>
+      <h4>Ask <span style={{ color: 'var(--accent, #E85A25)' }}>Popsicle</span></h4>
       <p className="s">The answer is shown to the room, with its sources.</p>
       {!asked && presets.map(p => <button key={p} className="rv2-q" onClick={() => ask(p)}>{p}</button>)}
       {asked && <div className="rv2-asked">{asked}</div>}
