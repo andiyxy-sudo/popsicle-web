@@ -4,10 +4,14 @@ import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_AI_CONTEXT } from '@/lib/demo-ai-context'
 import { orgIdsServer } from '@/lib/org'
+import { readSettings, languageRule } from '@/lib/settings'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  // Settings that shape answers: language, and the escalation thresholds the user chose
+  const my = readSettings((user?.user_metadata ?? {}) as Record<string, unknown>)
+  const prefsNote = `\n\n# The user's settings\n${languageRule(my)} Treat a buyer as having gone dark after ${my.thresholds.daysDark} days of silence. ${my.thresholds.minDeal ? `Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.`
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -24,7 +28,7 @@ export async function POST(req: NextRequest) {
   // Demo account: answer from the showcase context block (no DB round-trip), so the
   // co-pilot's answers match exactly what is on screen.
   if (user.email === DEMO_EMAIL) {
-    return runAnthropic(DEMO_AI_CONTEXT + focusNote + verdictNote, messages, wantStream)
+    return runAnthropic(DEMO_AI_CONTEXT + focusNote + verdictNote + prefsNote, messages, wantStream)
   }
 
   // Fetch context: recent signals + at-risk accounts
@@ -136,7 +140,7 @@ When you suggest exact wording to send - an opening line, a subject, a short mes
 Style: short sentences. No filler openings such as "Based on the data" or "It looks like". Never use em dashes. No emoji anywhere. No markdown headings with #; a section label is a short line ending with a colon. When ranking accounts, write each as "1. Account, short headline ($figure)" on its own line with at most three bullets under it, each opening with a two-word bold lead such as **Why first:**. Quotes in plain double quotes, no italics. Never invent figures. Only list sources that genuinely appear in the context above.
 `.trim()
 
-  return runAnthropic(contextBlock + focusNote + verdictNote, messages, wantStream)
+  return runAnthropic(contextBlock + focusNote + verdictNote + prefsNote, messages, wantStream)
 }
 
 // Shared Anthropic call used by both the demo and real-user paths.

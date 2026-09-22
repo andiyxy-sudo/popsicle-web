@@ -17,6 +17,7 @@ import { exposureOf } from '@/lib/metrics'
 import * as MX from '@/lib/metrics'
 import { LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
+import { useSettings } from '@/lib/useSettings'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -372,6 +373,7 @@ export type LateItem = { id: string; text: string; account: string | null; daysL
 function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoItems?: LateItem[] }) {
   const demoMode = accounts.some(a => String(a.id).startsWith('demo-'))
   const router = useRouter()
+  const settings = useSettings()
   const [items, setItems] = useState<LateItem[]>(demoMode ? (demoItems ?? []) : [])
   useEffect(() => {
     if (demoMode) return
@@ -393,13 +395,15 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
     return () => { dead = true }
   }, [demoMode])
   if (!items.length) return null
+  // Settings → Commitment overdue: a promise is only chased (red, "late") once its grace period has passed
+  const grace = settings.thresholds.graceDays
   return (
     <div style={{ marginTop: 26, padding: '10px 18px', background: 'var(--inset, #F4F0E8)', borderRadius: 6, maxWidth: 680 }}>
       {items.map(c => (
         <div key={c.id} onClick={() => c.account && router.push(`/accounts/${encodeURIComponent(c.account)}`)}
           style={{ display: 'grid', gridTemplateColumns: '58px minmax(0,1fr)', gap: 14, alignItems: 'baseline', padding: '7px 0', cursor: c.account ? 'pointer' : 'default' }}>
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: c.daysLate > 0 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)', whiteSpace: 'nowrap' }}>
-            {c.daysLate > 0 ? `${c.daysLate}d late` : 'due today'}
+          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: c.daysLate >= grace && c.daysLate > 0 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)', whiteSpace: 'nowrap' }}>
+            {c.daysLate === 0 ? 'due today' : c.daysLate >= grace ? `${c.daysLate}d late` : `${c.daysLate}d over`}
           </span>
           <span style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
             {c.text}{c.account ? <> <span style={{ color: 'var(--ink-faint)', margin: '0 6px' }}>/</span><span style={{ color: 'var(--ink-muted)' }}>{c.account}</span></> : null}
@@ -726,7 +730,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [inboxOpen, setInboxOpen] = useState(false)
   // deltas on the strip are measured against your last visit (or the start of the week), from replayed data
   const since = useChanges('pulse')
-  const lensData = useLens()   // the view follows who is signed in; leadership sees the standard strip
+  const lensData = useLens()
+  const mySettings = useSettings()   // Settings → Notifications decide which cards appear   // the view follows who is signed in; leadership sees the standard strip
 
   useEscape(inboxOpen, () => setInboxOpen(false))
   const [confOpen, setConfOpen] = useState(false)
@@ -870,8 +875,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />
 
-      <PreMeetingBrief />
-      <div style={{ marginTop: 24 }}><WeekDigest /></div>
+      {mySettings.notifs.brief && <PreMeetingBrief />}
+      {mySettings.notifs.digest && <div style={{ marginTop: 24 }}><WeekDigest /></div>}
       {/* Today / Needs attention card retired (v11.33): late commitments live in the panel under the headline */}
 
       {/* stat strip: strong rule above, hairline under each figure, strong rule follows hover */}

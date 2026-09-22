@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DEMO_SIGNALS, DEMO_COMMS, DEMO_PEOPLE } from '@/lib/demo-dataset'
+import { readSettings, voiceRule, languageRule } from '@/lib/settings'
 
 // POST { signal_id } -> { subject, body, to }
 // Drafts a follow-up email grounded in the signal's AI analysis plus the most
@@ -88,6 +89,9 @@ export async function POST(req: NextRequest) {
     '- Do not invent numbers, dates, amounts, or names. If a specific figure is not in the material provided, leave it out.',
     ...(typeof intent === 'string' && intent.trim() ? [`- PURPOSE OF THIS EMAIL: ${intent.trim()}. Write specifically for that purpose (for example a comparison one-pager, an ROI sheet, a contract redline, a meeting invite, a written confirmation), not a generic check-in.`] : []),
   ].join('\n')
+  // the user's own drafting preferences (Settings → Drafting) and language override the defaults above
+  const mySettings = readSettings((claimsData.claims.user_metadata ?? {}) as Record<string, unknown>)
+  const systemWithPrefs = `${system}\nThe user's own preferences override the tone and length above. ${voiceRule(mySettings)} ${languageRule(mySettings)}`
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) return NextResponse.json({ error: 'not_configured' }, { status: 501 })
@@ -140,7 +144,7 @@ export async function POST(req: NextRequest) {
   let lastReason = ''
   try {
     for (attempts = 1; attempts <= 2; attempts++) {
-      const sys = attempts === 1 ? system : system + '\nSTRICT: the previous draft was rejected for ' + lastReason + '. Use NO numbers at all, and never reference how you know things.'
+      const sys = attempts === 1 ? systemWithPrefs : systemWithPrefs + '\nSTRICT: the previous draft was rejected for ' + lastReason + '. Use NO numbers at all, and never reference how you know things.'
       const aResp = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },

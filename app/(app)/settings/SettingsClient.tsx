@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { PageHead } from '@/components/layout/PageHead'
 import { orgIdsBrowser } from '@/lib/org'
+import { APP_VERSION } from '@/lib/version'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -69,6 +70,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
   async function saveJson(key: string, value: unknown) {
     await supabase.auth.updateUser({ data: { [key]: value } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
   }
   const [device, setDevice] = useState('')
   const [exportBusy, setExportBusy] = useState(false)
@@ -83,6 +85,16 @@ export function SettingsClient({ user }: SettingsClientProps) {
   }, [])
 
   // Export is real: it pulls the workspace's own rows and downloads them.
+  const [delText, setDelText] = useState(''), [delBusy, setDelBusy] = useState(false), [delMsg, setDelMsg] = useState('')
+  async function deleteWorkspace() {
+    setDelBusy(true); setDelMsg('')
+    const r = await fetch('/api/workspace/delete', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ confirm: delText }) })
+    const j = await r.json().catch(() => ({}))
+    setDelBusy(false)
+    if (!r.ok) { setDelMsg(j.error ?? 'Couldn\u2019t delete the workspace.'); return }
+    await supabase.auth.signOut().catch(() => {})
+    window.location.href = '/login'
+  }
   async function exportData(fmt: 'json' | 'csv') {
     setExportBusy(true)
     try {
@@ -119,6 +131,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const next = { ...notifs, push: on }
     setNotifs(next)
     await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
   }
   const [sheet, setSheet] = useState<string | null>(null)
   // timezone
@@ -217,6 +230,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const next = { ...prefs, [key]: value }
     setPrefs(next)
     await supabase.auth.updateUser({ data: { prefs: next } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
     setSheet(null)
   }
 
@@ -224,6 +238,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     const next = { ...notifs, [k]: !notifs[k] }
     setNotifs(next)
     await supabase.auth.updateUser({ data: { notif_prefs: next } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
   }
 
   useEffect(() => {
@@ -281,7 +296,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   // about this workspace; options that are not implemented say so rather than
   // pretending to switch.
   const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode }> = {
-    Workspace: { title: 'Workspace', sub: 'Popsicle Labs', rows: [['Workspace name', 'Popsicle Labs'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', '1 · invitations not enabled yet']] },
+    Workspace: { title: 'Workspace', sub: org?.name ?? 'Your workspace', rows: [['Workspace name', org?.name ?? 'Your workspace'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', `${members.length || 1} · invite teammates under Your team`]], actions: [['Manage your team', true, () => setSheet('Your team')]] },
     Tone: { title: 'Tone', sub: 'How drafts read', options: [['Direct', 'Short sentences, no preamble'], ['Warm', 'Friendly, still concise'], ['Formal', 'Full sentences, measured'], ['Match the thread', 'Mirror how they write to you']] },
     Length: { title: 'Length', sub: 'How long a first draft runs', options: [['Short', 'Three or four sentences'], ['Medium', 'A paragraph and a clear ask'], ['Detailed', 'Context, evidence, then the ask']] },
     'Sign-off': { title: 'Sign-off', sub: 'The closing line on your emails', options: [['Best, Andy', 'Standard'], ['Thanks, Andy', 'Warmer'], ['Regards, Andy', 'Formal'], ['No sign-off', 'Ends on the last line']] },
@@ -380,10 +395,24 @@ export function SettingsClient({ user }: SettingsClientProps) {
         )}
       </div>
     ) },
-    'Signal visibility': { title: 'Signal visibility', sub: 'Whether teammates see your accounts', options: [['Private', 'Only you'], ['Team', 'Everyone in the workspace'], ['Owner and manager', 'You and whoever covers you']] },
+    'Signal visibility': { title: 'Signal visibility', sub: 'Who sees your accounts and signals', rows: [['Who sees them', 'Everyone in your organisation'], ['Why', 'Coverage, handovers and reviews need one shared picture'], ['Private accounts', 'Coming soon']] },
     'Data & privacy': { title: 'Data & privacy', sub: 'What Popsicle reads and keeps', rows: [['Reads', 'Sales threads on your connected sources'], ['Stores', 'Signals, account state and message metadata'], ['Retention', 'Until you delete the workspace'], ['Location', 'Hosted in Singapore'], ['Shared with', 'No one outside this workspace'], ['Model training', 'Your data is never used to train models']], actions: [['Export everything', true, () => exportData('json')]] },
-    'Delete workspace': { title: 'Delete workspace', sub: 'This cannot be undone', rows: [['Removes', counts ? `${counts.accounts} accounts and ${counts.signals} signals` : 'every account and signal'], ['Disconnects', `${integrations.length} source${integrations.length === 1 ? '' : 's'}`], ['Keeps', 'Nothing'], ['Timing', 'Immediate']], note: 'Deletion is handled manually while in beta so nothing is lost by accident. Email support@popsicle-labs.app from this address and it will be done within one working day.', actions: [['Export first', false, () => exportData('json')]] },
-    'Plan & billing': { title: 'Plan & billing', sub: 'Beta access', rows: [['Plan', 'Beta'], ['Cost', 'No charge during beta'], ['Seats', '1 · invitations not enabled yet'], ['Sources', `${integrations.length} connected`], ['Billing contact', user.email]], note: 'Pricing starts when the beta ends. You will be told before anything is charged.' },
+    'Delete workspace': { title: 'Delete workspace', sub: 'This permanently removes your data and cannot be undone', rows: [['Removes', counts ? `${counts.accounts} accounts and ${counts.signals} signals, with your commitments, decisions and connected sources` : 'Every account, signal, commitment, decision and connected source you added'], ['Keeps', 'Your sign-in, and your teammates\u2019 own data'], ['Before you go', 'Export a copy first if you might want it']], custom: (
+      <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
+        <label style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Type <b style={{ color: 'var(--critical, #c43d2b)' }}>DELETE</b> to confirm</label>
+        <input value={delText} onChange={e => { setDelText(e.target.value); setDelMsg('') }} placeholder="DELETE"
+          style={{ font: 'inherit', fontSize: 15, padding: '10px 12px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, background: '#fff' }} />
+        {delMsg && <div style={{ fontSize: 13, color: 'var(--critical, #c43d2b)' }}>{delMsg}</div>}
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button disabled={delText !== 'DELETE' || delBusy} onClick={deleteWorkspace}
+            style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '11px 20px', border: 0, borderRadius: 0, cursor: delText === 'DELETE' ? 'pointer' : 'default', background: 'var(--critical, #c43d2b)', color: '#fff', opacity: delText === 'DELETE' && !delBusy ? 1 : 0.4 }}>
+            {delBusy ? 'Deleting…' : 'Delete everything permanently'}
+          </button>
+          <button onClick={() => exportData('json')} style={{ font: 'inherit', fontSize: 14, fontWeight: 500, padding: '11px 18px', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, background: '#fff', cursor: 'pointer' }}>Export a copy first</button>
+        </div>
+      </div>
+    ) },
+    'Plan & billing': { title: 'Plan & billing', sub: 'Beta access', rows: [['Plan', 'Beta'], ['Cost', 'No charge during beta'], ['Seats', `${members.length || 1} · invite teammates under Your team`], ['Sources', `${integrations.length} connected`], ['Billing contact', user.email]], note: 'Pricing starts when the beta ends. You will be told before anything is charged.' },
     'Export data': { title: 'Export data', sub: 'Your accounts and signals, downloaded now', rows: [['Accounts', counts ? String(counts.accounts) : '--'], ['Signals', counts ? String(counts.signals) : '--'], ['Includes', 'Everything this workspace holds for you'], ['Leaves Popsicle', 'Yes, the file downloads to this device']], actions: [['Download JSON', true, () => exportData('json')], [exportBusy ? 'Preparing...' : 'Download CSV', false, () => exportData('csv')]] },
     'Two-factor authentication': { title: 'Two-factor authentication', sub: mfaFactors.some(f => f.status === 'verified') ? 'On. A code from your authenticator app is required at sign-in.' : 'Off. Add an authenticator app as a second step.', custom: (
       <div style={{ marginTop: 18 }}>
@@ -432,13 +461,13 @@ export function SettingsClient({ user }: SettingsClientProps) {
         {mfaMsg && <div style={{ fontSize: 13, color: /is on|is off/.test(mfaMsg) ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 14 }}>{mfaMsg}</div>}
       </div>
     ) },
-    'Active sessions': { title: 'Active sessions', sub: '1 device signed in', rows: [['This device', device || 'This browser'], ['Signed in as', user.email], ['Other devices', 'None detected'], ['Sign out everywhere', 'Sign out below ends this session']], note: 'Popsicle keeps one session per browser. Signing out here ends it on this device.' },
-    "What's new": { title: "What's new", sub: 'Recent changes to Popsicle', rows: [['Ask Popsicle', 'Streaming answers, saved questions, source inspection'], ['Account 360', 'People, timeline and contracts tabs'], ['Signals', 'Evidence and pattern match on every signal'], ['Integrations', 'Resolution broadcasts to Slack and HubSpot']] },
+    'Active sessions': { title: 'Active sessions', sub: 'Where you are signed in', rows: [['This device', device || 'This browser'], ['Signed in as', user.email ?? ''], ['Other devices', 'Signing them out ends every session except this one']], actions: [['Sign out other devices', true, async () => { await supabase.auth.signOut({ scope: 'others' }).catch(() => {}); setSheet(null) }]] },
+    "What's new": { title: "What's new", sub: `Popsicle ${APP_VERSION}`, rows: [['Every number explains itself', 'Tap any figure to see where it comes from, down to the buyer\u2019s words'], ['Pipeline review', 'Run the weekly review in Popsicle; decisions are saved with their evidence'], ['How we got here', 'Replay the last 30, 60 or 90 days on Intelligence'], ['Your view', 'Pulse shows reps, managers, leaders and finance what matters to them first'], ['Popsicle in Slack', '@popsicle in deal channels, and a daily top-5 risk briefing'], ['Ask Popsicle', 'Verdict answers, and suggested questions on every page']] },
     'Work email': { title: 'Work email', sub: user.email, rows: [['Address', user.email], ['Changing it', 'Runs through account recovery, not this screen'], ['Sending from', 'Drafts send from this address via Gmail']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText(user.email); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
     'Your data': { title: 'Your data', sub: 'Everything Popsicle holds for this workspace', rows: [['Accounts & health', counts ? `${counts.accounts} records` : '--'], ['Signals', counts ? `${counts.signals} records` : '--'], ['Sources connected', `${integrations.length}`], ['Export', 'Not built yet']], note: 'Export is on the roadmap. Nothing is shared outside this workspace.' },
-    'Weekly digest': { title: 'Weekly digest', sub: `Mondays at ${digestTime}`, rows: [['Meetings this week', 'From your calendar'], ['Commitments due', 'From detected promises'], ['Gone quiet', 'Accounts past their own reply cadence'], ['Email delivery', 'Not enabled yet']], options: [['06:00', 'Before the day starts'], ['07:00', 'With your first coffee'], ['08:00', 'At your desk'], ['09:00', 'After the morning rush']], actions: [['Preview it now', true, () => router.push('/pulse?digest=1')]] },
+    'Weekly digest': { title: 'Weekly digest', sub: 'Your week in review', rows: [['Where', 'The week-in-review card on Pulse'], ['Covers', 'Meetings this week, commitments due, and accounts that went quiet'], ['Show it', 'Turn Weekly summary on or off under Notifications'], ['Email delivery', 'Coming soon']] },
     Appearance: { title: 'Appearance', sub: 'How the portal renders on this device', options: [['Light', 'Warm paper, the default'], ['Dark', 'Not built yet'], ['Match system', 'Not built yet']] },
-    Language: { title: 'Language', sub: 'Interface and AI responses', options: [['English (US)', 'Default'], ['English (UK)', 'Spelling and dates'], ['Bahasa Indonesia', 'Not translated yet']] },
+    Language: { title: 'Language', sub: 'Interface and AI responses', options: [['English (US)', 'Default'], ['English (UK)', 'British spelling in answers and drafts'], ['Bahasa Indonesia', 'Answers and drafts in Bahasa; the interface stays in English']] },
     Timezone: { title: 'Timezone', sub: 'Used for digests, ages and time-of-day logic', custom: (() => {
       const active = tzPick || tz
       const list = [...new Set([tz, ...TIMEZONES].filter(Boolean))].filter(z => !tzQuery || z.toLowerCase().includes(tzQuery.toLowerCase().replace(' ', '_')))
@@ -458,7 +487,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         </div>
       )
     })() },
-    Currency: { title: 'Currency', sub: 'Applied to ARR, exposure and forecast', options: [['USD', 'US dollar'], ['SGD', 'Singapore dollar'], ['IDR', 'Indonesian rupiah'], ['EUR', 'Euro']] },
+    Currency: { title: 'Currency', sub: 'Applied to ARR, exposure and forecast', options: [['USD', 'US dollar'], ['SGD', 'Singapore dollar · Not built yet'], ['IDR', 'Indonesian rupiah · Not built yet'], ['EUR', 'Euro · Not built yet']] },
     'Connected sources': { title: 'Connected sources', sub: `${integrations.length} live`, rows: (integrations.length ? integrations.map(i => [i, 'Connected'] as [string, string]) : [['None', 'Connect Gmail or Slack to start']]), actions: [
       ...(integrations.some(x => /slack/i.test(x)) ? [['Manage Slack channels', true, () => router.push('/integrations?slack_channels=1')], ['Daily briefing settings', false, () => router.push('/integrations?slack_briefing=1')]] as Array<[string, boolean, () => void]> : []),
       ['All integrations', !integrations.some(x => /slack/i.test(x)), () => router.push('/integrations')],
@@ -466,7 +495,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
     'Ask Popsicle': { title: 'Ask Popsicle', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask Popsicle', true, () => router.push('/ask')]] },
     'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask Popsicle', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
-    'About Popsicle': { title: 'About Popsicle', sub: 'Revenue intelligence infrastructure', rows: [['Version', 'v3.6'], ['Platform', 'Revenue intelligence'], ['Support', 'support@popsicle-labs.app']], note: '© 2026 Popsicle Labs. All rights reserved.' },
+    'About Popsicle': { title: 'About Popsicle', sub: 'Revenue intelligence infrastructure', rows: [['Version', APP_VERSION], ['Platform', 'Revenue intelligence'], ['Support', 'support@popsicle-labs.app']], note: '© 2026 Popsicle Labs. All rights reserved.' },
     'Email support': { title: 'Email support', sub: 'support@popsicle-labs.app', rows: [['Include', 'Workspace name and the account in question'], ['Alternative', 'Ask Popsicle for instant answers']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText('support@popsicle-labs.app'); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
   }
 
@@ -498,10 +527,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
       <Section title="Account" sub="Profile, workspace and data.">
-        <Row label="Workspace" sub="Popsicle Labs" value="1 seat" onClick={() => setSheet('Workspace')} />
+        <Row label="Workspace" sub={org?.name ?? 'Your workspace'} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
         <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
         <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} onClick={() => setSheet('Your data')} />
-        <Row label="Weekly digest" sub="Appears on Pulse at the start of your week" value={`Mondays · ${digestTime}`} onClick={() => setSheet('Weekly digest')} />
+        <Row label="Weekly digest" sub="The week-in-review card on Pulse · email coming soon" value={notifs.digest ? 'On Pulse' : 'Off'} onClick={() => setSheet('Weekly digest')} />
       </Section>
 
       <Section title="Your day" sub="When Popsicle should work around you.">
@@ -528,7 +557,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
           <div>
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Working hours</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Used for pre-meeting briefs and digests</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Outside these hours, only critical signals interrupt you</div>
           </div>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, color: 'var(--ink-muted)' }}>
             <TimeField value={workHours.start} onChange={val => { const v = { ...workHours, start: val }; setWorkHours(v); saveJson('work_start', v.start) }} />
@@ -539,7 +568,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
           <div>
             <div style={{ fontSize: 15, color: 'var(--ink)' }}>Morning digest</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Overnight signals and today's meetings, once a day</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>When the morning brief appears in the Ask bar</div>
           </div>
           <TimeField value={morningDigest} onChange={val => { setMorningDigest(val); saveJson('morning_digest', val) }} />
         </div>
@@ -561,11 +590,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </Section>
 
       <Section title="Notifications" sub="What Popsicle should interrupt you for.">
-        {([['risk', 'Risk alerts', 'Critical signals, as they are detected'],
-           ['digest', 'Weekly summary', `Mondays at ${digestTime}, on the Pulse screen`],
-           ['brief', 'Pre-meeting briefs', '30 minutes before mapped meetings'],
+        {([['risk', 'Risk alerts', 'New signals in the Ask bar; respects quiet hours and minimum deal size'],
+           ['digest', 'Weekly summary', 'The week-in-review card on Pulse'],
+           ['brief', 'Pre-meeting briefs', 'The pre-meeting brief card on Pulse'],
            ['push', 'Push notifications', typeof Notification !== 'undefined' && Notification.permission === 'granted' ? 'Allowed in this browser' : 'Needs browser permission'],
-           ['emailDigest', 'Email digest', 'Sent to your inbox, not yet enabled'],
+           ['emailDigest', 'Email digest', 'A weekly summary in your inbox'],
            ['slackCritical', 'Slack DMs for critical signals', 'A direct message the moment an at-risk signal lands'],
            ['emailHandled', 'Email for handled and snoozed signals', 'A short confirmation when a signal is closed or parked']] as const).map(([k, label, sub]) => (
           <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -573,11 +602,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
               <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
             </div>
+            {(k === 'emailDigest' || k === 'slackCritical' || k === 'emailHandled') ? <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Coming soon</span> :
             <button onClick={() => (k === 'push' ? askPush() : toggleNotif(k))} aria-label={label}
               style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px', marginRight: 2,
                 background: notifs[k] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
               <span style={{ position: 'absolute', top: 3, left: notifs[k] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
-            </button>
+            </button>}
           </div>
         ))}
         <Row label="Quiet hours" sub="Nothing interrupts you inside this window" value={`${quiet.From} - ${quiet.To}`} onClick={() => setSheet('Quiet hours')} />
@@ -587,16 +617,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Tone" sub="Applies to every draft it prepares" value={voice.Tone} onClick={() => setSheet('Tone')} />
         <Row label="Length" sub="How long a first draft should run" value={voice.Length} onClick={() => setSheet('Length')} />
         <Row label="Sign-off" sub="The closing line on your emails" value={voice['Sign-off']} onClick={() => setSheet('Sign-off')} />
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-          <div>
-            <div style={{ fontSize: 15, color: 'var(--ink)' }}>Send without asking</div>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Off means every draft waits for your approval</div>
-          </div>
-          <button onClick={() => { const v = !autoSend; setAutoSend(v); saveJson('auto_send', v) }} aria-label="Send without asking"
-            style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
-              background: autoSend ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
-            <span style={{ position: 'absolute', top: 3, left: autoSend ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
-          </button>
+        <div style={{ padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div style={{ fontSize: 15, color: 'var(--ink)' }}>Nothing is sent without you</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Popsicle prepares every draft and action; you approve before anything goes out</div>
         </div>
       </Section>
 
@@ -607,10 +630,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </Section>
 
       <Section title="Team" sub="Who else can see this workspace.">
-        <Row label="Members" sub="You are the only member" value="1" onClick={() => setSheet('Members')} />
         <Row label="Your team" sub={org ? `${org.name} · everyone here sees the same accounts` : 'Who is in your organisation'} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'person' : 'people'}`} onClick={() => setSheet('Your team')} />
         <Row label="Invite a teammate" sub="Share signals and coverage" value="Invite" onClick={() => setSheet('Invite a teammate')} />
-        <Row label="Signal visibility" sub="Whether teammates see your accounts" value="Private" onClick={() => setSheet('Signal visibility')} />
+        <Row label="Signal visibility" sub="Everyone in your organisation sees the same accounts and signals" value="Organisation" onClick={() => setSheet('Signal visibility')} />
       </Section>
 
       <Section title="Security" sub="Access to this account.">
@@ -641,15 +663,15 @@ export function SettingsClient({ user }: SettingsClientProps) {
           value={mfaFactors.some(f => f.status === 'verified') ? <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>Enabled</span> : <span style={{ color: 'var(--critical, #c43d2b)', fontWeight: 600 }}>Disabled</span>}
           onClick={() => setSheet('Two-factor authentication')} />
         <Row label="Active sessions" sub={device ? `This device: ${device}` : 'Signed-in devices'}
-          value="1 device" onClick={() => setSheet('Active sessions')} />
+          value="Manage" onClick={() => setSheet('Active sessions')} />
         {pwStatus && !pwOpen && <div style={{ fontSize: 13, color: pwStatus.type === 'ok' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', padding: '14px 0' }}>{pwStatus.msg}</div>}
       </Section>
 
       <Section title="More" sub="Product information.">
-        <Row label="What's new" sub="Recent changes to Popsicle" value="v10.6" onClick={() => setSheet("What's new")} />
+        <Row label="What's new" sub="Recent changes to Popsicle" value={APP_VERSION} onClick={() => setSheet("What's new")} />
         <Row label="Ask Popsicle" sub="Answers grounded in your own data" value="Open" onClick={() => setSheet('Ask Popsicle')} />
         <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => setSheet('Help & support')} />
-        <Row label="About Popsicle" value="v3.6" onClick={() => setSheet('About Popsicle')} />
+        <Row label="About Popsicle" value={APP_VERSION} onClick={() => setSheet('About Popsicle')} />
         <Row label="Data & privacy" sub="What Popsicle reads, stores and for how long" value="Read" onClick={() => setSheet('Data & privacy')} />
         <Row label="Email support" value="support@popsicle-labs.app" onClick={() => setSheet('Email support')} />
         <Row label="Delete workspace" sub="Removes every account, signal and connection" danger

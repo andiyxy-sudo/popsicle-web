@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
+import { useSettings } from '@/lib/useSettings'
 
 interface DBSignal {
   id: string
@@ -66,6 +67,8 @@ interface Draft { subject: string; body: string; to: string; cc?: string; proven
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
 export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[]; demoHead?: DemoHead }) {
+  const mySettings = useSettings()
+  const [showSmall, setShowSmall] = useState(false)
   const router = useRouter()
   const [signals, setSignals] = useState<DBSignal[]>(initial)
   const [busyId, setBusyId] = useState<string | null>(null)
@@ -437,7 +440,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   // handled signals leave the live list and collect in the Recently handled strip below
   const handledList = [...signals].filter(s => s.status === 'handled').sort((a, b) => String(b.handled_at ?? '').localeCompare(String(a.handled_at ?? '')))
   const shownAll = (filter === 'critical' ? critical : filter === 'watch' ? watch : filter === 'positive' ? positive : [...critical, ...watch, ...positive])
-  const shown = shownAll.filter(s => s.status !== 'handled')
+  const openShown = shownAll.filter(s => s.status !== 'handled')
+  // Settings → Minimum deal size: smaller deals stay quiet unless critical (one click shows them)
+  const minDeal = mySettings.thresholds.minDeal
+  const smallDeals = minDeal ? openShown.filter(s => s.severity !== 'high' && Number(s.risk_amount || 0) > 0 && Number(s.risk_amount) < minDeal) : []
+  const shown = showSmall ? openShown : openShown.filter(s => !smallDeals.includes(s))
   const ACTION_LABEL: Record<string, string> = {
     silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
     competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
@@ -524,6 +531,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
       {/* alert rows */}
       <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+        {smallDeals.length > 0 && (
+          <button onClick={() => setShowSmall(v => !v)} style={{ font: 'inherit', fontSize: 13, color: 'var(--ink-faint)', background: 'none', border: 0, padding: '6px 0 14px', cursor: 'pointer', textAlign: 'left' }}>
+            {showSmall ? `Hide the ${smallDeals.length} smaller-deal signal${smallDeals.length === 1 ? '' : 's'}` : `${smallDeals.length} signal${smallDeals.length === 1 ? '' : 's'} on deals under $${Math.round(minDeal / 1000)}K hidden by your settings · Show`}
+          </button>
+        )}
         {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New signals land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
         {shown.map(s => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'

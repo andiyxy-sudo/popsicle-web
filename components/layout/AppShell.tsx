@@ -10,6 +10,7 @@ import { AskDock } from '@/components/agent/AskDock'
 import { ExplainHost } from '@/components/explain/Explain'
 import { Account360 } from '@/components/account/Account360'
 import { useRouter, usePathname } from 'next/navigation'
+import { APP_VERSION } from '@/lib/version'
 
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
@@ -93,7 +94,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>
-            <span>v11.151</span>
+            <span>{APP_VERSION}</span>
           </footer>
         </div>
       </div>

@@ -6,6 +6,8 @@ import { AGENT_NAME } from '@/lib/agent/config'
 import { Answer } from '@/components/ask/AnswerText'
 import type { AgentBrief, AgentMessage } from '@/lib/agent/compose'
 import { AgentNote, Dateline } from './AgentNote'
+import { getSettingsNow, useSettings } from '@/lib/useSettings'
+import { inQuietHours, inWorkingHours, pastMorningDigest } from '@/lib/settings'
 
 // The Ask bar that sits on every page, with the conversation pulling up out of it.
 // Ask a question from Acme's page and the answer rises above the bar, about Acme,
@@ -37,6 +39,7 @@ export function AskDock() {
   const [said, setSaid] = useState<Said[]>([])
   // only the newest alert shows; earlier ones fold behind a quiet "N earlier" line
   const [showEarlier, setShowEarlier] = useState(false)
+  useSettings()   // loads your settings so alerts can respect them
   // when a new signal pops up, the sheet shows just that one; everything else is one click away
   const [alertOnly, setAlertOnly] = useState(false)
   useEffect(() => { if (!open) setAlertOnly(false) }, [open])   // reopening later shows everything
@@ -103,6 +106,20 @@ export function AskDock() {
     const onSay = (e: Event) => {
       const d = (e as CustomEvent<{ kind: 'brief'; brief: AgentBrief } | { kind: 'note'; msg: AgentMessage }>).detail
       if (!d) return
+      // your Settings decide what may interrupt you
+      const st = getSettingsNow()
+      const timed = !st.demo   // the demo always performs, whatever the hour
+      if (timed && d.kind === 'brief' && !pastMorningDigest(st)) return                       // the brief waits for your morning-digest time
+      if (d.kind === 'note') {
+        const critical = d.msg.priority === 'critical'
+        if (!st.notifs.risk) return                                                    // risk alerts off
+        if (timed && (inQuietHours(st) || !inWorkingHours(st)) && !critical) return            // quiet hours, or outside working hours: only critical gets through
+        if (!critical && st.thresholds.minDeal && (d.msg.amount ?? Infinity) < st.thresholds.minDeal) return   // small deals stay quiet
+        // push: a real browser notification when you're on another tab
+        if (st.notifs.push && critical && typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden && !(timed && inQuietHours(st))) {
+          try { new Notification(`Popsicle · ${d.msg.account ?? 'New signal'}`, { body: d.msg.headline, tag: d.msg.key }) } catch { /* ignore */ }
+        }
+      }
       const id = d.kind === 'brief' ? `brief:${d.brief.generatedAt}` : d.msg.key
       setSaid(prev => prev.some(x => x.id === id) ? prev : [{ id, ...d } as Said, ...prev].slice(0, 6))
       setShowEarlier(false)
