@@ -443,7 +443,19 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
     ) },
     'Signal visibility': { title: 'Signal visibility', sub: 'Who sees your accounts and signals', rows: [['Who sees them', 'Everyone in your organisation'], ['Why', 'Coverage, handovers and reviews need one shared picture'], ['Private accounts', 'Coming soon']] },
-    'Data & privacy': { title: 'Data & privacy', sub: 'What Popsicle reads and keeps', rows: [['Reads', 'Sales threads on your connected sources'], ['Stores', 'Signals, account state and message metadata'], ['Retention', 'Until you delete the workspace'], ['Location', 'Hosted in Singapore and the USA'], ['Shared with', 'No one outside this workspace'], ['Model training', 'Your data is never used to train models']], actions: [['Privacy policy', true, () => window.open('https://popsicle-labs.app/privacy.html', '_blank')], ['Terms of service', false, () => window.open('https://popsicle-labs.app/terms.html', '_blank')], ['Data processing agreement', false, () => window.open('https://popsicle-labs.app/dpa.html', '_blank')], ['Export everything', false, () => exportData('json')]] },
+    'Data & privacy': { title: 'Data & privacy', sub: 'What Popsicle reads and keeps', rows: [['Reads', 'Sales threads on your connected sources'], ['Stores', 'Signals with short excerpts as evidence, account state and message metadata'], ['Retention', 'Until you delete the workspace; 30 days after you leave'], ['Location', 'App in Singapore, database in the USA'], ['Shared with', 'Only the sub-processors listed in the DPA'], ['Model training', 'Your data is never used to train models']], custom: (
+      <div style={{ marginTop: 22 }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 8, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>Legal documents</div>
+        {([['Privacy policy', 'How we handle your account and usage data', 'https://popsicle-labs.app/privacy.html'],
+           ['Terms of service', 'The agreement for using Popsicle', 'https://popsicle-labs.app/terms.html'],
+           ['Data processing agreement', 'How we process your customers\u2019 data (GDPR, UK, PDPA, PDP Law, US states)', 'https://popsicle-labs.app/dpa.html']] as const).map(([name, desc, url]) => (
+          <a key={name} href={url} target="_blank" rel="noreferrer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', textDecoration: 'none' }}>
+            <span><span style={{ display: 'block', fontSize: 15, color: 'var(--ink)' }}>{name}</span><span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{desc}</span></span>
+            <span style={{ fontSize: 14, color: 'var(--accent, #E85A25)', flex: 'none' }}>Open ↗</span>
+          </a>
+        ))}
+      </div>
+    ), actions: [['Export everything', true, () => exportData('json')]] },
     'Delete workspace': { title: 'Delete workspace', sub: 'This permanently removes your data and cannot be undone', rows: [['Removes', counts ? `${counts.accounts} accounts and ${counts.signals} signals, with your commitments, decisions and connected sources` : 'Every account, signal, commitment, decision and connected source you added'], ['Keeps', 'Your sign-in, and your teammates\u2019 own data'], ['Before you go', 'Export a copy first if you might want it']], custom: (
       <div style={{ marginTop: 18, display: 'grid', gap: 10 }}>
         <label style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Type <b style={{ color: 'var(--critical, #c43d2b)' }}>DELETE</b> to confirm</label>
@@ -816,7 +828,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="What's new" sub="Recent changes to Popsicle" value={APP_VERSION} onClick={() => setSheet("What's new")} />
         <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => setSheet('Help & support')} />
         <Row label="About Popsicle" value={APP_VERSION} onClick={() => setSheet('About Popsicle')} />
-        <Row label="Data & privacy" sub="What Popsicle reads, stores and for how long" value="Read" onClick={() => setSheet('Data & privacy')} />
+        <Row label="Data & privacy" sub="What Popsicle reads and keeps · privacy policy, terms and DPA" value="Read" onClick={() => setSheet('Data & privacy')} />
         <Row label="Email support" value="support@popsicle-labs.app" onClick={() => setSheet('Email support')} />
         <Row label="Delete workspace" sub="Removes every account, signal and connection" danger
           value={<span style={{ color: 'var(--critical, #c43d2b)' }}>Delete</span>} onClick={() => setSheet('Delete workspace')} />
