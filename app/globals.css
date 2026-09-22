@@ -3744,3 +3744,9 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
   .rp3:not(.rp3-inline) .rp3-sec-h { padding-bottom: 6px; }
   .rp3:not(.rp3-inline) .rp3-sec-h h3 { font-size: 17px; }
 }
+
+/* v11.156: no "more" button; the fade alone says there's more, and the list gets more room */
+.rp3-more { display: none !important; }
+.rp3:not(.rp3-inline) .rp3-day-wrap { height: clamp(160px, 24vh, 230px); }
+.rp3-day-wrap.more::after { height: 44px; }
+.rp3:not(.rp3-inline) .rp3-day-wrap { height: clamp(150px, 20vh, 220px); }

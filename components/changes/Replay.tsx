@@ -187,11 +187,6 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
                 </button>
               ))}
               </div>
-              {below > 0 && (
-                <button className="rp3-more" onClick={() => listRef.current?.scrollBy({ top: listRef.current.clientHeight * 0.8, behavior: 'smooth' })}>
-                  {below} more ↓
-                </button>
-              )}
               </div>
             </section>
           </>
