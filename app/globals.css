@@ -3757,3 +3757,15 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rp3-range button { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 600; color: var(--ink-muted, #5C5855); background: none; border: 0; padding: 7px 14px; cursor: pointer; border-radius: 0; }
 .rp3-range button:hover { color: var(--ink, #0E0D0B); }
 .rp3-range button.on { background: var(--accent, #E85A25); color: #fff; }
+
+/* v11.158: the Ask sheet's header in a warm orange-to-gold gradient, white type (matches Pulse's inbox header) */
+.dock-head { background: linear-gradient(115deg, #FF7A45 0%, #FF6B35 38%, #F58A3C 70%, #F4B04A 100%); border-bottom: 0 !important;
+  position: relative; overflow: hidden; }
+.dock-head::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.28), transparent 55%); }
+.dock-head > * { position: relative; z-index: 1; }
+.dock-head .dock-from { color: #fff; font-weight: 500; }
+.dock-head .dock-about { color: rgba(255,255,255,.82); }
+.dock-head .agent-mark { background: #fff !important; box-shadow: 0 0 0 3px rgba(255,255,255,.28) !important; }
+.dock-head-actions button { color: rgba(255,255,255,.92) !important; }
+.dock-head-actions button:hover { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
+.dock-head-actions .dock-x { color: rgba(255,255,255,.85) !important; }
