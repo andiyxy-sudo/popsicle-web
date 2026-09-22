@@ -3838,3 +3838,41 @@ html[data-theme="dark"] .about-logo-dark { display: block !important; }
 /* v11.164: the Ask sheet's suggested questions in a lighter weight */
 .dock-suggest-q { font-weight: 500 !important; color: var(--ink, #0E0D0B); }
 .dock-suggest-q:hover { color: var(--accent, #E85A25); }
+
+/* ═════════ v11.165 DECISION TRAIL, in the house style of Pulse's "Today" ═════════
+   Outfit throughout, a softer ink (not pure black), section head over a strong rule, hairline rows. */
+.dt2 { margin: 8px 0 34px; font-family: var(--font-sans, 'Outfit', sans-serif); --dt-ink: var(--d-ink, #2A2622); --dt-muted: var(--ink-muted, #5C5855); --dt-faint: var(--ink-faint, #A09C97); }
+.dt2-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.dt2-head h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.03em; color: var(--dt-ink); }
+.dt2-head span { font-size: 14px; color: var(--dt-muted); }
+.dt2-row { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 18px; padding: 20px 0; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.dt2-date { display: flex; flex-direction: column; align-items: flex-start; line-height: 1; padding-top: 2px; }
+.dt2-date span { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent, #E85A25); }
+.dt2-date b { font-size: 26px; font-weight: 700; letter-spacing: -.04em; color: var(--dt-ink); margin-top: 4px; }
+.dt2-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+.dt2-text { margin: 0; font-size: 17px; font-weight: 600; line-height: 1.4; letter-spacing: -.01em; color: var(--dt-ink); }
+.dt2-status { flex: none; font-size: 12px; font-weight: 600; padding: 3px 10px; margin-top: 2px; }
+.dt2-status.st-open { color: #A06A10; background: var(--d-tint-amber, rgba(211,139,29,.12)); }
+.dt2-status.st-done { color: var(--good, #2f8f5b); background: var(--d-tint-green, rgba(47,143,91,.1)); }
+.dt2-status.st-reversed { color: var(--dt-muted); background: var(--d-tintbg, rgba(14,13,11,.05)); }
+html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
+.dt2-meta { font-size: 13.5px; color: var(--dt-muted); margin-top: 6px; }
+.dt2-toggle { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; font: inherit; font-size: 13.5px; font-weight: 600; color: var(--accent, #E85A25); background: none; border: 0; padding: 0; cursor: pointer; }
+.dt2-toggle svg { transition: transform .2s ease; }
+.dt2-then { margin-top: 14px; padding: 16px 18px; background: var(--d-raised, #fff); border: 1px solid var(--hairline, #EFEAE1); border-left: 3px solid var(--accent, #E85A25); animation: rp2Story .25s ease both; }
+.dt2-then-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--dt-faint); }
+.dt2-figs { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 10px; }
+.dt2-figs div { display: flex; flex-direction: column; gap: 3px; }
+.dt2-figs span { font-size: 12px; color: var(--dt-faint); }
+.dt2-figs b { font-size: 20px; font-weight: 700; letter-spacing: -.03em; color: var(--dt-ink); }
+.dt2-sigs { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hairline, #EFEAE1); }
+.dt2-sig { display: block; padding: 10px 0 2px; text-decoration: none; color: inherit; }
+.dt2-sig + .dt2-sig { border-top: 1px solid var(--hairline, #EFEAE1); margin-top: 8px; }
+.dt2-sig-h { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; font-size: 14.5px; font-weight: 600; color: var(--dt-ink); }
+.dt2-sig-h i { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.dt2-sig-h em { font-style: normal; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10.5px; letter-spacing: .4px; color: var(--dt-faint); display: inline-flex; align-items: center; gap: 5px; font-weight: 400; }
+.dt2-sig-h em b { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dt2-sig:hover .dt2-sig-h { color: var(--accent, #E85A25); }
+.dt2-sig-q { display: block; margin: 6px 0 0 16px; font-size: 15px; line-height: 1.5; color: var(--dt-muted); }
+.dt2-sig-q::before { content: '\201C'; color: var(--accent, #E85A25); } .dt2-sig-q::after { content: '\201D'; color: var(--accent, #E85A25); }
+@media (max-width: 700px) { .dt2-row { grid-template-columns: 1fr; gap: 8px; } .dt2-date { flex-direction: row; gap: 8px; align-items: baseline; } }
