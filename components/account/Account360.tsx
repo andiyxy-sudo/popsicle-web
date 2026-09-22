@@ -67,7 +67,7 @@ const slackTsOf = (m: Msg) => { const raw = m.external_id?.split(':').pop(); con
 // the immutable extraction record). "Looks done?" nudges come from the
 // commitment_suggestions view; the user always decides - never auto-closed.
 // Dismissals persist in commitment_evidence. ----------
-interface Cm { id: string; text: string; owner: string | null; due_at: string | null; promised_at: string | null; status: string; done_at: string | null; source_signal_id: string | null }
+interface Cm { id: string; text: string; owner: string | null; assignee?: string | null; due_at: string | null; promised_at: string | null; status: string; done_at: string | null; source_signal_id: string | null }
 interface Sugg { evidence_id: string; commitment_id: string; strength: string; span: string | null; evidence_at: string | null; evidence_source: string | null; evidence_subject: string | null }
 
 
@@ -87,7 +87,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
     const { data: { user } } = await supa.auth.getUser()
     if (!user) return
     const [{ data: cms }, { data: sg }] = await Promise.all([
-      supa.from('commitments').select('id, text, owner, due_at, promised_at, status, done_at, source_signal_id')
+      supa.from('commitments').select('id, text, owner, assignee, due_at, promised_at, status, done_at, source_signal_id')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account).order('due_at', { ascending: true, nullsFirst: false }).limit(60),
       supa.from('commitment_suggestions').select('evidence_id, commitment_id, strength, span, evidence_at, evidence_source, evidence_subject')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account).limit(30),
@@ -175,6 +175,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.45 }}>{c.text}</div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
                   <span style={{ fontSize: 10.5, fontWeight: 800, color: ds.color, fontFamily: "'DM Mono',monospace" }}>{ds.txt}</span>
+                  {c.assignee && <span style={{ fontSize: 10.5, fontWeight: 600, color: 'var(--t2)' }}>{c.assignee}</span>}
                   {c.promised_at && <span style={{ fontSize: 10, color: 'var(--t4)' }}>promised {new Date(c.promised_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
                   {c.source_signal_id && <button onClick={() => onOpenSignal(c.source_signal_id!)} style={{ fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>View source →</button>}
                 </div>

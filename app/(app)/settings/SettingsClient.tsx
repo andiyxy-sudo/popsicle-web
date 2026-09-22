@@ -70,10 +70,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [autoSend, setAutoSend] = useState(false)
   const [sendMode, setSendMode] = useState<'with' | 'without'>('with')
   const [industry, setIndustry] = useState('')
+  const [dealText, setDealText] = useState('')
   const [easyRead, setEasyRead] = useState(() => { try { return typeof window !== 'undefined' && localStorage.getItem('easyread') === '1' } catch { return false } })
   const INDUSTRIES = ['Software & SaaS', 'Financial services', 'Healthcare & life sciences', 'Manufacturing', 'Retail & e-commerce', 'Logistics & supply chain', 'Real estate', 'Professional services', 'Media & advertising', 'Telecommunications', 'Education', 'Hospitality & travel', 'Energy & utilities', 'Public sector', 'Other']
   const [sendRules, setSendRules] = useState<{ kinds: string[]; neverExecs: boolean; neverCritical: boolean; maxDeal: string; hold: string; notify: string }>(
-    { kinds: ['Follow-ups on existing threads', 'Rebooking cancelled meetings'], neverExecs: true, neverCritical: true, maxDeal: '$100K', hold: '30 minutes', notify: 'Every time' })
+    { kinds: ['Follow-ups on threads', 'Rebooking cancelled meetings'], neverExecs: true, neverCritical: true, maxDeal: '$100K', hold: '30 min', notify: 'Every time' })
   const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
   const [quiet, setQuiet] = useState<Record<string, string>>({ From: '19:00', To: '08:00' })
   const [customQuiet, setCustomQuiet] = useState<Record<string, string>>({ From: '20:00', To: '07:00' })
@@ -588,48 +589,66 @@ export function SettingsClient({ user }: SettingsClientProps) {
       const setRules = (patch: Partial<typeof sendRules>) => { const next = { ...sendRules, ...patch }; setSendRules(next); saveJson('send_rules', next) }
       const choose = (m: 'with' | 'without') => { setSendMode(m); saveJson('send_mode', m) }
       const card = (m: 'with' | 'without', title: string, desc: string) => (
-        <button onClick={() => choose(m)} style={{ font: 'inherit', textAlign: 'left', padding: '14px 16px', cursor: 'pointer', borderRadius: 0, width: '100%',
-          background: sendMode === m ? 'var(--d-tint-red, rgba(232,90,37,.06))' : 'var(--d-raised, #fff)', border: sendMode === m ? '2px solid var(--accent, #E85A25)' : '1px solid var(--hairline, #EFEAE1)' }}>
-          <div style={{ fontSize: 15.5, fontWeight: 700, color: sendMode === m ? 'var(--accent, #E85A25)' : 'var(--ink)' }}>{title}</div>
-          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.45 }}>{desc}</div>
+        <button key={m} onClick={() => choose(m)} className={`snd-card${sendMode === m ? ' on' : ''}`}>
+          <span className="snd-card-t">{title}</span>
+          <span className="snd-card-d">{desc}</span>
         </button>)
-      const label = (t: string) => <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '14px 0 7px' }}>{t}</div>
-      const chip = (on: boolean, text: string, onClick: () => void) => (
-        <button key={text} onClick={onClick} style={{ font: 'inherit', fontSize: 12.5, fontWeight: on ? 600 : 500, padding: '6px 11px', borderRadius: 0, cursor: 'pointer', marginRight: 5, marginBottom: 5,
-          background: on ? 'var(--accent, #E85A25)' : 'var(--d-raised, #fff)', color: on ? '#fff' : 'var(--ink-muted)', border: '1px solid ' + (on ? 'var(--accent, #E85A25)' : 'var(--hairline, #EFEAE1)') }}>{text}</button>)
-      const KINDS = ['Follow-ups on existing threads', 'Rebooking cancelled meetings', 'Documents you already approved', 'First contact with someone new']
+      const check = (on: boolean, text: string, onClick: () => void) => (
+        <button key={text} className={`snd-check${on ? ' on' : ''}`} role="checkbox" aria-checked={on} onClick={onClick}>
+          <i>{on ? <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden><path d="M1.5 5.2l2.4 2.4L8.6 2.9" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg> : null}</i>
+          {text}
+        </button>)
+      const seg = (value: string, options: readonly string[], onPick: (v: string) => void) => (
+        <span className="snd-seg">{options.map(o => <button key={o} className={value === o ? 'on' : ''} onClick={() => onPick(o)}>{o}</button>)}</span>)
+      const row = (label: string, hint: string, control: React.ReactNode) => (
+        <div className="snd-row" key={label}>
+          <div><span className="snd-row-l">{label}</span><span className="snd-row-h">{hint}</span></div>
+          <div className="snd-row-c">{control}</div>
+        </div>)
+      const KINDS = ['Follow-ups on threads', 'Rebooking cancelled meetings', 'Documents already approved', 'First contact with new people']
       return (
-        <div style={{ marginTop: 12 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            {card('with', 'Send with you', 'Popsicle drafts every message; nothing goes out until you review and send it.')}
+        <div className="snd">
+          <div className="snd-cards">
+            {card('with', 'Send with you', 'Popsicle drafts every message. Nothing goes out until you review and send it.')}
             {card('without', 'Send without you', 'Popsicle sends its drafts on its own, only within the limits you set below.')}
           </div>
           {sendMode === 'without' && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 24 }}>
-              <div>
-                {label('What it may send')}
-                <div>{KINDS.map(k => chip(sendRules.kinds.includes(k), k, () => setRules({ kinds: sendRules.kinds.includes(k) ? sendRules.kinds.filter(x => x !== k) : [...sendRules.kinds, k] })))}</div>
-              </div>
-              <div>
-                {label('Never send on its own to')}
-                <div>
-                  {chip(sendRules.neverExecs, 'Executives (VP and above)', () => setRules({ neverExecs: !sendRules.neverExecs }))}
-                  {chip(sendRules.neverCritical, 'Accounts at critical risk', () => setRules({ neverCritical: !sendRules.neverCritical }))}
+            <div className="snd-rows">
+              {row('What it may send', 'Everything else still waits for you', (
+                <div className="snd-checks">{KINDS.map(k => check(sendRules.kinds.includes(k), k, () => setRules({ kinds: sendRules.kinds.includes(k) ? sendRules.kinds.filter(x => x !== k) : [...sendRules.kinds, k] })))}</div>
+              ))}
+              {row('Never on its own', 'These always come to you first', (
+                <div className="snd-checks">
+                  {check(sendRules.neverExecs, 'Executives (VP and up)', () => setRules({ neverExecs: !sendRules.neverExecs }))}
+                  {check(sendRules.neverCritical, 'Accounts at critical risk', () => setRules({ neverCritical: !sendRules.neverCritical }))}
                 </div>
-                {label('Only on deals up to')}
-                <div>{['$25K', '$50K', '$100K', '$250K', 'Any size'].map(v => chip(sendRules.maxDeal === v, v, () => setRules({ maxDeal: v })))}</div>
-              </div>
-              <div>
-                {label('Hold before sending, so you can stop it')}
-                <div>{['No hold', '5 minutes', '30 minutes', '1 hour'].map(v => chip(sendRules.hold === v, v, () => setRules({ hold: v })))}</div>
-              </div>
-              <div>
-                {label('Tell me')}
-                <div>{['Every time', 'In a daily summary'].map(v => chip(sendRules.notify === v, v, () => setRules({ notify: v })))}</div>
-              </div>
+              ))}
+              {row('Deal size limit', 'Bigger deals always wait for you', (() => {
+                const DEALS = ['$25K', '$50K', '$100K', '$250K', '$500K', '$1M', 'Any']
+                const custom = !DEALS.includes(sendRules.maxDeal)
+                const tidy = (t: string) => {
+                  const m = /([\d.]+)\s*([kmb]?)/i.exec(t.replace(/[$,\s]/g, ''))
+                  if (!m) return ''
+                  const n = parseFloat(m[1]); if (!isFinite(n) || n <= 0) return ''
+                  const v = n * (m[2].toLowerCase() === 'm' ? 1e6 : m[2].toLowerCase() === 'b' ? 1e9 : m[2].toLowerCase() === 'k' ? 1e3 : n < 1000 ? 1e3 : 1)
+                  return v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : `$${Math.round(v / 1e3)}K`
+                }
+                return (
+                  <div className="snd-deal">
+                    {seg(custom ? 'Custom' : sendRules.maxDeal, [...DEALS, 'Custom'], v => { if (v === 'Custom') { setDealText(''); setRules({ maxDeal: '' }) } else setRules({ maxDeal: v }) })}
+                    {custom && (
+                      <input autoFocus value={dealText} placeholder="e.g. 750K" onChange={e => setDealText(e.target.value)}
+                        onBlur={() => { const t = tidy(dealText); if (t) { setDealText(t); setRules({ maxDeal: t }) } }}
+                        onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }} className="snd-deal-in" />
+                    )}
+                  </div>
+                )
+              })())}
+              {row('Hold before sending', 'Your chance to stop a message', seg(sendRules.hold, ['None', '5 min', '30 min', '1 hour'], v => setRules({ hold: v })))}
+              {row('Tell me', 'How you hear about sends', seg(sendRules.notify, ['Every time', 'Daily summary'], v => setRules({ notify: v })))}
             </div>
           )}
-          <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--inset, #F4F0E8)', fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
+          <div className="snd-note">
             {sendMode === 'without'
               ? 'Your choices are saved. Automatic sending switches on once Popsicle has permission to send from your email, which is not connected yet. Until then, every draft still waits for you.'
               : 'Every draft waits for you. You can switch to sending without you at any time.'}

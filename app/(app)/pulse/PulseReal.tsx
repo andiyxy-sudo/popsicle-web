@@ -370,7 +370,7 @@ function computeHealth(_signals: Signal[], accounts: Account[]): number {
 // Late commitments: the quiet grey panel under the headline. Demo mode shows
 // fixed items from the demo accounts; live mode reads open commitments that are
 // due today or earlier from the commitments table.
-export type LateItem = { id: string; text: string; account: string | null; daysLate: number }
+export type LateItem = { id: string; text: string; account: string | null; daysLate: number; assignee?: string | null }
 function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoItems?: LateItem[] }) {
   const demoMode = accounts.some(a => String(a.id).startsWith('demo-'))
   const router = useRouter()
@@ -384,11 +384,11 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
       const { data: { user } } = await supa.auth.getUser()
       if (!user) return
       const end = new Date(); end.setHours(23, 59, 59, 999)
-      const { data } = await supa.from('commitments').select('id, text, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
+      const { data } = await supa.from('commitments').select('id, text, due_at, account_name, assignee').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
         .lte('due_at', end.toISOString()).order('due_at').limit(6)
       if (dead) return
-      setItems(((data ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null }>).map(c => ({
-        id: c.id, text: c.text, account: c.account_name,
+      setItems(((data ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null; assignee: string | null }>).map(c => ({
+        id: c.id, text: c.text, account: c.account_name, assignee: c.assignee,
         daysLate: c.due_at ? Math.max(0, Math.floor((Date.now() - new Date(c.due_at).getTime()) / 86400000)) : 0,
       })))
     }
@@ -407,7 +407,7 @@ function LateCommitments({ accounts, demoItems }: { accounts: Account[]; demoIte
             {c.daysLate === 0 ? 'due today' : c.daysLate >= grace ? `${c.daysLate}d late` : `${c.daysLate}d over`}
           </span>
           <span style={{ fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
-            {c.text}{c.account ? <> <span style={{ color: 'var(--ink-faint)', margin: '0 6px' }}>/</span><span style={{ color: 'var(--ink-muted)' }}>{c.account}</span></> : null}
+            {c.text}{c.account ? <> <span style={{ color: 'var(--ink-faint)', margin: '0 6px' }}>/</span><span style={{ color: 'var(--ink-muted)' }}>{c.account}</span></> : null}{c.assignee ? <span style={{ color: 'var(--ink-faint)', marginLeft: 8 }}>{c.assignee}</span> : null}
           </span>
         </div>
       ))}

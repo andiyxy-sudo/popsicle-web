@@ -3991,3 +3991,40 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 .fr-role span { display: block; font-size: 13px; color: var(--ink-muted, #5C5855); margin-top: 2px; }
 .fr-role-opts { display: flex; gap: 6px; flex-wrap: wrap; }
 .fr-role-opts button { font-size: 13.5px; padding: 8px 13px; }
+
+/* ═════════ v11.175 SENDING PANEL: labelled rows, checkboxes, segmented controls ═════════ */
+.snd { margin-top: 14px; font-family: var(--font-sans, 'Outfit', sans-serif); }
+.snd-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.snd-card { font: inherit; text-align: left; padding: 13px 15px; cursor: pointer; border-radius: 0; background: var(--d-raised, #fff); border: 1px solid var(--hairline, #EFEAE1); }
+.snd-card.on { border: 2px solid var(--accent, #E85A25); background: var(--d-tint-red, rgba(232,90,37,.05)); padding: 12px 14px; }
+.snd-card-t { display: block; font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.snd-card.on .snd-card-t { color: var(--accent, #E85A25); }
+.snd-card-d { display: block; font-size: 12.5px; color: var(--ink-muted); margin-top: 3px; line-height: 1.45; }
+.snd-rows { margin-top: 18px; border-top: 1px solid var(--rule-strong, #0E0D0B); }
+.snd-row { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: start; padding: 13px 0; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.snd-row-l { display: block; font-size: 14.5px; color: var(--ink); }
+.snd-row-h { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 2px; line-height: 1.4; }
+.snd-row-c { display: flex; justify-content: flex-end; }
+.snd-checks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; width: 100%; }
+.snd-check { display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13px; color: var(--ink-muted); background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; border-radius: 0; }
+.snd-check i { width: 16px; height: 16px; flex: none; display: grid; place-items: center; border: 1.5px solid var(--d-hair, #D9D2C6); color: #fff; background: var(--d-raised, #fff); }
+.snd-check.on { color: var(--ink); }
+.snd-check.on i { background: var(--accent, #E85A25); border-color: var(--accent, #E85A25); }
+.snd-seg { display: inline-flex; border: 1px solid var(--hairline, #EFEAE1); background: var(--d-raised, #fff); }
+.snd-seg button { font: inherit; font-size: 12.5px; font-weight: 500; color: var(--ink-muted); background: none; border: 0; border-right: 1px solid var(--hairline, #EFEAE1); padding: 6px 11px; cursor: pointer; border-radius: 0; white-space: nowrap; }
+.snd-seg button:last-child { border-right: 0; }
+.snd-seg button.on { background: var(--accent, #E85A25); color: #fff; font-weight: 600; }
+.snd-note { margin-top: 16px; padding: 11px 13px; background: var(--inset, #F4F0E8); font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; }
+@media (max-width: 720px) { .snd-cards, .snd-checks { grid-template-columns: 1fr; } .snd-row { grid-template-columns: 1fr; gap: 8px; } .snd-row-c { justify-content: flex-start; } }
+/* tighter, so the whole panel fits a laptop screen without scrolling */
+.snd-row { grid-template-columns: 186px minmax(0, 1fr); padding: 10px 0; }
+.snd-rows { margin-top: 14px; }
+.snd-check { font-size: 12.5px; padding: 3px 0; }
+.snd-checks { gap: 2px 12px; }
+.snd-note { margin-top: 13px; padding: 10px 12px; }
+.snd-card-d { font-size: 12px; }
+/* v11.176: the deal size row, with a custom amount; the signal inbox header matches the Ask sheet */
+.snd-deal { display: flex; align-items: center; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.snd-deal-in { font: inherit; font-size: 12.5px; width: 92px; padding: 6px 9px; border: 1px solid var(--accent, #E85A25); background: var(--d-raised, #fff); color: var(--ink); border-radius: 0; }
+.inbox-head { background: linear-gradient(115deg, #FF7A45 0%, #FF6B35 38%, #F58A3C 70%, #F4B04A 100%) !important; }
+.inbox-head::after { background: radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.28), transparent 55%) !important; }

@@ -48,12 +48,12 @@ export async function POST(req: NextRequest) {
 
   // With an owner or a due date, the follow-up is also tracked as a commitment. On commitments, `owner`
   // records WHO MADE the promise ('us' | 'them' | 'unattributed'): a decision's follow-up is ours, so 'us'.
-  // The named person stays on decisions.owner. `text_hash` is a generated column (never send it) and
+  // The named person is stored on decisions.owner and on commitments.assignee. `text_hash` is a generated column (never send it) and
   // `source` accepts 'call' | 'manual'. Every insert is checked; nothing reports success unless it saved.
   let commitment_id: string | null = null
   if (base.owner || due) {
     const { data: c, error: cErr } = await supabase.from('commitments').insert({
-      user_id: uid, account_name: base.account_name, text, owner: 'us', due_at: due,
+      user_id: uid, account_name: base.account_name, text, owner: 'us', assignee: base.owner ?? null, due_at: due,
       promised_at: new Date().toISOString(), source: 'manual', status: 'open', backfilled: false,
     }).select('id').single()
     if (cErr || !c) return NextResponse.json({ error: `Couldn\u2019t save the follow-up commitment: ${cErr?.message ?? 'no row returned'}` }, { status: 500 })
