@@ -3628,3 +3628,18 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 
 /* v11.139: the review's deal counter in the reading font, like Pulse's "Today" */
 .rv2-nav-c { font-family: var(--font-sans, 'Outfit', system-ui, sans-serif) !important; font-size: 14px !important; letter-spacing: 0 !important; color: var(--ink-muted, #5C5855) !important; }
+
+/* v11.141: the live placeholder. A real question from the page (or the natural next question after an
+   answer) with "Ask this →"; it fades between questions, pauses on hover, and clears the moment you click in */
+.dock-in { position: relative; flex: 1 1 auto; min-width: 0; display: flex; align-items: center; }
+.dock-in input { flex: 1; width: 100%; min-width: 0; }
+.dock-live { position: absolute; inset: 0; display: flex; align-items: center; gap: 12px; pointer-events: none; overflow: hidden; animation: dockLive .5s ease both; }
+@keyframes dockLive { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.dock-live-q { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14.5px; color: var(--ink-muted, #5C5855); }
+.dock-live-go { flex: none; pointer-events: auto; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 700; color: var(--accent, #E85A25);
+  background: rgba(255,107,53,.1); border: 0; border-radius: 99px; padding: 5px 11px; cursor: pointer; transition: background .15s ease, color .15s ease; }
+.dock-live-go:hover { background: var(--accent, #E85A25); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .dock-live { animation: none; } }
+.ed-askbar .dock-live-go { background: rgba(255,107,53,.1) !important; color: var(--accent, #E85A25) !important; box-shadow: none !important; border: 0 !important;
+  font-size: 12.5px !important; font-weight: 700 !important; padding: 4px 10px !important; height: auto !important; min-height: 0 !important; line-height: 1.4 !important; border-radius: 99px !important; }
+.ed-askbar .dock-live-go:hover { background: var(--accent, #E85A25) !important; color: #fff !important; }

@@ -175,6 +175,34 @@ export function AskDock() {
 
   const hasConvo = msgs.length > 0 || said.length > 0
   const showSuggest = suggestions.length > 0 && !ask.trim() && !busy && !streaming
+
+  // ── the live placeholder ─────────────────────────────────────────────────────
+  // Before you ask: the page's own live questions rotate slowly, each with "Ask this →".
+  // After an answer: the natural next question. Click into the bar and it goes blank to type freely.
+  const [focused, setFocused] = useState(false)
+  const [hover, setHover] = useState(false)
+  const [rot, setRot] = useState(0)
+  const [steps, setSteps] = useState(0)
+  const lastA = [...msgs].reverse().find(m => m.role === 'assistant')?.content ?? ''
+  const lastQ = [...msgs].reverse().find(m => m.role === 'user')?.content ?? ''
+  const followUp = (() => {
+    if (!msgs.length || !lastA || busy || streaming) return null
+    if (/^\s*\**\s*verdict\b/i.test(lastA)) return 'Why? And what would change that?'
+    const acct = account ?? (/\b(about|on|for|is|will)\s+([A-Z][\w&.-]*(?:\s+[A-Z][\w&.-]*){0,2})\b/.exec(lastQ)?.[2])
+    if (/^\s*(\d+[.)]|[-•*])\s+/m.test(lastA)) return 'Which one should I tackle first?'
+    if (acct && !/^(What|Which|Who|Why|How|Is|Will)$/.test(acct)) return `What should I do next on ${acct}?`
+    return 'What should I check next?'
+  })()
+  const pool = msgs.length ? (followUp ? [followUp] : []) : suggestions
+  const current = pool.length ? pool[rot % pool.length] : null
+  const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+  useEffect(() => { setRot(0); setSteps(0) }, [pool.join('|')])
+  useEffect(() => {
+    if (pool.length < 2 || focused || hover || reduced || steps >= pool.length * 2) return   // two calm rounds, then rest
+    const t = setTimeout(() => { setRot(r => r + 1); setSteps(n => n + 1) }, 4600)
+    return () => clearTimeout(t)
+  }, [pool.length, focused, hover, reduced, steps, rot])
+  const showLive = !!current && !focused && !ask && !busy && !streaming
   return (
     <div className="dock" ref={dockRef}>
       {open && (hasConvo || showSuggest) && (
@@ -245,10 +273,23 @@ export function AskDock() {
 
       <div className={`ed-askbar${open && hasConvo ? ' docked' : ''}`}>
         <span className="ed-askdot"><span /><span /></span>
+        <div className="dock-in" onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
         <input ref={inputRef} value={ask} onChange={e => setAsk(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') send() }}
-          onFocus={() => { if (hasConvo || suggestions.length) setOpen(true) }}
-          placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline')} />
+          onKeyDown={e => {
+            if (e.key === 'Enter') send()
+            // Tab fills in the question that was showing (a quiet extra for keyboard users)
+            if (e.key === 'Tab' && !ask && current) { e.preventDefault(); setAsk(current) }
+          }}
+          onFocus={() => { setFocused(true); if (hasConvo) setOpen(true) }}
+          onBlur={() => setFocused(false)}
+          placeholder={focused ? '' : showLive ? '' : (msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline'))} />
+        {showLive && (
+          <div className="dock-live" key={current} aria-hidden={false}>
+            <span className="dock-live-q">{current}</span>
+            <button className="dock-live-go" onMouseDown={e => e.preventDefault()} onClick={() => send(current!)}>Ask this →</button>
+          </div>
+        )}
+        </div>
         {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={() => send()}>Ask</button>
       </div>
