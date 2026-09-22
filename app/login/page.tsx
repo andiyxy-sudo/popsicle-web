@@ -215,7 +215,8 @@ export default function LoginPage() {
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 34, fontSize: 12, color: '#8A857F' }}>
           <a href="https://popsicle-labs.app/privacy.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</a><span>·</span>
-          <a href="https://popsicle-labs.app/terms.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</a>
+          <a href="https://popsicle-labs.app/terms.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</a><span>·</span>
+          <a href="https://popsicle-labs.app/dpa.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>DPA</a>
         </div>
       </div>
     </div>
