@@ -20,7 +20,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 // the client bundle never includes the whole demo dataset.
 export type DemoSlices = { transcripts?: Record<string, Transcript>; threads?: Record<string, ThreadSource>; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
-import { Decisions } from '@/components/account/Decisions'
+import { MergedTimeline } from '@/components/account/MergedTimeline'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -102,7 +102,7 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
             <div key={i} className="comms-row" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', gap: 16, alignItems: 'flex-start', padding: '20px 0' }}>
               {/* avatar with channel dot */}
               <div style={{ position: 'relative', flex: 'none' }}>
-                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: mine ? '#fff' : tone.c, background: mine ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
+                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: '#fff', background: mine ? 'var(--d-btn, var(--ink, #0E0D0B))' : tone.c, border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
                 <span title={ch.label} style={{ position: 'absolute', right: -3, bottom: -3, width: 17, height: 17, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 8.5, fontWeight: 700, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
               </div>
 
@@ -434,23 +434,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
         )
       })()}
 
-      {tab === 'timeline' && <Decisions account={accountName} />}
-      {tab === 'timeline' && demo.timeline && (
-        <TimelineRail account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)}
-          items={demo.timeline.map(t => ({ title: t.title, body: t.body, when: t.when, tags: t.tags, kind: (t.kind === 'negative' ? 'negative' : t.kind === 'watch' ? 'watch' : t.kind === 'call' ? 'call' : 'positive') as RailItem['kind'], transcript: demo.transcripts?.[t.title] }))} />
-      )}
-      {tab === 'timeline' && !demo.timeline && (() => {
-        const sorted = [...signals].sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-        if (!sorted.length) return <EmptyState line="No timeline yet." hint="Every signal, call and commitment on this account lands here in order." />
-        const items: RailItem[] = sorted.map(sg => ({
-          title: sg.title || 'Signal', body: sg.description || undefined,
-          when: mounted && sg.created_at ? formatWhen(sg.created_at) : '',
-          kind: (sg.status === 'handled' ? 'positive' : sg.severity === 'high' ? 'negative' : sg.severity === 'positive' ? 'positive' : /call|meeting/.test(sg.signal_type || '') ? 'call' : 'watch') as RailItem['kind'],
-          tags: [sg.source_integration ? `via ${sg.source_integration}` : null, sg.risk_amount ? `$${Math.round(Number(sg.risk_amount) / 1000)}K at risk` : null, sg.status === 'handled' ? (sg.handled_action || 'handled') : null].filter(Boolean) as string[],
-          done: sg.status === 'handled', onClick: () => router.push(`/signals?signal=${sg.id}`),
-        }))
-        return <TimelineRail account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} />
-      })()}
+      {tab === 'timeline' && <MergedTimeline account={accountName} signals={signals as never} />}
     </div>
   )
 }
