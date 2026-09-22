@@ -214,7 +214,8 @@ export default function LoginPage() {
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 34, fontSize: 12, color: '#8A857F' }}>
-          <span>Security</span><span>·</span><span>Privacy</span><span>·</span><span>Terms</span>
+          <a href="https://popsicle-labs.app/privacy.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Privacy</a><span>·</span>
+          <a href="https://popsicle-labs.app/terms.html" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'none' }}>Terms</a>
         </div>
       </div>
     </div>

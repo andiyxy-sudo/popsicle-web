@@ -68,3 +68,16 @@ export async function POST(req: NextRequest) {
   }
   return NextResponse.json({ decision: data })
 }
+
+// PATCH { id, status } → mark a decision open, done or reversed (organisation members can update)
+export async function PATCH(req: NextRequest) {
+  const { id, status } = await req.json().catch(() => ({})) as { id?: string; status?: string }
+  if (!id || !['open', 'done', 'reversed'].includes(status ?? '')) return NextResponse.json({ error: 'Need an id and a status of open, done or reversed.' }, { status: 400 })
+  const supabase = await createClient()
+  const { data: claims } = await supabase.auth.getClaims()
+  if (!claims) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if ((claims.claims.email as string | undefined) === 'demo@popsicle-labs.app' || id.startsWith('demo-')) return NextResponse.json({ ok: true, demo: true })
+  const { data, error } = await supabase.from('decisions').update({ status }).eq('id', id).select('id, status').maybeSingle()
+  if (error || !data) return NextResponse.json({ error: `Couldn\u2019t update the decision: ${error?.message ?? 'not found or not allowed'}` }, { status: 500 })
+  return NextResponse.json({ ok: true, decision: data })
+}

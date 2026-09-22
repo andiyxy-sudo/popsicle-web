@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Decision } from '@/lib/decisions'
+import { LOGOS } from '@/app/(app)/integrations/IntegrationsShowcase'
 
 // One timeline for a deal: what happened (events) and what we decided (decisions), in date order,
 // newest first. A decision shows the events it responded to, and what was true when it was made.
@@ -22,6 +23,24 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
   const [filter, setFilter] = useState<'all' | 'events' | 'decisions'>('all')
   const [openId, setOpenId] = useState<string | null>(null)
   const [flash, setFlash] = useState<string | null>(null)
+  const [menuFor, setMenuFor] = useState<string | null>(null)
+  const [statusErr, setStatusErr] = useState('')
+  useEffect(() => {
+    if (!menuFor) return
+    const close = (e: PointerEvent) => { if (!(e.target as HTMLElement).closest?.('.tl2-st-wrap')) setMenuFor(null) }
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuFor(null) }
+    document.addEventListener('pointerdown', close); document.addEventListener('keydown', esc)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc) }
+  }, [menuFor])
+  const setStatus = async (d: Decision, status: Decision['status']) => {
+    setMenuFor(null); setStatusErr('')
+    const prev = d.status
+    setDecisions(list => list.map(x => (x.id === d.id ? { ...x, status } : x)))
+    const r = await fetch('/api/decisions', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: d.id, status }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { setDecisions(list => list.map(x => (x.id === d.id ? { ...x, status: prev } : x))); setStatusErr(j.error ?? 'Couldn\u2019t update the decision.'); return }
+    if (j.demo) { try { const k = 'demo:decision-status'; const m = JSON.parse(localStorage.getItem(k) || '{}'); m[d.id] = status; localStorage.setItem(k, JSON.stringify(m)) } catch { /* ignore */ } }
+  }
   useEffect(() => {
     if (initialDecisions) return
     let dead = false
@@ -30,7 +49,9 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
       let local: Decision[] = []
       try { local = (JSON.parse(localStorage.getItem('demo:decisions') || '[]') as Decision[]).filter(d => d.account_name === account) } catch { /* ignore */ }
       const all = [...local, ...((j?.decisions ?? []) as Decision[])]
-      setDecisions(all.filter((d, i) => all.findIndex(x => x.id === d.id) === i))
+      let over: Record<string, Decision['status']> = {}
+      try { over = JSON.parse(localStorage.getItem('demo:decision-status') || '{}') } catch { /* ignore */ }
+      setDecisions(all.filter((d, i) => all.findIndex(x => x.id === d.id) === i).map(d => (over[d.id] ? { ...d, status: over[d.id] } : d)))
     }).catch(() => {})
     return () => { dead = true }
   }, [account, initialDecisions])
@@ -63,7 +84,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
         {items.map(it => {
           const dk = dayKey(it.t), showDate = dk !== prevDay; prevDay = dk
           const date = new Date(it.t)
-          const dateCell = <div className="tl2-date">{showDate && <><span>{date.toLocaleDateString('en-US', { month: 'short' })}</span><b>{date.getDate()}</b></>}</div>
+          const dateCell = <div className="tl2-date">{showDate && <><span>{date.toLocaleDateString('en-US', { month: 'short' })}</span> <b>{date.getDate()}</b></>}</div>
           if (it.kind === 'event') {
             const s = it.s, sev = s.status === 'handled' ? 'done' : (s.severity ?? 'watch'), src = s.source_integration ? SRC[s.source_integration] : null
             const q = s.ai_analysis?.quote?.replace(/^["“]|["”]$/g, '')
@@ -75,7 +96,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
                   <span className="tl2-ev-h">
                     {s.status === 'handled' && <span className="tl2-acted">{s.handled_action ? `${s.handled_action.replace(/^\w/, c => c.toUpperCase())}` : 'Acted on'}</span>}
                     {s.title ?? 'Signal'}
-                    {src && <em><b style={{ background: src[0] }} />{src[1]}</em>}
+                    {src && <em title={src[1]}>{s.source_integration && LOGOS[s.source_integration] ? <span className="tl2-logo">{LOGOS[s.source_integration]}</span> : <b style={{ background: src[0] }} />}{src[1]}</em>}
                   </span>
                   {q && <span className="tl2-ev-q">{q}</span>}
                 </a>
@@ -90,7 +111,23 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
               <div className="tl2-node"><i className="diamond" /></div>
               <div className="tl2-card">
                 <div className="tl2-card-k">Decision{d.source === 'review' ? ' · in pipeline review' : ''}</div>
-                <div className="tl2-card-top"><p>{d.decision}</p><span className={`dt2-status st-${d.status}`}>{STATUS[d.status] ?? d.status}</span></div>
+                <div className="tl2-card-top"><p>{d.decision}</p>
+                  <span className="tl2-st-wrap">
+                    <button className={`dt2-status st-${d.status} tl2-st-btn`} onClick={() => setMenuFor(menuFor === d.id ? null : d.id)} aria-haspopup="menu" aria-expanded={menuFor === d.id}>
+                      {STATUS[d.status] ?? d.status}<svg width="8" height="8" viewBox="0 0 10 10" aria-hidden><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
+                    </button>
+                    {menuFor === d.id && (
+                      <span className="tl2-st-menu" role="menu">
+                        {(['open', 'done', 'reversed'] as const).map(st => (
+                          <button key={st} role="menuitem" onClick={() => setStatus(d, st)} className={d.status === st ? 'on' : ''}>
+                            <i className={`dot st-${st}`} />{st === 'open' ? 'Open' : st === 'done' ? 'Mark done' : 'Reversed'}{d.status === st && <b>✓</b>}
+                          </button>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                {statusErr && <div className="tl2-err">{statusErr}</div>}
                 <div className="tl2-card-meta">{[d.by && `Decided by ${d.by}`, d.owner && `owner ${d.owner}`, d.due_at && `due ${new Date(d.due_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`].filter(Boolean).join(' · ')}</div>
                 {causes.length > 0 && (
                   <div className="tl2-why"><span>In response to</span>{causes.map(c => <button key={c.id} onClick={() => jumpTo(c.id)}>{c.title}</button>)}</div>
