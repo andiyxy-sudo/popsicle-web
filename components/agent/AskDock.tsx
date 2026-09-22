@@ -46,6 +46,7 @@ export function AskDock() {
   const [expanded, setExpanded] = useState<string | null>(null)
   // v11.112: questions worth asking about the page you're on
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [suggKey, setSuggKey] = useState('')   // which page the questions above belong to
   const cacheRef = useRef<Record<string, string[]>>({})
   const [fresh, setFresh] = useState<string | null>(null)       // the newest item, briefly highlighted
   const gen = useRef(0)
@@ -61,14 +62,14 @@ export function AskDock() {
 
   useEffect(() => {
     const key = `${screen ?? ''}|${account ?? ''}`
-    if (cacheRef.current[key]) { setSuggestions(cacheRef.current[key]); return }
-    setSuggestions([])
+    if (cacheRef.current[key]) { setSuggestions(cacheRef.current[key]); setSuggKey(key); return }
+    setSuggestions([]); setSuggKey(key)
     let dead = false
     const qs = new URLSearchParams({ screen: account ? 'account' : (screen || 'pulse') })
     if (account) qs.set('account', account)
     fetch(`/api/ask/suggest?${qs}`).then(r => r.ok ? r.json() : null).then((j: { questions?: string[] } | null) => {
       if (dead || !j?.questions) return
-      cacheRef.current[key] = j.questions; setSuggestions(j.questions)
+      cacheRef.current[key] = j.questions; setSuggestions(j.questions); setSuggKey(key)
     }).catch(() => {})
     return () => { dead = true }
   }, [screen, account])
@@ -207,8 +208,7 @@ export function AskDock() {
   // After an answer: the natural next question. Click into the bar and it goes blank to type freely.
   const [focused, setFocused] = useState(false)
   const [hover, setHover] = useState(false)
-  const [rot, setRot] = useState(0)
-  const [steps, setSteps] = useState(0)
+  const [rotState, setRotState] = useState<{ key: string; n: number; steps: number }>({ key: '', n: 0, steps: 0 })
   const lastA = [...msgs].reverse().find(m => m.role === 'assistant')?.content ?? ''
   const lastQ = [...msgs].reverse().find(m => m.role === 'user')?.content ?? ''
   const followUp = (() => {
@@ -219,15 +219,19 @@ export function AskDock() {
     if (acct && !/^(What|Which|Who|Why|How|Is|Will)$/.test(acct)) return `What should I do next on ${acct}?`
     return 'What should I check next?'
   })()
-  const pool = msgs.length && open ? (followUp ? [followUp] : []) : suggestions   // closed or new page: the page's own questions
+  const pageKey = `${screen ?? ''}|${account ?? ''}`
+  const pageQs = suggKey === pageKey ? suggestions : []          // never another page's questions, not even for one frame
+  const pool = msgs.length && open ? (followUp ? [followUp] : []) : pageQs   // closed or new page: the page's own questions
+  const poolKey = pool.join('|')
+  const rot = rotState.key === poolKey ? rotState.n : 0          // a new list always starts at its first question
+  const steps = rotState.key === poolKey ? rotState.steps : 0
   const current = pool.length ? pool[rot % pool.length] : null
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
-  useEffect(() => { setRot(0); setSteps(0) }, [pool.join('|')])
   useEffect(() => {
     if (pool.length < 2 || focused || hover || reduced || steps >= pool.length * 2) return   // two calm rounds, then rest
-    const t = setTimeout(() => { setRot(r => r + 1); setSteps(n => n + 1) }, 4600)
+    const t = setTimeout(() => setRotState(r => r.key === poolKey ? { key: poolKey, n: r.n + 1, steps: r.steps + 1 } : { key: poolKey, n: 1, steps: 1 }), 4600)
     return () => clearTimeout(t)
-  }, [pool.length, focused, hover, reduced, steps, rot])
+  }, [pool.length, poolKey, focused, hover, reduced, steps, rot])
   const showLive = !!current && !focused && !ask && !busy && !streaming
   return (
     <div className="dock" ref={dockRef}>

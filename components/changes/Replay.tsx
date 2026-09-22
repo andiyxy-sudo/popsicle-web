@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import type { Snapshot, ChangeEvent } from '@/lib/replay'
@@ -82,6 +82,14 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
   const [fast, setFast] = useState(false)
   const router = useRouter()
   useEscape(!inline && !!onClose, () => onClose?.())
+  // "That day": one scroll only. When changes are hidden below, a fade and "N more" say so.
+  const listRef = useRef<HTMLDivElement>(null)
+  const [below, setBelow] = useState(0)
+  const measure = useCallback(() => {
+    const el = listRef.current; if (!el) return
+    const edge = el.getBoundingClientRect().bottom - 4
+    setBelow([...el.children].filter(c => (c as HTMLElement).classList.contains('rp3-ev') && c.getBoundingClientRect().bottom > edge).length)
+  }, [])
 
   useEffect(() => {
     if (initial) return
@@ -101,6 +109,12 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
     return () => clearInterval(t)
   }, [playing, pts, fast, msPerDay])
 
+  useEffect(() => {
+    listRef.current?.scrollTo({ top: 0 })
+    const t = setTimeout(measure, 30)
+    window.addEventListener('resize', measure)
+    return () => { clearTimeout(t); window.removeEventListener('resize', measure) }
+  }, [idx, pts, measure])
   const p = pts?.[idx], prev = idx > 0 ? pts?.[idx - 1] : undefined, first = pts?.[0]
   const story = useMemo(() => (p ? narrate(p, prev) : null), [p, prev])
   if (typeof document === 'undefined' && !initial && !inline) return null
@@ -161,7 +175,8 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
 
             <section className="rp3-day">
               <div className="rp3-sec-h"><h3>That day</h3><span>{p.events.length ? `${p.events.length} change${p.events.length === 1 ? '' : 's'}` : 'quiet'}</span></div>
-              <div className="rp3-day-list">
+              <div className={`rp3-day-wrap${below ? ' more' : ''}`}>
+              <div className="rp3-day-list" ref={listRef} onScroll={measure}>
               {p.events.length === 0 && <div className="rp3-quiet">Nothing came in, and nothing moved.</div>}
               {p.events.map(e => (
                 <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose?.(); router.push(`/signals?signal=${e.id}`) }}>
@@ -171,6 +186,12 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
                   <span className="rp3-ev-m">{e.amount ? money(e.amount) : ''}</span>
                 </button>
               ))}
+              </div>
+              {below > 0 && (
+                <button className="rp3-more" onClick={() => listRef.current?.scrollBy({ top: listRef.current.clientHeight * 0.8, behavior: 'smooth' })}>
+                  {below} more ↓
+                </button>
+              )}
               </div>
             </section>
           </>

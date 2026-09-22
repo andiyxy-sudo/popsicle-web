@@ -7,7 +7,6 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getInitials } from '@/lib/utils'
 import { useEscape } from '@/components/ui/useEscape'
-import { Presence } from './Presence'
 
 interface SidebarProps {
   user: { email: string; id: string; name?: string; role?: string; avatar_url?: string }
@@ -178,7 +177,6 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         </Link>
       </div>
 
-      <Presence userId={user.id} name={user.name || user.email?.split('@')[0] || 'Teammate'} demo={isDemo} />
       <div className="ed-sb-user" onClick={() => setProfileOpen(true)} title="Profile">
         <div className="ed-sb-avatar" style={photo ? { background: `center/cover url(${photo})`, color: 'transparent' } : undefined}>{photo ? '' : initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>

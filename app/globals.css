@@ -3667,3 +3667,80 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 /* v11.147: "Ask this" lighter: softer tint, regular weight, gentler orange */
 .ed-askbar .dock-live-go { font-weight: 500 !important; color: #E8743F !important; background: rgba(255,107,53,.06) !important; }
 .ed-askbar .dock-live-go:hover { background: rgba(255,107,53,.14) !important; color: var(--accent, #E85A25) !important; }
+
+/* v11.154: the replay fits shorter screens. It compacts as the screen gets shorter (the chart shrinks with the
+   screen height); if a screen is shorter still, the window scrolls inside itself instead of cutting off the
+   bottom. It keeps one fixed size while it plays. */
+.rp3 { overflow-y: auto !important; overscroll-behavior: contain; }
+.rp3-day-list { min-height: 132px; }
+@media (max-height: 860px) {
+  .rp3 { padding: 18px 28px 20px; }
+  .rp3-date { font-size: clamp(26px, 3.2vw, 36px); margin-top: 10px; }
+  .rp3-story { font-size: 16px; margin-top: 8px; }
+  .rp3-figs { margin-top: 16px; }
+  .rp3-fig { padding: 12px 0 10px; }
+  .rp3-fig-v { font-size: 26px; margin-top: 8px; }
+  .rp3-fig-d { margin-top: 6px; }
+  .rp3-chart-wrap { margin-top: 14px; }
+  .rp3-legend { margin-bottom: 6px; }
+  .rp3-chart { height: clamp(96px, calc(100vh - 590px), 210px); }
+  .rp3-controls { margin-top: 10px; padding-top: 10px; }
+  .rp3-play, .rp3-seg button, .rp3-ghost { padding-top: 8px; padding-bottom: 8px; }
+  .rp3-day { margin-top: 14px; }
+  .rp3-sec-h { padding-bottom: 10px; }
+  .rp3-sec-h h3 { font-size: 19px; }
+  .rp3-ev { padding: 11px 0; }
+}
+@media (max-height: 780px) {
+  .rp3-chart { height: clamp(110px, calc(100vh - 570px), 170px); }
+  .rp3-tick { display: none; }                 /* too short to read; the headline shows the exact date */
+  .rp3-story { -webkit-line-clamp: 2; }
+}
+
+/* v11.155: "That day" is the one scrolling part, filling exactly the space left (the window never scrolls);
+   a soft fade and "N more ↓" appear while changes are hidden below */
+.rp3 { overflow: hidden !important; }
+.rp3-day { min-height: 0 !important; }
+.rp3-day-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.rp3-day-list { flex: 1 1 auto; min-height: 0 !important; overflow-y: auto; }
+.rp3-day-wrap.more::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 56px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(251,248,243,0), var(--paper, #FBF8F3) 85%); }
+.rp3-more { position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%); z-index: 1; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 600;
+  color: var(--accent, #E85A25); background: #fff; border: 1px solid rgba(232,90,37,.3); padding: 5px 12px; cursor: pointer; border-radius: var(--toggle-radius, 0px); box-shadow: 0 6px 16px -10px rgba(14,13,11,.4); }
+.rp3-more:hover { background: var(--accent, #E85A25); color: #fff; }
+/* inline (Intelligence): a fixed-height list inside the card, same cue */
+.rp3-inline .rp3-day-wrap { flex: none; height: 232px; }
+.rp3-inline .rp3-day-list { height: 100%; }
+/* the chart gives way, not the list: the day list keeps a steady ~3-4 rows; the chart fills what's left */
+.rp3:not(.rp3-inline) .rp3-chart-wrap { flex: 1 1 auto !important; min-height: 96px; display: flex; flex-direction: column; }
+.rp3:not(.rp3-inline) .rp3-chart { flex: 1 1 auto; height: auto !important; min-height: 70px; max-height: 250px; }
+.rp3:not(.rp3-inline) .rp3-day { flex: 0 0 auto !important; }
+.rp3:not(.rp3-inline) .rp3-day-wrap { flex: none; height: clamp(128px, 24vh, 208px); }
+.rp3:not(.rp3-inline) .rp3-day-list { height: 100%; }
+.rp3:not(.rp3-inline) .rp3-day-wrap { height: clamp(116px, 17vh, 164px); }
+.rp3:not(.rp3-inline) .rp3-chart { min-height: 60px; }
+.rp3:not(.rp3-inline) .rp3-chart-wrap { min-height: 84px; }
+.rp3:not(.rp3-inline) .rp3-story { min-height: 0; }
+.rp3:not(.rp3-inline) .rp3-figs { margin-top: 18px; }
+.rp3:not(.rp3-inline) .rp3-fig { padding: 14px 0 10px; }
+.rp3:not(.rp3-inline) .rp3-fig-v { font-size: 30px; margin-top: 8px; }
+.rp3:not(.rp3-inline) .rp3-day { margin-top: 16px; }
+@media (max-height: 700px) {
+  .rp3:not(.rp3-inline) .rp3-story { -webkit-line-clamp: 1; height: 1.5em; }
+  .rp3:not(.rp3-inline) .rp3-fig-d { display: none; }
+  .rp3:not(.rp3-inline) .rp3-legend { display: none; }
+}
+@media (max-height: 640px) {
+  .rp3:not(.rp3-inline) { padding: 14px 24px 16px !important; }
+  .rp3:not(.rp3-inline) .rp3-date { font-size: 26px; margin-top: 6px; }
+  .rp3:not(.rp3-inline) .rp3-story { font-size: 14.5px; margin-top: 4px; }
+  .rp3:not(.rp3-inline) .rp3-figs { margin-top: 10px; }
+  .rp3:not(.rp3-inline) .rp3-fig { padding: 8px 0 6px; }
+  .rp3:not(.rp3-inline) .rp3-fig-v { font-size: 22px; margin-top: 4px; }
+  .rp3:not(.rp3-inline) .rp3-chart-wrap { min-height: 56px; margin-top: 8px; }
+  .rp3:not(.rp3-inline) .rp3-chart { min-height: 48px; }
+  .rp3:not(.rp3-inline) .rp3-controls { margin-top: 6px; padding-top: 6px; }
+  .rp3:not(.rp3-inline) .rp3-day { margin-top: 8px; }
+  .rp3:not(.rp3-inline) .rp3-sec-h { padding-bottom: 6px; }
+  .rp3:not(.rp3-inline) .rp3-sec-h h3 { font-size: 17px; }
+}
