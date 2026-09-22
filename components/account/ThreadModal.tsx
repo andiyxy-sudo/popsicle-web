@@ -47,7 +47,7 @@ export function ThreadModal({ t, onClose, onAsk }: { t: ThreadSource; onClose: (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', padding: '18px 30px 22px', flex: 'none', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
           <span style={{ ...MONO, fontSize: 10, color: 'var(--ink-faint)' }}>{t.participants.join(' · ')}</span>
           <button onClick={() => { onClose(); onAsk(`From the ${t.channel} thread "${t.subject}" with ${t.account}: what is really being said, and what should I send next?`) }}
-            style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>Ask AI about this thread</button>
+            style={{ font: 'inherit', fontSize: 13.5, fontWeight: 600, padding: '11px 22px', border: 0, cursor: 'pointer', background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff' }}>Ask Popsicle about this thread</button>
         </div>
       </div>
     </div>

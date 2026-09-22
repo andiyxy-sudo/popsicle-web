@@ -9,7 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 // screen, and everyone in the same channel sees the roster. Demo mode shows a scripted
 // teammate so the feature is visible in a walkthrough.
 type Peer = { id: string; name: string; screen: string; account?: string }
-const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', signals: 'Signals', forecast: 'Forecast', intelligence: 'Intelligence', team: 'Team', integrations: 'Integrations', settings: 'Settings', ask: 'Ask AI', accounts: 'an account' }
+const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', signals: 'Signals', forecast: 'Forecast', intelligence: 'Intelligence', team: 'Team', integrations: 'Integrations', settings: 'Settings', ask: 'Ask Popsicle', accounts: 'an account' }
 
 export function Presence({ userId, name, demo }: { userId: string; name: string; demo: boolean }) {
   const [peers, setPeers] = useState<Peer[]>([])

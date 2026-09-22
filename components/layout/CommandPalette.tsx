@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 // Cmd+K / Ctrl+K: jump to a page or an account, or ask Popsicle a question.
 // Accounts come from the demo dataset (loaded on demand) or the accounts table.
 type Item = { kind: 'page' | 'account' | 'ask'; label: string; sub?: string; go: () => void }
-const PAGES: Array<[string, string]> = [['Pulse', '/pulse'], ['Portfolio', '/portfolio'], ['Signals', '/signals'], ['Forecast', '/forecast'], ['Intelligence', '/intelligence'], ['Team', '/team'], ['Integrations', '/integrations'], ['Settings', '/settings'], ['Ask AI', '/ask']]
+const PAGES: Array<[string, string]> = [['Pulse', '/pulse'], ['Portfolio', '/portfolio'], ['Signals', '/signals'], ['Forecast', '/forecast'], ['Intelligence', '/intelligence'], ['Team', '/team'], ['Integrations', '/integrations'], ['Settings', '/settings'], ['Ask Popsicle', '/ask']]
 
 export function CommandPalette({ demo }: { demo: boolean }) {
   const [open, setOpen] = useState(false)

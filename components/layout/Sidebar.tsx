@@ -174,7 +174,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         <div className="ed-sb-rule" style={{ background: 'rgba(251,248,243,.12)', margin: '20px 26px 18px' }} />
         <Link href="/ask" prefetch className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`}>
           <span className="ed-sb-dot" style={{ background: pathname === '/ask' ? '#E85A25' : 'transparent' }} />
-          <span className="ed-sb-label">Ask AI</span>
+          <span className="ed-sb-label">Ask Popsicle</span>
         </Link>
       </div>
 
