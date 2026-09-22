@@ -18,7 +18,7 @@ type Said = { id: string; kind: 'brief'; brief: AgentBrief } | { id: string; kin
 const PROMPT: Record<string, string> = {
   pulse: 'What needs you today?', portfolio: 'Which account is quietly slipping?', signals: 'Which of these signals is real?',
   forecast: 'Is the commit real?', intelligence: 'What\u2019s driving the risk?', team: 'Who on the team needs help?',
-  review: 'Ask Popsicle about this deal', integrations: 'Ask Popsicle about your pipeline', settings: 'Ask Popsicle about your pipeline',
+  review: 'Ask Popsicle about this deal', integrations: 'Which source is telling you the most?', settings: 'How should Popsicle work for you?',
 }
 const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', signals: 'Signals', forecast: 'Forecast', intelligence: 'Intelligence', team: 'Team', integrations: 'Integrations', settings: 'Settings' }
 

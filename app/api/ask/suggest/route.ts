@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
   const ids = await orgIdsServer(supabase, claims.claims.sub as string)
   const [{ data: accounts }, { data: signals }] = await Promise.all([
     supabase.from('accounts').select('name, value, risk_level, health_score, owner, last_contact_date, stage').in('user_id', ids).limit(300),
-    supabase.from('signals').select('account_name, title, severity, signal_type, created_at, status, is_dismissed, risk_amount').in('user_id', ids).order('created_at', { ascending: false }).limit(200),
+    supabase.from('signals').select('account_name, title, severity, signal_type, created_at, status, is_dismissed, risk_amount, source_integration').in('user_id', ids).order('created_at', { ascending: false }).limit(200),
   ])
   return NextResponse.json({ questions: suggest({ screen, account, accounts: (accounts ?? []) as never, signals: (signals ?? []) as never }) })
 }

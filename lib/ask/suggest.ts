@@ -82,6 +82,24 @@ export function suggest(d: SuggestInput): string[] {
         'Is any critical account covered by only one person?',
       )
     }
+    case 'integrations': {
+      // which connected source is doing the talking, from the signals themselves
+      const NAME: Record<string, string> = { gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack', zoom: 'Zoom', whatsapp: 'WhatsApp', hubspot: 'HubSpot', gcal: 'Calendar', fireflies: 'Fireflies' }
+      const bySrc = new Map<string, number>()
+      for (const s of open) { const k = (s as { source_integration?: string | null }).source_integration; if (k) bySrc.set(k, (bySrc.get(k) ?? 0) + 1) }
+      const topSrc = [...bySrc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+      return pick(
+        topSrc ? `Why is ${NAME[topSrc] ?? topSrc} raising the most signals?` : 'Which source is raising the most signals?',
+        'Which source would catch more risk if I connected it next?',
+        'Are any deals going quiet in a channel Popsicle can\u2019t see?',
+      )
+    }
+    case 'settings':
+      return pick(
+        'What will Popsicle interrupt me for?',
+        'What does my role show me first on Pulse?',
+        'Which alerts should I turn off to cut the noise?',
+      )
     default:
       return pick(
         top && `Is ${top.name} going to close this quarter?`,
