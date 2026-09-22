@@ -70,7 +70,6 @@ const slackTsOf = (m: Msg) => { const raw = m.external_id?.split(':').pop(); con
 interface Cm { id: string; text: string; owner: string | null; due_at: string | null; promised_at: string | null; status: string; done_at: string | null; source_signal_id: string | null }
 interface Sugg { evidence_id: string; commitment_id: string; strength: string; span: string | null; evidence_at: string | null; evidence_source: string | null; evidence_subject: string | null }
 
-function hashText(t: string) { let h = 5381; for (const ch of t.toLowerCase().replace(/\s+/g, ' ').trim()) h = ((h << 5) + h + ch.charCodeAt(0)) | 0; return (h >>> 0).toString(16) }
 
 function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSignal: (id: string) => void }) {
   const [items, setItems] = useState<Cm[] | null>(null)
@@ -79,6 +78,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
   const [adding, setAdding] = useState(false)
   const [newText, setNewText] = useState('')
   const [newOwner, setNewOwner] = useState<'us' | 'them'>('us')
+  const [addErr, setAddErr] = useState('')
   const [newDue, setNewDue] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
 
@@ -117,13 +117,15 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
     if (user) {
-      await supa.from('commitments').insert({
-        user_id: user.id, account_name: account, text, text_hash: hashText(text), owner: newOwner,
+      // text_hash is a generated column: never send it. Check the result; only clear the form if it saved.
+      const { error } = await supa.from('commitments').insert({
+        user_id: user.id, account_name: account, text, owner: newOwner,
         due_at: newDue ? new Date(newDue + 'T09:00:00').toISOString() : null, promised_at: new Date().toISOString(),
         source: 'manual', status: 'open', backfilled: false,
       })
+      if (error) { setBusy(null); setAddErr(`Couldn\u2019t save: ${error.message}`); return }
     }
-    setNewText(''); setNewDue(''); setAdding(false); setBusy(null); load()
+    setAddErr(''); setNewText(''); setNewDue(''); setAdding(false); setBusy(null); load()
   }
 
   if (!items) return <div style={{ padding: '32px 0', textAlign: 'center', fontSize: 12.5, color: 'var(--t3)' }}>Loading commitments...</div>
@@ -160,6 +162,7 @@ function CommitmentsPanel({ account, onOpenSignal }: { account: string; onOpenSi
           </div>
         </div>
       )}
+      {addErr && <div style={{ fontSize: 13, color: 'var(--critical, #c43d2b)', padding: '8px 0' }}>{addErr}</div>}
       {open.length === 0 && !adding && <div style={{ textAlign: 'center', padding: '28px 0', fontSize: 12.5, color: 'var(--t4)' }}>No open commitments for this account.</div>}
       {open.map(c => {
         const ds = dueState(c)

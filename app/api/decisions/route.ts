@@ -8,7 +8,6 @@ import { snapshotFor, type Decision } from '@/lib/decisions'
 // POST /api/decisions { account, decision, owner?, due?, review_id?, source? }
 //      → stores the decision with a snapshot of the evidence as it stands now, and (with an owner or a
 //        due date) a tracked commitment so the follow-up shows up if it slips.
-const hashText = (t: string) => { let h = 5381; for (const ch of t.toLowerCase().replace(/\s+/g, ' ').trim()) h = ((h << 5) + h + ch.charCodeAt(0)) | 0; return (h >>> 0).toString(36) }
 
 export async function GET(req: NextRequest) {
   const account = req.nextUrl.searchParams.get('account')
@@ -45,15 +44,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ decision: d, demo: true })
   }
   const uid = claims.claims.sub as string
+  const setupHint = (m: string) => /relation .*decisions|decisions.* does not exist/i.test(m) ? 'Decisions need a one-time setup: run supabase/migrations/20260922_decisions.sql' : m
+
+  // With an owner or a due date, the follow-up is also tracked as a commitment. On commitments, `owner`
+  // records WHO MADE the promise ('us' | 'them' | 'unattributed'): a decision's follow-up is ours, so 'us'.
+  // The named person stays on decisions.owner. `text_hash` is a generated column (never send it) and
+  // `source` accepts 'call' | 'manual'. Every insert is checked; nothing reports success unless it saved.
   let commitment_id: string | null = null
   if (base.owner || due) {
-    const { data: c } = await supabase.from('commitments').insert({
-      user_id: uid, account_name: base.account_name, text, text_hash: hashText(text), owner: base.owner, due_at: due,
-      promised_at: new Date().toISOString(), source: 'review', status: 'open', backfilled: false,
-    }).select('id').maybeSingle()
-    commitment_id = (c as { id?: string } | null)?.id ?? null
+    const { data: c, error: cErr } = await supabase.from('commitments').insert({
+      user_id: uid, account_name: base.account_name, text, owner: 'us', due_at: due,
+      promised_at: new Date().toISOString(), source: 'manual', status: 'open', backfilled: false,
+    }).select('id').single()
+    if (cErr || !c) return NextResponse.json({ error: `Couldn\u2019t save the follow-up commitment: ${cErr?.message ?? 'no row returned'}` }, { status: 500 })
+    commitment_id = (c as { id: string }).id
   }
-  const { data, error } = await supabase.from('decisions').insert({ ...base, user_id: uid, commitment_id }).select('*').maybeSingle()
-  if (error) return NextResponse.json({ error: error.message.includes('decisions') ? 'Decisions need a one-time setup: run supabase/migrations/20260922_decisions.sql' : error.message }, { status: 500 })
+
+  const { data, error } = await supabase.from('decisions').insert({ ...base, user_id: uid, commitment_id }).select('*').single()
+  if (error || !data) {
+    // don't leave an orphan commitment behind a decision that didn't save
+    if (commitment_id) await supabase.from('commitments').delete().eq('id', commitment_id)
+    return NextResponse.json({ error: `Couldn\u2019t save the decision: ${setupHint(error?.message ?? 'no row returned')}` }, { status: 500 })
+  }
   return NextResponse.json({ decision: data })
 }
