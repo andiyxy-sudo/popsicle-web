@@ -3595,3 +3595,9 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rp3.rp3-inline, .rv2-intro .rp3.rp3-inline { height: auto !important; overflow: visible !important; display: block; }
 .rp3-inline .rp3-day { display: block; }
 .rp3-inline .rp3-day-list { height: 232px; overflow-y: auto; }
+
+/* v11.133: review, "Replay this week" opens the replay in its own window */
+.rv2-head-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rv2-replay { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; font-weight: 600; color: var(--accent, #E85A25);
+  background: #fff; border: 1px solid rgba(232,90,37,.4); padding: 11px 16px; cursor: pointer; border-radius: var(--toggle-radius, 0px); transition: background .15s ease, color .15s ease, border-color .15s ease; }
+.rv2-replay:hover { background: var(--accent, #E85A25); border-color: var(--accent, #E85A25); color: #fff; }
