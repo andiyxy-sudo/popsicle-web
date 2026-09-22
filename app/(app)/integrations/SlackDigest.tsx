@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useEscape } from '@/components/ui/useEscape'
 import { createClient } from '@/lib/supabase/client'
 
 // Daily Slack briefing: pick a channel and a time, and Popsicle posts the day's top 5 risks there.
@@ -114,3 +116,20 @@ export function SlackDigest() {
     </section>
   )
 }
+
+/** The briefing settings in their own full window, opened from Slack's settings. */
+export function BriefingWindow({ onClose }: { onClose: () => void }) {
+  useEscape(true, onClose)
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <div className="sdw" role="dialog" aria-label="Daily Slack briefing settings">
+      <div className="sdw-bar">
+        <span className="sdw-k">Slack · Daily briefing settings</span>
+        <button className="sdw-x" onClick={onClose} aria-label="Close">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+        </button>
+      </div>
+      <div className="sdw-body"><SlackDigest /></div>
+    </div>, document.body)
+}
+

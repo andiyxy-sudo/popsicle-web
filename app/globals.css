@@ -3538,3 +3538,40 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .sd-msg-body a:hover { text-decoration: underline; }
 .sd-line { min-height: 1.5em; }
 @media (max-width: 960px) { .sd-grid { grid-template-columns: 1fr; } }
+
+/* v11.130: the briefing settings in their own full window; preview in the app's own type */
+.sdw { position: fixed; inset: 0; z-index: 10030; background: var(--paper, #FBF8F3); overflow-y: auto; scrollbar-width: none; animation: xppIn .28s cubic-bezier(.2,.8,.2,1) both; font-family: var(--font-sans, 'Outfit', sans-serif); }
+.sdw::-webkit-scrollbar { display: none; }
+.sdw-bar { position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; padding: 16px 48px; background: rgba(251,248,243,.92); backdrop-filter: blur(10px);
+  border-top: 3px solid transparent; border-image: linear-gradient(90deg, #FF8A50, #E85A25 60%, #C94B24) 1; box-shadow: 0 1px 0 var(--hairline, #EFEAE1); }
+.sdw-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent, #E85A25); }
+.sdw-x { width: 34px; height: 34px; display: grid; place-items: center; background: #fff; border: 1px solid var(--hairline, #EFEAE1); color: var(--ink-muted, #5C5855); cursor: pointer; border-radius: var(--toggle-radius, 0px); }
+.sdw-x:hover { border-color: var(--ink, #0E0D0B); color: var(--ink, #0E0D0B); }
+.sdw-body { max-width: 1200px; margin: 0 auto; padding: 8px 48px 64px; }
+.sdw-body .sd { margin-top: 28px; }
+.sdw-body .sd-head h2 { font-size: var(--page-title, clamp(30px, 3.4vw, 44px)); letter-spacing: -.035em; }
+.sd-msg-card { font-family: var(--font-sans, 'Outfit', sans-serif) !important; font-size: 14.5px !important; line-height: 1.55 !important; color: var(--ink-muted, #5C5855) !important; }
+.sd-msg-card b { color: var(--ink, #0E0D0B); font-weight: 700; }
+.sd-msg-card i { font-style: normal; color: var(--ink, #0E0D0B); }
+.sd-msg-from b { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; }
+.sd-msg-from em { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10.5px; letter-spacing: .6px; color: var(--ink-faint, #A09C97); }
+.sd-av { border-radius: 0 !important; font-family: var(--font-sans, 'Outfit', sans-serif); }
+.sd-msg-body a { color: var(--accent, #E85A25) !important; font-weight: 600; }
+@media (max-width: 760px) { .sdw-bar, .sdw-body { padding-left: 18px; padding-right: 18px; } }
+
+/* v11.130 */
+/* Pulse: the signal inbox header in a warm orange gradient */
+.inbox-head { background: linear-gradient(120deg, #FF9A5C 0%, #FF6B35 42%, #E85A25 72%, #C94B24 100%); position: relative; overflow: hidden; }
+.inbox-head::after { content: ''; position: absolute; inset: 0; background: radial-gradient(120% 90% at 100% 0%, rgba(255,255,255,.22), transparent 55%); pointer-events: none; }
+.inbox-head > * { position: relative; z-index: 1; }
+
+/* sidebar: an elastic glide. It stretches to the new page, then springs onto it with a small bounce */
+.ed-sb-glide { border-radius: 0; background: linear-gradient(90deg, rgba(255,107,53,.30), rgba(232,90,37,.08) 65%, transparent) !important;
+  box-shadow: inset 3px 0 0 #FF6B35, 0 0 18px -6px rgba(255,107,53,.45) !important; }
+.ed-sb-glide.stretch { transition: transform .17s cubic-bezier(.4,0,.2,1), height .17s cubic-bezier(.4,0,.2,1), opacity .2s ease !important; }
+.ed-sb-glide.settle { transition: transform .62s cubic-bezier(.34,1.56,.64,1), height .62s cubic-bezier(.34,1.56,.64,1), opacity .25s ease !important; }
+.ed-sb-nav .ed-sb-item.on { animation: sbIn .6s cubic-bezier(.34,1.56,.64,1) both; transform: translateX(4px); }
+@keyframes sbIn { 0% { transform: translateX(0); } 55% { transform: translateX(8px); } 100% { transform: translateX(4px); } }
+.ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: sbDot2 .7s cubic-bezier(.34,1.56,.64,1) both; box-shadow: 0 0 0 0 rgba(255,107,53,.6); }
+@keyframes sbDot2 { 0% { transform: scale(0); box-shadow: 0 0 0 0 rgba(255,107,53,.6); } 60% { transform: scale(1.35); box-shadow: 0 0 0 6px rgba(255,107,53,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,53,0); } }
+@media (prefers-reduced-motion: reduce) { .ed-sb-glide.stretch, .ed-sb-glide.settle { transition: none !important; } .ed-sb-nav .ed-sb-item.on, .ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: none; } }

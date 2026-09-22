@@ -118,11 +118,21 @@ export function ExplainHost() {
   const maxLeft = (host === document.body ? window.innerWidth : host.clientWidth) - W - 12
   const left = Math.min(Math.max(12, anchor.left - hostRect.left + (host === document.body ? 0 : host.scrollLeft)), Math.max(12, maxLeft))
   const top = anchor.bottom - hostRect.top + (host === document.body ? 0 : host.scrollTop) + 10
+  // the popup's top rule (and figure) take the colour of the number that was clicked
+  const tone = (() => {
+    let n: Element | null = req.el ?? null
+    while (n && n.firstElementChild) n = n.firstElementChild
+    const c = n ? getComputedStyle(n).color : ''
+    const m = /rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(c)
+    if (!m) return null
+    const [r, g, b] = [Number(m[1]), Number(m[2]), Number(m[3])]
+    return r < 70 && g < 70 && b < 70 ? null : c   // near-black numbers keep the ink rule
+  })()
   const go = (href: string) => { setReq(null); router.push(href) }
   const total = x?.value ?? 0
 
   return createPortal(
-    <div ref={panel} className="xpp" style={{ left, top, width: W }} role="dialog" aria-label="Where this number comes from">
+    <div ref={panel} className="xpp" style={{ left, top, width: W, ...(tone ? { borderTopColor: tone } : {}) }} role="dialog" aria-label="Where this number comes from">
       {!x && !err && <div className="xpp-loading"><span /><span /><span /></div>}
       {err && <div className="xpp-def">{err}</div>}
       {x && (() => {
@@ -132,7 +142,7 @@ export function ExplainHost() {
         return (
           <>
             <div className="xpp-label">{x.label}</div>
-            <div className="xpp-num" style={x.color ? { color: x.color } : undefined}>{x.valueText}</div>
+            <div className="xpp-num" style={x.color ? { color: x.color } : tone ? { color: tone } : undefined}>{x.valueText}</div>
             <p className="xpp-def">{x.definition}</p>
             {x.n != null && <p className="xpp-stat">{x.collecting ? `Collecting · ${x.n} so far, shown from 30` : `Based on ${x.n} · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}–${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</p>}
             {showBar && <div className="xpp-bar" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: PALETTE[i % PALETTE.length] }} />)}</div>}

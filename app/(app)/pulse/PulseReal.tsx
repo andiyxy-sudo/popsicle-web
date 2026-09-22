@@ -833,14 +833,14 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             )}
             {inboxOpen && (
               <div style={{ position: 'absolute', top: 44, right: 0, width: 430, maxWidth: 'calc(100vw - 280px)', zIndex: 60, background: 'var(--raised, #FFFDFA)', boxShadow: 'var(--shadow-panel, 0 32px 80px -24px rgba(14,13,11,.35))', animation: 'fadeUp .25s both', textAlign: 'left' }}>
-                <div style={{ background: 'var(--ink)', color: 'var(--paper, #FBF8F3)', padding: '18px 22px 16px' }}>
+                <div className="inbox-head" style={{ color: '#fff', padding: '18px 22px 16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(251,248,243,.5)' }}>Inbox · open now</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(255,255,255,.78)' }}>Inbox · open now</span>
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--accent-light, #FF8A50)' }}>live</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
                     <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{open.length}</span>
-                    <span style={{ fontSize: 14, color: 'rgba(251,248,243,.62)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: 'var(--accent-light, #FF8A50)' }}>{highs.length} critical</span></> : null}</span>
+                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.88)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: 'var(--accent-light, #FF8A50)' }}>{highs.length} critical</span></> : null}</span>
                   </div>
                 </div>
                 <div style={{ maxHeight: 390, overflowY: 'auto' }}>

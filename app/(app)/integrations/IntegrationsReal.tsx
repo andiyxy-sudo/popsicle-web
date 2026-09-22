@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { A360Modal, ModalBtn, ModalConfig, ActionConfirmBody } from '@/components/account/A360Modal'
 import { LOGOS } from './IntegrationsShowcase'
 import { SlackChannelPicker } from './SlackChannels'
-import { SlackDigest } from './SlackDigest'
+import { BriefingWindow } from './SlackDigest'
 import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
 
@@ -184,6 +184,7 @@ function ResSwitch({ on }: { on: boolean }) {
 }
 
 export function IntegrationsReal({ active, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
+  const [briefingOpen, setBriefingOpen] = useState(false)   // the daily Slack briefing, in its own window
   // Opt-in resolution broadcasts (shared columns with mobile).
   const [resToggles, setResToggles] = useState<{ slack?: boolean; hubspot?: boolean }>({})
   useEffect(() => {
@@ -474,6 +475,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
             {statBox(st?.thisMonth ?? 0, 'This month')}
           </div>
           {p.key === 'slack' ? (
+            <>
             <button
               onClick={() => openSlackChannels(p)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', marginBottom: 14, fontFamily: "'Outfit',sans-serif" }}
@@ -485,6 +487,18 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
               </div>
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
+            <button
+              onClick={() => { setModal(null); setBriefingOpen(true) }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', marginTop: 8, borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', font: 'inherit' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15.5 14" /></svg>
+              <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>Daily briefing settings</div>
+                <div style={{ fontSize: 11, color: 'var(--t3)' }}>Post the top 5 risks to a channel every morning</div>
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2.5" strokeLinecap="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+            </>
           ) : (
             <div style={{ display: 'flex', gap: 10, marginBottom: 14 }}>
               {statBox(p.fn === 'oauth-gcal' ? (st?.total ?? 0) : '0', p.fn === 'oauth-gcal' ? 'Events synced' : 'Items synced')}
@@ -554,7 +568,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
         ))}
       </div>
 
-      {active.includes('slack') && <SlackDigest />}
+      {briefingOpen && <BriefingWindow onClose={() => setBriefingOpen(false)} />}
       {/* category label column + provider rows (design) */}
       {cats.map(cat => {
         const inCat = PROVIDERS.filter(p => p.cat === cat)

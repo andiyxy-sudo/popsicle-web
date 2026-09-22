@@ -54,8 +54,19 @@ const NAV = [
 export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   // v11.129: a highlight that glides to the page you pick, before the page has even loaded
   const navRef = useRef<HTMLDivElement>(null)
-  const [glide, setGlide] = useState<{ top: number; h: number; on: boolean }>({ top: 0, h: 36, on: false })
-  const moveGlide = (el: HTMLElement) => setGlide({ top: el.offsetTop, h: el.offsetHeight, on: true })
+  const [glide, setGlide] = useState<{ top: number; h: number; on: boolean; phase?: 'stretch' | 'settle' }>({ top: 0, h: 36, on: false })
+  const glideRef = useRef(glide); glideRef.current = glide
+  const settleT = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const moveGlide = (el: HTMLElement) => {
+    const to = { top: el.offsetTop, h: el.offsetHeight }, cur = glideRef.current
+    if (settleT.current) clearTimeout(settleT.current)
+    if (!cur.on || Math.abs(cur.top - to.top) < 2) { setGlide({ ...to, on: true, phase: 'settle' }); return }
+    // 1. stretch: reach from the current item to the new one, like a drop of liquid
+    const top = Math.min(cur.top, to.top), bottom = Math.max(cur.top + cur.h, to.top + to.h)
+    setGlide({ top, h: bottom - top, on: true, phase: 'stretch' })
+    // 2. settle: let go of the old item and spring onto the new one
+    settleT.current = setTimeout(() => setGlide({ ...to, on: true, phase: 'settle' }), 170)
+  }
 
   const pathname = usePathname()
   useLayoutEffect(() => {
@@ -143,7 +154,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
       </div>
 
       <div className="ed-sb-nav" ref={navRef} onClickCapture={e => { const a = (e.target as HTMLElement).closest('.ed-sb-item') as HTMLElement | null; if (a) moveGlide(a) }}>
-        <span className={`ed-sb-glide${glide.on ? ' on' : ''}`} aria-hidden style={{ transform: `translateY(${glide.top}px)`, height: glide.h }} />
+        <span className={`ed-sb-glide${glide.on ? ' on' : ''}${glide.phase ? ` ${glide.phase}` : ''}`} aria-hidden style={{ transform: `translateY(${glide.top}px)`, height: glide.h }} />
         {NAV.map((group, gi) => (
           <div key={group.section}>
             <div className="ed-sb-rule" style={{ background: gi === 0 ? 'transparent' : 'rgba(251,248,243,.12)', margin: gi === 0 ? '30px 26px 0' : '20px 26px 18px' }} />
