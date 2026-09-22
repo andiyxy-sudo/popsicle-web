@@ -66,7 +66,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
         <div className="rv2-head-actions">
         <button className="rv2-replay" onClick={() => setReplayOpen(true)}>
           <svg width="11" height="12" viewBox="0 0 11 12" aria-hidden><path d="M1.5 1v10l8.5-5z" fill="currentColor" /></svg>
-          Replay this week
+          Replay
         </button>
         <button className="rv2-end" onClick={() => setEnding(true)}>End review{made.length ? <> · <b>{made.length} decision{made.length === 1 ? '' : 's'}</b></> : null}</button>
         </div>
@@ -153,7 +153,11 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
           : <button className="rv2-next" onClick={() => setEnding(true)}>Wrap up the review →</button>}
       </nav>
 
-      {replayOpen && <ReplayView days={7} msPerDay={2600} title="This week, replayed" onClose={() => setReplayOpen(false)} />}
+      {replayOpen && <ReplayView onClose={() => setReplayOpen(false)} ranges={[
+        { label: 'Week', days: 7, msPerDay: 2600, title: 'This week, replayed' },
+        { label: 'Month', days: 30, msPerDay: 900, title: 'This month, replayed' },
+        { label: 'Year', days: 365, msPerDay: 160, title: 'This year, replayed' },
+      ]} />}
       {ending && <Summary made={made} deals={deals} demo={demo} onClose={() => setEnding(false)} onDone={() => router.push('/pulse')} />}
     </div>
   )

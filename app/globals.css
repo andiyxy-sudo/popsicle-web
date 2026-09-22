@@ -3750,3 +3750,10 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rp3:not(.rp3-inline) .rp3-day-wrap { height: clamp(160px, 24vh, 230px); }
 .rp3-day-wrap.more::after { height: 44px; }
 .rp3:not(.rp3-inline) .rp3-day-wrap { height: clamp(150px, 20vh, 220px); }
+
+/* v11.157: Week / Month / Year inside the review's replay */
+.rp3-top { gap: 14px; }
+.rp3-range { display: inline-flex; margin-left: auto; border: 1px solid var(--hairline, #EFEAE1); background: #fff; }
+.rp3-range button { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 600; color: var(--ink-muted, #5C5855); background: none; border: 0; padding: 7px 14px; cursor: pointer; border-radius: 0; }
+.rp3-range button:hover { color: var(--ink, #0E0D0B); }
+.rp3-range button.on { background: var(--accent, #E85A25); color: #fff; }

@@ -43,6 +43,7 @@ function Q({ text }: { text: string }) {
 
 function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: number) => void }) {
   const W = 1000, H = 230, P = { l: 8, r: 16, t: 16, b: 30 }
+  const tickStep = Math.max(7, Math.ceil(pts.length / 8))   // weekly labels for short spans, about 8 for long ones
   const maxV = Math.max(1, ...pts.map(p => Math.max(p.atRisk, p.protectedValue))) * 1.08
   const x = (i: number) => P.l + (i / Math.max(1, pts.length - 1)) * (W - P.l - P.r)
   const y = (v: number) => P.t + (1 - v / maxV) * (H - P.t - P.b)
@@ -57,7 +58,7 @@ function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: nu
       onPointerDown={e => { (e.target as Element).setPointerCapture?.(e.pointerId); pick(e.clientX) }} onPointerMove={e => { if (e.buttons) pick(e.clientX) }}>
       {[0, 0.25, 0.5, 0.75].map(f => <line key={f} x1={0} x2={W} y1={P.t + f * (H - P.t - P.b)} y2={P.t + f * (H - P.t - P.b)} stroke="#EFEAE1" strokeWidth="1" vectorEffect="non-scaling-stroke" />)}
       <line x1={0} x2={W} y1={H - P.b} y2={H - P.b} stroke="#0E0D0B" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-      {pts.map((p, i) => (i % 7 === 0 && pts.length - 1 - i > 4) || i === pts.length - 1 ? <text key={i} x={x(i)} y={H - 9} textAnchor={i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle'} className="rp3-tick">{new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}</text> : null)}
+      {pts.map((p, i) => ((i % tickStep === 0 && pts.length - 1 - i > tickStep * 0.6) || i === pts.length - 1) ? <text key={i} x={x(i)} y={H - 9} textAnchor={i === 0 ? 'start' : i === pts.length - 1 ? 'end' : 'middle'} className="rp3-tick">{new Date(p.t).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}</text> : null)}
       <path d={area(risk, pts.length - 1)} fill="rgba(196,61,43,.05)" />
       <path d={line(risk, pts.length - 1)} fill="none" stroke="rgba(196,61,43,.22)" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
       <path d={line(prot, pts.length - 1)} fill="none" stroke="rgba(47,143,91,.22)" strokeWidth="1.5" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
@@ -73,9 +74,15 @@ function Chart({ pts, idx, onPick }: { pts: Point[]; idx: number; onPick: (i: nu
 }
 
 // The replay can sit inline on a page (Intelligence, the review opener) or open as a window.
-export function ReplayView({ onClose, initial, days = 56, inline = false, msPerDay = 720, title = 'Replay', footer, autoplay = true }: {
-  onClose?: () => void; initial?: Point[]; days?: number; inline?: boolean; msPerDay?: number; title?: string; footer?: React.ReactNode; autoplay?: boolean
+export type ReplayRange = { label: string; days: number; msPerDay: number; title: string }
+export function ReplayView({ onClose, initial, days: daysProp = 56, inline = false, msPerDay: msProp = 720, title: titleProp = 'Replay', footer, autoplay = true, ranges }: {
+  onClose?: () => void; initial?: Point[]; days?: number; inline?: boolean; msPerDay?: number; title?: string; footer?: React.ReactNode; autoplay?: boolean; ranges?: ReplayRange[]
 }) {
+  // optional Week / Month / Year toggle; each has its own length, pace and title
+  const [rangeIdx, setRangeIdx] = useState(0)
+  const range = ranges?.[rangeIdx]
+  const days = range?.days ?? daysProp, msPerDay = range?.msPerDay ?? msProp, title = range?.title ?? titleProp
+  const [trimmedFrom, setTrimmedFrom] = useState<number | null>(null)
   const [pts, setPts] = useState<Point[] | null>(initial ?? null)
   const [idx, setIdx] = useState(initial ? initial.length - 1 : 0)
   const [playing, setPlaying] = useState(false)
@@ -97,7 +104,11 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
     setPts(null); setPlaying(false)
     fetch(`/api/timeline?days=${days}`).then(r => r.ok ? r.json() : null).then(j => {
       if (dead || !j?.points) return
-      setPts(j.points)
+      const all = j.points as Point[]
+      const firstActive = all.findIndex(p => p.events.length > 0 || p.atRisk > 0 || p.protectedValue > 0 || p.active > 0)
+      const start = firstActive > 3 && days > 14 ? firstActive - 3 : 0
+      setTrimmedFrom(start > 0 ? all[start].t : null)
+      setPts(all.slice(start))
       if (autoplay) { setIdx(0); setTimeout(() => { if (!dead) setPlaying(true) }, 700) } else setIdx(j.points.length - 1)
     }).catch(() => {})
     return () => { dead = true }
@@ -130,7 +141,12 @@ export function ReplayView({ onClose, initial, days = 56, inline = false, msPerD
   const card = (
       <div className={`rp3${inline ? ' rp3-inline' : ''}`} role={inline ? 'region' : 'dialog'} aria-label={title}>
         <header className="rp3-top">
-          <span className="rp3-k">{title}{pts ? (pts.length > 8 ? ` · week ${Math.floor(idx / 7) + 1} of ${Math.ceil(pts.length / 7)} · day ${idx + 1} of ${pts.length}` : ` · day ${idx + 1} of ${pts.length}`) : ''}</span>
+          <span className="rp3-k">{title}{trimmedFrom ? ` · from the first activity, ${new Date(trimmedFrom).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : ''}{pts ? (pts.length > 70 ? ` · day ${idx + 1} of ${pts.length}` : pts.length > 8 ? ` · week ${Math.floor(idx / 7) + 1} of ${Math.ceil(pts.length / 7)} · day ${idx + 1} of ${pts.length}` : ` · day ${idx + 1} of ${pts.length}`) : ''}</span>
+          {ranges && ranges.length > 1 && (
+            <div className="rp3-range" role="group" aria-label="Replay length">
+              {ranges.map((r, k) => <button key={r.label} className={k === rangeIdx ? 'on' : ''} onClick={() => { setPlaying(false); setIdx(0); setRangeIdx(k) }}>{r.label}</button>)}
+            </div>
+          )}
           {onClose && !inline && (
             <button className="rp3-x" onClick={onClose} aria-label="Close">
               <svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 2l8 8M10 2l-8 8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>

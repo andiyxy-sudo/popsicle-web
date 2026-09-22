@@ -9,6 +9,6 @@ export async function GET(req: NextRequest) {
   const { data: claims } = await supabase.auth.getClaims()
   if (!claims) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const { accts, sigs, now } = await loadMetricsData(supabase, claims.claims as Record<string, unknown>)
-  const days = Math.min(120, Math.max(7, Number(req.nextUrl.searchParams.get('days')) || 56))
+  const days = Math.min(366, Math.max(7, Number(req.nextUrl.searchParams.get('days')) || 56))   // up to a year (review's Year view)
   return NextResponse.json({ now, points: timeline(accts, sigs, now, days) })
 }
