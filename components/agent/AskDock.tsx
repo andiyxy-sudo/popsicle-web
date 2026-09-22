@@ -66,6 +66,7 @@ export function AskDock() {
     }).catch(() => {})
     return () => { dead = true }
   }, [screen, account])
+  useEffect(() => { setOpen(false) }, [screen, account])
 
   useEffect(() => { if (!loaded.current) return; try { sessionStorage.setItem('ask:dock', JSON.stringify(msgs.slice(-20))) } catch { /* ignore */ } }, [msgs])
   // follow a streaming answer only while you are reading at the bottom. The moment you
@@ -196,7 +197,7 @@ export function AskDock() {
     if (acct && !/^(What|Which|Who|Why|How|Is|Will)$/.test(acct)) return `What should I do next on ${acct}?`
     return 'What should I check next?'
   })()
-  const pool = msgs.length ? (followUp ? [followUp] : []) : suggestions
+  const pool = msgs.length && open ? (followUp ? [followUp] : []) : suggestions   // closed or new page: the page's own questions
   const current = pool.length ? pool[rot % pool.length] : null
   const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
   useEffect(() => { setRot(0); setSteps(0) }, [pool.join('|')])
