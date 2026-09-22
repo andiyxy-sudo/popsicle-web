@@ -17,6 +17,7 @@ import { AskThis } from '@/components/agent/AskThis'
 import { X } from '@/components/explain/Explain'
 import * as MX from '@/lib/metrics'
 import * as IX from '@/lib/intel'
+import { ReplayView } from '@/components/changes/Replay'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -299,6 +300,13 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         </div>
       )}
 
+      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
+
+      {/* ---- how we got here: the replay, inline, for the selected window ---- */}
+      <section className="intel-replay">
+        <div className="intel-replay-h"><h2>How we got here</h2><span>the last {range} days, replayed from the data · press play or drag the chart</span></div>
+        <ReplayView inline days={range} autoplay={false} msPerDay={range === 30 ? 900 : range === 60 ? 560 : 400} title="How we got here" />
+      </section>
       <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
 
       {/* ---- risk movement spine ---- */}

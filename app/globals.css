@@ -3575,3 +3575,23 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: sbDot2 .7s cubic-bezier(.34,1.56,.64,1) both; box-shadow: 0 0 0 0 rgba(255,107,53,.6); }
 @keyframes sbDot2 { 0% { transform: scale(0); box-shadow: 0 0 0 0 rgba(255,107,53,.6); } 60% { transform: scale(1.35); box-shadow: 0 0 0 6px rgba(255,107,53,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,107,53,0); } }
 @media (prefers-reduced-motion: reduce) { .ed-sb-glide.stretch, .ed-sb-glide.settle { transition: none !important; } .ed-sb-nav .ed-sb-item.on, .ed-sb-nav .ed-sb-item.on .ed-sb-dot { animation: none; } }
+
+/* v11.131: the replay inline, on Intelligence and as the review opener */
+.rp3.rp3-inline { width: 100%; max-height: none; height: 760px; box-shadow: none; animation: none; padding: 24px 28px 22px;
+  background: #fff; border: 1px solid var(--hairline, #EFEAE1); border-top: 3px solid var(--accent, #E85A25); }
+.rp3-inline .rp3-date { font-size: clamp(28px, 3.2vw, 40px); }
+.rp3-inline .rp3-story { font-size: 17px; }
+.intel-replay { margin-top: var(--gap-m, 40px); }
+.intel-replay-h { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; padding-bottom: 16px; margin-bottom: 20px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.intel-replay-h h2 { margin: 0; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 22px; font-weight: 700; letter-spacing: -.03em; }
+.intel-replay-h span { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; color: var(--ink-faint, #A09C97); }
+.rv2-intro { margin-top: 36px; animation: rp2Story .4s ease both; }
+.rv2-intro-h { margin-bottom: 24px; }
+.rv2-intro .rp3.rp3-inline { height: 720px; }
+.rv2-intro-go { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; font-weight: 700; color: #fff; background: var(--ink, #0E0D0B); border: 0; padding: 11px 18px; cursor: pointer; border-radius: var(--toggle-radius, 0px); margin-left: auto; }
+.rv2-intro-go:hover { background: var(--accent, #E85A25); }
+@media (max-width: 760px) { .rp3.rp3-inline { height: auto; } }
+/* inline: the card sizes itself around a fixed-height day list, so it never changes size as it plays */
+.rp3.rp3-inline, .rv2-intro .rp3.rp3-inline { height: auto !important; overflow: visible !important; display: block; }
+.rp3-inline .rp3-day { display: block; }
+.rp3-inline .rp3-day-list { height: 232px; overflow-y: auto; }

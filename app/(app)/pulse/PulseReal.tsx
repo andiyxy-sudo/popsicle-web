@@ -15,7 +15,6 @@ import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import * as MX from '@/lib/metrics'
-import { SinceBar } from '@/components/changes/SinceBar'
 import { LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
 
@@ -867,7 +866,6 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           </div>
         </div>
       </div>
-      <SinceBar screen="pulse" />
 
       {narrative}
       <LateCommitments accounts={accounts} demoItems={demoLate} />

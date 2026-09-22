@@ -224,6 +224,10 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       const slack = PROVIDERS.find(p => p.key === 'slack')
       if (slack) openSlackChannels(slack)
     }
+    if (params.get('slack_briefing') === '1' && active.includes('slack')) {
+      window.history.replaceState({}, '', '/integrations')
+      setBriefingOpen(true)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const cats = CAT_ORDER.filter(c => PROVIDERS.some(p => p.cat === c))

@@ -14,7 +14,6 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { X } from '@/components/explain/Explain'
 import { formatCurrency } from '@/lib/utils'
 import { AskThis } from '@/components/agent/AskThis'
-import { SinceBar } from '@/components/changes/SinceBar'
 
 const STAGE_WEIGHT: Array<[RegExp, number]> = [
   [/closed won|expansion/i, 1],
@@ -186,7 +185,6 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           ))}
         </div>
       </div>
-      <SinceBar screen="forecast" />
 
       {/* the narrative */}
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: 'var(--ink)' }}>

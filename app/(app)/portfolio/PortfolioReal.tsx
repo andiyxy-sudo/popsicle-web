@@ -13,7 +13,6 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import { buildA360 } from '@/lib/demo-accounts'
 import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
-import { SinceBar } from '@/components/changes/SinceBar'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -148,7 +147,6 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         Portfolio <span style={{ margin: '0 8px' }}>/</span> {accounts.length} accounts
       </div>
-      <SinceBar screen="portfolio" />
       {(() => {
         const RED = TONE.critical, GREEN = TONE.good
         const high = accounts.filter(x => (x.risk_level || '') === 'high')

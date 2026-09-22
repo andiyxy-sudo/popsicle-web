@@ -21,7 +21,6 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
-import { SinceBar } from '@/components/changes/SinceBar'
 
 interface DBSignal {
   id: string
@@ -463,7 +462,6 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           synced {initial.some(sg => String(sg.id).startsWith('demo-')) ? '2 min ago' : (newest || 'just now')}
         </div>
       </div>
-      <SinceBar screen="signals" />
 
       {/* narrative headline */}
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>

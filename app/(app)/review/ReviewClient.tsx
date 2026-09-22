@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Answer } from '@/components/ask/AnswerText'
 import { X } from '@/components/explain/Explain'
 import { DateField } from '@/components/ui/DateField'
+import { ReplayView } from '@/components/changes/Replay'
 import { formatWhen, healthTone } from '@/lib/utils'
 import type { ChangeEvent } from '@/lib/replay'
 import type { Decision } from '@/lib/decisions'
@@ -23,7 +24,9 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
   const [i, setI] = useState(0)
   const [made, setMade] = useState<Decision[]>([])
   const [ending, setEnding] = useState(false)
+  const [intro, setIntro] = useState(true)   // the review opens with the week, replayed
   const reviewId = useMemo(() => `review-${new Date(now).toISOString().slice(0, 10)}-${Math.random().toString(36).slice(2, 7)}`, [now])
+  const introRef = useRef(intro); introRef.current = intro
   const deal = deals[i]
   // the date comes from the viewer's own clock and time zone, never the server's
   const [today, setToday] = useState('')
@@ -34,8 +37,8 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return
-      if (e.key === 'ArrowRight') setI(x => Math.min(deals.length - 1, x + 1))
-      if (e.key === 'ArrowLeft') setI(x => Math.max(0, x - 1))
+      if (e.key === 'ArrowRight') { if (introRef.current) { setIntro(false); return } setI(x => Math.min(deals.length - 1, x + 1)) }
+      if (e.key === 'ArrowLeft') setI(x => { if (x === 0) { setIntro(true); return 0 } return x - 1 })
     }
     window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey)
   }, [deals.length])
@@ -73,6 +76,17 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
         ))}
       </nav>
 
+      {intro ? (
+        <section className="rv2-intro">
+          <div className="rv2-intro-h">
+            <span className="rv2-tag commit"><i />Before the first deal</span>
+            <h1 className="rv2-name">This week, replayed</h1>
+            <div className="rv2-contact">Seven days in under half a minute: what came in, what moved, and what was saved. Then the agenda.</div>
+          </div>
+          <ReplayView inline days={7} msPerDay={2600} title="This week, replayed"
+            footer={<button className="rv2-intro-go" onClick={() => setIntro(false)}>Start the review with {deals[0].account} →</button>} />
+        </section>
+      ) : (
       <div className="rv2-grid" key={deal.account}>
         <div className="rv2-main">
           <span className={`rv2-tag${deal.why === 'critical' ? '' : ' commit'}`}><i />{deal.why === 'critical' ? (i === 0 ? 'Critical · first on the agenda' : 'Critical') : 'In the commit'}</span>
@@ -137,8 +151,9 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
           )}
         </aside>
       </div>
+      )}
 
-      <nav className="rv2-nav" aria-label="Move between deals">
+      {!intro && <nav className="rv2-nav" aria-label="Move between deals">
         <button className="rv2-prev" disabled={i === 0} onClick={() => setI(x => x - 1)}>
           <span className="rv2-nav-k">Previous</span><span className="rv2-nav-v">← {i > 0 ? deals[i - 1].account : 'Start of the agenda'}</span>
         </button>
@@ -146,7 +161,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
         {i < deals.length - 1
           ? <button className="rv2-next" onClick={() => setI(x => x + 1)}><span className="rv2-nav-k">Next</span><span className="rv2-nav-v">{deals[i + 1].account} →</span></button>
           : <button className="rv2-next" onClick={() => setEnding(true)}><span className="rv2-nav-k">Last deal</span><span className="rv2-nav-v">Wrap up the review →</span></button>}
-      </nav>
+      </nav>}
 
       {ending && <Summary made={made} deals={deals} demo={demo} onClose={() => setEnding(false)} onDone={() => router.push('/pulse')} />}
     </div>

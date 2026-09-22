@@ -459,7 +459,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
       )
     })() },
     Currency: { title: 'Currency', sub: 'Applied to ARR, exposure and forecast', options: [['USD', 'US dollar'], ['SGD', 'Singapore dollar'], ['IDR', 'Indonesian rupiah'], ['EUR', 'Euro']] },
-    'Connected sources': { title: 'Connected sources', sub: `${integrations.length} live`, rows: (integrations.length ? integrations.map(i => [i, 'Connected'] as [string, string]) : [['None', 'Connect Gmail or Slack to start']]), actions: [['Manage integrations', true, () => router.push('/integrations')]] },
+    'Connected sources': { title: 'Connected sources', sub: `${integrations.length} live`, rows: (integrations.length ? integrations.map(i => [i, 'Connected'] as [string, string]) : [['None', 'Connect Gmail or Slack to start']]), actions: [
+      ...(integrations.some(x => /slack/i.test(x)) ? [['Manage Slack channels', true, () => router.push('/integrations?slack_channels=1')], ['Daily briefing settings', false, () => router.push('/integrations?slack_briefing=1')]] as Array<[string, boolean, () => void]> : []),
+      ['All integrations', !integrations.some(x => /slack/i.test(x)), () => router.push('/integrations')],
+    ] },
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
     'Ask AI': { title: 'Ask AI', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask AI', true, () => router.push('/ask')]] },
     'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask AI', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
