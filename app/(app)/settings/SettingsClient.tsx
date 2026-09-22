@@ -316,7 +316,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   // Settings detail sheets (design pattern). Every row states something true
   // about this workspace; options that are not implemented say so rather than
   // pretending to switch.
-  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode; titleNode?: React.ReactNode }> = {
+  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode; titleNode?: React.ReactNode; wide?: boolean }> = {
     Workspace: { title: 'Workspace', sub: org?.name ?? 'Your workspace', rows: [['Workspace name', org?.name ?? 'Your workspace'], ['Industry', industry || 'Not set'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', `${members.length || 1} · invite teammates under Your team`]], actions: [['Manage your team', true, () => setSheet('Your team')]] , custom: (
       <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Industry</div>
@@ -570,44 +570,52 @@ export function SettingsClient({ user }: SettingsClientProps) {
       ...(integrations.some(x => /slack/i.test(x)) ? [['Manage Slack channels', true, () => router.push('/integrations?slack_channels=1')], ['Daily briefing settings', false, () => router.push('/integrations?slack_briefing=1')]] as Array<[string, boolean, () => void]> : []),
       ['All integrations', !integrations.some(x => /slack/i.test(x)), () => router.push('/integrations')],
     ] },
-    'Sending': { title: 'Sending', sub: 'What happens after Popsicle drafts a message', custom: (() => {
+    'Sending': { title: 'Sending', sub: 'What happens after Popsicle drafts a message', wide: true, custom: (() => {
       const setRules = (patch: Partial<typeof sendRules>) => { const next = { ...sendRules, ...patch }; setSendRules(next); saveJson('send_rules', next) }
       const choose = (m: 'with' | 'without') => { setSendMode(m); saveJson('send_mode', m) }
       const card = (m: 'with' | 'without', title: string, desc: string) => (
-        <button onClick={() => choose(m)} style={{ font: 'inherit', textAlign: 'left', padding: '16px 18px', cursor: 'pointer', borderRadius: 0, background: sendMode === m ? 'var(--d-raised, #fff)' : 'transparent',
-          border: sendMode === m ? '2px solid var(--accent, #E85A25)' : '1px solid var(--hairline, #EFEAE1)', display: 'block', width: '100%' }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--ink)' }}>{title}</div>
-          <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4, lineHeight: 1.5 }}>{desc}</div>
+        <button onClick={() => choose(m)} style={{ font: 'inherit', textAlign: 'left', padding: '14px 16px', cursor: 'pointer', borderRadius: 0, width: '100%',
+          background: sendMode === m ? 'var(--d-tint-red, rgba(232,90,37,.06))' : 'var(--d-raised, #fff)', border: sendMode === m ? '2px solid var(--accent, #E85A25)' : '1px solid var(--hairline, #EFEAE1)' }}>
+          <div style={{ fontSize: 15.5, fontWeight: 700, color: sendMode === m ? 'var(--accent, #E85A25)' : 'var(--ink)' }}>{title}</div>
+          <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 3, lineHeight: 1.45 }}>{desc}</div>
         </button>)
-      const label = (t: string) => <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '18px 0 8px' }}>{t}</div>
+      const label = (t: string) => <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '14px 0 7px' }}>{t}</div>
       const chip = (on: boolean, text: string, onClick: () => void) => (
-        <button key={text} onClick={onClick} style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '7px 12px', borderRadius: 0, cursor: 'pointer', marginRight: 6, marginBottom: 6,
-          background: on ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'var(--d-raised, #fff)', color: on ? '#fff' : 'var(--ink-muted)', border: '1px solid ' + (on ? 'var(--ink, #0E0D0B)' : 'var(--hairline, #EFEAE1)') }}>{text}</button>)
+        <button key={text} onClick={onClick} style={{ font: 'inherit', fontSize: 12.5, fontWeight: on ? 600 : 500, padding: '6px 11px', borderRadius: 0, cursor: 'pointer', marginRight: 5, marginBottom: 5,
+          background: on ? 'var(--accent, #E85A25)' : 'var(--d-raised, #fff)', color: on ? '#fff' : 'var(--ink-muted)', border: '1px solid ' + (on ? 'var(--accent, #E85A25)' : 'var(--hairline, #EFEAE1)') }}>{text}</button>)
       const KINDS = ['Follow-ups on existing threads', 'Rebooking cancelled meetings', 'Documents you already approved', 'First contact with someone new']
       return (
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: 'grid', gap: 10 }}>
+        <div style={{ marginTop: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
             {card('with', 'Send with you', 'Popsicle drafts every message; nothing goes out until you review and send it.')}
             {card('without', 'Send without you', 'Popsicle sends its drafts on its own, only within the limits you set below.')}
           </div>
           {sendMode === 'without' && (
-            <div>
-              {label('What it may send')}
-              <div>{KINDS.map(k => chip(sendRules.kinds.includes(k), k, () => setRules({ kinds: sendRules.kinds.includes(k) ? sendRules.kinds.filter(x => x !== k) : [...sendRules.kinds, k] })))}</div>
-              {label('Never send on its own to')}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 24 }}>
               <div>
-                {chip(sendRules.neverExecs, 'Executives (VP and above)', () => setRules({ neverExecs: !sendRules.neverExecs }))}
-                {chip(sendRules.neverCritical, 'Accounts at critical risk', () => setRules({ neverCritical: !sendRules.neverCritical }))}
+                {label('What it may send')}
+                <div>{KINDS.map(k => chip(sendRules.kinds.includes(k), k, () => setRules({ kinds: sendRules.kinds.includes(k) ? sendRules.kinds.filter(x => x !== k) : [...sendRules.kinds, k] })))}</div>
               </div>
-              {label('Only on deals up to')}
-              <div>{['$25K', '$50K', '$100K', '$250K', 'Any size'].map(v => chip(sendRules.maxDeal === v, v, () => setRules({ maxDeal: v })))}</div>
-              {label('Hold before sending, so you can stop it')}
-              <div>{['No hold', '5 minutes', '30 minutes', '1 hour'].map(v => chip(sendRules.hold === v, v, () => setRules({ hold: v })))}</div>
-              {label('Tell me')}
-              <div>{['Every time', 'In a daily summary'].map(v => chip(sendRules.notify === v, v, () => setRules({ notify: v })))}</div>
+              <div>
+                {label('Never send on its own to')}
+                <div>
+                  {chip(sendRules.neverExecs, 'Executives (VP and above)', () => setRules({ neverExecs: !sendRules.neverExecs }))}
+                  {chip(sendRules.neverCritical, 'Accounts at critical risk', () => setRules({ neverCritical: !sendRules.neverCritical }))}
+                </div>
+                {label('Only on deals up to')}
+                <div>{['$25K', '$50K', '$100K', '$250K', 'Any size'].map(v => chip(sendRules.maxDeal === v, v, () => setRules({ maxDeal: v })))}</div>
+              </div>
+              <div>
+                {label('Hold before sending, so you can stop it')}
+                <div>{['No hold', '5 minutes', '30 minutes', '1 hour'].map(v => chip(sendRules.hold === v, v, () => setRules({ hold: v })))}</div>
+              </div>
+              <div>
+                {label('Tell me')}
+                <div>{['Every time', 'In a daily summary'].map(v => chip(sendRules.notify === v, v, () => setRules({ notify: v })))}</div>
+              </div>
             </div>
           )}
-          <div style={{ marginTop: 18, padding: '12px 14px', background: 'var(--inset, #F4F0E8)', fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.55 }}>
+          <div style={{ marginTop: 14, padding: '10px 12px', background: 'var(--inset, #F4F0E8)', fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>
             {sendMode === 'without'
               ? 'Your choices are saved. Automatic sending switches on once Popsicle has permission to send from your email, which is not connected yet. Until then, every draft still waits for you.'
               : 'Every draft waits for you. You can switch to sending without you at any time.'}
@@ -818,7 +826,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         const sh = SHEETS[sheet]
         return (
           <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--paper, #FBF8F3)', padding: '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: sh.wide ? 720 : 520, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: sh.wide ? '30px 36px 30px' : '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>settings</span>
                 <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
@@ -830,7 +838,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
               {sh.rows?.map(([k, v]) => (
                 <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{k}</span>
-                  <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{v}</span>
+                  <span style={{ fontSize: 14, color: v === 'Connected' ? 'var(--good, #2f8f5b)' : 'var(--ink-muted)', fontWeight: v === 'Connected' ? 600 : 400, textAlign: 'right' }}>{v}</span>
                 </div>
               ))}
 
