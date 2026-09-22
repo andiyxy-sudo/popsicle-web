@@ -604,7 +604,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, fontSize: 13 }}>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
-        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask AI to prioritise →</span>
+        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritise →</span>
       </div>
 
       {/* Recently handled: what was done, by when, so actions have somewhere to be seen */}

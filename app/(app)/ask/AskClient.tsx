@@ -1,6 +1,6 @@
 'use client'
 
-// Ask AI, in the design's answer layout: the question as a headline, a live
+// Ask Popsicle, in the design's answer layout: the question as a headline, a live
 // thinking state, then the answer set in readable prose with headings, lead-in
 // bullets and a recommended play. The renderer is markdown-lite so whatever
 // shape the model returns still reads cleanly.
@@ -579,7 +579,7 @@ export function AskClient() {
     } catch {
       if (!live()) return
       setStreamingIdx(null)
-      setMsgs([...next, { role: 'assistant', content: 'Could not reach the co-pilot. Try again in a moment.' }])
+      setMsgs([...next, { role: 'assistant', content: 'Couldn\u2019t reach Popsicle. Try again in a moment.' }])
     }
     if (live()) setBusy(false)
   }
@@ -614,7 +614,7 @@ export function AskClient() {
         {!started && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              Ask AI <span style={{ margin: '0 8px' }}>/</span> grounded in your data
+              Ask Popsicle <span style={{ margin: '0 8px' }}>/</span> grounded in your data
             </div>
           </div>
         )}

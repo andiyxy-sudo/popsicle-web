@@ -504,7 +504,7 @@ export function TeamReal({ accounts, signals, me, demo }: { accounts: Account[];
         )
       })}
       <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned signals should the team prioritise?')}`)}
-        style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask AI to prioritise →</div>
+        style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask Popsicle to prioritise →</div>
 
       <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-l) 0 30px' }} />
 

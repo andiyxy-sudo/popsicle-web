@@ -122,7 +122,7 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
                 <div className="comms-acts" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'center', gap: 16, marginTop: 9, flexWrap: 'wrap' }}>
                   <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: tone.c }}>{tone.t}</span>
                   {m.source && <span onClick={() => setOpenSrc(m.source!)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Open full thread</span>}
-                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask AI →</span>
+                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask Popsicle →</span>
                   {onDraft && !mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
                 </div>
               </div>
@@ -131,7 +131,7 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
         })}
       </div>
       {openSrc && <ThreadModal t={openSrc} onClose={() => setOpenSrc(null)} onAsk={onAsk} />}
-      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI to summarise this thread →</div>
+      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask Popsicle to summarise this thread →</div>
     </div>
   )
 }
@@ -188,7 +188,7 @@ function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: s
         })}
       </div>
       {openTr && <TranscriptModal t={openTr} onClose={() => setOpenTr(null)} onAsk={onAsk} />}
-      <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask AI what changed →</div>
+      <div onClick={() => onAsk(`Walk me through the deal timeline for ${account}: what changed, in what order, and where the risk was introduced.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask Popsicle what changed →</div>
     </div>
   )
 }

@@ -433,7 +433,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
     ) },
     'Active sessions': { title: 'Active sessions', sub: '1 device signed in', rows: [['This device', device || 'This browser'], ['Signed in as', user.email], ['Other devices', 'None detected'], ['Sign out everywhere', 'Sign out below ends this session']], note: 'Popsicle keeps one session per browser. Signing out here ends it on this device.' },
-    "What's new": { title: "What's new", sub: 'Recent changes to Popsicle', rows: [['Ask AI', 'Streaming answers, saved questions, source inspection'], ['Account 360', 'People, timeline and contracts tabs'], ['Signals', 'Evidence and pattern match on every signal'], ['Integrations', 'Resolution broadcasts to Slack and HubSpot']] },
+    "What's new": { title: "What's new", sub: 'Recent changes to Popsicle', rows: [['Ask Popsicle', 'Streaming answers, saved questions, source inspection'], ['Account 360', 'People, timeline and contracts tabs'], ['Signals', 'Evidence and pattern match on every signal'], ['Integrations', 'Resolution broadcasts to Slack and HubSpot']] },
     'Work email': { title: 'Work email', sub: user.email, rows: [['Address', user.email], ['Changing it', 'Runs through account recovery, not this screen'], ['Sending from', 'Drafts send from this address via Gmail']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText(user.email); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
     'Your data': { title: 'Your data', sub: 'Everything Popsicle holds for this workspace', rows: [['Accounts & health', counts ? `${counts.accounts} records` : '--'], ['Signals', counts ? `${counts.signals} records` : '--'], ['Sources connected', `${integrations.length}`], ['Export', 'Not built yet']], note: 'Export is on the roadmap. Nothing is shared outside this workspace.' },
     'Weekly digest': { title: 'Weekly digest', sub: `Mondays at ${digestTime}`, rows: [['Meetings this week', 'From your calendar'], ['Commitments due', 'From detected promises'], ['Gone quiet', 'Accounts past their own reply cadence'], ['Email delivery', 'Not enabled yet']], options: [['06:00', 'Before the day starts'], ['07:00', 'With your first coffee'], ['08:00', 'At your desk'], ['09:00', 'After the morning rush']], actions: [['Preview it now', true, () => router.push('/pulse?digest=1')]] },
@@ -464,10 +464,10 @@ export function SettingsClient({ user }: SettingsClientProps) {
       ['All integrations', !integrations.some(x => /slack/i.test(x)), () => router.push('/integrations')],
     ] },
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
-    'Ask AI': { title: 'Ask AI', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask AI', true, () => router.push('/ask')]] },
-    'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask AI', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
+    'Ask Popsicle': { title: 'Ask Popsicle', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask Popsicle', true, () => router.push('/ask')]] },
+    'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask Popsicle', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
     'About Popsicle': { title: 'About Popsicle', sub: 'Revenue intelligence infrastructure', rows: [['Version', 'v3.6'], ['Platform', 'Revenue intelligence'], ['Support', 'support@popsicle-labs.app']], note: '© 2026 Popsicle Labs. All rights reserved.' },
-    'Email support': { title: 'Email support', sub: 'support@popsicle-labs.app', rows: [['Include', 'Workspace name and the account in question'], ['Alternative', 'Ask AI for instant answers']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText('support@popsicle-labs.app'); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
+    'Email support': { title: 'Email support', sub: 'support@popsicle-labs.app', rows: [['Include', 'Workspace name and the account in question'], ['Alternative', 'Ask Popsicle for instant answers']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText('support@popsicle-labs.app'); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
   }
 
 
@@ -647,7 +647,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="More" sub="Product information.">
         <Row label="What's new" sub="Recent changes to Popsicle" value="v10.6" onClick={() => setSheet("What's new")} />
-        <Row label="Ask AI" sub="Answers grounded in your own data" value="Open" onClick={() => setSheet('Ask AI')} />
+        <Row label="Ask Popsicle" sub="Answers grounded in your own data" value="Open" onClick={() => setSheet('Ask Popsicle')} />
         <Row label="Help & support" sub="Answers from your own data" value="Chat with AI" onClick={() => setSheet('Help & support')} />
         <Row label="About Popsicle" value="v3.6" onClick={() => setSheet('About Popsicle')} />
         <Row label="Data & privacy" sub="What Popsicle reads, stores and for how long" value="Read" onClick={() => setSheet('Data & privacy')} />

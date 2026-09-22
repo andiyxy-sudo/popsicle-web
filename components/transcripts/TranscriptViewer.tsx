@@ -232,11 +232,11 @@ export function TranscriptViewer({ row, userEmail }: { row: TRow | null; userEma
                 {role && <span style={{ fontSize: 8.5, fontWeight: 800, color: role === 'Buyer' ? 'var(--o)' : 'var(--t3)', border: `1px solid ${role === 'Buyer' ? 'rgba(255,107,53,.35)' : 'var(--border)'}`, padding: '1px 7px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '.5px' }}>{role}</span>}
                 <button
                   onClick={() => router.push(`/ask?q=${encodeURIComponent(`In the "${(row.topic || 'call').replace(/^(Zoom|Meet|Fireflies):\s*/i, '')}" call, ${t.sp} said: "${t.tx.slice(0, 180)}". What does this mean for the deal and how should I respond?`)}`)}
-                  title="Ask AI about this moment"
+                  title="Ask Popsicle about this moment"
                   style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: 'var(--o)', background: 'none', border: '1px solid rgba(255,107,53,.25)', padding: '1px 8px', borderRadius: 20, cursor: 'pointer', opacity: .0, transition: 'opacity .15s ease' }}
                   onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
                   className="turn-ask"
-                >Ask AI</button>
+                >Ask Popsicle</button>
               </div>
               <div style={{ fontSize: 12.5, color: 'var(--t2)', lineHeight: 1.65 }}>{t.tx}</div>
             </div>

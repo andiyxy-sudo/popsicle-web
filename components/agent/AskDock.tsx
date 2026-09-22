@@ -14,6 +14,12 @@ import { AgentNote, Dateline } from './AgentNote'
 type Msg = { role: 'user' | 'assistant'; content: string }
 type Said = { id: string; kind: 'brief'; brief: AgentBrief } | { id: string; kind: 'note'; msg: AgentMessage }
 
+// the bar's prompt, asked the way a colleague would on each page
+const PROMPT: Record<string, string> = {
+  pulse: 'What needs you today?', portfolio: 'Which account is quietly slipping?', signals: 'Which of these signals is real?',
+  forecast: 'Is the commit real?', intelligence: 'What\u2019s driving the risk?', team: 'Who on the team needs help?',
+  review: 'Ask Popsicle about this deal', integrations: 'Ask Popsicle about your pipeline', settings: 'Ask Popsicle about your pipeline',
+}
 const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', signals: 'Signals', forecast: 'Forecast', intelligence: 'Intelligence', team: 'Team', integrations: 'Integrations', settings: 'Settings' }
 
 export function AskDock() {
@@ -148,7 +154,7 @@ export function AskDock() {
         setMsgs([...next, { role: 'assistant', content: j.content || j.error || 'No answer came back. Try rephrasing the question.' }])
       }
     } catch {
-      if (live()) setMsgs([...next, { role: 'assistant', content: 'Could not reach the co-pilot. Try again in a moment.' }])
+      if (live()) setMsgs([...next, { role: 'assistant', content: 'Couldn\u2019t reach Popsicle. Try again in a moment.' }])
     }
     if (live()) { setBusy(false); setStreaming(false) }
   }
@@ -242,7 +248,7 @@ export function AskDock() {
         <input ref={inputRef} value={ask} onChange={e => setAsk(e.target.value)}
           onKeyDown={e => { if (e.key === 'Enter') send() }}
           onFocus={() => { if (hasConvo || suggestions.length) setOpen(true) }}
-          placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `Ask about ${account}` : 'Ask Popsicle anything about your pipeline'} />
+          placeholder={msgs.length ? 'Ask a follow-up' : said.length ? `Reply to ${AGENT_NAME}` : account ? `What's worrying you about ${account}?` : (PROMPT[screen ?? ''] ?? 'Ask Popsicle about your pipeline')} />
         {hasConvo && !open && <button className="dock-reopen" onClick={() => setOpen(true)} title="Show the conversation">{said.length && !msgs.length ? `${AGENT_NAME} ↑` : `${Math.ceil(msgs.length / 2) + said.length} ↑`}</button>}
         <button onClick={() => send()}>Ask</button>
       </div>

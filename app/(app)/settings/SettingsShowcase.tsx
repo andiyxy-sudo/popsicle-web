@@ -227,7 +227,7 @@ export function SettingsShowcase({ email }: { email: string }) {
         <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Launch Release</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
           {item('Revenue Loop - Signals to Cases to Actions to Impact')}
-          {item('Ask AI - natural language revenue co-pilot')}
+          {item('Ask Popsicle: questions answered from your own data')}
           {item('Account 360 with AI executive briefs')}
           {item('Interactive Forecast with scenario modelling')}
           {item('7 integrations - Gmail, Slack, WhatsApp, LinkedIn, HubSpot, Zoom, Gong')}
