@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   // Settings that shape answers: language, and the escalation thresholds the user chose
   const my = readSettings((user?.user_metadata ?? {}) as Record<string, unknown>)
-  const prefsNote = `\n\n# The user's settings\n${languageRule(my)} Treat a buyer as having gone dark after ${my.thresholds.daysDark} days of silence. ${my.thresholds.minDeal ? `Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.`
+  const prefsNote = `\n\n# The user's settings\n${languageRule(my)} Treat a buyer as having gone dark after ${my.thresholds.daysDark} days of silence. ${my.thresholds.minDeal ? `Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.${my.industry && my.industry !== 'Other' ? ` The user's company sells in ${my.industry}; frame advice for that market where it matters.` : ''}`
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

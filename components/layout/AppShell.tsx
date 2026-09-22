@@ -13,6 +13,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { APP_VERSION } from '@/lib/version'
 import { CurrencyLayer } from '@/components/currency/CurrencyLayer'
 import { ThemeSync } from './ThemeSync'
+import { EasyRead } from './EasyRead'
 
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
@@ -88,6 +89,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <ExplainHost />
       <CurrencyLayer />
       <ThemeSync />
+      <EasyRead />
       {AGENT_ENABLED && <AgentPopup />}
       <div className="main" style={{ position: 'relative' }}>
         <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>

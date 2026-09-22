@@ -3830,3 +3830,7 @@ html[data-theme="dark"] .sk { background: linear-gradient(90deg, #211C16 0%, #2A
 html[data-theme="dark"] input, html[data-theme="dark"] textarea, html[data-theme="dark"] select { color: var(--ink); }
 html[data-theme="dark"] ::placeholder { color: #6E675E; }
 html[data-theme="dark"] { --d-tint-red: rgba(239,106,85,.16); --d-tint-amber: rgba(228,163,60,.16); --d-tint-green: rgba(82,180,127,.16); --d-tint-blue: rgba(111,166,220,.16); }
+
+/* v11.162: About Popsicle shows the logo for the current theme */
+html[data-theme="dark"] .about-logo-light { display: none !important; }
+html[data-theme="dark"] .about-logo-dark { display: block !important; }

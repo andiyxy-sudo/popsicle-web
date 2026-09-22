@@ -10,6 +10,8 @@ export type Settings = {
   language: string
   currency: string
   appearance: string
+  industry: string
+  easyRead?: boolean
   demo?: boolean     // the demo account ignores time-based settings so it always performs
 }
 type Meta = Record<string, unknown>
@@ -34,6 +36,8 @@ export function readSettings(meta: Meta | null | undefined): Settings {
     language: p.Language ?? 'English (US)',
     currency: (p.Currency ?? 'USD').split(' ')[0],
     appearance: p.Appearance ?? '',
+    industry: String(m.industry ?? ''),
+    easyRead: typeof m.easy_read === 'boolean' ? m.easy_read : undefined,
   }
 }
 

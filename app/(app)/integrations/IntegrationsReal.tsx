@@ -21,15 +21,26 @@ const PROVIDERS: Provider[] = [
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
   { key: 'whatsapp', name: 'WhatsApp Business', short: 'WhatsApp', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
   { key: 'teams', name: 'Microsoft Teams', short: 'Teams', desc: 'Shared channels & chats · Same stall detection', cat: 'Messaging' },
-  { key: 'gcal', name: 'Google Calendar & Meet', desc: 'Meeting cadence & stall detection · Meet call transcripts & analysis', cat: 'Calendar', fn: 'oauth-gcal' },
+  { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence & stall detection · Cancelled and declined meetings', cat: 'Calendar', fn: 'oauth-gcal' },
   { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
   { key: 'fireflies', name: 'Fireflies', desc: 'Meeting transcripts from any platform · Call analysis', cat: 'Voice & Meetings', fn: 'oauth-fireflies', token: true },
   { key: 'zoom', name: 'Zoom', desc: 'Call transcripts · Buyer sentiment analysis', cat: 'Voice & Meetings', fn: 'oauth-zoom' },
+  { key: 'gmeet', name: 'Google Meet', desc: 'Meet call transcripts & analysis · Connects with your Google account', cat: 'Voice & Meetings', fn: 'oauth-gcal' },
+  { key: 'miitel', name: 'MiiTel', desc: 'Phone call recordings & transcripts · Talk-listen ratio and sentiment', cat: 'Voice & Meetings' },
+  { key: 'zoho', name: 'Zoho CRM', desc: 'Deals, stages & owners · CRM risk signals', cat: 'CRM' },
+  { key: 'pipedrive', name: 'Pipedrive', desc: 'Pipeline stages & deal activity · Stalled-deal detection', cat: 'CRM' },
+  { key: 'linkedin', name: 'LinkedIn Sales Navigator', short: 'LinkedIn', desc: 'Champion job changes · New stakeholders at your accounts', cat: 'Social' },
+  { key: 'gdrive', name: 'Google Drive', desc: 'Proposals & contracts · Who opened what, and when', cat: 'Productivity' },
+  { key: 'notion', name: 'Notion', desc: 'Account plans & meeting notes · Mutual action plans', cat: 'Productivity' },
+  { key: 'zendesk', name: 'Zendesk', desc: 'Support tickets at your accounts · Escalations before renewals', cat: 'Support' },
+  { key: 'freshdesk', name: 'Freshdesk', desc: 'Ticket volume & sentiment · Unhappy-customer early warning', cat: 'Support' },
+  { key: 'stripe', name: 'Stripe', desc: 'Failed payments & downgrades · Expansion signals from usage billing', cat: 'Data & Billing' },
+  { key: 'snowflake', name: 'Snowflake', desc: 'Product usage from your warehouse · Adoption drops and spikes', cat: 'Data & Billing' },
 ]
 
-const CAT_ORDER = ['Email', 'Messaging', 'Calendar', 'CRM', 'Voice & Meetings']
+const CAT_ORDER = ['Email', 'Messaging', 'Calendar', 'CRM', 'Voice & Meetings', 'Social', 'Productivity', 'Support', 'Data & Billing']
 
 export type ProviderStat = {
   total: number; thisMonth: number; high: number; watch: number; positive: number
@@ -184,7 +195,8 @@ function ResSwitch({ on }: { on: boolean }) {
   )
 }
 
-export function IntegrationsReal({ active, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
+export function IntegrationsReal({ active: activeIn, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
+  const active = activeIn.includes('gcal') ? [...activeIn, 'gmeet'] : activeIn   // Meet rides on the Google Calendar connection
   const [briefingOpen, setBriefingOpen] = useState(false)   // the daily Slack briefing, in its own window
   // Opt-in resolution broadcasts (shared columns with mobile).
   const [resToggles, setResToggles] = useState<{ slack?: boolean; hubspot?: boolean }>({})
@@ -249,7 +261,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
     if (!p.fn) {
       setModal({
         title: 'Coming soon',
-        body: <ActionConfirmBody kind="connect" title={`${p.name} is coming soon`} desc="This connector is not wired up yet. Gmail, Google Calendar, Slack, and Zoom are live today." />,
+        body: <ActionConfirmBody kind="connect" title={`${p.name} is coming soon`} desc="This connector isn't available yet. Gmail, Google Calendar and Meet, Slack, Zoom, HubSpot and Fireflies are live today." />,
         footer: <ModalBtn primary onClick={() => setModal(null)}>Got it</ModalBtn>,
       })
       return

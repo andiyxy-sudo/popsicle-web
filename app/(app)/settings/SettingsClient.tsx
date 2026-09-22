@@ -68,6 +68,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [voice, setVoice] = useState<Record<string, string>>({ Tone: 'Direct', Length: 'Short', 'Sign-off': 'Best, Andy' })
   const [autoSend, setAutoSend] = useState(false)
   const [sendMode, setSendMode] = useState<'with' | 'without'>('with')
+  const [industry, setIndustry] = useState('')
+  const [easyRead, setEasyRead] = useState(() => { try { return typeof window !== 'undefined' && localStorage.getItem('easyread') === '1' } catch { return false } })
+  const INDUSTRIES = ['Software & SaaS', 'Financial services', 'Healthcare & life sciences', 'Manufacturing', 'Retail & e-commerce', 'Logistics & supply chain', 'Real estate', 'Professional services', 'Media & advertising', 'Telecommunications', 'Education', 'Hospitality & travel', 'Energy & utilities', 'Public sector', 'Other']
   const [sendRules, setSendRules] = useState<{ kinds: string[]; neverExecs: boolean; neverCritical: boolean; maxDeal: string; hold: string; notify: string }>(
     { kinds: ['Follow-ups on existing threads', 'Rebooking cancelled meetings'], neverExecs: true, neverCritical: true, maxDeal: '$100K', hold: '30 minutes', notify: 'Every time' })
   const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
@@ -264,6 +267,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
       if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
       if (typeof m.auto_send === 'boolean') setAutoSend(m.auto_send)
       if (m.send_mode === 'with' || m.send_mode === 'without') setSendMode(m.send_mode)
+      if (typeof m.industry === 'string') setIndustry(m.industry)
+      if (typeof m.easy_read === 'boolean') setEasyRead(m.easy_read)
       if (m.send_rules && typeof m.send_rules === 'object') setSendRules(r => ({ ...r, ...(m.send_rules as object) }))
       if (m.notif_prefs) setNotifs(m.notif_prefs as Record<string, boolean>)
       if (m.prefs) setPrefs(m.prefs as Record<string, string>)
@@ -311,8 +316,21 @@ export function SettingsClient({ user }: SettingsClientProps) {
   // Settings detail sheets (design pattern). Every row states something true
   // about this workspace; options that are not implemented say so rather than
   // pretending to switch.
-  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode }> = {
-    Workspace: { title: 'Workspace', sub: org?.name ?? 'Your workspace', rows: [['Workspace name', org?.name ?? 'Your workspace'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', `${members.length || 1} · invite teammates under Your team`]], actions: [['Manage your team', true, () => setSheet('Your team')]] },
+  const SHEETS: Record<string, { title: string; sub: string; rows?: Array<[string, string]>; options?: Array<[string, string]>; actions?: Array<[string, boolean, () => void]>; note?: string; custom?: React.ReactNode; titleNode?: React.ReactNode }> = {
+    Workspace: { title: 'Workspace', sub: org?.name ?? 'Your workspace', rows: [['Workspace name', org?.name ?? 'Your workspace'], ['Industry', industry || 'Not set'], ['Signed in as', user.email], ['Accounts tracked', counts ? String(counts.accounts) : '--'], ['Signals recorded', counts ? String(counts.signals) : '--'], ['Seats', `${members.length || 1} · invite teammates under Your team`]], actions: [['Manage your team', true, () => setSheet('Your team')]] , custom: (
+      <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Industry</div>
+        <div style={{ fontSize: 13, color: 'var(--ink-muted)', margin: '6px 0 10px' }}>Popsicle uses it to frame its answers and advice for your market.</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {INDUSTRIES.map(ind => (
+            <button key={ind} onClick={() => { setIndustry(ind); saveJson('industry', ind) }}
+              style={{ font: 'inherit', fontSize: 13, fontWeight: 500, padding: '7px 12px', borderRadius: 0, cursor: 'pointer',
+                background: industry === ind ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'var(--d-raised, #fff)', color: industry === ind ? '#fff' : 'var(--ink-muted)',
+                border: '1px solid ' + (industry === ind ? 'var(--ink, #0E0D0B)' : 'var(--hairline, #EFEAE1)') }}>{ind}</button>
+          ))}
+        </div>
+      </div>
+    ) },
     Tone: { title: 'Tone', sub: 'How drafts read', options: [['Direct', 'Short sentences, no preamble'], ['Warm', 'Friendly, still concise'], ['Formal', 'Full sentences, measured'], ['Match the thread', 'Mirror how they write to you']] },
     Length: { title: 'Length', sub: 'How long a first draft runs', options: [['Short', 'Three or four sentences'], ['Medium', 'A paragraph and a clear ask'], ['Detailed', 'Context, evidence, then the ask']] },
     'Sign-off': { title: 'Sign-off', sub: 'The closing line on your emails', options: [['Best, Andy', 'Standard'], ['Thanks, Andy', 'Warmer'], ['Regards, Andy', 'Formal'], ['No sign-off', 'Ends on the last line']] },
@@ -600,7 +618,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
     'Resolution broadcasts': { title: 'Resolution broadcasts', sub: 'What happens when you mark a signal handled', rows: [['Slack', 'Appends "Handled by…" to the original card'], ['HubSpot', 'Writes a note on the matching deal'], ['Both', 'Opt-in per source']], actions: [['Open integrations', true, () => router.push('/integrations')]] },
     'Ask Popsicle': { title: 'Ask Popsicle', sub: 'Answers grounded in your own data', rows: [['Sources', 'Signals, accounts, correspondence'], ['Grounding', 'Answers cite what they are drawn from'], ['Speed', 'Seconds']], actions: [['Open Ask Popsicle', true, () => router.push('/ask')]] },
     'Help & support': { title: 'Help & support', sub: 'Answers drawn from your own workspace data', rows: [['Ask Popsicle', 'Fastest route · answers in seconds'], ['Email support', 'support@popsicle-labs.app'], ['Status', 'All systems operational']], actions: [['Chat with AI', true, () => router.push('/ask')]] },
-    'About Popsicle': { title: 'About Popsicle', sub: 'Revenue intelligence infrastructure', rows: [['Version', APP_VERSION], ['Platform', 'Revenue intelligence'], ['Support', 'support@popsicle-labs.app']], note: '© 2026 Popsicle Labs. All rights reserved.' },
+    'About Popsicle': { title: 'About Popsicle', titleNode: (
+      <span style={{ display: 'block', padding: '4px 0 2px' }} aria-label="Popsicle Labs">
+        <img src="/brand/logo-light.svg" alt="Popsicle Labs" className="about-logo about-logo-light" style={{ height: 52, width: 'auto', display: 'block' }} />
+        <img src="/brand/logo-dark.svg" alt="Popsicle Labs" className="about-logo about-logo-dark" style={{ height: 52, width: 'auto', display: 'none' }} />
+      </span>
+    ), sub: 'Revenue intelligence infrastructure', rows: [['Version', APP_VERSION], ['Build date', (() => { const t = process.env.NEXT_PUBLIC_BUILD_TIME; return t ? new Date(t).toLocaleString('en-US', { day: 'numeric', month: 'long', year: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Unknown' })()], ['Environment', (() => { const e = process.env.NEXT_PUBLIC_APP_ENV ?? 'development'; return e.charAt(0).toUpperCase() + e.slice(1) })()], ['Platform', 'Revenue intelligence'], ['Support', 'support@popsicle-labs.app']], note: '\u00a9 2026 Popsicle Labs. All rights reserved.' },
     'Email support': { title: 'Email support', sub: 'support@popsicle-labs.app', rows: [['Include', 'Workspace name and the account in question'], ['Alternative', 'Ask Popsicle for instant answers']], actions: [['Copy address', true, () => { navigator.clipboard?.writeText('support@popsicle-labs.app'); setCopied(true); setTimeout(() => setCopied(false), 1600) }]] },
   }
 
@@ -632,7 +655,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
       <Section title="Account" sub="Profile, workspace and data.">
-        <Row label="Workspace" sub={org?.name ?? 'Your workspace'} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
+        <Row label="Workspace" sub={[org?.name ?? 'Your workspace', industry].filter(Boolean).join(' · ')} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
         <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
         <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} signals` : '--'} onClick={() => setSheet('Your data')} />
         <Row label="Weekly digest" sub="The week-in-review card on Pulse · email coming soon" value={notifs.digest ? 'On Pulse' : 'Off'} onClick={() => setSheet('Weekly digest')} />
@@ -681,6 +704,17 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="Preferences" sub="How the portal looks and reads.">
         <Row label="Appearance" value={prefs.Appearance} onClick={() => setSheet('Appearance')} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+          <div>
+            <div style={{ fontSize: 15, color: 'var(--ink)' }}>Easy read</div>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>Makes small text 20% larger; headings and figures stay the same</div>
+          </div>
+          <button role="switch" aria-checked={easyRead} aria-label="Easy read" onClick={() => { const v = !easyRead; setEasyRead(v); try { localStorage.setItem('easyread', v ? '1' : '0') } catch { /* ignore */ } saveJson('easy_read', v) }}
+            style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
+              background: easyRead ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--d-inset, var(--border, #E5DFD4))' }}>
+            <span style={{ position: 'absolute', top: 3, left: easyRead ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease' }} />
+          </button>
+        </div>
         <Row label="Language" value={prefs.Language} onClick={() => setSheet('Language')} />
         <Row label="Timezone" value={(tzPick || tz || '--').replace(/_/g, ' ')} onClick={() => setSheet('Timezone')} />
         <Row label="Currency" value={prefs.Currency} onClick={() => setSheet('Currency')} />
@@ -789,7 +823,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>settings</span>
                 <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
               </div>
-              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', margin: '12px 0 4px', color: 'var(--ink)' }}>{sh.title.split(/(Popsicle)/).map((part, k) => part === 'Popsicle' ? <span key={k} style={{ color: 'var(--accent, #E85A25)' }}>{part}</span> : part)}</h2>
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', margin: '12px 0 4px', color: 'var(--ink)' }}>{sh.titleNode ?? sh.title.split(/(Popsicle)/).map((part, k) => part === 'Popsicle' ? <span key={k} style={{ color: 'var(--accent, #E85A25)' }}>{part}</span> : part)}</h2>
               {sh.sub && <div style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{sh.sub}</div>}
               <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 0 6px' }} />
 
