@@ -3625,3 +3625,6 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .rv2-sum .sb-btn:hover { border-color: var(--ink, #0E0D0B) !important; }
 .rv2-sum .sb-btn-primary { background: var(--accent, #E85A25) !important; border-color: var(--accent, #E85A25) !important; color: #fff !important; }
 .rv2-sum .sb-btn-primary:hover { background: #C94B24 !important; border-color: #C94B24 !important; }
+
+/* v11.139: the review's deal counter in the reading font, like Pulse's "Today" */
+.rv2-nav-c { font-family: var(--font-sans, 'Outfit', system-ui, sans-serif) !important; font-size: 14px !important; letter-spacing: 0 !important; color: var(--ink-muted, #5C5855) !important; }
