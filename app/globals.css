@@ -3648,3 +3648,9 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .dock-earlier { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 600;
   color: var(--ink-faint, #A09C97); background: none; border: 0; padding: 0 0 12px; cursor: pointer; }
 .dock-earlier:hover { color: var(--accent, #E85A25); }
+
+/* v11.145: review's first row sits on the logo's line, exactly like Pulse (36px row, mono breadcrumb, actions right) */
+.rv2-head { display: flex !important; justify-content: space-between !important; align-items: center !important; gap: 16px; flex-wrap: wrap; min-height: var(--first-row-h, 36px); margin: 0 !important; padding: 0 !important; }
+.rv2-crumb { font-family: var(--font-mono, 'DM Mono', monospace) !important; font-size: 11px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint, #A09C97); }
+.rv2-head-actions .rv2-replay, .rv2-head-actions .rv2-end { padding: 8px 14px !important; font-size: 13px !important; line-height: 1.3; }
+.rv2-steps { margin-top: 26px !important; }

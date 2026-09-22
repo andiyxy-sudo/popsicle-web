@@ -59,12 +59,10 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
   const closeTxt = deal.close ? new Date(deal.close).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : null
   const openCount = deal.evidence.length
   return (
-    <div className="rv2">
+    <div className="dsk-screen on rv2">
+      {/* first row on the logo's line, like every page: mono breadcrumb left, actions right (36px row) */}
       <div className="rv2-head">
-        <div>
-          <div className="rv2-eyebrow">Pipeline review</div>
-          <div className="rv2-title">{today || '\u00a0'}</div>
-        </div>
+        <div className="rv2-crumb">Pipeline review <span style={{ margin: '0 8px' }}>/</span> {today || '\u00a0'} <span style={{ margin: '0 8px' }}>/</span> {deals.length} deal{deals.length === 1 ? '' : 's'}</div>
         <div className="rv2-head-actions">
         <button className="rv2-replay" onClick={() => setReplayOpen(true)}>
           <svg width="11" height="12" viewBox="0 0 11 12" aria-hidden><path d="M1.5 1v10l8.5-5z" fill="currentColor" /></svg>
