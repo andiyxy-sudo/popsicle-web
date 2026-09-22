@@ -35,6 +35,8 @@ export function AskDock() {
   const [streaming, setStreaming] = useState(false)
   // what the agent has said to you this session, shown above your questions
   const [said, setSaid] = useState<Said[]>([])
+  // only the newest alert shows; earlier ones fold behind a quiet "N earlier" line
+  const [showEarlier, setShowEarlier] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
   // v11.112: questions worth asking about the page you're on
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -99,6 +101,7 @@ export function AskDock() {
       if (!d) return
       const id = d.kind === 'brief' ? `brief:${d.brief.generatedAt}` : d.msg.key
       setSaid(prev => prev.some(x => x.id === id) ? prev : [{ id, ...d } as Said, ...prev].slice(0, 6))
+      setShowEarlier(false)
       setFresh(id); setTimeout(() => setFresh(f => (f === id ? null : f)), 2600)
       setOpen(true)
       if (paneRef.current) paneRef.current.scrollTo({ top: 0, behavior: 'smooth' })
@@ -228,7 +231,13 @@ export function AskDock() {
                 ))}
               </div>
             )}
-            {said.map(item => (
+            {said.length > 1 && (
+              <button className="dock-earlier" onClick={() => setShowEarlier(v => !v)} aria-expanded={showEarlier}>
+                {showEarlier ? 'Hide earlier updates' : `${said.length - 1} earlier update${said.length - 1 === 1 ? '' : 's'}`}
+                <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden style={{ transform: showEarlier ? 'rotate(180deg)' : undefined, transition: 'transform .2s ease' }}><path d="M2 3.5l3 3 3-3" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            )}
+            {(showEarlier ? said : said.slice(0, 1)).map(item => (
               <div key={item.id} className={`dock-said${fresh === item.id ? ' fresh' : ''}`}>
                 {item.kind === 'note' ? (
                   <AgentNote m={item.msg} compact onAction={act} onReceipt={href => { setOpen(false); router.push(href) }} />
@@ -286,7 +295,7 @@ export function AskDock() {
         {showLive && (
           <div className="dock-live" key={current} aria-hidden={false}>
             <span className="dock-live-q">{current}</span>
-            <button className="dock-live-go" onMouseDown={e => e.preventDefault()} onClick={() => send(current!)}>Ask this →</button>
+            <button className="dock-live-go" onMouseDown={e => e.preventDefault()} onClick={() => send(current!)}>Ask this</button>
           </div>
         )}
         </div>

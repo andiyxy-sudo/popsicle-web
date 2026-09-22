@@ -3643,3 +3643,8 @@ textarea.rv2-field { resize: none; line-height: 1.5; min-height: 76px; }
 .ed-askbar .dock-live-go { background: rgba(255,107,53,.1) !important; color: var(--accent, #E85A25) !important; box-shadow: none !important; border: 0 !important;
   font-size: 12.5px !important; font-weight: 700 !important; padding: 4px 10px !important; height: auto !important; min-height: 0 !important; line-height: 1.4 !important; border-radius: 99px !important; }
 .ed-askbar .dock-live-go:hover { background: var(--accent, #E85A25) !important; color: #fff !important; }
+
+/* v11.142: the sheet shows only the newest alert; earlier ones fold behind one quiet line */
+.dock-earlier { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 600;
+  color: var(--ink-faint, #A09C97); background: none; border: 0; padding: 0 0 12px; cursor: pointer; }
+.dock-earlier:hover { color: var(--accent, #E85A25); }
