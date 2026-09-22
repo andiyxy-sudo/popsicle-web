@@ -4,7 +4,8 @@
 // blurred ink scrim, mono eyebrow, editorial headline, hairline detail rows.
 // The API is unchanged so every existing caller keeps working.
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
+import { useModalFlag } from '@/components/ui/useEscape'
 
 // The original surface carried several kinds beyond these; the trailing
 // (string & {}) keeps autocomplete while accepting any caller's value, so a
@@ -84,16 +85,15 @@ export function ActionConfirmBody({ kind, title, desc, rows }: {
 }
 
 export function A360Modal({ config, onClose }: { config: ModalConfig | null; onClose: () => void }) {
-  // the floating Ask bar must not sit over the sheet
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    document.body.dataset.modal = config ? '1' : '0'
-    return () => { document.body.dataset.modal = '0' }
-  }, [config])
+  // the floating Ask bar must not sit over the sheet (shared counter, so nothing else can un-hide it)
+  useModalFlag(!!config)
+  // close only when both the press and the release land outside the sheet: a sheet that changes
+  // size under the pointer must never read as a click outside
+  const downOutside = useRef(false)
 
   if (!config) return null
   return (
-    <div onClick={onClose}
+    <div onPointerDown={e => { downOutside.current = e.target === e.currentTarget }} onClick={e => { if (e.target === e.currentTarget && downOutside.current) onClose(); downOutside.current = false }}
       style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()}
         style={{ width: 'min(460px,100%)', maxHeight: '84vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '26px 28px 26px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>

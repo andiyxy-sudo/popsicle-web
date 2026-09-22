@@ -19,3 +19,15 @@ export function useEscape(active: boolean, onClose: () => void) {
     }
   }, [active, onClose])
 }
+
+/** Marks a popup as open for as long as `active` is true, through the same counter as useEscape,
+ *  so the floating Ask bar hides and no other component can un-hide it while this one is open. */
+export function useModalFlag(active: boolean) {
+  useEffect(() => {
+    if (!active) return
+    openCount += 1
+    document.body.dataset.modal = '1'
+    return () => { openCount = Math.max(0, openCount - 1); if (openCount === 0) document.body.dataset.modal = '0' }
+  }, [active])
+}
+

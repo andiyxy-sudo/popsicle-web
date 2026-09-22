@@ -49,7 +49,7 @@ export function SlackChannelPicker({ onCancel, onSaved }: { onCancel: () => void
     setLoading(true); setError(null)
     try {
       const t = await token()
-      if (!t) { window.location.href = '/login'; return }
+      if (!t) { setError('Your session has expired. Sign in again, then reopen Slack channels.'); setLoading(false); return }
       const res = await fetch(`${SUPA_URL}/functions/v1/slack-channels`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${t}` },
@@ -114,7 +114,7 @@ export function SlackChannelPicker({ onCancel, onSaved }: { onCancel: () => void
     setSaving(true); setError(null)
     try {
       const t = await token()
-      if (!t) { window.location.href = '/login'; return }
+      if (!t) { setError('Your session has expired. Sign in again, then reopen Slack channels.'); setLoading(false); return }
       const chosen = channels.filter(c => selected.has(c.channel_id))
 
       // Create any "new" accounts first (named after their channel), collecting

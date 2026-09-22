@@ -481,7 +481,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
           {p.key === 'slack' ? (
             <>
             <button
-              onClick={() => openSlackChannels(p)}
+              onClick={e => { e.stopPropagation(); setModal(null); setTimeout(() => openSlackChannels(p), 60) }}
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', marginBottom: 14, fontFamily: "'Outfit',sans-serif" }}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="4" y1="9" x2="20" y2="9" /><line x1="4" y1="15" x2="20" y2="15" /><line x1="10" y1="3" x2="8" y2="21" /><line x1="16" y1="3" x2="14" y2="21" /></svg>

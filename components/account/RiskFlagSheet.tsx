@@ -6,6 +6,7 @@
 // Everything shown is derived from that account's real open signals.
 
 import { useEffect } from 'react'
+import { useModalFlag } from '@/components/ui/useEscape'
 import { useRouter } from 'next/navigation'
 import { exposureOf } from '@/lib/metrics'
 
@@ -23,11 +24,7 @@ export interface RiskFlag {
 export function RiskFlagSheet({ flag, onClose }: { flag: RiskFlag | null; onClose: () => void }) {
   const router = useRouter()
   // The floating Ask bar must not sit over an open sheet.
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    document.body.dataset.modal = flag ? '1' : '0'
-    return () => { document.body.dataset.modal = '0' }
-  }, [flag])
+  useModalFlag(!!flag)
   if (!flag) return null
   const c = flag.color
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const }

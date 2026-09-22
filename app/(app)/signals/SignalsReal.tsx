@@ -8,7 +8,7 @@ import { DateField } from '@/components/ui/DateField'
 import { X } from '@/components/explain/Explain'
 import { TranscriptModal, type Transcript } from '@/components/account/TranscriptModal'
 import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal'
-import { useEscape } from '@/components/ui/useEscape'
+import { useEscape, useModalFlag } from '@/components/ui/useEscape'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
 // Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
@@ -122,11 +122,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   }, [detailFor?.id])
 
   // hide the floating Ask bar while a sheet is open
-  useEffect(() => {
-    if (typeof document === 'undefined') return
-    document.body.dataset.modal = (detailFor || draftFor) ? '1' : '0'
-    return () => { document.body.dataset.modal = '0' }
-  }, [detailFor, draftFor])
+  useModalFlag(!!(detailFor || draftFor))
 
   // Handle /signals?signal=<id> deep links (Slack "Open in Popsicle" etc).
   // If the signal is in the visible list: scroll to it, flash it, open detail.
