@@ -107,7 +107,7 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
   const segExposure = new Map<string, number>()
   for (const s of live) if ((!s.status || s.status === 'open') && s.severity !== 'positive') { const acc = accounts.find(a => a.name === s.account_name); if (acc) { const k = segOf(acc); segExposure.set(k, (segExposure.get(k) ?? 0) + amt(s)) } }
   const SEG_COLOR: Record<string, string> = { Enterprise: '#c43d2b', 'Mid-Market': '#d38b1d', SMB: '#7C5CFC' }
-  const bySegment = Array.from(segExposure.entries()).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v, color: SEG_COLOR[k] ?? '#5C5855' }))
+  const bySegment = Array.from(segExposure.entries()).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v, color: SEG_COLOR[k] ?? 'var(--d-muted, #5C5855)' }))
   const byHealth = [
     { k: 'Critical', n: accounts.filter(a => a.risk_level === 'high').length, color: '#c43d2b' },
     { k: 'Monitor', n: accounts.filter(a => a.risk_level === 'medium').length, color: '#d38b1d' },

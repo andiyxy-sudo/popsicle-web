@@ -66,7 +66,7 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
           onClick={() => { if (t.account) window.dispatchEvent(new CustomEvent('open-a360', { detail: { name: t.account, contact: '', stage: 'Active', risk: (t.severity || 'watch').toUpperCase(), arr: '--', health: '--' } })); dismiss(t.id) }}
           style={{ pointerEvents: 'auto', position: 'relative', overflow: 'hidden', cursor: t.account ? 'pointer' : 'default',
             background: 'rgba(251,248,243,.86)', backdropFilter: 'blur(14px) saturate(1.2)', WebkitBackdropFilter: 'blur(14px) saturate(1.2)',
-            border: '1px solid rgba(14,13,11,.08)', boxShadow: '0 30px 60px -28px rgba(14,13,11,.32), 0 1px 0 rgba(255,255,255,.6) inset', padding: '18px 20px 16px' }}>
+            border: '1px solid var(--d-hair, rgba(14,13,11,.08))', boxShadow: '0 30px 60px -28px rgba(14,13,11,.32), 0 1px 0 rgba(255,255,255,.6) inset', padding: '18px 20px 16px' }}>
           {/* a soft tint of the severity colour in the top-right corner */}
           <span aria-hidden style={{ position: 'absolute', right: -60, top: -60, width: 180, height: 180, borderRadius: '50%', background: color(t.severity), opacity: .10, filter: 'blur(28px)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, position: 'relative' }}>
@@ -78,7 +78,7 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
           <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 16, letterSpacing: '-.02em', lineHeight: 1.3, color: 'var(--ink)', marginTop: 10, position: 'relative' }}>{t.title}</div>
           {t.quote && <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginTop: 6, lineHeight: 1.5, position: 'relative' }}>{t.quote}</div>}
           {t.account && (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(14,13,11,.08)', position: 'relative' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--d-hair, rgba(14,13,11,.08))', position: 'relative' }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>{t.account}</span>
               <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)' }}>Open account →</span>
             </div>

@@ -186,14 +186,14 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
         </div>
       </div>
       {profileOpen && typeof document !== 'undefined' && createPortal((
-        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+        <div onClick={() => setProfileOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 520, background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both', color: 'var(--ink, #0E0D0B)' }}>
             <div style={{ padding: '32px 32px 0', display: 'flex', alignItems: 'center', gap: 16 }}>
               <div style={{ position: 'relative', flex: 'none' }}>
                 <span onClick={pickPhoto} title="Change photo" style={{ width: 54, height: 54, borderRadius: '50%', background: photo ? `center/cover url(${photo})` : 'var(--accent, #E85A25)', color: '#fff', display: 'grid', placeItems: 'center', fontWeight: 700, fontSize: 18, cursor: 'pointer', overflow: 'hidden' }}>
                   {!photo && initials}
                 </span>
-                <span onClick={pickPhoto} title="Change photo" style={{ position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: '50%', background: 'var(--ink, #0E0D0B)', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', border: '2px solid var(--paper, #FBF8F3)' }}>
+                <span onClick={pickPhoto} title="Change photo" style={{ position: 'absolute', right: -2, bottom: -2, width: 20, height: 20, borderRadius: '50%', background: 'var(--d-btn, var(--ink, #0E0D0B))', color: '#fff', display: 'grid', placeItems: 'center', cursor: 'pointer', border: '2px solid var(--paper, #FBF8F3)' }}>
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 013 3L7 19l-4 1 1-4z"/></svg>
                 </span>
               </div>

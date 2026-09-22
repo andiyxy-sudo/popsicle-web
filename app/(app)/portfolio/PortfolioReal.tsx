@@ -216,7 +216,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
             <h2 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>All accounts</h2>
             <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)', borderRadius: 'var(--toggle-radius, 0px)' }}>
               {([['all', 'All'], ['high', 'High risk'], ['closing', 'Closing'], ['stalled', 'Stalled']] as const).map(([k, lbl]) => (
-                <button key={k} onClick={() => setView(k)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: view === k ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer', background: view === k ? 'var(--ink)' : 'transparent', color: view === k ? '#fff' : 'var(--ink-muted)' }}>
+                <button key={k} onClick={() => setView(k)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: view === k ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer', background: view === k ? 'var(--d-btn, var(--ink))' : 'transparent', color: view === k ? '#fff' : 'var(--ink-muted)' }}>
                   {lbl} <span style={{ opacity: .55, marginLeft: 4 }}>{counts[k]}</span>
                 </button>
               ))}

@@ -181,7 +181,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           {(['1W', '1M', '3M', 'YTD'] as const).map(w => (
             <button key={w} onClick={() => setWindow(w)}
               style={{ font: 'inherit', fontSize: 12, fontWeight: window_ === w ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
-                background: window_ === w ? 'var(--ink, #0E0D0B)' : 'transparent', color: window_ === w ? '#fff' : 'var(--ink-muted)' }}>{w}</button>
+                background: window_ === w ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', color: window_ === w ? '#fff' : 'var(--ink-muted)' }}>{w}</button>
           ))}
         </div>
       </div>
@@ -233,7 +233,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, flexWrap: 'wrap' }}>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Pipeline trend · {window_}</span>
             <span style={{ display: 'flex', gap: 16, fontSize: 12.5, color: 'var(--ink-muted)' }}>
-              <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--ink)', verticalAlign: 'middle', marginRight: 6 }} />Best case</span>
+              <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--d-btn, var(--ink))', verticalAlign: 'middle', marginRight: 6 }} />Best case</span>
               <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--good, #2f8f5b)', verticalAlign: 'middle', marginRight: 6 }} />Commit</span>
               <span><span style={{ display: 'inline-block', width: 14, height: 2, background: 'var(--critical, #c43d2b)', verticalAlign: 'middle', marginRight: 6 }} />At risk</span>
             </span>

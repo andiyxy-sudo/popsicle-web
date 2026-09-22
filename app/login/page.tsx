@@ -116,7 +116,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, zIndex: 10050, background: '#FBF8F3', overflowY: 'auto', fontFamily: "'Outfit', sans-serif", color: '#0E0D0B', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ position: 'fixed', inset: 0, zIndex: 10050, background: 'var(--d-paper, #FBF8F3)', overflowY: 'auto', fontFamily: "'Outfit', sans-serif", color: 'var(--d-ink, #0E0D0B)', display: 'flex', flexDirection: 'column' }}>
       {/* warm corner wash */}
       <div aria-hidden style={{ position: 'absolute', top: 0, right: 0, width: 'min(900px,100%)', height: 900, pointerEvents: 'none', background: 'radial-gradient(120% 90% at 90% -10%, rgba(255,138,80,.22), rgba(255,138,80,0) 70%)' }} />
       <style>{`
@@ -160,15 +160,15 @@ export default function LoginPage() {
         {mfa ? (
           <form onSubmit={handleMfa}>
             <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.6px', textTransform: 'uppercase', color: '#E85A25', marginBottom: 10 }}>Two-factor check</div>
-            <div style={{ fontSize: 13.5, color: '#5C5855', lineHeight: 1.55, marginBottom: 14 }}>Enter the six-digit code from your authenticator app.</div>
+            <div style={{ fontSize: 13.5, color: 'var(--d-muted, #5C5855)', lineHeight: 1.55, marginBottom: 14 }}>Enter the six-digit code from your authenticator app.</div>
             <input autoFocus inputMode="numeric" placeholder="123 456" value={mfaCode} onChange={e => setMfaCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-              style={{ width: '100%', boxSizing: 'border-box', fontFamily: "'DM Mono',monospace", fontSize: 20, letterSpacing: '6px', textAlign: 'center', padding: '12px 0', border: 0, borderBottom: '1px solid #0E0D0B', background: 'transparent', color: '#0E0D0B', outline: 0 }} />
+              style={{ width: '100%', boxSizing: 'border-box', fontFamily: "'DM Mono',monospace", fontSize: 20, letterSpacing: '6px', textAlign: 'center', padding: '12px 0', border: 0, borderBottom: '1px solid var(--d-rule, #0E0D0B)', background: 'transparent', color: 'var(--d-ink, #0E0D0B)', outline: 0 }} />
             <button type="submit" disabled={loading || mfaCode.length !== 6} style={{
               width: '100%', padding: '14px 0', border: 0, cursor: 'pointer', fontFamily: 'inherit', marginTop: 12,
-              background: mfaCode.length === 6 ? '#0E0D0B' : '#E9E4DA', color: mfaCode.length === 6 ? '#FBF8F3' : '#8A857F',
+              background: mfaCode.length === 6 ? 'var(--d-btn, #0E0D0B)' : '#E9E4DA', color: mfaCode.length === 6 ? '#FBF8F3' : '#8A857F',
               fontSize: 14, fontWeight: 600, transition: 'background .2s',
             }}>{loading ? 'Checking…' : 'Continue'}</button>
-            <div onClick={() => { setMfa(null); setMfaCode(''); supabase.auth.signOut() }} style={{ fontSize: 12.5, color: '#5C5855', marginTop: 14, cursor: 'pointer', textAlign: 'center' }}>Use a different account</div>
+            <div onClick={() => { setMfa(null); setMfaCode(''); supabase.auth.signOut() }} style={{ fontSize: 12.5, color: 'var(--d-muted, #5C5855)', marginTop: 14, cursor: 'pointer', textAlign: 'center' }}>Use a different account</div>
           </form>
         ) : (
         <form onSubmit={handleSubmit}>
@@ -179,24 +179,24 @@ export default function LoginPage() {
           <input className="lg-in" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} required />
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '16px 0' }}>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, color: '#5C5855' }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontSize: 13, color: 'var(--d-muted, #5C5855)' }}>
               <span style={{ width: 34, height: 19, borderRadius: 999, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', position: 'relative', flex: 'none' }}>
-                <span style={{ position: 'absolute', top: 2.5, right: 2.5, width: 14, height: 14, borderRadius: '50%', background: '#fff' }} />
+                <span style={{ position: 'absolute', top: 2.5, right: 2.5, width: 14, height: 14, borderRadius: '50%', background: 'var(--d-raised, #fff)' }} />
               </span>
               Keep me signed in
             </span>
-            <span style={{ fontSize: 13, color: '#5C5855' }}>Forgot password?</span>
+            <span style={{ fontSize: 13, color: 'var(--d-muted, #5C5855)' }}>Forgot password?</span>
           </div>
 
           <button type="submit" disabled={loading} style={{
             width: '100%', padding: '14px 0', border: 0, cursor: 'pointer', fontFamily: 'inherit',
-            background: email && password ? '#0E0D0B' : '#E9E4DA', color: email && password ? '#FBF8F3' : '#8A857F',
+            background: email && password ? 'var(--d-btn, #0E0D0B)' : '#E9E4DA', color: email && password ? '#FBF8F3' : '#8A857F',
             fontSize: 14, fontWeight: 600, transition: 'background .2s',
           }}>{loading ? 'Please wait...' : mode === 'signup' ? 'Create account' : 'Sign in'}</button>
         </form>
         )}
 
-        <div style={{ textAlign: 'center', fontSize: 13, color: '#5C5855', marginTop: 16 }}>
+        <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--d-muted, #5C5855)', marginTop: 16 }}>
           {mode === 'signup' ? 'Already have an account? ' : "Don't have an account? "}
           <span onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setError(null); setNotice(null) }} style={{ color: '#E85A25', fontWeight: 600, cursor: 'pointer' }}>
             {mode === 'signup' ? 'Sign in' : 'Request access'}

@@ -20,7 +20,7 @@ export function TimeField({ value, onChange, disabled }: { value: string; onChan
   const col = (items: string[], cur: string, pick: (v: string) => void) => (
     <div style={{ maxHeight: 176, overflowY: 'auto', minWidth: 56 }}>
       {items.map(it => (
-        <div key={it} onClick={() => pick(it)} style={{ padding: '7px 12px', fontSize: 14, cursor: 'pointer', background: it === cur ? 'var(--ink, #0E0D0B)' : 'transparent', color: it === cur ? '#fff' : 'var(--ink)' }}>{it}</div>
+        <div key={it} onClick={() => pick(it)} style={{ padding: '7px 12px', fontSize: 14, cursor: 'pointer', background: it === cur ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', color: it === cur ? '#fff' : 'var(--ink)' }}>{it}</div>
       ))}
     </div>
   )

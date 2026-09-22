@@ -274,7 +274,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
           </div>
         )
         return (
-          <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+          <div onClick={() => setBig(false)} style={{ position: 'fixed', inset: 0, zIndex: 950, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
             <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 430, background: 'var(--paper, #FBF8F3)', padding: '26px 28px 28px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 10 }}>
@@ -826,14 +826,14 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{ position: 'relative' }}>
-            <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'rgba(14,13,11,.05)' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
+            <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'var(--d-tintbg, rgba(14,13,11,.05))' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
               <span className={open.length > 0 ? 'sig-pulse' : undefined}
                 style={{ width: 8, height: 8, flex: 'none', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}></span>
               <span>{open.length} signal{open.length === 1 ? '' : 's'}</span>
             </button>
             {inboxOpen && (
               <div onClick={() => setInboxOpen(false)} aria-hidden
-                style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)' }} />
+                style={{ position: 'fixed', inset: 0, zIndex: 55, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)' }} />
             )}
             {inboxOpen && (
               <div style={{ position: 'absolute', top: 44, right: 0, width: 430, maxWidth: 'calc(100vw - 280px)', zIndex: 60, background: 'var(--raised, #FFFDFA)', boxShadow: 'var(--shadow-panel, 0 32px 80px -24px rgba(14,13,11,.35))', animation: 'fadeUp .25s both', textAlign: 'left' }}>

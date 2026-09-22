@@ -707,7 +707,7 @@ export function AskClient() {
               {DEEP().map((sec, i) => (
                 <button key={sec.group} onClick={() => setDeepGroup(i)}
                   style={{ font: 'inherit', fontSize: 12.5, fontWeight: deepGroup === i ? 600 : 500, padding: '6px 14px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
-                    background: deepGroup === i ? 'var(--ink)' : 'transparent', color: deepGroup === i ? '#fff' : 'var(--ink-muted)', transition: 'background .15s ease, color .15s ease' }}>
+                    background: deepGroup === i ? 'var(--d-btn, var(--ink))' : 'transparent', color: deepGroup === i ? '#fff' : 'var(--ink-muted)', transition: 'background .15s ease, color .15s ease' }}>
                   {sec.group}
                 </button>
               ))}
@@ -799,7 +799,7 @@ export function AskClient() {
       </div>
 
       {inspect && (
-        <div onClick={() => setInspect(null)} style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+        <div onClick={() => setInspect(null)} style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
           <div onClick={e => e.stopPropagation()} style={{ width: 'min(520px,100%)', maxHeight: '80vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '26px 28px 28px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--accent)' }}>read from {inspect}</span>

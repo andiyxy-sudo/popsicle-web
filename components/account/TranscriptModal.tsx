@@ -30,7 +30,7 @@ export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose:
   const isUs = (who: string) => /^(Andy|Mike|Jamie|You)/.test(who)
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(14,13,11,.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 24px', overflowY: 'auto' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'var(--d-tintbg, rgba(14,13,11,.45))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 24px', overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(760px, 100%)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--paper, #FBF8F3)', boxShadow: '0 44px 100px -34px rgba(14,13,11,.55)' }}>
         {/* header */}
         <div style={{ padding: '26px 30px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 18 }}>
@@ -62,7 +62,7 @@ export function TranscriptModal({ t, onClose, onAsk }: { t: Transcript; onClose:
           <div style={{ ...MONO, color: 'var(--ink-faint)' }}>Key moments</div>
           <div style={{ display: 'inline-flex', gap: 2, padding: 3, background: 'var(--inset, #F4F0E8)' }}>
             {([['all', `All ${t.moments.length}`], ['key', `Tagged ${t.moments.filter(m => m.tag).length}`]] as const).map(([k, lbl]) => (
-              <button key={k} onClick={() => setOnly(k)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: only === k ? 600 : 500, padding: '5px 12px', border: 0, cursor: 'pointer', background: only === k ? 'var(--ink, #0E0D0B)' : 'transparent', color: only === k ? '#fff' : 'var(--ink-muted)' }}>{lbl}</button>
+              <button key={k} onClick={() => setOnly(k)} style={{ font: 'inherit', fontSize: 12.5, fontWeight: only === k ? 600 : 500, padding: '5px 12px', border: 0, cursor: 'pointer', background: only === k ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', color: only === k ? '#fff' : 'var(--ink-muted)' }}>{lbl}</button>
             ))}
           </div>
         </div>

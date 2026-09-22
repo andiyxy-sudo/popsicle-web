@@ -14,7 +14,7 @@ const FLAG: Record<string, string> = { OBJECTION: 'var(--warn, #d38b1d)', RISK: 
 export function ThreadModal({ t, onClose, onAsk }: { t: ThreadSource; onClose: () => void; onAsk: (q: string) => void }) {
   useEscape(true, onClose)
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'rgba(14,13,11,.45)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 24px', overflowY: 'auto' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 900, background: 'var(--d-tintbg, rgba(14,13,11,.45))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '5vh 24px', overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(760px, 100%)', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--paper, #FBF8F3)', boxShadow: '0 44px 100px -34px rgba(14,13,11,.55)' }}>
         <div style={{ padding: '26px 30px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 18, flex: 'none' }}>
           <div>

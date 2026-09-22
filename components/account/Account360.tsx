@@ -360,7 +360,7 @@ export function Account360() {
   let lastDay = ''
 
   return (
-    <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.5)', zIndex: 400, display: 'flex', justifyContent: 'flex-end' }}>
+    <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'var(--d-tintbg, rgba(15,12,9,.5))', zIndex: 400, display: 'flex', justifyContent: 'flex-end' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(680px, 94vw)', height: '100%', background: 'var(--bg, #FBF8F3)', boxShadow: '-16px 0 48px rgba(15,12,9,.25)', display: 'flex', flexDirection: 'column' }}>
         {/* header */}
         <div style={{ padding: '18px 24px 0', background: 'var(--surface, #fff)', borderBottom: '1px solid var(--border)' }}>

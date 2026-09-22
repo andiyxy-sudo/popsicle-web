@@ -8,6 +8,8 @@ export type Settings = {
   thresholds: { daysDark: number; minDeal: number; graceDays: number }
   voice: { tone: string; length: string; signOff: string }
   language: string
+  currency: string
+  appearance: string
   demo?: boolean     // the demo account ignores time-based settings so it always performs
 }
 type Meta = Record<string, unknown>
@@ -30,6 +32,8 @@ export function readSettings(meta: Meta | null | undefined): Settings {
     thresholds: { daysDark: num(t['Days dark'], 5), minDeal: money(t['Minimum deal size'], 50000), graceDays: num(t['Commitment overdue'], 3) },
     voice: { tone: v.Tone ?? 'Direct', length: v.Length ?? 'Short', signOff: v['Sign-off'] ?? '' },
     language: p.Language ?? 'English (US)',
+    currency: (p.Currency ?? 'USD').split(' ')[0],
+    appearance: p.Appearance ?? '',
   }
 }
 

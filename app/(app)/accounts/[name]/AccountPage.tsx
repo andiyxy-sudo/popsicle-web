@@ -44,7 +44,7 @@ type RailItem = { title: string; body?: string; when: string; kind: 'positive' |
 
 const CHANNEL: Record<string, { label: string; glyph: string; color: string }> = {
   gmail: { label: 'Gmail', glyph: 'M', color: '#c43d2b' }, outlook: { label: 'Outlook', glyph: 'O', color: '#2f6f9f' }, whatsapp: { label: 'WhatsApp', glyph: 'W', color: '#25a45a' },
-  slack: { label: 'Slack', glyph: 'S', color: '#7C5CFC' }, phone: { label: 'Phone', glyph: 'P', color: '#0E0D0B' }, zoom: { label: 'Zoom', glyph: 'Z', color: '#2f6f9f' },
+  slack: { label: 'Slack', glyph: 'S', color: '#7C5CFC' }, phone: { label: 'Phone', glyph: 'P', color: 'var(--d-ink, #0E0D0B)' }, zoom: { label: 'Zoom', glyph: 'Z', color: '#2f6f9f' },
   linkedin: { label: 'LinkedIn', glyph: 'in', color: '#2f6f9f' }, hubspot: { label: 'HubSpot', glyph: 'H', color: '#E85A25' }, fireflies: { label: 'Fireflies', glyph: 'F', color: '#7C5CFC' }, gcal: { label: 'Calendar', glyph: 'C', color: '#2f6f9f' },
 }
 const TONE_META = {
@@ -96,13 +96,13 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
       <div style={{ position: 'relative', marginTop: 8, maxWidth: 860 }}>
         {items.map((m, i) => {
           const tone = TONE_META[m.tone]
-          const ch = CHANNEL[m.via.toLowerCase()] ?? { label: m.via, glyph: m.via.slice(0, 1).toUpperCase(), color: '#5C5855' }
+          const ch = CHANNEL[m.via.toLowerCase()] ?? { label: m.via, glyph: m.via.slice(0, 1).toUpperCase(), color: 'var(--d-muted, #5C5855)' }
           const mine = !!m.mine
           return (
             <div key={i} className="comms-row" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', gap: 16, alignItems: 'flex-start', padding: '20px 0' }}>
               {/* avatar with channel dot */}
               <div style={{ position: 'relative', flex: 'none' }}>
-                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: mine ? '#fff' : tone.c, background: mine ? 'var(--ink, #0E0D0B)' : 'transparent', border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
+                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: mine ? '#fff' : tone.c, background: mine ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
                 <span title={ch.label} style={{ position: 'absolute', right: -3, bottom: -3, width: 17, height: 17, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 8.5, fontWeight: 700, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
               </div>
 

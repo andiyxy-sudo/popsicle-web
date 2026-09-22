@@ -49,7 +49,7 @@ export function CommandPalette({ demo }: { demo: boolean }) {
   if (!open) return null
   const mono = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
   return (
-    <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh' }}>
+    <div onClick={() => setOpen(false)} style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: '14vh' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(560px, calc(100vw - 32px))', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--accent)' }} />

@@ -523,7 +523,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           {([['all', 'All', signals.length], ['critical', 'Critical', critical.length], ['watch', 'Watch', watch.length], ['positive', 'Positive', positive.length]] as const).map(([k, lbl, n]) => (
             <button key={k} onClick={() => setFilter(k as typeof filter)} style={{
               font: 'inherit', fontSize: 12.5, fontWeight: filter === k ? 600 : 500, padding: '6px 13px', borderRadius: 'var(--toggle-radius, 0px)', border: 0, cursor: 'pointer',
-              background: filter === k ? 'var(--ink)' : 'transparent', color: filter === k ? '#fff' : 'var(--ink-muted)' }}>
+              background: filter === k ? 'var(--d-btn, var(--ink))' : 'transparent', color: filter === k ? '#fff' : 'var(--ink-muted)' }}>
               {lbl} <span style={{ opacity: .55, marginLeft: 4 }}>{n}</span></button>
           ))}
         </div>
@@ -672,7 +672,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         })()
         const titleFor = kind === 'schedule' ? label : kind === 'map' ? 'Map the new decision-maker' : 'Close out the commitment'
         return (
-          <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', zIndex: 820, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', zIndex: 820, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <div onClick={e => e.stopPropagation()} style={{ width: 'min(440px,100%)', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ padding: '26px 28px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
                 <div>
@@ -843,7 +843,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
           </div>
         )
         return (
-          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', zIndex: 810, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+          <div onClick={() => setDetailFor(null)} style={{ position: 'fixed', inset: 0, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', zIndex: 810, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
             <div onClick={e => e.stopPropagation()} style={{ width: 'min(470px,100%)', maxHeight: '86vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ padding: '28px 30px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 24 }}>
                 <div style={{ minWidth: 0 }}>
@@ -1069,7 +1069,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
       {/* Deep link pointed at a signal that does not exist for this user */}
       {deepNotFound && (
-        <div onClick={() => { setDeepNotFound(false); if (typeof window !== 'undefined') window.history.replaceState({}, '', '/signals') }} style={{ position: 'fixed', inset: 0, background: 'rgba(15,12,9,.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+        <div onClick={() => { setDeepNotFound(false); if (typeof window !== 'undefined') window.history.replaceState({}, '', '/signals') }} style={{ position: 'fixed', inset: 0, background: 'var(--d-tintbg, rgba(15,12,9,.45))', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 400, background: 'var(--surface, #fff)', borderRadius: 16, boxShadow: '0 24px 64px rgba(15,12,9,.25)', padding: '32px 28px', textAlign: 'center' }}>
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -1082,7 +1082,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       )}
 
       {draftFor && (
-        <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+        <div onClick={() => setDraftFor(null)} style={{ position: 'fixed', inset: 0, zIndex: 500, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
           <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 620, background: 'var(--paper, #FBF8F3)', padding: '40px 44px 44px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)', animation: 'fadeUp .3s both' }}>
             {/* eyebrow + close */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
@@ -1142,7 +1142,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
                 {/* body */}
                 <textarea value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} rows={11}
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '22px 26px', fontSize: 15.5, lineHeight: 1.75, color: 'var(--ink)', background: '#FFFDFA', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", display: 'block' }} />
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '22px 26px', fontSize: 15.5, lineHeight: 1.75, color: 'var(--ink)', background: 'var(--d-raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", display: 'block' }} />
 
                 {draft.provenance && (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 12 }}>
@@ -1175,7 +1175,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       {srcTr && <TranscriptModal t={srcTr} onClose={() => setSrcTr(null)} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />}
       {srcTh && <ThreadModal t={srcTh} onClose={() => setSrcTh(null)} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}`)} />}
       {receipt && (
-        <div style={{ position: 'fixed', left: '50%', bottom: 104, transform: 'translateX(-50%)', zIndex: 950, background: 'var(--ink, #0E0D0B)', color: 'var(--paper, #FBF8F3)', padding: '11px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 20px 44px -20px rgba(14,13,11,.5)' }}>
+        <div style={{ position: 'fixed', left: '50%', bottom: 104, transform: 'translateX(-50%)', zIndex: 950, background: 'var(--d-btn, var(--ink, #0E0D0B))', color: 'var(--paper, #FBF8F3)', padding: '11px 18px', fontSize: 13, display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 20px 44px -20px rgba(14,13,11,.5)' }}>
           <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800 }}>✓</span>{receipt}
         </div>
       )}

@@ -179,7 +179,7 @@ function fmtDate(iso: string | null) {
 function ResSwitch({ on }: { on: boolean }) {
   return (
     <div style={{ width: 36, height: 21, borderRadius: 20, background: on ? 'var(--ok)' : 'var(--border)', position: 'relative', transition: 'background .18s ease', flexShrink: 0 }}>
-      <div style={{ position: 'absolute', top: 2.5, left: on ? 17.5 : 2.5, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }}></div>
+      <div style={{ position: 'absolute', top: 2.5, left: on ? 17.5 : 2.5, width: 16, height: 16, borderRadius: '50%', background: 'var(--d-raised, #fff)', transition: 'left .18s ease', boxShadow: '0 1px 3px rgba(0,0,0,.25)' }}></div>
     </div>
   )
 }
@@ -460,10 +460,10 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
       title: p.name,
       body: (
         <div>
-          <div style={{ textAlign: 'center', marginBottom: 18 }}>
-            <div style={{ position: 'relative', width: 56, height: 56, margin: '0 auto 12px' }}>
-              <div style={{ width: 56, height: 56, borderRadius: 16, background: 'var(--inset)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1)', overflow: 'hidden' }}>
-                <div style={{ transform: 'scale(1.35)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <div style={{ position: 'relative', width: 48, height: 48, margin: '0 auto 8px' }}>
+              <div style={{ width: 48, height: 48, borderRadius: 14, background: 'var(--inset)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'scale(1)', overflow: 'hidden' }}>
+                <div style={{ transform: 'scale(1.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {LOGOS[p.key] ?? <span style={{ fontWeight: 800, color: 'var(--t2)', fontSize: 20 }}>{p.name[0]}</span>}
                 </div>
               </div>
@@ -644,7 +644,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
           ['Connected', fmtDate(st?.connectedAt)],
         ]
         return (
-          <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+          <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
             <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: 'var(--paper, #FBF8F3)', padding: '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
@@ -673,7 +673,7 @@ export function IntegrationsReal({ active, stats = {} }: { active: string[]; sta
                   <button onClick={async () => { await flipResToggle(p) }}
                     style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px',
                       background: resToggles[p.key as 'slack' | 'hubspot'] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
-                    <span style={{ position: 'absolute', top: 3, left: resToggles[p.key as 'slack' | 'hubspot'] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
+                    <span style={{ position: 'absolute', top: 3, left: resToggles[p.key as 'slack' | 'hubspot'] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--d-raised, #fff)', transition: 'left .18s ease', boxShadow: '0 1px 2px rgba(14,13,11,.2)' }} />
                   </button>
                 </div>
               )}

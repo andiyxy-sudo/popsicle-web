@@ -29,7 +29,7 @@ export function RiskFlagSheet({ flag, onClose }: { flag: RiskFlag | null; onClos
   const c = flag.color
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase' as const }
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 810, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 810, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()} style={{ width: 'min(460px,100%)', maxHeight: '84vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '28px 30px 30px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 }}>
           <div style={{ minWidth: 0 }}>

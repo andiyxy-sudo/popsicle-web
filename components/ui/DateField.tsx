@@ -45,7 +45,7 @@ export function DateField({ value, onChange, placeholder = 'Pick a date', min }:
               return (
                 <button key={key} type="button" disabled={disabled} onClick={() => { onChange(key); setOpen(false) }}
                   style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 12, height: 30, border: 0, cursor: disabled ? 'default' : 'pointer', opacity: disabled ? .3 : 1,
-                    background: isSel ? 'var(--ink, #0E0D0B)' : 'transparent', color: isSel ? '#fff' : isToday ? 'var(--accent)' : 'var(--ink)', fontWeight: isToday || isSel ? 700 : 400 }}>
+                    background: isSel ? 'var(--d-btn, var(--ink, #0E0D0B))' : 'transparent', color: isSel ? '#fff' : isToday ? 'var(--accent)' : 'var(--ink)', fontWeight: isToday || isSel ? 700 : 400 }}>
                   {i + 1}
                 </button>
               )

@@ -94,9 +94,9 @@ export function A360Modal({ config, onClose }: { config: ModalConfig | null; onC
   if (!config) return null
   return (
     <div onPointerDown={e => { downOutside.current = e.target === e.currentTarget }} onClick={e => { if (e.target === e.currentTarget && downOutside.current) onClose(); downOutside.current = false }}
-      style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'rgba(14,13,11,.42)', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
+      style={{ position: 'fixed', inset: 0, zIndex: 820, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 32, overflowY: 'auto' }}>
       <div onClick={e => e.stopPropagation()}
-        style={{ width: 'min(460px,100%)', maxHeight: '84vh', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '26px 28px 26px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+        style={{ width: 'min(480px,100%)', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: '26px 28px 26px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 16 }}>
           <span style={{ ...MONO, color: 'var(--ink-faint, #A09C97)' }}>{config.title}</span>
           <button onClick={onClose} style={{ ...MONO, fontSize: 10.5, background: 'none', border: 0, color: 'var(--ink-faint, #A09C97)', cursor: 'pointer' }}>close</button>

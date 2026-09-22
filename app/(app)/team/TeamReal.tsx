@@ -180,7 +180,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
   const router = useRouter()
 
   const m = demo ?? buildLiveModel(accounts, signals, me, repNames)
-  const repBy = (n: string) => m.reps.find(r => r.name === n) ?? { name: n, color: '#A09C97' }
+  const repBy = (n: string) => m.reps.find(r => r.name === n) ?? { name: n, color: 'var(--d-faint, #A09C97)' }
   const respColor = (h: number) => {
     const best = Math.min(...m.reps.map(r => r.avgResp))
     return h <= best ? GREEN : h > m.timeToAction + 0.5 ? AMBER : INK

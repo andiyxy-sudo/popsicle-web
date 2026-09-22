@@ -42,7 +42,7 @@ export function splitVerdict(text: string): { verdict: string; reason: string; t
 }
 export function VerdictBanner({ verdict, reason, tone }: { verdict: string; reason: string; tone: string }) {
   return (
-    <div className="vb" style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', padding: '12px 0 14px', marginBottom: 12, borderBottom: '1px solid rgba(14,13,11,.12)' }}>
+    <div className="vb" style={{ display: 'flex', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', padding: '12px 0 14px', marginBottom: 12, borderBottom: '1px solid var(--d-hair, rgba(14,13,11,.12))' }}>
       <span className="vb-label" style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.5px', textTransform: 'uppercase', color: 'var(--ink-faint, #A09C97)' }}>Verdict</span>
       <span className="vb-word" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 22, letterSpacing: '-.03em', color: tone }}>{verdict}</span>
       {reason && <span className="vb-reason" style={{ fontSize: 14.5, color: 'var(--ink-muted, #5C5855)' }}>{reason}</span>}
