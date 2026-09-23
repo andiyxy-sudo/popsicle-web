@@ -4045,3 +4045,37 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 /* v11.189: page headlines balance their line lengths, so no middle line juts out past the others.
    Browsers without text-wrap: balance (older Safari/Firefox) simply wrap as before. */
 .content h1, .dsk-screen h1 { text-wrap: wrap; }   /* fill from the top: first lines longest, last line short */
+
+/* ═════════ v11.194 THE ASK PAGE OPENING: the line is the headline ═════════ */
+.ask-open { display: flex; flex-direction: column; height: 100%; min-height: 0; font-family: var(--font-sans, 'Outfit', sans-serif); }
+.ask-open-top { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; min-height: 36px; }
+.ask-line { display: flex; align-items: center; gap: 16px; border-bottom: 1.5px solid var(--ink, #0E0D0B); padding: 12px 0; margin-top: 22px; }
+.ask-line-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent, #E85A25); flex: none; }
+.ask-line input { flex: 1; border: 0; background: transparent; font-family: inherit; letter-spacing: -.025em; color: var(--ink); padding: 0; min-width: 0; }
+.ask-line input::placeholder { color: var(--ink-faint, #A09C97); }
+.ask-line input:focus { outline: none; }
+.ask-line button { font-family: inherit; font-size: 14px; font-weight: 700; color: var(--accent, #E85A25); background: none; border: 0; cursor: pointer; white-space: nowrap; }
+.ask-line button:disabled { color: var(--ink-faint, #A09C97); cursor: default; }
+.ask-brief { font-size: 16.5px; line-height: 1.55; color: var(--ink-muted, #5C5855); margin: 16px 0 0; max-width: 860px; }
+.ask-brief b { color: var(--ink); font-weight: 600; }
+.ask-open-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.35fr .8fr; gap: 44px; margin-top: 24px; }
+.ask-open-main, .ask-open-rail { min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.ask-open-rail { border-left: 1px solid var(--hairline, #EFEAE1); padding-left: 32px; }
+.ask-open-main::-webkit-scrollbar, .ask-open-rail::-webkit-scrollbar { width: 0; }
+.ask-q { display: flex; align-items: flex-start; gap: 13px; width: 100%; text-align: left; padding: 13px 0; border: 0; border-bottom: 1px solid var(--hairline, #EFEAE1); background: none; cursor: pointer; border-radius: 0; font-family: inherit; }
+.ask-q:hover .ask-q-title { color: var(--accent, #E85A25); }
+.ask-q-dot { width: 6px; height: 6px; border-radius: 50%; margin-top: 8px; flex: none; }
+.ask-q-text { flex: 1; min-width: 0; }
+.ask-q-title { display: block; font-size: 15.5px; color: var(--ink); line-height: 1.35; }
+.ask-q-why { display: block; font-size: 12.5px; color: var(--ink-muted, #5C5855); margin-top: 3px; }
+.ask-q-amt { font-weight: 700; font-size: 14.5px; white-space: nowrap; margin-left: 10px; }
+.ask-q-go { color: var(--accent, #E85A25); }
+.ask-q-plain { align-items: center; }
+.ask-read { padding: 11px 0; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.ask-read-t { font-size: 13.5px; color: var(--ink); line-height: 1.4; }
+.ask-ledger { display: flex; gap: 38px; flex-wrap: wrap; border-top: 1px solid var(--hairline, #EFEAE1); padding-top: 13px; margin-top: 14px; font-size: 13px; color: var(--ink-muted, #5C5855); }
+.ask-ledger b { font-family: var(--font-sans, 'Outfit', sans-serif); }
+@media (max-width: 900px) { .ask-open-cols { grid-template-columns: 1fr; gap: 20px; } .ask-open-rail { border-left: 0; padding-left: 0; border-top: 1px solid var(--hairline, #EFEAE1); padding-top: 14px; } .ask-line input { font-size: 22px !important; } }
+/* the Ask opening owns the full height of the page area, so nothing scrolls except its two columns */
+.content:has(.ask-open) { display: flex; flex-direction: column; min-height: 0; padding-bottom: 26px; }
+.ask-open { flex: 1; height: auto; }

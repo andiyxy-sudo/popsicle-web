@@ -606,6 +606,92 @@ export function AskClient() {
   const lastQuestion = [...msgs].reverse().find(m => m.role === 'user')?.content
   const label = { fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
 
+  // what the opening shows, built from this workspace's own signals
+  type Opening = { readCount: number; needCount: number; needValue: number; watching: number
+    questions: Array<{ account: string; question: string; why: string; amount: number; tone: 'risk' | 'good' }>
+    bigger: Array<{ question: string; why: string }>
+    reading: Array<{ id: string; title: string; account: string; when: string; source: string }>
+    ledger: { atRisk: string; protected: string; critical: number } }
+  const [open0, setOpen0] = useState<Opening | null>(null)
+  const [firstName, setFirstName] = useState('')
+  useEffect(() => {
+    let dead = false
+    fetch('/api/ask/opening').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) setOpen0(j as Opening) }).catch(() => {})
+    createClient().auth.getUser().then(({ data }) => {
+      const n = (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || ''
+      if (!dead) setFirstName(n.split(' ')[0].replace(/^./, c => c.toUpperCase()))
+    }).catch(() => {})
+    return () => { dead = true }
+  }, [])
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening' }
+  const numWords = (n: number) => (['zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'][n] ?? String(n))
+  const money = (v: number) => (v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${Math.round(v)}`)
+
+  // ── the opening: the line is the headline, the questions come from today's signals ──────────────
+  const mono = (t: React.ReactNode, color = 'var(--ink-faint)') => (
+    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 9.5, letterSpacing: '1.5px', textTransform: 'uppercase', color }}>{t}</span>
+  )
+  const lineField = (placeholder: string, fs: number) => (
+    <div className="ask-line">
+      <span className="ask-line-dot" />
+      <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }}
+        placeholder={placeholder} style={{ fontSize: fs }} autoFocus />
+      <button onClick={() => send()} disabled={busy || !input.trim()}>{busy ? 'Thinking' : `Ask \u2192`}</button>
+    </div>
+  )
+  if (!started) return (
+    <div className="dsk-screen on ask-open">
+      <div className="ask-open-top">
+        {mono('Ask Popsicle', 'var(--accent)')}
+        {mono(open0 ? `${open0.readCount} signals read \u00b7 live` : 'live')}
+      </div>
+      {lineField('What do you want to know?', 30)}
+      {open0 && (
+        <p className="ask-brief">
+          {greeting()}, {firstName}. I read <b>{open0.readCount} signal{open0.readCount === 1 ? '' : 's'}</b> since yesterday.{' '}
+          {open0.needCount > 0
+            ? <>{' '}<b>{open0.needCount === 1 ? 'One needs' : `${numWords(open0.needCount)} need`} you</b>, <b style={{ color: 'var(--critical, #c43d2b)' }}>{money(open0.needValue)}</b> between them. The rest I&rsquo;m watching.</>
+            : <>Nothing needs you right now. I&rsquo;m watching {open0.watching} open signal{open0.watching === 1 ? '' : 's'}.</>}
+        </p>
+      )}
+      <div className="ask-open-cols">
+        <div className="ask-open-main">
+          {mono('Worth asking today')}
+          {(open0?.questions ?? []).map(q => (
+            <button key={q.question} className="ask-q" onClick={() => send(q.question)}>
+              <span className="ask-q-dot" style={{ background: q.tone === 'good' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)' }} />
+              <span className="ask-q-text"><span className="ask-q-title">{q.question}</span><span className="ask-q-why">{q.why}</span></span>
+              <span className="ask-q-amt" style={{ color: q.tone === 'good' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)' }}>{money(q.amount)}</span>
+            </button>
+          ))}
+          {(open0?.bigger ?? []).length > 0 && <div style={{ marginTop: 14 }}>{mono('Bigger questions')}</div>}
+          {(open0?.bigger ?? []).map(b => (
+            <button key={b.question} className="ask-q ask-q-plain" onClick={() => send(b.question)}>
+              <span className="ask-q-text"><span className="ask-q-title">{b.question}</span></span>
+              <span className="ask-q-go">{'\u2192'}</span>
+            </button>
+          ))}
+        </div>
+        <div className="ask-open-rail">
+          {mono('Popsicle is reading')}
+          {(open0?.reading ?? []).map(r => (
+            <div key={r.id} className="ask-read">
+              <div className="ask-read-t">{r.title}</div>
+              <div>{mono(`${r.account}${r.when ? ` \u00b7 ${r.when}` : ''}${r.source ? ` \u00b7 ${r.source}` : ''}`, 'var(--ink-faint)')}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+      {open0 && (
+        <div className="ask-ledger">
+          <span>At risk <b style={{ color: 'var(--critical, #c43d2b)' }}>{open0.ledger.atRisk}</b></span>
+          <span>Protected <b style={{ color: 'var(--good, #2f8f5b)' }}>{open0.ledger.protected}</b></span>
+          <span>Critical <b>{open0.ledger.critical}</b></span>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="dsk-screen on ask-screen" style={{ maxWidth: 820, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
       <div style={{ flexShrink: 0 }}>
