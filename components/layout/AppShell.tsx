@@ -44,6 +44,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   // narrow screens: the sidebar becomes a drawer behind a menu button, closing on every page change
   const [navOpen, setNavOpen] = useState(false)
   useEffect(() => { setNavOpen(false) }, [pathname])
+  useEffect(() => { const c = () => setNavOpen(false); window.addEventListener('nav:close', c); return () => window.removeEventListener('nav:close', c) }, [])
   const contentRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     // Lets client components skip database round-trips in demo mode.

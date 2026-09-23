@@ -68,6 +68,17 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
   }
 
   const pathname = usePathname()
+  // clicking the page you are already on takes you back to the top of it
+  const toTop = (href: string) => (e: React.MouseEvent) => {
+    if (pathname !== href) return
+    e.preventDefault()
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const el = document.querySelector('.content') as HTMLElement | null
+    const behavior: ScrollBehavior = reduced ? 'auto' : 'smooth'
+    if (el && el.scrollTop > 0) el.scrollTo({ top: 0, behavior })
+    else window.scrollTo({ top: 0, behavior })
+    window.dispatchEvent(new Event('nav:close'))   // on a narrow screen, close the drawer too
+  }
   useLayoutEffect(() => {
     const el = navRef.current?.querySelector('.ed-sb-item.on') as HTMLElement | null
     if (el) moveGlide(el); else setGlide(g => ({ ...g, on: false }))
@@ -148,7 +159,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
 
   return (
     <nav className="sidebar ed-sidebar">
-      <div className="ed-sb-logo" onClick={() => router.push('/pulse')}>
+      <div className="ed-sb-logo" onClick={e => { if (pathname === '/pulse') toTop('/pulse')(e); else router.push('/pulse') }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/brand/logo-dark-smallmark.svg" alt="Popsicle Labs" />
       </div>
@@ -162,7 +173,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
               const active = pathname === item.href
               const badgeVal = item.badgeKey ? badges[item.badgeKey] : undefined
               return (
-                <Link key={item.id} href={item.href} prefetch className={`ed-sb-item${active ? ' on' : ''}`} id={`nav-${item.id}`}>
+                <Link key={item.id} href={item.href} prefetch onClick={toTop(item.href)} className={`ed-sb-item${active ? ' on' : ''}`} id={`nav-${item.id}`}>
                   <span className="ed-sb-dot" style={{ background: active ? '#E85A25' : 'transparent' }} />
                   <span className="ed-sb-label">{item.label}</span>
                   {badgeVal != null && badgeVal > 0 && <span className="ed-sb-count">{badgeVal}</span>}
@@ -172,7 +183,7 @@ export function Sidebar({ user, isDemo, badges = {} }: SidebarProps) {
           </div>
         ))}
         <div className="ed-sb-rule" style={{ background: 'rgba(251,248,243,.12)', margin: '20px 26px 18px' }} />
-        <Link href="/ask" prefetch className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`}>
+        <Link href="/ask" prefetch onClick={toTop('/ask')} className={`ed-sb-item${pathname === '/ask' ? ' on' : ''}`}>
           <span className="ed-sb-dot" style={{ background: pathname === '/ask' ? '#E85A25' : 'transparent' }} />
           <span className="ed-sb-label">Ask Popsicle</span>
         </Link>
