@@ -4041,3 +4041,7 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 .intel-narrate b { color: var(--ink); font-weight: 600; }
 .intel-narrate-w { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; letter-spacing: 1.2px; color: var(--accent, #E85A25); flex: none; }
 .intel-narrate-idle { color: var(--ink-faint, #A09C97); }
+
+/* v11.189: page headlines balance their line lengths, so no middle line juts out past the others.
+   Browsers without text-wrap: balance (older Safari/Firefox) simply wrap as before. */
+.content h1, .dsk-screen h1 { text-wrap: wrap; }   /* fill from the top: first lines longest, last line short */

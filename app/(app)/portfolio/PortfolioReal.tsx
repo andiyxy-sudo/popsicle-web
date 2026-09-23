@@ -170,13 +170,13 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         const topShare = bookTotal > 0 ? Math.round((topTwo / bookTotal) * 100) : 0
         const slipping = accounts.find(a => (a.health_score ?? 100) >= 60 && (a.health_score ?? 100) < 72 && a.risk_level !== 'high')
         const third = accounts.length >= 3 && topShare >= 40
-          ? <> {byValue[0].name} and {byValue[1].name} alone are <span style={{ color: 'var(--accent, #E85A25)' }}>{topShare}%</span> of the book{slipping ? <>, and {slipping.name} has <span style={{ color: RED }}>slipped</span> to <span style={{ color: RED }}>{slipping.health_score}</span></> : null}.</>
+          ? <> {byValue[0].name} and {byValue[1].name} are <span style={{ color: 'var(--accent, #E85A25)' }}>{topShare}%</span> of the book.</>
           : slipping ? <> {slipping.name} has quietly <span style={{ color: RED }}>slipped</span> to <span style={{ color: RED }}>{slipping.health_score}</span>, worth a look before it hardens.</>
           : accounts.length > 0 ? <> {accounts.length} account{accounts.length === 1 ? '' : 's'} in the book, worth {fmtVal(bookTotal)} a year.</> : null
         const headline = h ? (
           <>
             {numWord(h.highCount)} account{h.highCount === 1 ? '' : 's'} carr{h.highCount === 1 ? 'ies' : 'y'} <span style={{ color: RED }}>{fmtVal(h.highValue)}</span> of high risk, both dark for over {h.darkHours} hours.{' '}
-            <span style={{ color: 'var(--ink-muted)' }}>{h.closingName} is <span style={{ color: GREEN }}>closing this week</span> and {numWord(h.healthyCount).toLowerCase()} more {h.healthyCount === 1 ? 'is' : 'are'} healthy.{third}</span>
+            <span style={{ color: 'var(--ink-muted)' }}>{h.closingName} is <span style={{ color: GREEN }}>closing this week</span>.{third}</span>
           </>
         ) : (
           <>
@@ -184,7 +184,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               ? <>{numWord(high.length)} account{high.length === 1 ? '' : 's'} carr{high.length === 1 ? 'ies' : 'y'} <span style={{ color: RED }}>{fmtVal(highVal)}</span> of high risk{allDark ? `, ${high.length === 1 ? '' : high.length === 2 ? 'both ' : 'all '}dark for over 48 hours` : ''}.{' '}</>
               : <>Nothing is flagged high risk right now.{' '}</>}
             <span style={{ color: 'var(--ink-muted)' }}>
-              {closingNow ? <>{closingNow.name.split(' ')[0]} is <span style={{ color: GREEN }}>closing this week</span>{healthy.length ? <> and {numWord(healthy.length).toLowerCase()} more {healthy.length === 1 ? 'is' : 'are'} healthy</> : null}.</>
+              {closingNow ? <>{closingNow.name.split(' ')[0]} is <span style={{ color: GREEN }}>closing this week</span>.</>
                 : healthy.length ? <>{numWord(healthy.length)} account{healthy.length === 1 ? ' is' : 's are'} healthy.</> : null}
               {third}
             </span>

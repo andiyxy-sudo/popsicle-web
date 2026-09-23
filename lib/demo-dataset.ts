@@ -760,7 +760,7 @@ export const DEMO_TEAM: TeamModel = {
   // Mobile Team Intelligence is the source of truth (v11.23)
   protectedTotal: 560_000, protectedDeltaPct: 38,
   waitingCount: 7, waitingValue: 2_170_000, criticalWithOneRep: false,
-  headline: 'Mike Ross is 2.5x slower than the team median on first action, and two critical accounts lack a second touch.',
+  headline: 'Mike Ross is 2.5x slower on first action.',
   bullets: [
     { tone: '#2f8f5b', text: 'Exec calls have 83% success rate vs 74% for follow-ups, the highest-impact intervention by far.' },
     { tone: '#E85A25', text: "Andy G's 2.1h response is half the team median. 12 signals caught, 4 deals recovered, $284K protected." },
@@ -841,7 +841,7 @@ export const DEMO_TEAM: TeamModel = {
   criticalOwned: '8/10', activeFollowUp: '6/10',
   unowned: { count: 2, risk: 245_000, stale: 2 },
   followThrough: 78, loopClosure: 71,
-  executionInsight: 'Mike Ross is 2.5x slower than team median on first action. Two critical accounts lack second-touch. Loop closure rate 13 points below team average.',
+  executionInsight: 'Mike Ross is 2.5x slower than team median on first action. Loop closure rate 13 points below team average.',
   actionsFeed: [
     { rep: 'Andy G', account: 'Brightwave', when: 'Mar 18', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
     { rep: 'Mike Ross', account: 'Nexus AI', when: 'Mar 11', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },

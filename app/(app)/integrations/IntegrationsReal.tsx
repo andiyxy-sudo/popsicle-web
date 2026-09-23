@@ -566,8 +566,8 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
               {feeding > 0 ? <><span style={{ color: 'var(--accent)' }}>{feeding.toLocaleString()} signal{feeding === 1 ? '' : 's'}</span></> : 'your pipeline'}
               {indexed30 > 0 ? <> in the last 30 days</> : null}.{' '}
               <span style={{ color: 'var(--ink-muted)' }}>
-                {leader && leaderShare > 0 ? <>{leader.name} carries {leaderShare}% of the volume{missing.length ? '; ' : '.'}</> : null}
-                {missing.length ? <>{missing.join(' and ')} {missing.length === 1 ? 'is' : 'are'} still unconnected.</> : null}
+                {leader && leaderShare > 0 ? <>{leader.name} carries <span style={{ color: 'var(--good, #2f8f5b)' }}>{leaderShare}%</span> of the volume{missing.length ? '; ' : '.'}</> : null}
+                {missing.length ? <>{missing.join(' and ')} {missing.length === 1 ? 'is' : 'are'} still <span style={{ color: 'var(--critical, #c43d2b)' }}>unconnected</span>.</> : null}
                 {!leaderShare && !missing.length ? <>Every available source is connected.</> : null}
               </span>
             </>

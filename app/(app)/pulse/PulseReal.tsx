@@ -750,9 +750,17 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const topAcct = atRiskX.parts[0]?.label
     const topSignal = topAcct ? open.filter(sg => sg.account_name === topAcct && sg.severity === 'high')
       .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))[0] : undefined
+    // keep the first few words, and never end on a dangling word like "after" or "and"
+    const shortTitle = (t: string) => {
+      const w = t.split(/\s+/)
+      if (w.length <= 7) return t.replace(/[,;:]$/, '')
+      let cut = w.slice(0, 7)
+      while (cut.length > 3 && /^(after|and|with|for|in|on|to|the|a|of|from|by|at|before|since)$/i.test(cut[cut.length - 1])) cut = cut.slice(0, -1)
+      return cut.join(' ').replace(/[,;:]$/, '')
+    }
     const third = topAcct && topSignal?.title
-      ? <> Start with <span style={{ color: 'var(--ink)' }}>{topAcct}</span>: {redWords(String(topSignal.title))}{freshCount > 0 ? `, one of ${freshCount} signal${freshCount === 1 ? '' : 's'} in the last day` : ''}.</>
-      : topAcct ? <> Start with <span style={{ color: 'var(--ink)' }}>{topAcct}</span>, the account carrying the most of it.</>
+      ? <> <span style={{ color: 'var(--ink)', whiteSpace: 'nowrap' }}>{topAcct}</span> first: {redWords(shortTitle(String(topSignal.title)))}.</>
+      : topAcct ? <> <span style={{ color: 'var(--ink)', whiteSpace: 'nowrap' }}>{topAcct}</span> first, the account carrying the most of it.</>
       : freshCount > 0 ? <> {freshCount} signal{freshCount === 1 ? '' : 's'} arrived in the last day, none of them critical.</>
       : protectedVal > 0 ? <> {formatCurrency(protectedVal)} has been protected so far this quarter.</> : null
     return (
