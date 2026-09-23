@@ -9,6 +9,8 @@ import { AgentNote, Dateline } from './AgentNote'
 import { getSettingsNow, useSettings } from '@/lib/useSettings'
 import { inQuietHours, inWorkingHours, pastMorningDigest } from '@/lib/settings'
 import { track } from '@/lib/analytics'
+import { readIntent, type Action } from '@/lib/companion/actions'
+import { runAction } from '@/lib/companion/run'
 
 // The Ask bar that sits on every page, with the conversation pulling up out of it.
 // Ask a question from Acme's page and the answer rises above the bar, about Acme,
@@ -28,6 +30,7 @@ const LABEL: Record<string, string> = { pulse: 'Pulse', portfolio: 'Portfolio', 
 export function AskDock() {
   const pathname = usePathname()
   const router = useRouter()
+  const confirmedAct = useRef<Action | null>(null)   // an action waiting for a yes
   const [ask, setAsk] = useState('')
   const [msgs, setMsgs] = useState<Msg[]>([])
   const loaded = useRef(false)
@@ -175,6 +178,30 @@ export function AskDock() {
     setLatestOnly(true)
     const q = (override ?? ask).trim()
     if (!q || busy) return
+    // the companion: do it, rather than talk about it
+    {
+      const act = readIntent(q)
+      if (act) {
+        setMsgs(m => [...m, { role: 'user', content: q }]); setAsk(''); setOpen(true)
+        if (act.confirm && !confirmedAct.current) { confirmedAct.current = act; setMsgs(m => [...m, { role: 'assistant', content: `${act.confirm} — say "yes" and I will.` }]); return }
+        confirmedAct.current = null
+        try {
+          const res = await runAction(act, path => router.push(path))
+          setMsgs(m => [...m, { role: 'assistant', content: `${act.say}\n\n${res.ok ? '✓ ' : ''}${res.done}` }])
+        } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: `I could not finish that: ${String((e as Error).message ?? e)}` }]) }
+        return
+      }
+      // a plain yes runs the action that was waiting
+      if (confirmedAct.current && /^(yes|yep|do it|go ahead|confirm)\b/i.test(q)) {
+        const act2 = confirmedAct.current; confirmedAct.current = null
+        setMsgs(m => [...m, { role: 'user', content: q }]); setAsk('')
+        try {
+          const res = await runAction(act2, path => router.push(path))
+          setMsgs(m => [...m, { role: 'assistant', content: `${res.ok ? '✓ ' : ''}${res.done}` }])
+        } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: `I could not finish that: ${String((e as Error).message ?? e)}` }]) }
+        return
+      }
+    }
     const next: Msg[] = [...msgs, { role: 'user', content: q }]
     setMsgs(next); setAsk(''); setOpen(true); setBusy(true); followRef.current = true
     const my = ++gen.current

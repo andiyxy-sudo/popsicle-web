@@ -4146,3 +4146,10 @@ html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a 
 .ans-head .ask-copy:hover { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
 .ans-head span[class*="live-dot"] { background: #fff !important; }
 .ans-head > span:last-child > span:last-child { color: rgba(255,255,255,.9) !important; }
+/* v11.202: the companion's confirm row */
+.cmp-confirm { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-top: 14px; padding: 12px 14px; background: var(--inset, #F4F0E8);
+  font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; color: var(--ink); }
+.cmp-yes, .cmp-no { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; background: none; border: 0; cursor: pointer; padding: 0; }
+.cmp-yes { color: var(--accent, #E85A25); }
+.cmp-no { color: var(--ink-faint, #A09C97); }
+.cmp-yes:hover, .cmp-no:hover { text-decoration: underline; text-underline-offset: 3px; }

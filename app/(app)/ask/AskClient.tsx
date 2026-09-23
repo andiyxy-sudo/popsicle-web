@@ -13,6 +13,8 @@ import { Answer, inline, splitNumbered, splitVerdict, VerdictAnswer } from '@/co
 import { AGENT_ENABLED } from '@/lib/agent/config'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
+import { readIntent, type Action } from '@/lib/companion/actions'
+import { runAction } from '@/lib/companion/run'
 
 interface Msg { role: 'user' | 'assistant'; content: string }
 
@@ -531,9 +533,30 @@ export function AskClient() {
     return () => clearInterval(t)
   }, [busy])
 
-  async function send(q?: string) {
+  async function send(q?: string, confirmed = false) {
     const question = (q ?? input).trim()
     if (!question || busy) return
+    const q0 = question
+    lastAsk.current = q0
+    // the companion: when the message is something Popsicle can DO, do it instead of answering
+    {
+      const act = readIntent(q0)
+      if (act) {
+        setMsgs(m => [...m, { role: 'user', content: q0 }])
+        setInput('')
+        if (act.confirm && !confirmed) { setPending(act); return }
+        setPending(null)
+        const said = act.say
+        try {
+          const res = await runAction(act, path => router.push(path))
+          setMsgs(m => [...m, { role: 'assistant', content: `${said}\n\n${res.ok ? '✓ ' : ''}${res.done}` }])
+        } catch (e) {
+          setMsgs(m => [...m, { role: 'assistant', content: `I could not finish that: ${String((e as Error).message ?? e)}` }])
+        }
+        return
+      }
+    }
+
     const next: Msg[] = [...msgs, { role: 'user', content: question }]
     setMsgs(next); setInput(''); setBusy(true); setConfirmClear(false)
     const myGen = gen.current
@@ -615,6 +638,8 @@ export function AskClient() {
     ledger: { atRisk: string; protected: string; critical: number } }
   const [open0, setOpen0] = useState<Opening | null>(null)
   const [firstName, setFirstName] = useState('')
+  const [pending, setPending] = useState<Action | null>(null)   // an action waiting for a yes
+  const lastAsk = useRef('')
   useEffect(() => {
     let dead = false
     fetch('/api/ask/opening').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) { setOpen0(j as Opening); KNOWN_ACCOUNTS = (j.accounts ?? []) as string[] } }).catch(() => {})
@@ -871,6 +896,13 @@ export function AskClient() {
         </div>
       )}
 
+      {pending && (
+        <div className="cmp-confirm">
+          <span>{pending.confirm}</span>
+          <button className="cmp-yes" onClick={() => { const a = pending; setPending(null); if (a) send(a.confirm ? lastAsk.current : '', true) }}>Yes, do it</button>
+          <button className="cmp-no" onClick={() => { setPending(null); setMsgs(m => [...m, { role: 'assistant', content: 'Left it alone.' }]) }}>Cancel</button>
+        </div>
+      )}
       <div style={{ display: 'flex', gap: 10, marginTop: started ? 0 : 26, paddingTop: 18, borderTop: started ? '1px solid var(--hairline, #EFEAE1)' : 'none', flexShrink: 0 }}>
         <input
           value={input}
