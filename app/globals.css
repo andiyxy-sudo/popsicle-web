@@ -4126,3 +4126,15 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 @media (max-width: 900px) { .cm-cols { grid-template-columns: 1fr; gap: 18px; } .cm-rail { border-left: 0; padding-left: 0; border-top: 1px solid var(--hairline, #EFEAE1); padding-top: 14px; } }
 .cm-chan, .cm-chan svg { width: 16px !important; height: 16px !important; }
 .cm-chan { align-items: center; }
+
+/* v11.198: "Start fresh" in the house action style; bold inside answers a touch lighter */
+.ask-fresh { font-family: var(--font-mono, 'DM Mono', monospace) !important; font-size: 9.5px !important; font-weight: 400 !important; letter-spacing: 1.3px; text-transform: uppercase;
+  gap: 6px; padding: 0 !important; border: 0 !important; background: none !important; color: var(--ink-faint, #A09C97) !important; }
+.ask-fresh:hover { color: var(--accent, #E85A25) !important; background: none !important; text-decoration: underline; text-underline-offset: 3px; }
+.ask-fresh.danger { color: var(--critical, #c43d2b) !important; background: none !important; }
+.ask-fresh.danger:hover { color: #a33323 !important; }
+.ask-fresh span[aria-hidden] { font-size: 11px !important; }
+/* bold inside an answer: 20% lighter than full ink, so emphasis reads without shouting */
+.ans b, .ans strong, [class^="ans-"] b, [class^="ans-"] strong, .dock-a b, .dock-a strong, .ask-a b, .ask-a strong { color: #3E3B38; }
+html[data-theme="dark"] .ans b, html[data-theme="dark"] .ans strong, html[data-theme="dark"] [class^="ans-"] b,
+html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a b, html[data-theme="dark"] .dock-a strong { color: #D8D2C8; }
