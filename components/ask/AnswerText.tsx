@@ -55,7 +55,18 @@ export function VerdictBanner({ verdict, reason, tone }: { verdict: string; reas
 export function parseVerdictBody(rest: string) {
   const lines = rest.split('\n')
   const srcLine = lines.find(l => /^\s*\**\s*sources\s*:?\**/i.test(l))
-  const sources = srcLine ? srcLine.replace(/^\s*\**\s*sources\s*:?\s*\**\s*/i, '').replace(/\.$/, '').split(/\s*[,;·]\s*/).map(x => x.trim()).filter(Boolean) : []
+  // split on separators OUTSIDE quotes, so a quoted signal keeps its own commas
+  const splitSources = (line: string) => {
+    const out: string[] = []; let buf = '', q = false
+    for (const ch of line) {
+      if (ch === '"' || ch === '\u201c' || ch === '\u201d') { q = !q; buf += ch; continue }
+      if (!q && /[,;·]/.test(ch)) { out.push(buf); buf = ''; continue }
+      buf += ch
+    }
+    out.push(buf)
+    return out.map(x => x.trim()).filter(Boolean)
+  }
+  const sources = srcLine ? splitSources(srcLine.replace(/^\s*\**\s*sources\s*:?\s*\**\s*/i, '').replace(/\.$/, '')) : []
   const body = lines.filter(l => l !== srcLine).join(' ').replace(/\s+/g, ' ').trim()
     // a label the model forgot to bold ("The signal: …" at a sentence start) still gets its own row
     .replace(/(^|[.!?]\s+)(?!\*\*)([A-Z][A-Za-z]+(?: [A-Za-z]+){0,2}):\s+/g, '$1**$2:** ')
@@ -70,6 +81,25 @@ export function parseVerdictBody(rest: string) {
     if (m.index === re.lastIndex) re.lastIndex++
   }
   return { intro, rows, sources }
+}
+
+// A source names evidence that exists somewhere in the app: a signal, a forecast record, an account's timeline.
+// This works out where to send someone when they click it; anything unrecognised stays plain text.
+function sourceHref(src: string): string | null {
+  const quoted = /[""]([^""]+)[""]/.exec(src)
+  const acct = /^([A-Z][\w.&-]*(?: [A-Z][\w.&-]*){0,2})\s+(?:deal\s+|account\s+)?(?:timeline|history|record)/.exec(src.trim())
+  if (acct) return `/accounts/${encodeURIComponent(acct[1])}?tab=timeline`
+  if (/^signal\b/i.test(src) && quoted) return `/signals?q=${encodeURIComponent(quoted[1])}`
+  if (/forecast/i.test(src)) return '/forecast'
+  if (/commit/i.test(src)) return '/forecast'
+  if (/review/i.test(src)) return '/review'
+  if (/decision/i.test(src)) return '/review?tab=decisions'
+  if (/portfolio|book/i.test(src)) return '/portfolio'
+  if (/team|rep\b/i.test(src)) return '/team'
+  if (quoted) return `/signals?q=${encodeURIComponent(quoted[1])}`
+  const bare = /^(gmail|slack|whatsapp|zoom|outlook|hubspot|calendar|fireflies)\b/i.exec(src)
+  if (bare) return '/integrations'
+  return null
 }
 
 export function VerdictAnswer({ vd }: { vd: { verdict: string; reason: string; tone: string; rest: string } }) {
@@ -93,7 +123,12 @@ export function VerdictAnswer({ vd }: { vd: { verdict: string; reason: string; t
       {sources.length > 0 && (
         <div className="va-sources">
           <span className="va-label">Sources</span>
-          {sources.map((x, i) => <span key={i} className="va-src">{x}</span>)}
+          {sources.map((x, i) => {
+            const target = sourceHref(x)
+            return target
+              ? <a key={i} className="va-src va-src-go" href={target}>{x}<span aria-hidden> ↗</span></a>
+              : <span key={i} className="va-src">{x}</span>
+          })}
         </div>
       )}
     </div>
