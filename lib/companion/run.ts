@@ -15,6 +15,12 @@ const saveMeta = async (data: Record<string, unknown>) => {
 }
 const meta = async () => ((await createClient().auth.getUser()).data.user?.user_metadata ?? {}) as Record<string, unknown>
 
+// the draft the companion is holding, so "send it" knows what to send
+export type HeldDraft = { to: string; subject: string; body: string; signal_id?: string; account?: string } | null
+let held: HeldDraft = null
+export const heldDraft = () => held
+export const holdDraft = (d: HeldDraft) => { held = d }
+
 export async function runAction(a: Action, go: (path: string) => void): Promise<RunResult> {
   switch (a.id) {
     case 'connect_source': {
@@ -70,6 +76,33 @@ export async function runAction(a: Action, go: (path: string) => void): Promise<
       const j = await r.json().catch(() => ({}))
       if (!r.ok) return { ok: false, done: `Couldn't record that decision: ${j.error ?? 'it failed to save'}.` }
       return { ok: true, done: `Recorded on ${a.params.account}, with today's evidence attached.` }
+    }
+    case 'draft_reply': {
+      const account = String(a.params.account ?? '')
+      if (!account) return { ok: false, done: 'Tell me which account and I will draft it.' }
+      const sr = await fetch(`/api/companion/signal?account=${encodeURIComponent(account)}`)
+      const sig = await sr.json().catch(() => ({}))
+      if (!sr.ok || !sig?.id) return { ok: false, done: `I have no open signal for ${account} to base a reply on.` }
+      const r = await fetch('/api/draft', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ signal_id: sig.id }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j?.body) return { ok: false, done: `I could not draft that: ${j?.error ?? 'the draft failed'}.` }
+      holdDraft({ to: j.to, subject: j.subject, body: j.body, signal_id: sig.id, account })
+      const preview = `To: ${j.to}\nSubject: ${j.subject}\n\n${j.body}`
+      const tail = a.params.send
+        ? 'You asked me to send it as well: say "send it" and it goes from your Gmail. I will not send anything you have not seen.'
+        : 'Say "send it" and I will send it from your Gmail, or edit it on the Signals page.'
+      return { ok: true, done: `Here it is, from "${sig.title}":\n\n${preview}\n\n${tail}` }
+    }
+    case 'send_draft': {
+      const d = held
+      if (!d) return { ok: false, done: 'I have no draft in hand. Ask me to draft one first.' }
+      const r = await fetch('/api/send', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to: d.to, subject: d.subject, body: d.body, signal_id: d.signal_id, account_name: d.account, mode: 'manual' }) })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok || !j?.ok) return { ok: false, done: j?.reason ?? 'The send failed.' }
+      held = null
+      if (j.demo) return { ok: true, done: `Nothing actually left the building: ${j.note}` }
+      return { ok: true, done: `Sent to ${d.to}${j.threaded ? ', in the existing thread' : ''}. Recorded against ${d.account ?? 'the account'}.` }
     }
     case 'start_review': go('/review'); return { ok: true, done: 'Review started.', navigated: '/review' }
     case 'export_data': go('/settings?panel=Data%20%26%20privacy'); return { ok: true, done: 'Opened Data & privacy: press Export everything.', navigated: '/settings' }

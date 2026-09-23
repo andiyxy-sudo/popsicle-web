@@ -255,10 +255,10 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       const supa = createClient()
       const { data: { session } } = await supa.auth.getSession()
       if (!session) { window.location.href = '/login'; return }
-      const r = await fetch(`${SUPA_URL}/functions/v1/send-email`, {
+      const r = await fetch('/api/send', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
-        body: JSON.stringify({ action: 'send', to: draft.to, cc: draft.cc || '', subject: draft.subject, body: draft.body, signal_id: draftFor.id }),
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ to: draft.to, cc: draft.cc || '', subject: draft.subject, body: draft.body, signal_id: draftFor.id, account_name: draftFor.account_name, mode: 'manual' }),
       })
       const data = await r.json().catch(() => ({}))
       if (r.ok && data?.ok) {
