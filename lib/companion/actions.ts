@@ -109,11 +109,14 @@ export function readIntent(raw: string): Action | null {
   if (/send with me|approve every|nothing without me/.test(t)) return { id: 'set_send_mode', params: { mode: 'with' }, say: 'Every draft will wait for you.' }
 
   // drafting and sending
-  if (/\b(draft|write|compose)\b/.test(t) && /(reply|email|follow[- ]?up|message|note)/.test(t)) {
-    const m = /(?:to|for)\s+([A-Z][\w.&-]*(?: [A-Z][\w.&-]*){0,2})/.exec(raw)
-    const andSend = /and send|then send/.test(t)
-    return { id: 'draft_reply', params: { account: m ? m[1].trim() : '', send: andSend },
-      say: m ? `Drafting a reply for ${m[1].trim()}, grounded in their latest signal.` : 'Which account should I draft for?' }
+  if ((/\b(draft|write|compose)\b/.test(t) && /(reply|email|follow[- ]?up|message|note)/.test(t))
+    || /\bsend (an? )?(email|note|message|follow[- ]?up)\b/.test(t)) {
+    const m = /(?:to|for|up to|at)\s+([A-Z][\w.&-]*(?: [A-Z][\w.&-]*){0,2})/.exec(raw)
+    const about = /\babout\s+(.{3,80})$/i.exec(raw.trim())
+    const andSend = /and send|then send|^send/i.test(t)
+    const acct = m ? m[1].trim() : ''
+    return { id: 'draft_reply', params: { account: acct, send: andSend, intent: about ? about[1].trim() : '' },
+      say: acct ? `Drafting${about ? ` a note about ${about[1].trim()}` : ' a reply'} for ${acct}, grounded in their latest signal${andSend ? '. You will see it before anything is sent' : ''}.` : 'Which account should I draft for?' }
   }
   if (/^(send it|send that|send the draft|go ahead and send)\b/.test(t)) return { id: 'send_draft', params: {}, say: 'Sending it from your Gmail.', confirm: 'Send this message from your Gmail?' }
 

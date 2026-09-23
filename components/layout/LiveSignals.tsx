@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AGENT_ENABLED } from '@/lib/agent/config'
@@ -25,14 +25,26 @@ const SRC: Record<string, string> = { gmail: 'Gmail', whatsapp: 'WhatsApp', slac
 
 export function LiveSignals({ userId, demo = false }: { userId: string; demo?: boolean }) {
   const [toasts, setToasts] = useState<Toast[]>([])
+  const queued = useRef<Toast[]>([])   // notes that arrived while the Ask sheet was open
   const router = useRouter()
 
   const dismiss = useCallback((id: string) => setToasts(t => t.filter(x => x.id !== id)), [])
   const push = useCallback((t: Toast) => {
     // v11.88: with the agent on, the agent tells you about the signal instead of a toast
     if (AGENT_ENABLED) { window.dispatchEvent(new CustomEvent('agent:signal', { detail: t })); return }
+    // don't talk over the Ask sheet: hold the note until it is closed
+    if (typeof document !== 'undefined' && document.documentElement.dataset.askOpen === '1') { queued.current.push(t); return }
     setToasts(prev => [t, ...prev.filter(x => x.id !== t.id)].slice(0, 3))
     setTimeout(() => dismiss(t.id), 9000)
+  }, [dismiss])
+
+  useEffect(() => {   // when the sheet closes, show at most one of the notes that waited
+    const t = setInterval(() => {
+      if (typeof document === 'undefined' || document.documentElement.dataset.askOpen === '1') return
+      const next = queued.current.shift()
+      if (next) { setToasts(prev => [next, ...prev.filter(x => x.id !== next.id)].slice(0, 3)); setTimeout(() => dismiss(next.id), 9000) }
+    }, 1500)
+    return () => clearInterval(t)
   }, [dismiss])
 
   useEffect(() => {

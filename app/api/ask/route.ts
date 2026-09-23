@@ -20,6 +20,9 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   // Settings that shape answers: language, and the escalation thresholds the user chose
   const my = readSettings((user?.user_metadata ?? {}) as Record<string, unknown>)
+  const { data: gmailInteg } = await supabase.from('integrations').select('scope, is_active, needs_reconnect').eq('user_id', user?.id ?? '').eq('provider', 'gmail').maybeSingle()
+  const isDemo = (user?.email ?? '').toLowerCase() === 'demo@popsicle-labs.app'
+  const canSend = !!gmailInteg?.is_active && String(gmailInteg?.scope ?? '').includes('gmail.send') && !gmailInteg?.needs_reconnect
   const meta = (user?.user_metadata ?? {}) as { role?: string; send_mode?: string; send_rules?: { kinds?: string[]; neverExecs?: boolean; neverCritical?: boolean; maxDeal?: string; hold?: string; notify?: string }; industry?: string }
   const rules = meta.send_rules ?? {}
   // What Popsicle knows about how this person has set it up, so questions about alerts, quiet hours and
@@ -30,7 +33,11 @@ Thresholds: a buyer counts as gone dark after ${my.thresholds.daysDark} days of 
 Role: ${(meta as { role?: string }).role?.trim() || 'not set'} ${(meta as { role?: string }).role?.trim() ? `(so Pulse opens in the ${LENS_LABEL[resolveLens((meta as { role?: string }).role, null)]}: ${LENS_WHAT[resolveLens((meta as { role?: string }).role, null)]})` : '(with no title set, Pulse shows the standard view; setting a title in the profile changes what it shows first)'}
 Alerts (Settings > Notifications, each on/off): Risk alerts ${my.notifs.risk ? 'ON' : 'OFF'} (new signals in the Ask bar; respects quiet hours and the minimum deal size), Weekly summary ${my.notifs.digest ? 'ON' : 'OFF'} (the week-in-review card on Pulse), Pre-meeting briefs ${my.notifs.brief ? 'ON' : 'OFF'} (the brief card on Pulse), Push notifications ${my.notifs.push ? 'ON' : 'OFF'} (browser notifications for critical signals). Email digest, Slack DMs and handled-signal emails are not built yet.
 Quiet hours ${my.quiet.from} to ${my.quiet.to}; working hours ${my.work.start} to ${my.work.end} (outside these, only critical signals interrupt); the morning brief appears at ${my.morningDigest}.
-Sending (Settings > Drafting > Sending): ${meta.send_mode === 'without' ? `Popsicle may send its own drafts, limited to: ${(rules.kinds ?? []).join(', ') || 'nothing chosen yet'}; never on its own to ${[rules.neverExecs !== false ? 'executives' : null, rules.neverCritical !== false ? 'accounts at critical risk' : null].filter(Boolean).join(' or ') || 'no exclusions'}; only on deals up to ${rules.maxDeal ?? '$100K'}; held ${rules.hold ?? '30 min'} before going out; reported ${(rules.notify ?? 'Every time').toLowerCase()}. Automatic sending is not active until email sending is connected, so every draft still waits for approval.` : 'every draft waits for the user; nothing is sent automatically.'}
+Sending (Settings > Drafting > Sending): ${isDemo
+  ? 'This is the DEMO workspace: there is no mailbox behind it. Drafting works and is worth showing, but nothing can actually be sent; say so plainly rather than quoting connection problems.'
+  : canSend
+  ? `Gmail sending IS connected: Popsicle can send a draft from the user's own Gmail once they approve it, and a reply threads into the original conversation. ${meta.send_mode === 'without' ? `Automatic sending is on, limited to: ${(rules.kinds ?? []).join(', ') || 'nothing chosen yet'}; never to ${[rules.neverExecs !== false ? 'executives' : null, rules.neverCritical !== false ? 'accounts at critical risk' : null].filter(Boolean).join(' or ') || 'no exclusions'}; only on deals up to ${rules.maxDeal ?? '$100K'}; held ${rules.hold ?? '30 min'} first; reported ${(rules.notify ?? 'Every time').toLowerCase()}. Anything outside those limits still waits for approval.` : 'Every draft waits for the user to approve it; nothing is sent automatically.'} In chat the user can say "draft a reply to <account>" and then "send it".`
+  : `Gmail sending is NOT connected for this user (Popsicle can read their mail but not send). Offer to draft, and say they need to reconnect Gmail and allow sending before anything can go out.`}
 When asked what to turn off or turn down, answer with these settings by name, say where each one lives, and tie the advice to the signal volume you can see.`
 
 

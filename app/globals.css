@@ -4153,3 +4153,6 @@ html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a 
 .cmp-yes { color: var(--accent, #E85A25); }
 .cmp-no { color: var(--ink-faint, #A09C97); }
 .cmp-yes:hover, .cmp-no:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* v11.206: the Ask sheet's header carries the popsicle mark */
+.dock-mark { display: inline-flex; align-items: center; flex: none; margin-right: 2px; }
+.dock-mark svg { display: block; }

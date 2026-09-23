@@ -37,6 +37,11 @@ export function AskDock() {
   // restore after mount (never during render, so server and client HTML agree)
   useEffect(() => { try { const r = sessionStorage.getItem('ask:dock'); if (r) setMsgs(JSON.parse(r) as Msg[]) } catch { /* ignore */ } loaded.current = true }, [])
   const [open, setOpen] = useState(false)
+  useEffect(() => {   // the signal pop-ups stay quiet while this sheet is open
+    if (typeof document === 'undefined') return
+    document.documentElement.dataset.askOpen = open ? '1' : '0'
+    return () => { document.documentElement.dataset.askOpen = '0' }
+  }, [open])
   const [busy, setBusy] = useState(false)
   const [streaming, setStreaming] = useState(false)
   // what the agent has said to you this session, shown above your questions
@@ -287,7 +292,13 @@ export function AskDock() {
       {open && (hasConvo || showSuggest) && (
         <div className={`dock-sheet${moreBelow ? ' more-below' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
-            <span className="agent-mark" />
+            <span className="dock-mark" aria-hidden>
+              <svg viewBox="0 0 44 80" width="15" height="24" fill="none">
+                <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="#fff" fillOpacity=".95" />
+                <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#fff" fillOpacity=".7" />
+                <path d="M25 16L17 34h6l-4 14 12-18h-6l4-14z" fill="#FF6B35" />
+              </svg>
+            </span>
             <span className="dock-from">{AGENT_NAME}</span>
             {msgs.length === 0 && said[0]?.kind === 'brief' ? <span className="dock-about">· morning brief</span> : about && <span className="dock-about">· about {about}</span>}
             <span className="dock-head-actions">

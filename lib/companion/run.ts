@@ -83,7 +83,7 @@ export async function runAction(a: Action, go: (path: string) => void): Promise<
       const sr = await fetch(`/api/companion/signal?account=${encodeURIComponent(account)}`)
       const sig = await sr.json().catch(() => ({}))
       if (!sr.ok || !sig?.id) return { ok: false, done: `I have no open signal for ${account} to base a reply on.` }
-      const r = await fetch('/api/draft', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ signal_id: sig.id }) })
+      const r = await fetch('/api/draft', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ signal_id: sig.id, intent: String(a.params.intent ?? '') }) })
       const j = await r.json().catch(() => ({}))
       if (!r.ok || !j?.body) return { ok: false, done: `I could not draft that: ${j?.error ?? 'the draft failed'}.` }
       holdDraft({ to: j.to, subject: j.subject, body: j.body, signal_id: sig.id, account })
