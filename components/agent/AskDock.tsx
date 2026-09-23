@@ -293,7 +293,7 @@ export function AskDock() {
         <div className={`dock-sheet${moreBelow ? ' more-below' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
             <span className="dock-mark" aria-hidden>
-              <svg viewBox="0 0 44 80" width="11" height="18" fill="none">
+              <svg viewBox="0 0 44 80" width="12" height="20" fill="none">
                 <path d="M4 22C4 10.954 12.954 2 24 2h0c11.046 0 20 8.954 20 20v28c0 2.21-1.79 4-4 4H8c-2.21 0-4-1.79-4-4V22z" fill="#fff" fillOpacity=".95" />
                 <path d="M17 54h14v20a4 4 0 01-4 4h-6a4 4 0 01-4-4V54z" fill="#fff" fillOpacity=".7" />
                 <path d="M25 16L17 34h6l-4 14 12-18h-6l4-14z" fill="#FF6B35" />
