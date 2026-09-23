@@ -170,7 +170,9 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         const topShare = bookTotal > 0 ? Math.round((topTwo / bookTotal) * 100) : 0
         const slipping = accounts.find(a => (a.health_score ?? 100) >= 60 && (a.health_score ?? 100) < 72 && a.risk_level !== 'high')
         const third = accounts.length >= 3 && topShare >= 40
-          ? <> {byValue[0].name} and {byValue[1].name} are <span style={{ color: 'var(--accent, #E85A25)' }}>{topShare}%</span> of the book.</>
+          ? (byValue[0].name.length + byValue[1].name.length > 30
+            ? <> The top two accounts are <span style={{ color: 'var(--accent, #E85A25)' }}>{topShare}%</span> of the book.</>
+            : <> {byValue[0].name} and {byValue[1].name} are <span style={{ color: 'var(--accent, #E85A25)' }}>{topShare}%</span> of the book.</>)
           : slipping ? <> {slipping.name} has quietly <span style={{ color: RED }}>slipped</span> to <span style={{ color: RED }}>{slipping.health_score}</span>, worth a look before it hardens.</>
           : accounts.length > 0 ? <> {accounts.length} account{accounts.length === 1 ? '' : 's'} in the book, worth {fmtVal(bookTotal)} a year.</> : null
         const headline = h ? (

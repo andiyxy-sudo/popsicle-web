@@ -293,9 +293,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {/* narrative */}
       <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
         {m.riskDeltaPct !== 0
-          ? <>Revenue at risk is {m.riskDeltaPct > 0 ? 'up' : 'down'} <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}><X m="risk_change" days={range}>{Math.abs(m.riskDeltaPct)}%</X></span> in {range} days{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
+          ? <>Revenue at risk is {m.riskDeltaPct > 0 ? 'up' : 'down'} <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}><X m="risk_change" days={range}>{Math.abs(m.riskDeltaPct)}%</X></span> in {range} days{m.driver && !/^other$/i.test(m.driver) ? <>, driven by {m.driver}</> : null}.{' '}</>
           : <>Revenue at risk is flat over the last {range} days.{' '}</>}
-        <span style={{ color: MUTED }}>Interventions are <span style={{ color: ACCENT }}>holding</span> at <span style={{ color: ACCENT }}><X m="holding" days={range}>{m.holdingPct}%</X></span>, <span style={{ color: GREEN }}>{fmtMoney(m.protectedTotal)}</span> <span style={{ color: GREEN }}>protected</span>.</span>
+        <span style={{ color: MUTED }}>Interventions are <span style={{ color: ACCENT }}>holding</span> at <span style={{ color: ACCENT }}><X m="holding" days={range}>{m.holdingPct}%</X></span>, {m.protectedTotal > 0 ? <><span style={{ color: GREEN }}>{fmtMoney(m.protectedTotal)}</span> <span style={{ color: GREEN }}>protected</span>.</> : <>nothing lost to silence yet.</>}</span>
       </h1>
 
       {m.bullets.length > 0 && (

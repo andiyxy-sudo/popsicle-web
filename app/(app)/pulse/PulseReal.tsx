@@ -751,16 +751,25 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const topSignal = topAcct ? open.filter(sg => sg.account_name === topAcct && sg.severity === 'high')
       .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))[0] : undefined
     // keep the first few words, and never end on a dangling word like "after" or "and"
+    const longName = (topAcct?.length ?? 0) > 18            // a long company name eats a whole line
     const shortTitle = (t: string) => {
+      const keep = longName ? 5 : 7
       const w = t.split(/\s+/)
-      if (w.length <= 7) return t.replace(/[,;:]$/, '')
-      let cut = w.slice(0, 7)
-      while (cut.length > 3 && /^(after|and|with|for|in|on|to|the|a|of|from|by|at|before|since)$/i.test(cut[cut.length - 1])) cut = cut.slice(0, -1)
+      if (w.length <= keep) return t.replace(/[,;:]$/, '')
+      let cut = w.slice(0, keep)
+      const dangling = /^(after|and|with|for|in|on|to|the|a|an|of|from|by|at|before|since|has|have|had|is|are|was|were|not|been|will|would|can|could|should|may|might|do|does|did|no|their|his|her|its|our|that|this|next|last|other|same|more|less|very|just)$/i
+      while (cut.length > 3 && (dangling.test(cut[cut.length - 1]) || /^[\d.,]+$/.test(cut[cut.length - 1]))) cut = cut.slice(0, -1)
       return cut.join(' ').replace(/[,;:]$/, '')
     }
+    // keep a leading person's name together, so it never breaks across two lines
+    const keepName = (t: string) => {
+      const m = /^([A-Z][\w'’-]+ [A-Z][\w'’-]+)(\s[\s\S]*)?$/.exec(t)
+      if (!m) return redWords(t)
+      return <><span style={{ whiteSpace: 'nowrap' }}>{m[1]}</span>{m[2] ? redWords(m[2]) : null}</>
+    }
     const third = topAcct && topSignal?.title
-      ? <> <span style={{ color: 'var(--ink)', whiteSpace: 'nowrap' }}>{topAcct}</span> first: {redWords(shortTitle(String(topSignal.title)))}.</>
-      : topAcct ? <> <span style={{ color: 'var(--ink)', whiteSpace: 'nowrap' }}>{topAcct}</span> first, the account carrying the most of it.</>
+      ? <> <span style={{ color: 'var(--ink)', whiteSpace: longName ? 'normal' : 'nowrap' }}>{topAcct}</span> first: {keepName(shortTitle(String(topSignal.title)))}.</>
+      : topAcct ? <> <span style={{ color: 'var(--ink)', whiteSpace: longName ? 'normal' : 'nowrap' }}>{topAcct}</span> first, the account carrying the most of it.</>
       : freshCount > 0 ? <> {freshCount} signal{freshCount === 1 ? '' : 's'} arrived in the last day, none of them critical.</>
       : protectedVal > 0 ? <> {formatCurrency(protectedVal)} has been protected so far this quarter.</> : null
     return (
