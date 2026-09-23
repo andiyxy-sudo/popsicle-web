@@ -300,7 +300,9 @@ export function AskDock() {
               </svg>
             </span>
             <span className="dock-from">{AGENT_NAME}</span>
-            {msgs.length === 0 && said[0]?.kind === 'brief' ? <span className="dock-about">· morning brief</span> : about && <span className="dock-about">· about {about}</span>}
+            {msgs.length === 0 && said[0]?.kind === 'brief'
+              ? <><span className="dock-dot" aria-hidden /><span className="dock-about">morning brief</span></>
+              : about && <><span className="dock-dot" aria-hidden /><span className="dock-about">about {about}</span></>}
             <span className="dock-head-actions">
               <button onClick={openFull} title="Continue on the Ask page">Open in Ask ↗</button>
               <button onClick={startFresh} title="Clear this conversation">Start fresh</button>

@@ -4182,3 +4182,6 @@ html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a 
   letter-spacing: -.02em !important; text-transform: none !important; }
 .dock-head .dock-about { font-family: var(--font-sans, 'Outfit', sans-serif) !important; font-size: 13.5px !important; font-weight: 400 !important;
   letter-spacing: 0 !important; text-transform: none !important; color: rgba(255,255,255,.88) !important; }
+/* the separator between the name and the context: a true dot, centred, with even space either side */
+.dock-head .dock-dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255,255,255,.65); flex: none; margin: 0 2px; align-self: center; }
+.dock-head { gap: 6px; }
