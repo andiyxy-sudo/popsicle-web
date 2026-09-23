@@ -67,8 +67,9 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
     if (filter === 'decisions') { setFilter('all'); setTimeout(go, 60) } else go()
   }
 
+  // work out up front which rows start a new day, so nothing is reassigned while rendering
+  const firstOfDay = items.map((it, i) => i === 0 || dayKey(it.t) !== dayKey(items[i - 1].t))
   if (!events.length && !decisions.length) return <div className="tl2-empty">No timeline yet. Every signal and decision on this account lands here in order.</div>
-  let prevDay = ''
   return (
     <section className="tl2">
       <div className="tl2-head">
@@ -81,8 +82,8 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
       </div>
       {items.length === 0 && <div className="tl2-empty">{filter === 'decisions' ? 'No decisions recorded on this account yet. Record one in a pipeline review.' : 'No events yet.'}</div>}
       <div className="tl2-list">
-        {items.map(it => {
-          const dk = dayKey(it.t), showDate = dk !== prevDay; prevDay = dk
+        {items.map((it, idx) => {
+          const showDate = firstOfDay[idx]
           const date = new Date(it.t)
           const dateCell = <div className="tl2-date">{showDate && <><span>{date.toLocaleDateString('en-US', { month: 'short' })}</span> <b>{date.getDate()}</b></>}</div>
           if (it.kind === 'event') {

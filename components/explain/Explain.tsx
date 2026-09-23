@@ -56,7 +56,7 @@ function Node({ n, total, depth, go, color }: { n: XNode; total: number; depth: 
   if (n.evidence && !n.children?.length) return <Ev n={n} go={go} />
   const kids = n.children ?? []
   const val = n.valueText ?? (n.value != null ? money(n.value) : '')
-  const pct = n.value != null && total > 0 && depth === 0 ? Math.round(n.value / total * 100) : null
+  const pct = n.value != null && total > 0 && depth === 0 ? Math.min(100, Math.round((n.value / total) * 100)) : null
   return (
     <li className={`xpp-item${open ? ' open' : ''}${depth ? ' nested' : ''}`}>
       <button className="xpp-row" onClick={() => kids.length ? setOpen(o => !o) : n.href && go(n.href)}>
@@ -130,7 +130,11 @@ export function ExplainHost() {
     return r < 70 && g < 70 && b < 70 ? null : c   // near-black numbers keep the ink rule
   })()
   const go = (href: string) => { setReq(null); router.push(href) }
-  const total = x?.value ?? 0
+  const partsSum = (x?.parts ?? []).reduce((a, p) => a + (Number(p.value) || 0), 0)
+  const headline = x?.value ?? 0
+  // the rows add up to the headline (47 signals by severity) → share of the headline;
+  // otherwise (2 accounts, rows in money) → share of what the rows themselves add up to
+  const total = partsSum > 0 && (headline <= 0 || Math.abs(partsSum - headline) / Math.max(partsSum, headline) > 0.02) ? partsSum : headline
 
   return createPortal(
     <div ref={panel} className="xpp" style={{ left, top, width: W, ...(tone ? { borderTopColor: tone } : {}) }} role="dialog" aria-label="Where this number comes from">
