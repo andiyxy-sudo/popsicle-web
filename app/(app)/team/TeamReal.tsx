@@ -36,8 +36,8 @@ const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(x
 const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 const word = (n: number) => (n >= 0 && n <= 10 ? WORDS[n] : String(n))
 // a multiple such as "2.5x slower" means the rep is behind the team: show it in red
-const markUp = (t: string) => t.split(/(\d+(?:\.\d+)?x)(?=\s+slower)/i)
-  .map((part, k) => (/^\d+(?:\.\d+)?x$/i.test(part) ? <span key={k} style={{ color: RED }}>{part}</span> : part))
+const markUp = (t: string) => t.split(/(\d+(?:\.\d+)?x(?=\s+slower)|\blacks?\b)/i)
+  .map((part, k) => (/^(\d+(?:\.\d+)?x|lacks?)$/i.test(part) ? <span key={k} style={{ color: RED }}>{part}</span> : part))
 const fmtH = (h: number) => `${h.toFixed(1)}h`
 
 // ---------------------------------------------------------------- live model
