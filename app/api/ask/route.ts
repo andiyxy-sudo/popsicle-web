@@ -5,13 +5,34 @@ import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_AI_CONTEXT } from '@/lib/demo-ai-context'
 import { orgIdsServer } from '@/lib/org'
 import { readSettings, languageRule } from '@/lib/settings'
+import { resolveLens, LENS_LABEL, type LensId } from '@/lib/lens'
+
+// what each view puts first on Pulse, so questions about "my role" can be answered
+const LENS_WHAT: Record<LensId, string> = {
+  rep: 'their own accounts first: my revenue at risk, my open signals, what is ready for them, my book',
+  manager: 'the team first: team exposure, active cases, what is waiting on the team, caught early',
+  cro: 'the forecast first: revenue at risk, revenue protected, active signals, AI confidence',
+  cfo: 'the money first: revenue at risk, revenue protected, commit, total ARR',
+}
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   // Settings that shape answers: language, and the escalation thresholds the user chose
   const my = readSettings((user?.user_metadata ?? {}) as Record<string, unknown>)
-  const prefsNote = `\n\n# The user's settings\n${languageRule(my)} Treat a buyer as having gone dark after ${my.thresholds.daysDark} days of silence. ${my.thresholds.minDeal ? `Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.${my.industry && my.industry !== 'Other' ? ` The user's company sells in ${my.industry}; frame advice for that market where it matters.` : ''}`
+  const meta = (user?.user_metadata ?? {}) as { role?: string; send_mode?: string; send_rules?: { kinds?: string[]; neverExecs?: boolean; neverCritical?: boolean; maxDeal?: string; hold?: string; notify?: string }; industry?: string }
+  const rules = meta.send_rules ?? {}
+  // What Popsicle knows about how this person has set it up, so questions about alerts, quiet hours and
+  // sending can be answered from the real settings rather than guessed at.
+  const prefsNote = `\n\n# The user's settings (these are real, live values from their Settings page; you can answer questions about them and suggest changes)
+${languageRule(my)}
+Thresholds: a buyer counts as gone dark after ${my.thresholds.daysDark} days of silence.${my.thresholds.minDeal ? ` Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.${my.industry && my.industry !== 'Other' ? ` The user's company sells in ${my.industry}; frame advice for that market where it matters.` : ''}
+Role: ${(meta as { role?: string }).role?.trim() || 'not set'} ${(meta as { role?: string }).role?.trim() ? `(so Pulse opens in the ${LENS_LABEL[resolveLens((meta as { role?: string }).role, null)]}: ${LENS_WHAT[resolveLens((meta as { role?: string }).role, null)]})` : '(with no title set, Pulse shows the standard view; setting a title in the profile changes what it shows first)'}
+Alerts (Settings > Notifications, each on/off): Risk alerts ${my.notifs.risk ? 'ON' : 'OFF'} (new signals in the Ask bar; respects quiet hours and the minimum deal size), Weekly summary ${my.notifs.digest ? 'ON' : 'OFF'} (the week-in-review card on Pulse), Pre-meeting briefs ${my.notifs.brief ? 'ON' : 'OFF'} (the brief card on Pulse), Push notifications ${my.notifs.push ? 'ON' : 'OFF'} (browser notifications for critical signals). Email digest, Slack DMs and handled-signal emails are not built yet.
+Quiet hours ${my.quiet.from} to ${my.quiet.to}; working hours ${my.work.start} to ${my.work.end} (outside these, only critical signals interrupt); the morning brief appears at ${my.morningDigest}.
+Sending (Settings > Drafting > Sending): ${meta.send_mode === 'without' ? `Popsicle may send its own drafts, limited to: ${(rules.kinds ?? []).join(', ') || 'nothing chosen yet'}; never on its own to ${[rules.neverExecs !== false ? 'executives' : null, rules.neverCritical !== false ? 'accounts at critical risk' : null].filter(Boolean).join(' or ') || 'no exclusions'}; only on deals up to ${rules.maxDeal ?? '$100K'}; held ${rules.hold ?? '30 min'} before going out; reported ${(rules.notify ?? 'Every time').toLowerCase()}. Automatic sending is not active until email sending is connected, so every draft still waits for approval.` : 'every draft waits for the user; nothing is sent automatically.'}
+When asked what to turn off or turn down, answer with these settings by name, say where each one lives, and tie the advice to the signal volume you can see.`
+
 
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
