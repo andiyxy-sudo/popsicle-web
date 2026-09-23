@@ -857,11 +857,11 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 <div className="inbox-head" style={{ color: '#fff', padding: '18px 22px 16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
                     <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'rgba(255,255,255,.78)' }}>Inbox · open now</span>
-                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--accent-light, #FF8A50)' }}>live</span>
+                    <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'rgba(255,255,255,.9)' }}>live</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
                     <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{open.length}</span>
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.88)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: 'var(--accent-light, #FF8A50)' }}>{highs.length} critical</span></> : null}</span>
+                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.88)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: '#fff', fontWeight: 600, background: 'rgba(255,255,255,.22)', padding: '2px 8px', whiteSpace: 'nowrap' }}>{highs.length} critical</span></> : null}</span>
                   </div>
                 </div>
                 <div style={{ maxHeight: 390, overflowY: 'auto' }}>
