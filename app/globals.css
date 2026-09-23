@@ -4176,3 +4176,9 @@ html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a 
 .va .va-src-go { text-decoration: none; cursor: pointer; transition: background .15s, color .15s; }
 .va .va-src-go:hover { background: rgba(232,90,37,.12); color: var(--accent, #E85A25); }
 .va .va-src-go span { opacity: .55; font-size: 10px; }
+
+/* v11.212: the sheet's title uses the page font (Outfit), not the mono label style */
+.dock-head .dock-from { font-family: var(--font-sans, 'Outfit', sans-serif) !important; font-size: 14.5px !important; font-weight: 700 !important;
+  letter-spacing: -.02em !important; text-transform: none !important; }
+.dock-head .dock-about { font-family: var(--font-sans, 'Outfit', sans-serif) !important; font-size: 13.5px !important; font-weight: 400 !important;
+  letter-spacing: 0 !important; text-transform: none !important; color: rgba(255,255,255,.88) !important; }
