@@ -738,8 +738,23 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
   const [confOpen, setConfOpen] = useState(false)
 
   const narrative = (() => {
+    // the words that say something is going wrong, in red
+    const redWords = (t: string) => t.split(/(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|cancelled|declined|slipped|pushed|at risk)/i)
+      .map((part, k) => (/^(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|cancelled|declined|slipped|pushed|at risk)$/i.test(part)
+        ? <span key={k} style={{ color: 'var(--critical, #c43d2b)' }}>{part}</span> : part))
     const deltaTxt = healthDelta ? `, ${healthDelta.pts > 0 ? 'up' : 'down'} ${Math.abs(healthDelta.pts)} ${healthDelta.label.replace('vs ', 'since ')}` : ''
     const riskAccts = atRiskX.parts.length
+    // a third sentence: where to start, taken from the account carrying the most risk
+    const dayAgo = Date.now() - 864e5
+    const freshCount = open.filter(sg => sg.created_at && new Date(sg.created_at).getTime() > dayAgo).length
+    const topAcct = atRiskX.parts[0]?.label
+    const topSignal = topAcct ? open.filter(sg => sg.account_name === topAcct && sg.severity === 'high')
+      .sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))[0] : undefined
+    const third = topAcct && topSignal?.title
+      ? <> Start with <span style={{ color: 'var(--ink)' }}>{topAcct}</span>: {redWords(String(topSignal.title))}{freshCount > 0 ? `, one of ${freshCount} signal${freshCount === 1 ? '' : 's'} in the last day` : ''}.</>
+      : topAcct ? <> Start with <span style={{ color: 'var(--ink)' }}>{topAcct}</span>, the account carrying the most of it.</>
+      : freshCount > 0 ? <> {freshCount} signal{freshCount === 1 ? '' : 's'} arrived in the last day, none of them critical.</>
+      : protectedVal > 0 ? <> {formatCurrency(protectedVal)} has been protected so far this quarter.</> : null
     return (
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920 }}>
         Pipeline health is <span style={{ color: 'var(--accent-hot, #FF6B35)' }}><X m="avg_health">{health}</X></span>{deltaTxt}.{' '}
@@ -749,6 +764,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
             : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
             : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
+          {third}
         </span>
       </h1>
     )
