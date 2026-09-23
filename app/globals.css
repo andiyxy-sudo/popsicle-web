@@ -4156,3 +4156,8 @@ html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a 
 /* v11.206: the Ask sheet's header carries the popsicle mark */
 .dock-mark { display: inline-flex; align-items: center; flex: none; margin-right: 2px; }
 .dock-mark svg { display: block; }
+/* v11.207: the orange header covers the sheet's own 1px edge, so no white hairline shows above it */
+.dock-head { border-radius: 21px 21px 0 0; margin: -1px -1px 0; }
+.dock-sheet { border-top-color: transparent; }   /* the orange header is the top edge; no hairline above it */
+/* v11.208: a smaller mark, so the orange header is shorter */
+.dock-head { padding: 9px 18px 9px 20px; }
