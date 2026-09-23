@@ -35,6 +35,9 @@ const ACCENT = 'var(--accent, #E85A25)'
 const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase()
 const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
 const word = (n: number) => (n >= 0 && n <= 10 ? WORDS[n] : String(n))
+// a multiple such as "2.5x slower" means the rep is behind the team: show it in red
+const markUp = (t: string) => t.split(/(\d+(?:\.\d+)?x)(?=\s+slower)/i)
+  .map((part, k) => (/^\d+(?:\.\d+)?x$/i.test(part) ? <span key={k} style={{ color: RED }}>{part}</span> : part))
 const fmtH = (h: number) => `${h.toFixed(1)}h`
 
 // ---------------------------------------------------------------- live model
@@ -205,10 +208,10 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
 
       {/* narrative */}
       <h1 style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', lineHeight: 1.14, margin: '18px 0 0', maxWidth: 960, color: INK }}>
-        The team protected <span style={{ color: ACCENT }}>{formatCurrency(m.protectedTotal)}</span> this quarter{m.protectedDeltaPct ? <>, up {m.protectedDeltaPct}% on Q3</> : null}.{' '}
+        The team protected <span style={{ color: ACCENT }}>{formatCurrency(m.protectedTotal)}</span> this quarter{m.protectedDeltaPct ? <>, up <span style={{ color: GREEN }}>{m.protectedDeltaPct}%</span> on Q3</> : null}.{' '}
         <span style={{ color: MUTED }}>
           {m.headline
-            ? <>{m.exposure ? <><span style={{ color: RED }}>{formatCurrency(m.exposure.total)}</span> is exposed across {m.accountCount} accounts. </> : null}{m.headline}</>
+            ? <>{m.exposure ? <><span style={{ color: RED }}>{formatCurrency(m.exposure.total)}</span> is exposed across {m.accountCount} accounts. </> : null}{markUp(m.headline)}</>
             : m.waitingCount > 0
             ? <>{word(m.waitingCount)} signal{m.waitingCount === 1 ? '' : 's'} worth <span style={{ color: RED }}>{formatCurrency(m.waitingValue)}</span> {m.waitingCount === 1 ? 'is' : 'are'} still waiting for a response{m.criticalWithOneRep && crit === 2 ? ', and both critical accounts sit with one rep' : m.criticalWithOneRep ? `, and all ${crit} critical accounts sit with one rep` : ''}.</>
             : <>Nothing is waiting for a response.</>}

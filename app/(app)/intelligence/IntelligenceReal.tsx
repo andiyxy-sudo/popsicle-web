@@ -276,7 +276,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         {m.riskDeltaPct !== 0
           ? <>Revenue at risk is {m.riskDeltaPct > 0 ? 'up' : 'down'} <span style={{ color: m.riskDeltaPct > 0 ? RED : GREEN }}><X m="risk_change" days={range}>{Math.abs(m.riskDeltaPct)}%</X></span> in the last {range} days{m.driver ? <>, driven by {m.driver}</> : null}.{' '}</>
           : <>Revenue at risk is flat over the last {range} days.{' '}</>}
-        <span style={{ color: MUTED }}>Interventions are holding at <X m="holding" days={range}>{m.holdingPct}%</X>, and Popsicle has protected <span style={{ color: ACCENT }}>{fmtMoney(m.protectedTotal)}</span> this quarter.</span>
+        <span style={{ color: MUTED }}>Interventions are holding at <X m="holding" days={range}>{m.holdingPct}%</X>, and Popsicle has <span style={{ color: GREEN }}>protected</span> <span style={{ color: GREEN }}>{fmtMoney(m.protectedTotal)}</span> this quarter.</span>
       </h1>
 
       {m.bullets.length > 0 && (
