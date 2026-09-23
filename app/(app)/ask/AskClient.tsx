@@ -636,7 +636,7 @@ export function AskClient() {
       <span className="ask-line-dot" />
       <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') send() }}
         placeholder={placeholder} style={{ fontSize: fs }} autoFocus />
-      <button onClick={() => send()} disabled={busy || !input.trim()}>{busy ? 'Thinking' : `Ask \u2192`}</button>
+      <button className="ask-line-go" onClick={() => send()} disabled={busy || !input.trim()}>{busy ? 'Thinking' : 'Ask'}</button>
     </div>
   )
   if (!started) return (
@@ -648,7 +648,7 @@ export function AskClient() {
       {lineField('What do you want to know?', 30)}
       {open0 && (
         <p className="ask-brief">
-          {greeting()}, {firstName}. I read <b>{open0.readCount} signal{open0.readCount === 1 ? '' : 's'}</b> since yesterday.{' '}
+          {greeting()}, {firstName}. I read <b style={{ color: 'var(--accent, #E85A25)' }}>{open0.readCount} signal{open0.readCount === 1 ? '' : 's'}</b> since yesterday.{' '}
           {open0.needCount > 0
             ? <>{' '}<b>{open0.needCount === 1 ? 'One needs' : `${numWords(open0.needCount)} need`} you</b>, <b style={{ color: 'var(--critical, #c43d2b)' }}>{money(open0.needValue)}</b> between them. The rest I&rsquo;m watching.</>
             : <>Nothing needs you right now. I&rsquo;m watching {open0.watching} open signal{open0.watching === 1 ? '' : 's'}.</>}
@@ -657,7 +657,7 @@ export function AskClient() {
       <div className="ask-open-cols">
         <div className="ask-open-main">
           {mono('Worth asking today')}
-          {(open0?.questions ?? []).map(q => (
+          {(open0?.questions ?? []).slice(0, 3).map(q => (
             <button key={q.question} className="ask-q" onClick={() => send(q.question)}>
               <span className="ask-q-dot" style={{ background: q.tone === 'good' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)' }} />
               <span className="ask-q-text"><span className="ask-q-title">{q.question}</span><span className="ask-q-why">{q.why}</span></span>
@@ -665,7 +665,7 @@ export function AskClient() {
             </button>
           ))}
           {(open0?.bigger ?? []).length > 0 && <div style={{ marginTop: 14 }}>{mono('Bigger questions')}</div>}
-          {(open0?.bigger ?? []).map(b => (
+          {(open0?.bigger ?? []).slice(0, 2).map(b => (
             <button key={b.question} className="ask-q ask-q-plain" onClick={() => send(b.question)}>
               <span className="ask-q-text"><span className="ask-q-title">{b.question}</span></span>
               <span className="ask-q-go">{'\u2192'}</span>
@@ -674,7 +674,7 @@ export function AskClient() {
         </div>
         <div className="ask-open-rail">
           {mono('Popsicle is reading')}
-          {(open0?.reading ?? []).map(r => (
+          {(open0?.reading ?? []).slice(0, 5).map(r => (
             <div key={r.id} className="ask-read">
               <div className="ask-read-t">{r.title}</div>
               <div>{mono(`${r.account}${r.when ? ` \u00b7 ${r.when}` : ''}${r.source ? ` \u00b7 ${r.source}` : ''}`, 'var(--ink-faint)')}</div>
@@ -686,7 +686,7 @@ export function AskClient() {
         <div className="ask-ledger">
           <span>At risk <b style={{ color: 'var(--critical, #c43d2b)' }}>{open0.ledger.atRisk}</b></span>
           <span>Protected <b style={{ color: 'var(--good, #2f8f5b)' }}>{open0.ledger.protected}</b></span>
-          <span>Critical <b>{open0.ledger.critical}</b></span>
+          <span>Critical <b style={{ color: 'var(--critical, #c43d2b)' }}>{open0.ledger.critical}</b></span>
         </div>
       )}
     </div>

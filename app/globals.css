@@ -4079,3 +4079,14 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 /* the Ask opening owns the full height of the page area, so nothing scrolls except its two columns */
 .content:has(.ask-open) { display: flex; flex-direction: column; min-height: 0; padding-bottom: 26px; }
 .ask-open { flex: 1; height: auto; }
+/* v11.195: the orange Ask button on the line, and a page that never scrolls */
+.ask-line button.ask-line-go { padding: 11px 26px; background: linear-gradient(135deg,#FF8A50,#FF6B35); color: #fff; font-size: 14px; font-weight: 700;
+  border-radius: var(--toggle-radius, 0px); }
+.ask-line button.ask-line-go:disabled { background: var(--d-inset, #EFEAE1); color: var(--ink-faint, #A09C97); }
+.ask-line { padding-bottom: 10px; }
+.ask-open-main, .ask-open-rail { overflow: hidden; }
+/* the opening owns the page area: the floating Ask bar is hidden here, so its reserved space is reclaimed */
+.content:has(.ask-open) { padding-bottom: 26px !important; }
+.dsk-screen.ask-open { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.ask-line button.ask-line-go:disabled { background: linear-gradient(135deg,#FF8A50,#FF6B35); color: #fff; opacity: .4; }
+.dsk-screen.ask-open { height: auto; flex: 1 1 auto; }   /* fill what is left, rather than 100% + padding */
