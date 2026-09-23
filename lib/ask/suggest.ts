@@ -1,3 +1,4 @@
+import * as M from '@/lib/metrics'
 // Questions worth asking about the page you're on, built from that page's live data.
 // Templates filled with real names and numbers: instant, free, and never about something
 // that isn't on screen. At least one yes/no question per page, so an answer can come back
@@ -15,8 +16,10 @@ export type SuggestInput = {
 }
 
 const money = (v: number) => (v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${v}`)
-const lower = (t: string) => t.charAt(0).toLowerCase() + t.slice(1)
-const QUIET = /silent|stall|dark|disengag|champion|ghost/i
+// lowercase the first word only when it is an ordinary word, never a name like "Alex Park"
+// lowercase the first word only when it is an ordinary word: never a name ("Alex Park") or an acronym ("CFO")
+const lower = (t: string) => (/^[A-Z][a-z]+ [A-Z]/.test(t) || /^[A-Z]{2,}/.test(t) ? t : t.charAt(0).toLowerCase() + t.slice(1))
+const QUIET = /silent|stall|gone dark|disengag|ghost|no reply|unanswered|went quiet/i
 
 export function suggest(d: SuggestInput): string[] {
   const open = d.signals.filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
@@ -33,7 +36,7 @@ export function suggest(d: SuggestInput): string[] {
       const name = d.account ?? 'this account'
       const who = a?.owner || undefined
       const sigs = open.filter(s => s.account_name === d.account)
-      const quiet = sigs.find(s => QUIET.test(`${s.signal_type} ${s.title}`))
+      const quiet = sigs.find(s => s.severity !== 'positive' && QUIET.test(`${s.signal_type} ${s.title}`))
       const newest = [...sigs].sort((x, y) => String(y.created_at).localeCompare(String(x.created_at)))[0]
       return pick(
         `Is ${name} going to close this quarter?`,
@@ -60,7 +63,7 @@ export function suggest(d: SuggestInput): string[] {
         latestHigh?.account_name ? `What should I send ${latestHigh.account_name} today?` : 'What should I act on first, and why?',
       )
     case 'forecast': {
-      const commit = d.forecast?.commit ?? d.accounts.filter(a => /negotiation|closing|commit/i.test(a.stage || '')).reduce((s, a) => s + Number(a.value || 0), 0)
+      const commit = d.forecast?.commit ?? M.commit(d.accounts as unknown as M.Acct[], d.signals as unknown as M.Sig[]).value
       const slipper = [...(d.movers ?? [])].sort((a, b) => a.swing - b.swing)[0]?.name ?? atRisk[0]?.name
       return pick(
         commit > 0 ? `Is the ${money(commit)} commit real?` : 'Is this quarter\'s commit real?',

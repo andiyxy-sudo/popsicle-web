@@ -122,10 +122,11 @@ function parseAnswer(text: string) {
 // Follow-ups drawn from what the answer actually mentions, so they are useful
 // rather than decorative.
 // Pull the account an answer is about, used by the draft and source actions.
+// The accounts this workspace actually has, so a person's name is never mistaken for one.
+let KNOWN_ACCOUNTS: string[] = []
 function accountOf(text: string): string | null {
-  const m = text.replace(/\*\*/g, '').match(/\b([A-Z][a-zA-Z0-9.&-]+(?: [A-Z][a-zA-Z0-9.&-]+){0,2})\b/g) || []
-  const stop = new Set(['Today', 'Tomorrow', 'Recommended', 'Play', 'Critical', 'Backup', 'The', 'This', 'Your', 'No', 'Email', 'Slack', 'Gmail', 'Sources', 'Stats', 'Tags'])
-  return m.map(x => x.trim()).find(x => x.includes(' ') && !stop.has(x.split(' ')[0])) ?? null
+  const plain = text.replace(/\*\*/g, '')
+  return KNOWN_ACCOUNTS.filter(n => n && plain.includes(n)).sort((a, b) => b.length - a.length)[0] ?? null
 }
 
 function followUps(text: string): string[] {
@@ -616,7 +617,7 @@ export function AskClient() {
   const [firstName, setFirstName] = useState('')
   useEffect(() => {
     let dead = false
-    fetch('/api/ask/opening').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) setOpen0(j as Opening) }).catch(() => {})
+    fetch('/api/ask/opening').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) { setOpen0(j as Opening); KNOWN_ACCOUNTS = (j.accounts ?? []) as string[] } }).catch(() => {})
     createClient().auth.getUser().then(({ data }) => {
       const n = (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || ''
       if (!dead) setFirstName(n.split(' ')[0].replace(/^./, c => c.toUpperCase()))

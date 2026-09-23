@@ -35,7 +35,7 @@ export const DEMO_EXTRA: Record<string, Extra> = {
     breakdown: [{ k: 'Engagement', v: 81 }, { k: 'Product Fit', v: 95 }, { k: 'Legal', v: 92 }, { k: 'Financial', v: 96 }],
   },
   'TechFlow Inc': {
-    contact_name: 'Jamie Torres', trend: '-3%', repScore: 61, expiry: 'Feb 01',
+    contact_name: 'Jordan Reyes', trend: '-3%', repScore: 61, expiry: 'Feb 01',
     flags: ['Price Flinch', 'Finance Review'],
     breakdown: [{ k: 'Engagement', v: 40 }, { k: 'Product Fit', v: 78 }, { k: 'Legal', v: 62 }, { k: 'Financial', v: 64 }],
   },
@@ -60,7 +60,7 @@ export const DEMO_EXTRA: Record<string, Extra> = {
     breakdown: [{ k: 'Engagement', v: 51 }, { k: 'Product', v: 88 }, { k: 'Support', v: 72 }, { k: 'Finance', v: 25 }],
   },
   'Cobalt Health': {
-    contact_name: 'Jamie Torres', trend: '+14%', repScore: 95, expiry: 'Closed Dec 20',
+    contact_name: 'Lisa Park', trend: '+14%', repScore: 95, expiry: 'Closed Dec 20',
     flags: ['Contract Signed', 'Onboarding Started'], statusNote: 'Onboarding',
     breakdown: [{ k: 'Engagement', v: 87 }, { k: 'Product', v: 98 }, { k: 'Support', v: 97 }, { k: 'Finance', v: 98 }],
   },
@@ -81,11 +81,11 @@ export const DEMO_ACCOUNTS: Account[] = [
   A('demo-acme', 'Acme Corp', 'acmecorp.com', 480000, 'Negotiation', 'Sarah Chen', 'high', 36, at(12, 31), 192, ['Exec Unresponsive', '8d Dark', 'Champion at Risk']),
   A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 58, at(3, 30), 120, ['Timeline Slip']),
   A('demo-nexus', 'Nexus AI', 'nexus.ai', 320000, 'Closing', 'Marcus Webb', 'low', 91, at(1, 15), 20, ['Legal Clearing', 'PO Expected']),
-  A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jamie Torres', 'medium', 61, at(2, 1), 72, ['Price Flinch', 'Finance Review']),
-  A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Andy G', 'low', 82, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
-  A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Andy G', 'high', 38, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
-  A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Mike Ross', 'medium', 59, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
-  A('demo-cobalt', 'Cobalt Health', 'cobalthealth.com', 150000, 'Closed Won', 'Jamie Torres', 'low', 95, at(12, 20), 48, ['Contract Signed', 'Onboarding Started']),
+  A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jordan Reyes', 'medium', 61, at(2, 1), 72, ['Price Flinch', 'Finance Review']),
+  A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Tom Okafor', 'low', 82, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
+  A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Rachel Voss', 'high', 38, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
+  A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Kevin Cho', 'medium', 59, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
+  A('demo-cobalt', 'Cobalt Health', 'cobalthealth.com', 150000, 'Closed Won', 'Lisa Park', 'low', 95, at(12, 20), 48, ['Contract Signed', 'Onboarding Started']),
   // ninth account, from the mobile Portfolio / Team / Intelligence screens
   A('demo-vertex', 'Vertex Systems', 'vertexsystems.com', 175000, 'Proposal', 'Dana Kim', 'low', 82, at(1, 28), 48, ['Legal Review', 'Close Jan 28']),
 ]
@@ -226,7 +226,7 @@ export const DEMO_PEOPLE: Record<string, Array<{ name: string; role: string; bad
       desc: 'Standard legal review in progress. Two clauses outstanding. On track to resolve this week.' },
   ],
   'TechFlow Inc': [
-    { name: 'Jamie Torres', role: 'VP Sales Ops', badge: 'DECISION MAKER', status: 'Slipping', last: '5d ago', eng: 48,
+    { name: 'Jordan Reyes', role: 'VP Sales Ops', badge: 'DECISION MAKER', status: 'Slipping', last: '5d ago', eng: 48,
       desc: 'Primary contact but engagement slipping. Price sensitivity flagged. Needs ROI-focused re-engagement.' },
     { name: 'Lena Ford', role: 'IT Director', badge: 'INFLUENCER', status: 'Active', last: '7d ago', eng: 72,
       desc: 'Technically interested. Comparing API capabilities vs competitors. Could be a strong internal ally.' },
@@ -298,11 +298,11 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
       quote: 'Can we schedule a call to go over the contract terms? A few things need clarification.' },
   ],
   'TechFlow Inc': [
-    { who: 'Jamie Torres', role: 'VP Sales Ops', via: 'WhatsApp', tone: 'negative', when: '5d ago',
+    { who: 'Jordan Reyes', role: 'VP Sales Ops', via: 'WhatsApp', tone: 'negative', when: '5d ago',
       quote: 'Looks interesting but I need to check with finance first before we go any further on pricing.' },
     { who: 'Lena Ford', role: 'IT Director', via: 'Gmail', tone: 'neutral', when: '7d ago',
       quote: 'Your API docs look solid. How does the integration compare to Gong\'s offering?' },
-    { who: 'Jamie Torres', role: 'VP Sales Ops', via: 'Gmail', tone: 'neutral', when: '10d ago',
+    { who: 'Jordan Reyes', role: 'VP Sales Ops', via: 'Gmail', tone: 'neutral', when: '10d ago',
       quote: "Can you send over the formal proposal and pricing options? We're evaluating 2-3 vendors." },
   ],
   'Meridian Labs': [
@@ -395,9 +395,9 @@ export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; 
     { title: 'Price Sensitivity Detected', kind: 'watch', when: '5d ago',
       body: 'Multiple references to budget constraints in Slack messages. Finance review in progress.' },
     { title: 'Budget Concern Flagged', kind: 'watch', when: '7d ago',
-      body: '"Check with finance first" - Jamie Torres deferred pricing decision to CFO.' },
+      body: '"Check with finance first" - Jordan Reyes deferred pricing decision to CFO.' },
     { title: 'Proposal Delivered', kind: 'call', when: '10d ago',
-      body: 'Full pricing proposal sent to Jamie Torres. Three-tier option with annual commitment discount.' },
+      body: 'Full pricing proposal sent to Jordan Reyes. Three-tier option with annual commitment discount.' },
   ],
   'Acme Corp': [
     { title: 'Popsicle Deployed Response', kind: 'action', when: '4h ago',
@@ -561,13 +561,13 @@ export const DEMO_TRANSCRIPTS: Record<string, DemoTranscript> = {
 
   'TechFlow Inc::Proposal Delivered': {
     account: 'TechFlow Inc', title: 'Proposal Walkthrough', duration: 28, when: '10 days ago', analyser: 'Zoom · AI analyzed',
-    summary: 'Three-tier pricing presented to Jamie Torres. He favoured the middle tier and asked for the annual discount in writing. No objection to the product, only to how quickly the decision can move through their finance calendar.',
+    summary: 'Three-tier pricing presented to Jordan Reyes. He favoured the middle tier and asked for the annual discount in writing. No objection to the product, only to how quickly the decision can move through their finance calendar.',
     moments: [
-      { t: '2:10', who: 'Jamie Torres', tag: null, text: 'The middle tier is where we land. The top one has seats we would not use this year.' },
-      { t: '9:35', who: 'Jamie Torres', tag: 'OBJECTION', text: 'The annual discount needs to be in the document. Verbal will not survive our procurement process.' },
+      { t: '2:10', who: 'Jordan Reyes', tag: null, text: 'The middle tier is where we land. The top one has seats we would not use this year.' },
+      { t: '9:35', who: 'Jordan Reyes', tag: 'OBJECTION', text: 'The annual discount needs to be in the document. Verbal will not survive our procurement process.' },
       { t: '14:20', who: 'Andy G', tag: 'COMMITMENT', text: 'I will put the discount in the proposal and resend it today.' },
-      { t: '19:45', who: 'Jamie Torres', tag: 'RISK', text: 'Our finance calendar closes for new spend in two weeks. After that we are into next quarter.' },
-      { t: '25:30', who: 'Jamie Torres', tag: 'NEXT STEP', text: 'Get me the revised document and I will start the internal approval on Monday.' },
+      { t: '19:45', who: 'Jordan Reyes', tag: 'RISK', text: 'Our finance calendar closes for new spend in two weeks. After that we are into next quarter.' },
+      { t: '25:30', who: 'Jordan Reyes', tag: 'NEXT STEP', text: 'Get me the revised document and I will start the internal approval on Monday.' },
     ],
   },
 }

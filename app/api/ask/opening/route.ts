@@ -72,6 +72,7 @@ export async function GET() {
   const needValue = byAccount.filter(b => b.tone === 'risk').reduce((t, b) => t + b.amount, 0)
 
   return NextResponse.json({
+    accounts: accts.map(a => a.name).filter(Boolean),
     readCount, needCount, needValue, watching: open.length - needCount,
     questions: byAccount.slice(0, 4), bigger,
     reading: [...open].sort((a, b) => String(b.created_at ?? '').localeCompare(String(a.created_at ?? ''))).slice(0, 6)
