@@ -4028,3 +4028,16 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 .snd-deal-in { font: inherit; font-size: 12.5px; width: 92px; padding: 6px 9px; border: 1px solid var(--accent, #E85A25); background: var(--d-raised, #fff); color: var(--ink); border-radius: 0; }
 .inbox-head { background: linear-gradient(115deg, #FF7A45 0%, #FF6B35 38%, #F58A3C 70%, #F4B04A 100%) !important; }
 .inbox-head::after { background: radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.28), transparent 55%) !important; }
+
+/* v11.183: the risk chart plays itself; the full replay opens in a window */
+.intel-play { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 600; color: #fff;
+  background: var(--accent, #E85A25); border: 0; padding: 7px 14px; cursor: pointer; border-radius: var(--toggle-radius, 0px); }
+.intel-play:hover { background: #C94B24; }
+.intel-play-i { font-size: 10px; line-height: 1; }
+.intel-replay-link { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 600; color: var(--accent, #E85A25); background: none; border: 0; padding: 0; cursor: pointer; }
+.intel-replay-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.intel-narrate { display: flex; align-items: baseline; gap: 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--hairline, #EFEAE1);
+  font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13.5px; color: var(--ink-muted, #5C5855); min-height: 34px; line-height: 1.45; }
+.intel-narrate b { color: var(--ink); font-weight: 600; }
+.intel-narrate-w { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 11px; letter-spacing: 1.2px; color: var(--accent, #E85A25); flex: none; }
+.intel-narrate-idle { color: var(--ink-faint, #A09C97); }

@@ -857,7 +857,7 @@ export type IntelModel = {
   weekNo: number; newRisk: number; firstWeekRisk: number
   stabilized: number; netChangePct: number
   drivers: Array<{ k: string; v: number }>              // v < 0 = reduced risk (green, shown with +)
-  weeks: Array<{ label: string; added: number; stabilized: number }>
+  weeks: Array<{ label: string; added: number; stabilized: number; top?: { account: string; title: string; amount: number } }>
   riskSits: Array<{ k: string; pct: number; exposure: number; color: string }>
   actions: Array<{ k: string; used: number; success: number; churn: number }>
   successRate: number; successTarget: number; recovered: number; caughtEarly: number

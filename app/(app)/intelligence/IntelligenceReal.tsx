@@ -65,8 +65,10 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
   for (let i = 7; i >= 0; i--) {
     const start = now - (i + 1) * 7 * DAY, end = now - i * 7 * DAY
     const w = inRange.filter(s => { const t = s.created_at ? new Date(s.created_at).getTime() : 0; return t >= start && t < end })
+    const biggest = [...w.filter(s => s.severity !== 'positive')].sort((a, b) => amt(b) - amt(a))[0]
     weeks.push({
       label: `W${8 - i}`,
+      top: biggest ? { account: biggest.account_name ?? '', title: biggest.title ?? 'Signal', amount: amt(biggest) } : undefined,
       added: w.filter(s => s.severity !== 'positive').reduce((a, s) => a + amt(s), 0),
       stabilized: w.filter(s => s.severity === 'positive' || s.status === 'handled').reduce((a, s) => a + amt(s), 0),
     })
@@ -211,6 +213,10 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
   const [series, setSeries] = useState<'At risk' | 'Stabilized' | 'Both'>('At risk')
   const [sits, setSits] = useState<'By driver' | 'By segment' | 'By health'>('By driver')
   const [hoverW, setHoverW] = useState<number | null>(null)   // risk chart hover index
+  // the chart plays itself: it walks the weeks and narrates each one
+  const [playing, setPlaying] = useState(false)
+  const [replayOpen, setReplayOpen] = useState(false)
+
   // measured detection accuracy from the team's own thumbs up/down (live only)
   const [acc, setAcc] = useState<{ rated: number; pct: number } | null>(null)
   useEffect(() => {
@@ -254,6 +260,19 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       hero: m0.hero ? { ...m0.hero, protectedTotal: q.value, caughtEarly: w.caught.value, recovered: q.parts.length, fasterDays: sp.value > 0 ? sp.value : 0 } : m0.hero,
     }
   })()
+
+  // the chart plays itself: step through the weeks, one at a time
+  useEffect(() => {
+    if (!playing || !m) return
+    const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    const last = m.weeks.length - 1
+    const t = setTimeout(() => setHoverW(i2 => {
+      if (i2 == null) return 0
+      if (i2 >= last) { setPlaying(false); return last }
+      return i2 + 1
+    }), reduced ? 420 : 950)
+    return () => clearTimeout(t)
+  }, [playing, hoverW, m])
   const srcTotal = m.sources.reduce((a, s) => a + s.n, 0)
   const srcMax = Math.max(1, ...m.sources.map(s => s.n))
   const renewTotal = m.renewals.reduce((a, r) => a + r.value, 0)
@@ -302,15 +321,22 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
 
       <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
 
-      {/* ---- how we got here: the replay, inline, for the selected window ---- */}
-      <section className="intel-replay">
-        <div className="intel-replay-h"><h2>How we got here</h2><span>the last {range} days, replayed from the data · press play or drag the chart</span></div>
-        <ReplayView inline days={range} autoplay={false} msPerDay={range === 30 ? 900 : range === 60 ? 560 : 400} title="How we got here" />
-      </section>
-      <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-m) 0 30px' }} />
+      {replayOpen && <ReplayView onClose={() => setReplayOpen(false)} ranges={[
+        { label: 'Week', days: 7, msPerDay: 2600, title: 'This week, replayed' },
+        { label: 'Month', days: 30, msPerDay: 900, title: 'This month, replayed' },
+        { label: 'Year', days: 365, msPerDay: 160, title: 'This year, replayed' },
+      ]} />}
 
       {/* ---- risk movement spine ---- */}
-      <div style={{ ...MONO, fontSize: 10, color: FAINT }}>New risk added · week {m.weekNo}</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ ...MONO, fontSize: 10, color: FAINT }}>New risk added · week {m.weekNo}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <button className="intel-play" onClick={() => { if (playing) { setPlaying(false); return } setHoverW(0); setPlaying(true) }}>
+            {playing ? <><span className="intel-play-i">❙❙</span>Pause</> : <><span className="intel-play-i">▶</span>Play the last {range} days</>}
+          </button>
+          <button className="intel-replay-link" onClick={() => { setPlaying(false); setReplayOpen(true) }}>Open full replay</button>
+        </div>
+      </div>
       <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(52px,6.4vw,84px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 12, color: RED }}>{fmtMoney(m.newRisk)}</div>
       {m.firstWeekRisk > 0 && (
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 14, fontSize: 13.5 }}>
@@ -410,7 +436,14 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
                   </div>
                 )}
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10 }}>
-                  {m.weeks.map((w, i) => <span key={i} style={{ ...MONO_NUM, fontSize: 10, color: i === m.weeks.length - 1 ? ACCENT : FAINT }}>{w.label}</span>)}
+                  {m.weeks.map((w, i) => <span key={i} style={{ ...MONO_NUM, fontSize: 10, color: i === hoverW ? INK : i === m.weeks.length - 1 ? ACCENT : FAINT }}>{w.label}</span>)}
+                </div>
+                <div className="intel-narrate">
+                  {hoverW != null ? (
+                    <><span className="intel-narrate-w">{m.weeks[hoverW].label}</span>
+                      <span><span style={{ color: RED }}>{fmtMoney(m.weeks[hoverW].added)}</span> added{m.weeks[hoverW].stabilized > 0 ? <>, <span style={{ color: GREEN }}>{fmtMoney(m.weeks[hoverW].stabilized)}</span> stabilized</> : null}
+                        {m.weeks[hoverW].top ? <> · <b>{m.weeks[hoverW].top!.account}</b>: {m.weeks[hoverW].top!.title}</> : null}</span></>
+                  ) : <span className="intel-narrate-idle">Press play, or drag across the chart, to watch the {range} days unfold week by week.</span>}
                 </div>
               </div>
             )
