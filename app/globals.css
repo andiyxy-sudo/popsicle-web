@@ -4138,3 +4138,11 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 .ans b, .ans strong, [class^="ans-"] b, [class^="ans-"] strong, .dock-a b, .dock-a strong, .ask-a b, .ask-a strong { color: #3E3B38; }
 html[data-theme="dark"] .ans b, html[data-theme="dark"] .ans strong, html[data-theme="dark"] [class^="ans-"] b,
 html[data-theme="dark"] [class^="ans-"] strong, html[data-theme="dark"] .dock-a b, html[data-theme="dark"] .dock-a strong { color: #D8D2C8; }
+/* v11.199: the answer card's header is the same orange-to-gold as the Ask sheet */
+.ans-head { background: linear-gradient(115deg, #FF7A45 0%, #FF6B35 38%, #F58A3C 70%, #F4B04A 100%); position: relative; overflow: hidden; border-bottom: 0 !important; }
+.ans-head::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 140% at 100% 0%, rgba(255,255,255,.28), transparent 55%); }
+.ans-head > * { position: relative; z-index: 1; }
+.ans-head .ask-copy { color: rgba(255,255,255,.88) !important; }
+.ans-head .ask-copy:hover { color: #fff !important; text-decoration: underline; text-underline-offset: 3px; }
+.ans-head span[class*="live-dot"] { background: #fff !important; }
+.ans-head > span:last-child > span:last-child { color: rgba(255,255,255,.9) !important; }

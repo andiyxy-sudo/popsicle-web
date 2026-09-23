@@ -280,9 +280,9 @@ function AnswerCard({ text, streaming = false, onAsk, onInspect, onDraft }: { te
     <div className="ask-answer" style={{ position: 'relative', maxWidth: 700, background: 'var(--raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 4px 20px -8px rgba(14,13,11,.12)' }}>
       {streaming && <div className="ans-rail" aria-hidden />}
       {vd && <div style={{ padding: '6px 20px 18px' }}><VerdictAnswer vd={vd} /></div>}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: 'var(--ink)' }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
+      <div className="ans-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 20px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, fontWeight: 700, fontSize: 15, color: '#fff' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinejoin="round"><polygon points="12 2 15 9 22 9.5 17 14.5 18.5 21.5 12 18 5.5 21.5 7 14.5 2 9.5 9 9 12 2"/></svg>
           Popsicle AI
         </span>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
