@@ -50,10 +50,12 @@ export function activeSignals(accts: Acct[], sigs: Sig[], nowMs = Date.now()): E
   const parts: XNode[] = (['high', 'watch', 'positive'] as const).map(sev => {
     const mine = open.filter(s => s.severity === sev)
     const byAcct = [...new Set(mine.map(s => s.account_name || ''))].filter(Boolean).map(n => ({
-      id: `${sev}:${n}`, label: n, valueText: String(mine.filter(s => s.account_name === n).length), href: acctHref(n),
+      id: `${sev}:${n}`, label: n, value: mine.filter(s => s.account_name === n).length, valueText: String(mine.filter(s => s.account_name === n).length), href: acctHref(n),
       children: mine.filter(s => s.account_name === n).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 6).map(s => sigNode(s, accts)),
     })).sort((a, b) => Number(b.valueText) - Number(a.valueText))
-    return { id: `sev:${sev}`, label: sev === 'high' ? 'Critical' : sev === 'watch' ? 'Watch' : 'Positive', valueText: String(mine.length), children: byAcct }
+    // each severity keeps its own colour: critical red, watch amber, positive green
+    const color = sev === 'high' ? 'var(--critical, #c43d2b)' : sev === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
+    return { id: `sev:${sev}`, label: sev === 'high' ? 'Critical' : sev === 'watch' ? 'Watch' : 'Positive', value: mine.length, valueText: String(mine.length), color, children: byAcct }
   })
   return { metric: 'active', label: 'Active signals', value: open.length, valueText: String(open.length), parts,
     definition: `Signals that are open (not handled, snoozed or dismissed). ${newToday} arrived in the last 24 hours.` }

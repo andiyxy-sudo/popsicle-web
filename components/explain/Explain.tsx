@@ -150,10 +150,10 @@ export function ExplainHost() {
             <div className="xpp-num" style={x.color ? { color: x.color } : tone ? { color: tone } : undefined}>{x.valueText}</div>
             <p className="xpp-def">{x.definition}</p>
             {x.n != null && <p className="xpp-stat">{x.collecting ? `Collecting · ${x.n} so far, shown from 30` : `Based on ${x.n} · 95% range ${Math.round((x.interval?.[0] ?? 0) * 100)}–${Math.round((x.interval?.[1] ?? 0) * 100)}%`}</p>}
-            {showBar && <div className="xpp-bar" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: PALETTE[i % PALETTE.length] }} />)}</div>}
+            {showBar && <div className="xpp-bar" aria-hidden>{segs.map((p, i) => <span key={p.id} style={{ flexGrow: p.value ?? 0, background: p.color ?? PALETTE[i % PALETTE.length] }} />)}</div>}
             {x.parts.length === 0
               ? <p className="xpp-def">Nothing contributes to this yet.</p>
-              : <ul className="xpp-list">{x.parts.map(p => <Node key={p.id} n={p} total={total} depth={0} go={go} color={showBar && (p.value ?? 0) > 0 ? PALETTE[k++ % PALETTE.length] : undefined} />)}</ul>}
+              : <ul className="xpp-list">{x.parts.map(p => <Node key={p.id} n={p} total={total} depth={0} go={go} color={p.color ?? (showBar && (p.value ?? 0) > 0 ? PALETTE[k++ % PALETTE.length] : undefined)} />)}</ul>}
             {showBar && <div className="xpp-foot">Total<b>{x.valueText}</b></div>}
             {x.footnote && <p className="xpp-note">{x.footnote}</p>}
           </>
