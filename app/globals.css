@@ -4090,3 +4090,39 @@ html[data-theme="dark"] .dt2-status.st-open { color: #E4A33C; }
 .dsk-screen.ask-open { display: flex; flex-direction: column; height: 100%; min-height: 0; }
 .ask-line button.ask-line-go:disabled { background: linear-gradient(135deg,#FF8A50,#FF6B35); color: #fff; opacity: .4; }
 .dsk-screen.ask-open { height: auto; flex: 1 1 auto; }   /* fill what is left, rather than 100% + padding */
+
+/* ═════════ v11.197 ACCOUNT COMMS: a message list with a "who is talking" rail ═════════ */
+.cm-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap; padding-bottom: 14px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.cm-head h2 { margin: 0; font-family: var(--font-sans, 'Outfit', sans-serif); font-weight: 700; font-size: 21px; letter-spacing: -.03em; color: var(--ink); }
+.cm-sub { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 10.5px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); margin-top: 6px; }
+.cm-meter { min-width: 240px; }
+.cm-meter-bar { display: flex; height: 4px; overflow: hidden; }
+.cm-meter-key { display: flex; justify-content: space-between; gap: 12px; margin-top: 7px; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; }
+.cm-cols { display: grid; grid-template-columns: 1.5fr .78fr; gap: 40px; margin-top: 4px; }
+.cm-msg { padding: 13px 0; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.cm-msg-top { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.cm-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.cm-who { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14.5px; font-weight: 600; color: var(--ink); }
+.cm-role, .cm-when { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); }
+.cm-chan { display: inline-flex; width: 14px; height: 14px; }
+.cm-chan svg { width: 14px; height: 14px; }
+.cm-chan-txt { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; color: var(--ink-faint); }
+.cm-tone { margin-left: auto; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; }
+.cm-label { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); margin: 6px 0 0 16px; }
+.cm-text { margin: 6px 0 0 16px; font-size: 15px; line-height: 1.55; color: var(--ink); max-width: 640px; }
+.cm-acts { display: flex; gap: 16px; flex-wrap: wrap; margin: 8px 0 0 16px; }
+.cm-acts button, .cm-summary { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-faint); background: none; border: 0; padding: 0; cursor: pointer; }
+.cm-acts button:first-child { color: var(--accent, #E85A25); }
+.cm-acts button:hover, .cm-summary:hover { color: var(--accent, #E85A25); text-decoration: underline; text-underline-offset: 3px; }
+.cm-summary { color: var(--accent, #E85A25); font-size: 10px; margin-top: 16px; }
+.cm-rail { border-left: 1px solid var(--hairline, #EFEAE1); padding-left: 28px; }
+.cm-rail-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); }
+.cm-person { padding: 11px 0; border-bottom: 1px solid var(--hairline, #EFEAE1); }
+.cm-person-n { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; font-weight: 600; color: var(--ink); }
+.cm-person-r { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--ink-faint); margin-top: 2px; }
+.cm-person-l { font-size: 12.5px; line-height: 1.45; margin-top: 5px; }
+.cm-quiet { font-size: 13.5px; color: var(--ink-muted); line-height: 1.5; margin: 6px 0 0; }
+.cm-quiet b { color: var(--ink); font-weight: 600; }
+@media (max-width: 900px) { .cm-cols { grid-template-columns: 1fr; gap: 18px; } .cm-rail { border-left: 0; padding-left: 0; border-top: 1px solid var(--hairline, #EFEAE1); padding-top: 14px; } }
+.cm-chan, .cm-chan svg { width: 16px !important; height: 16px !important; }
+.cm-chan { align-items: center; }

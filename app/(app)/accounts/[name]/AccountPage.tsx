@@ -21,6 +21,7 @@ import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE
 export type DemoSlices = { transcripts?: Record<string, Transcript>; threads?: Record<string, ThreadSource>; people?: (typeof DEMO_PEOPLE)[string]; contracts?: (typeof DEMO_CONTRACTS)[string]; extra?: (typeof DEMO_EXTRA)[string]; comms?: (typeof DEMO_COMMS)[string]; timeline?: (typeof DEMO_TIMELINE)[string]; riskLines?: (typeof DEMO_RISK_LINES)[string] }
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import { MergedTimeline } from '@/components/account/MergedTimeline'
+import { LOGOS } from '@/app/(app)/integrations/IntegrationsShowcase'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -66,72 +67,97 @@ function ChannelIcon({ via, size = 14 }: { via: string; size?: number }) {
 
 function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; account: string; onAsk: (q: string) => void; onDraft?: () => void }) {
   const [openSrc, setOpenSrc] = useState<ThreadSource | null>(null)
-  const viaSet = Array.from(new Set(items.map(i => CHANNEL[i.via.toLowerCase()]?.label ?? i.via)))
+  const chan = (via: string) => CHANNEL[via.toLowerCase()] ?? { label: via, glyph: via.slice(0, 1).toUpperCase(), color: 'var(--ink-faint)' }
+  const logo = (via: string) => LOGOS[via.toLowerCase()] ?? null            // the platform's own mark
+  const viaSet = Array.from(new Set(items.map(i => chan(i.via).label)))
   const counts = { positive: items.filter(i => i.tone === 'positive').length, negative: items.filter(i => i.tone === 'negative').length, neutral: items.filter(i => i.tone === 'neutral').length }
-  const initials = (n: string) => n.replace(/^#/, '').split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase() || '·'
-  const total = Math.max(1, items.length)
+  const total = Math.max(1, counts.positive + counts.neutral + counts.negative)
+  const TONE_WORD: Record<string, string> = { positive: 'Momentum', neutral: 'Waiting', negative: 'Concern', internal: 'Internal' }
+
+  // who is talking: one line per person, from their own messages
+  const days = (when: string) => { const m = /(\d+)\s*([dhwm])/i.exec(when || ''); if (!m) return 0; const n = Number(m[1]); const u = m[2].toLowerCase(); return u === 'h' ? n / 24 : u === 'w' ? n * 7 : u === 'm' ? n * 30 : n }
+  const people = Array.from(new Map(items.filter(i => !i.mine && i.who).map(i => [i.who, i])).keys()).map(who => {
+    const mine = items.filter(i => i.who === who && !i.mine)
+    const last = mine[0]
+    const neg = mine.filter(i => i.tone === 'negative').length, pos = mine.filter(i => i.tone === 'positive').length
+    const role = last?.role ?? ''
+    const kind = /cfo|ceo|coo|cro|chief|vp|head|director|founder/i.test(role) ? 'decision maker' : pos > neg && pos > 0 ? 'champion' : ''
+    const tone = last?.tone ?? 'neutral'
+    const line = neg > 0
+      ? `${neg === 1 ? 'One concern' : `${neg} concerns`} raised, last message ${last?.when ?? ''}`
+      : pos > 0 ? `Actively helping, last note ${last?.when ?? ''}` : `Waiting, last note ${last?.when ?? ''}`
+    return { who, role, kind, line, tone, quiet: days(last?.when ?? '') }
+  })
+  const quietest = [...people].sort((a, b) => b.quiet - a.quiet)[0]
+
   return (
     <div style={{ marginTop: 'var(--gap-m)' }}>
-      {/* header: title, a tone meter, the channels */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 24, flexWrap: 'wrap', paddingBottom: 16, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
+      <div className="cm-head">
         <div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 21, letterSpacing: '-.03em', color: 'var(--ink)' }}>Recent communications</div>
-          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 6 }}>{items.length} messages · via {viaSet.join(' · ')}</div>
+          <h2>Recent communications</h2>
+          <div className="cm-sub">{items.length} message{items.length === 1 ? '' : 's'} · {people.length} {people.length === 1 ? 'person' : 'people'} · {viaSet.join(', ')}</div>
         </div>
-        <div style={{ minWidth: 200 }}>
-          <div style={{ display: 'flex', height: 4, overflow: 'hidden' }}>
+        <div className="cm-meter">
+          <div className="cm-meter-bar">
             {counts.positive > 0 && <span style={{ flex: counts.positive / total, background: TONE_META.positive.c }} />}
             {counts.neutral > 0 && <span style={{ flex: counts.neutral / total, background: TONE_META.neutral.c }} />}
             {counts.negative > 0 && <span style={{ flex: counts.negative / total, background: TONE_META.negative.c }} />}
           </div>
-          <div style={{ display: 'flex', gap: 14, marginTop: 8, fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '.6px', textTransform: 'uppercase' }}>
-            {counts.positive > 0 && <span style={{ color: TONE_META.positive.c }}>{counts.positive} positive</span>}
-            {counts.neutral > 0 && <span style={{ color: TONE_META.neutral.c }}>{counts.neutral} neutral</span>}
-            {counts.negative > 0 && <span style={{ color: TONE_META.negative.c }}>{counts.negative} negative</span>}
+          <div className="cm-meter-key">
+            {counts.positive > 0 && <span style={{ color: TONE_META.positive.c }}>{counts.positive} momentum</span>}
+            {counts.neutral > 0 && <span style={{ color: TONE_META.neutral.c }}>{counts.neutral} waiting</span>}
+            {counts.negative > 0 && <span style={{ color: TONE_META.negative.c }}>{counts.negative} concern</span>}
           </div>
         </div>
       </div>
 
-      {/* thread: theirs left, yours right, each on its own side of a centre line */}
-      <div style={{ position: 'relative', marginTop: 8, maxWidth: 860 }}>
-        {items.map((m, i) => {
-          const tone = TONE_META[m.tone]
-          const ch = CHANNEL[m.via.toLowerCase()] ?? { label: m.via, glyph: m.via.slice(0, 1).toUpperCase(), color: 'var(--d-muted, #5C5855)' }
-          const mine = !!m.mine
-          return (
-            <div key={i} className="comms-row" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', gap: 16, alignItems: 'flex-start', padding: '20px 0' }}>
-              {/* avatar with channel dot */}
-              <div style={{ position: 'relative', flex: 'none' }}>
-                <span style={{ width: 40, height: 40, borderRadius: '50%', display: 'grid', placeItems: 'center', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 13.5, color: '#fff', background: mine ? 'var(--d-btn, var(--ink, #0E0D0B))' : tone.c, border: `1.5px solid ${mine ? 'var(--ink, #0E0D0B)' : tone.c}` }}>{mine ? 'ME' : initials(m.who)}</span>
-                <span title={ch.label} style={{ position: 'absolute', right: -3, bottom: -3, width: 17, height: 17, background: ch.color, color: '#fff', display: 'grid', placeItems: 'center', fontFamily: "'DM Mono',monospace", fontSize: 8.5, fontWeight: 700, border: '2px solid var(--paper, #FBF8F3)' }}>{ch.glyph}</span>
-              </div>
-
-              <div style={{ minWidth: 0, maxWidth: 620, textAlign: mine ? 'right' : 'left' }}>
-                <div style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{mine ? 'You' : m.who}</span>
-                  {m.role && <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>{m.role}</span>}
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)' }}>{m.when}</span>
+      <div className="cm-cols">
+        <div>
+          {items.map((m, i) => {
+            const tone = TONE_META[m.tone], ch = chan(m.via)
+            return (
+              <div key={i} className="cm-msg">
+                <div className="cm-msg-top">
+                  <span className="cm-dot" style={{ background: tone.c }} />
+                  <span className="cm-who">{m.mine ? 'You' : m.who}</span>
+                  {(m.role || m.mine) && <span className="cm-role">{m.mine ? 'you' : m.role}</span>}
+                  <span className="cm-chan" title={ch.label}>{logo(m.via) ?? <span className="cm-chan-txt">{ch.glyph}</span>}</span>
+                  <span className="cm-when">{m.when}</span>
+                  <span className="cm-tone" style={{ color: tone.c }}>{TONE_WORD[m.tone] ?? m.tone}</span>
                 </div>
-
-                <div style={{ marginTop: 9, padding: '15px 19px', textAlign: 'left', background: mine ? 'transparent' : 'var(--inset, #F4F0E8)', border: mine ? '1px solid var(--hairline, #EFEAE1)' : 0, position: 'relative' }}>
-                  <span aria-hidden style={{ position: 'absolute', top: 0, bottom: 0, [mine ? 'right' : 'left']: 0, width: 2, background: tone.c } as React.CSSProperties} />
-                  {m.label && <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>{m.label}</div>}
-                  <span style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink)' }}>{m.text}</span>
-                </div>
-
-                <div className="comms-acts" style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'center', gap: 16, marginTop: 9, flexWrap: 'wrap' }}>
-                  <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1px', textTransform: 'uppercase', color: tone.c }}>{tone.t}</span>
-                  {m.source && <span onClick={() => setOpenSrc(m.source!)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Open full thread</span>}
-                  <span onClick={() => onAsk(`In the message from ${m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Ask Popsicle →</span>
-                  {onDraft && !mine && <span onClick={onDraft} style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-muted)', cursor: 'pointer' }}>Draft reply</span>}
+                {m.label && <div className="cm-label">{m.label}</div>}
+                <p className="cm-text">{m.text}</p>
+                <div className="cm-acts">
+                  <button onClick={() => onAsk(`In the message from ${m.mine ? 'me' : m.who} at ${account} via ${ch.label} ("${m.text.slice(0, 80)}…"), what does it mean for the deal and how should I reply?`)}>Ask about this</button>
+                  {m.source && <button onClick={() => setOpenSrc(m.source!)}>Open thread</button>}
+                  {onDraft && !m.mine && <button onClick={onDraft}>Draft reply</button>}
                 </div>
               </div>
+            )
+          })}
+          <button className="cm-summary" onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)}>
+            Ask Popsicle to summarise this thread →
+          </button>
+        </div>
+
+        <aside className="cm-rail">
+          <div className="cm-rail-k">Who is talking</div>
+          {people.map(p => (
+            <div key={p.who} className="cm-person">
+              <div className="cm-person-n">{p.who}</div>
+              <div className="cm-person-r">{[p.role, p.kind].filter(Boolean).join(' · ')}</div>
+              <div className="cm-person-l" style={{ color: TONE_META[p.tone as keyof typeof TONE_META].c }}>{p.line}</div>
             </div>
-          )
-        })}
+          ))}
+          {quietest && quietest.quiet >= 2 && (
+            <>
+              <div className="cm-rail-k" style={{ marginTop: 16 }}>Quiet since</div>
+              <p className="cm-quiet">No message from <b>{quietest.who}</b> for <b style={{ color: 'var(--critical, #c43d2b)' }}>{Math.round(quietest.quiet)} days</b>.</p>
+            </>
+          )}
+        </aside>
       </div>
       {openSrc && <ThreadModal t={openSrc} onClose={() => setOpenSrc(null)} onAsk={onAsk} />}
-      <div onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)} style={{ display: 'inline-block', fontSize: 14, fontWeight: 600, color: 'var(--accent)', marginTop: 14, cursor: 'pointer' }}>Ask Popsicle to summarise this thread →</div>
     </div>
   )
 }
