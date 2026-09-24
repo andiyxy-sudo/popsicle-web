@@ -13,6 +13,7 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import { buildA360 } from '@/lib/demo-accounts'
 import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
+import { healthOf } from '@/lib/health'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -37,13 +38,6 @@ type SigLite = { id: string; corroboration?: unknown; account_name: string | nul
 
 // Demo-parity derivations, honest fallbacks: real values win; when absent we
 // derive from live signals rather than showing blanks or inventing numbers.
-function healthOf(a: Account, sigs: SigLite[]): number {
-  if (a.health_score != null && a.health_score > 0) return a.health_score
-  const nH = sigs.filter(x => x.severity === 'high').length
-  const nW = sigs.filter(x => x.severity === 'watch').length
-  const nP = sigs.filter(x => x.severity === 'positive').length
-  return Math.max(25, Math.min(95, 90 - nH * 18 - nW * 6 + nP * 4))
-}
 function riskOf(a: Account, sigs: SigLite[]): string {
   if (a.risk_level) return a.risk_level
   if (sigs.some(x => x.severity === 'high')) return 'high'
@@ -247,12 +241,19 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         const isStalled = (a: Account) => !isClosing(a) && !/won/i.test(a.stage || '') && (dark(a) >= 5 || (sigMap.get(a.name) ?? []).some(x => /silent_stall|timeline_slip|deal_stage_backward/.test((x as { signal_type?: string | null }).signal_type || '')))
         const inView = accounts.filter(a => view === 'all' ? true : view === 'high' ? (a.risk_level || '') === 'high' : view === 'closing' ? isClosing(a) : isStalled(a))
         // urgency first: lowest health at the top, healthiest at the bottom; attention score breaks ties
+        // the same order as Pulse's accounts table: weakest health first, then the same tie-breakers
+        const exposureOfAcct = (a: Account) => Number(a.value ?? 0)
         const ordered = [...inView].sort((x, y) => {
           const hx = healthOf(x, sigMap.get(x.name) ?? []), hy = healthOf(y, sigMap.get(y.name) ?? [])
           if (hx !== hy) return hx - hy
+          const cx = x.risk_level === 'high' ? 1 : 0, cy = y.risk_level === 'high' ? 1 : 0
+          if (cx !== cy) return cy - cx
+          const ex = exposureOfAcct(x), ey = exposureOfAcct(y)
+          if (ex !== ey) return ey - ex
           const dx = x.last_contact_date ? Math.floor((Date.now() - new Date(x.last_contact_date).getTime()) / 86400000) : null
           const dy = y.last_contact_date ? Math.floor((Date.now() - new Date(y.last_contact_date).getTime()) / 86400000) : null
-          return attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name)) - attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name))
+          const sx = attentionScore(sigMap.get(x.name) ?? [], dx, soon48.has(x.name)), sy = attentionScore(sigMap.get(y.name) ?? [], dy, soon48.has(y.name))
+          return sy - sx || x.name.localeCompare(y.name)
         })
         return (
           <>

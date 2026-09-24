@@ -19,6 +19,7 @@ import { LensStrip, useLens } from '@/components/lens/Lens'
 import { useChanges } from '@/components/changes/useChanges'
 import { useSettings } from '@/lib/useSettings'
 import { FirstRun } from '@/components/onboarding/FirstRun'
+import { healthOf } from '@/lib/health'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -464,8 +465,20 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
       const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
       const sigs = byAcct.get(a.name) ?? []
       const top = sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open') && sg.severity === 'high') ?? sigs.find(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
-      return { a, dark, top, score: attentionScore(sigs, dark, soonAccts.has(a.name)) }
-    }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 3)
+      // money at stake and time left decide order when the shared score ties, which it often does
+      const open = sigs.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open') && sg.severity !== 'positive')
+      const exposure = open.reduce((t, sg) => Math.max(t, Number(sg.risk_amount ?? 0)), 0) || Number(a.value ?? 0)
+      const days = a.close_date ? Math.ceil((new Date(a.close_date).getTime() - Date.now()) / 86400000) : 9999
+      const critical = a.risk_level === 'high' ? 1 : 0
+      return { a, dark, top, score: attentionScore(sigs, dark, soonAccts.has(a.name)), exposure, days, critical, health: Number(a.health_score ?? 100) }
+    }).filter(r => r.score > 0).sort((x, y) =>
+      y.score - x.score                    // the shared attention score first
+      || y.critical - x.critical           // then an account already flagged critical
+      || y.exposure - x.exposure           // then the money at stake
+      || x.days - y.days                   // then how little time is left
+      || x.health - y.health               // then the weaker account
+      || x.a.name.localeCompare(y.a.name)  // and a stable order, never the array's accident
+    ).slice(0, 3)
   })()
 
   if (!loaded) return null
@@ -1024,9 +1037,19 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             const nPos = sigs.filter(x => x.severity === 'positive').length
             const top = sigs.find(x => x.severity === 'high') ?? sigs[0] ?? null
             const risk = (a.risk_level || (nHigh ? 'high' : nWatch ? 'medium' : 'low')) as 'high' | 'medium' | 'low'
-            const health = (a.health_score != null && a.health_score > 0) ? a.health_score : Math.max(25, Math.min(95, 90 - nHigh * 18 - nWatch * 6 + nPos * 4))
-            return { a, sigs, dark, top, risk, health, score: attentionScore(sigs, dark, soon48.has(a.name)) }
-          }).filter(r => r.score > 0).sort((x, y) => y.score - x.score).slice(0, 6)
+            const health = healthOf(a, sigs)      // the same definition Portfolio uses
+            const openSigs = sigs.filter(x => !x.is_dismissed && (!x.status || x.status === 'open') && x.severity !== 'positive')
+            const exposure = openSigs.reduce((t, x) => Math.max(t, Number(x.risk_amount ?? 0)), 0) || Number(a.value ?? 0)
+            return { a, sigs, dark, top, risk, health, exposure, score: attentionScore(sigs, dark, soon48.has(a.name)) }
+          }).filter(r => r.score > 0)
+            // this table SHOWS the health score, so it is ordered by it: the weakest account first
+            .sort((x, y) =>
+              x.health - y.health                                                    // lower health, higher up
+              || (y.risk === 'high' ? 1 : 0) - (x.risk === 'high' ? 1 : 0)           // then anything already critical
+              || y.exposure - x.exposure                                             // then the money at stake
+              || y.score - x.score                                                   // then the attention score
+              || x.a.name.localeCompare(y.a.name))                                   // never the array's accident
+            .slice(0, 6)
           if (!rows.length) return null
           const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
           return (
