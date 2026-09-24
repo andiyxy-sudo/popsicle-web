@@ -4207,3 +4207,8 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
   border-color: rgba(242,236,227,.10) !important;
   box-shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 26px -12px rgba(0,0,0,.55), 0 34px 70px -34px rgba(0,0,0,.7) !important;
 }
+/* part of the v11.214 block: the orange header IS the top edge, so no hairline above it */
+.dock-sheet { border-top-color: transparent; }
+/* the top border must take no SPACE either, or the sheet's own surface shows as a 1px band above the orange */
+.dock-sheet { border-top: 0 !important; }
+.dock-head { margin: 0 -1px 0 !important; border-radius: 22px 22px 0 0 !important; }
