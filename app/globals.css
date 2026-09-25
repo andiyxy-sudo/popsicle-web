@@ -4212,3 +4212,91 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* the top border must take no SPACE either, or the sheet's own surface shows as a 1px band above the orange */
 .dock-sheet { border-top: 0 !important; }
 .dock-head { margin: 0 -1px 0 !important; border-radius: 22px 22px 0 0 !important; }
+
+/* ═════════ v11.219 PLAN & BILLING ═════════ */
+.bil { font-family: var(--font-sans, 'Outfit', sans-serif); margin-top: 16px; }
+.bil-now { display: flex; justify-content: space-between; gap: 28px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 1px solid var(--rule-strong, #0E0D0B); }
+.bil-k { display: block; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--ink-faint); }
+.bil-plan { font-size: 26px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 6px; }
+.bil-sub { font-size: 13.5px; color: var(--ink-muted); margin-top: 3px; }
+.bil-facts { display: grid; grid-template-columns: repeat(2, minmax(130px, auto)); gap: 10px 32px; align-content: center; }
+.bil-facts b { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 3px; }
+.bil-plans { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 18px; }
+.bil-card { border: 1px solid var(--hairline, #EFEAE1); background: var(--d-raised, #fff); padding: 16px 16px 14px; display: flex; flex-direction: column; }
+.bil-card.on { border: 2px solid var(--accent, #E85A25); background: var(--d-tint-red, rgba(232,90,37,.05)); padding: 15px 15px 13px; }
+.bil-card-h { display: flex; align-items: center; gap: 8px; }
+.bil-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+.bil-badge { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 8.5px; letter-spacing: 1.2px; text-transform: uppercase; color: #fff; background: var(--accent, #E85A25); padding: 2px 7px; }
+.bil-price { font-size: 22px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 10px; }
+.bil-per { font-size: 12px; font-weight: 400; color: var(--ink-faint); letter-spacing: 0; }
+.bil-tag { font-size: 12.5px; color: var(--ink-muted); margin-top: 2px; line-height: 1.4; }
+.bil-feats { list-style: none; margin: 12px 0 0; padding: 0; flex: 1; }
+.bil-feats li { font-size: 12.5px; color: var(--ink-muted); line-height: 1.5; padding-left: 13px; position: relative; margin-bottom: 4px; }
+.bil-feats li::before { content: ''; position: absolute; left: 0; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: var(--accent, #E85A25); opacity: .55; }
+.bil-acts { display: flex; flex-direction: column; gap: 6px; margin-top: 14px; }
+.bil-go { font-family: inherit; font-size: 13px; font-weight: 700; color: #fff; background: linear-gradient(135deg,#FF8A50,#FF6B35); border: 0; padding: 9px 12px; cursor: pointer; border-radius: var(--toggle-radius, 0px); }
+.bil-alt { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-faint); background: none; border: 0; padding: 2px 0; cursor: pointer; }
+.bil-alt:hover { color: var(--accent, #E85A25); text-decoration: underline; text-underline-offset: 3px; }
+.bil-msg { margin-top: 14px; padding: 11px 13px; background: var(--d-tint-red, rgba(232,90,37,.06)); font-size: 13.5px; color: var(--ink); }
+.bil-note { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--hairline, #EFEAE1); font-size: 12.5px; color: var(--ink-faint); line-height: 1.55; }
+@media (max-width: 900px) { .bil-plans { grid-template-columns: 1fr 1fr; } .bil-now { flex-direction: column; gap: 14px; } }
+/* v11.220: plans banded by Concerns, with usage */
+.bil-plans { grid-template-columns: repeat(5, 1fr); }
+.bil-card.trial { border-style: dashed; }
+.bil-use { min-width: 230px; }
+.bil-use-n { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 22px; font-weight: 700; letter-spacing: -.03em; color: var(--ink); margin-top: 6px; }
+.bil-use-cap { font-size: 13px; font-weight: 400; color: var(--ink-faint); letter-spacing: 0; }
+.bil-bar { height: 5px; background: var(--d-inset, #EFEAE1); margin-top: 8px; overflow: hidden; }
+.bil-bar span { display: block; height: 100%; background: linear-gradient(90deg,#FF8A50,#E85A25); }
+.bil-use-note { font-size: 11.5px; color: var(--ink-faint); margin-top: 6px; line-height: 1.4; }
+.bil-meter { margin-top: 12px; padding: 9px 10px; background: var(--d-inset, #F4F0E8); }
+.bil-meter-n { display: block; font-size: 13.5px; font-weight: 700; color: var(--ink); }
+.bil-meter-s { display: block; font-size: 11.5px; color: var(--ink-muted); margin-top: 2px; line-height: 1.4; }
+@media (max-width: 1100px) { .bil-plans { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 780px) { .bil-plans { grid-template-columns: 1fr 1fr; } }
+/* v11.221: the recommended team size gets its own row, and says plainly that users are never capped */
+.bil-team { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--hairline, #EFEAE1); }
+.bil-team-k { display: block; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-faint); }
+.bil-team-v { display: block; font-size: 14px; font-weight: 600; color: var(--ink); margin-top: 3px; }
+.bil-team-n { display: block; font-size: 11px; color: var(--good, #2f8f5b); margin-top: 2px; }
+/* v11.224: compact plan cards so the buttons are never at the edge, and a "Soon" tag for what is not built yet */
+.bil-card { padding: 13px 13px 12px; }
+.bil-card.on { padding: 12px 12px 11px; }
+.bil-price { font-size: 20px; margin-top: 8px; }
+.bil-tag { font-size: 12px; }
+.bil-meter { margin-top: 9px; padding: 7px 9px; }
+.bil-meter-n { font-size: 12.5px; }
+.bil-meter-s { font-size: 11px; }
+.bil-team { margin-top: 8px; padding-top: 7px; }
+.bil-team-v { font-size: 13px; }
+.bil-team-n { font-size: 10.5px; }
+.bil-feats { margin-top: 9px; }
+.bil-feats li { font-size: 12px; line-height: 1.45; margin-bottom: 3px; }
+.bil-acts { margin-top: 11px; gap: 5px; }
+.bil-go { font-size: 12.5px; padding: 8px 10px; }
+.bil-soon { display: inline-block; margin-left: 6px; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 8px; letter-spacing: 1.1px;
+  text-transform: uppercase; color: var(--accent, #E85A25); border: 1px solid rgba(232,90,37,.35); padding: 1px 5px; vertical-align: 1px; }
+/* the recommendation on one line, so every card's buttons stay above the fold */
+.bil-team { display: flex; align-items: baseline; gap: 8px; margin-top: 7px; padding-top: 6px; }
+.bil-team-k { flex: none; }
+.bil-team-v { margin-top: 0; }
+.bil-now { padding-bottom: 12px; }
+.bil-plan { font-size: 22px; margin-top: 4px; }
+.bil-use-n { font-size: 19px; margin-top: 4px; }
+.bil-facts { gap: 7px 28px; }
+.bil-facts b { font-size: 13px; }
+.bil-plans { margin-top: 14px; }
+.bil-note { margin-top: 11px; padding-top: 10px; font-size: 12px; }
+/* v11.225: the tagline is one line, always */
+.bil-tag { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 3px; }
+.bil-meter-n { white-space: nowrap; }   /* the allowance never wraps, so every card lines up */
+/* v11.226: the recommendation says it is one, the action row is the same height on every card */
+.bil-team { flex-wrap: wrap; row-gap: 1px; }
+.bil-team-n { flex-basis: 100%; font-size: 10.5px; color: var(--good, #2f8f5b); }
+.bil-acts { min-height: 58px; justify-content: flex-end; }
+.bil-alt-ph { display: block; height: 14px; }
+.bil-later { display: block; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 600; color: var(--ink-muted);
+  background: var(--d-inset, #F4F0E8); text-align: center; padding: 8px 10px; }
+/* the primary action is exactly the same height and position on every card */
+.bil-go, .bil-later { height: 34px; display: flex; align-items: center; justify-content: center; padding: 0 10px; box-sizing: border-box; }
+.bil-alt, .bil-alt-ph { height: 16px; display: flex; align-items: center; justify-content: center; }

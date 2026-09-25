@@ -17,6 +17,8 @@ import { APP_VERSION } from '@/lib/version'
 import { CURRENCIES } from '@/lib/currency'
 import { applyTheme } from '@/lib/theme'
 import { track } from '@/lib/analytics'
+import { PLANS, planOf } from '@/lib/billing/plans'
+import type { Subscription } from '@/lib/billing/provider'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -71,6 +73,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [sendMode, setSendMode] = useState<'with' | 'without'>('with')
   const [industry, setIndustry] = useState('')
   const [dealText, setDealText] = useState('')
+  const [billing, setBilling] = useState<Subscription | null>(null)
+  const [billingMsg, setBillingMsg] = useState('')
+  useEffect(() => { let dead = false
+    fetch('/api/billing').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) setBilling(j as Subscription) }).catch(() => {})
+    return () => { dead = true } }, [])
   const [easyRead, setEasyRead] = useState(() => { try { return typeof window !== 'undefined' && localStorage.getItem('easyread') === '1' } catch { return false } })
   const INDUSTRIES = ['Software & SaaS', 'Financial services', 'Healthcare & life sciences', 'Manufacturing', 'Retail & e-commerce', 'Logistics & supply chain', 'Real estate', 'Professional services', 'Media & advertising', 'Telecommunications', 'Education', 'Hospitality & travel', 'Energy & utilities', 'Public sector', 'Other']
   const [sendRules, setSendRules] = useState<{ kinds: string[]; neverExecs: boolean; neverCritical: boolean; maxDeal: string; hold: string; notify: string }>(
@@ -472,7 +479,90 @@ export function SettingsClient({ user }: SettingsClientProps) {
         </div>
       </div>
     ) },
-    'Plan & billing': { title: 'Plan & billing', sub: 'Beta access', rows: [['Plan', 'Beta'], ['Cost', 'No charge during beta'], ['Seats', `${members.length || 1} · invite teammates under Your team`], ['Sources', `${integrations.length} connected`], ['Billing contact', user.email]], note: 'Pricing starts when the beta ends. You will be told before anything is charged.' },
+    'Plan & billing': { title: 'Plan & billing', sub: 'A flat fee for the company. Invite everyone; the band is what Popsicle reads and raises', wide: true, custom: (() => {
+      const sub = billing
+      const current = sub?.plan ?? 'design_partner'
+      const partner = current === 'design_partner' || current === 'beta'
+      const used = sub?.concernsUsed ?? 0
+      const cap = planOf(current)?.concerns ?? null
+      const choose = async (planId: string, mode: 'checkout' | 'invoice') => {
+        setBillingMsg('')
+        const r = await fetch('/api/billing', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ plan: planId, mode }) })
+        const j = await r.json().catch(() => ({}))
+        if (j?.url) { window.location.href = j.url as string; return }
+        setBillingMsg(j?.message ?? 'Something went wrong. Try again, or email us.')
+      }
+      return (
+        <div className="bil">
+          <div className="bil-now">
+            <div>
+              <div className="bil-k">Current plan</div>
+              <div className="bil-plan">{partner ? 'Design partner' : (planOf(current)?.name ?? current)}</div>
+              <div className="bil-sub">{partner
+                ? (sub?.renewsAt ? `Free until ${new Date(sub.renewsAt).toLocaleDateString()}` : 'Free while we build this with you')
+                : sub?.amount ? `$${sub.amount.toLocaleString()} a month` : ''}</div>
+            </div>
+            <div className="bil-use">
+              <div className="bil-k">Concerns this month</div>
+              <div className="bil-use-n">{used.toLocaleString()}{cap ? <span className="bil-use-cap"> of {cap.toLocaleString()}</span> : null}</div>
+              <div className="bil-bar"><span style={{ width: cap ? `${Math.min(100, (used / cap) * 100)}%` : '12%' }} /></div>
+              <div className="bil-use-note">{cap ? 'Going over never cuts you off. We talk first.' : 'No cap while you are a design partner.'}</div>
+            </div>
+            <div className="bil-facts">
+              <div><span className="bil-k">People</span><b>{sub ? `${sub.seatsUsed} · never capped` : '—'}</b></div>
+              <div><span className="bil-k">Sources</span><b>{sub?.sourcesUsed ?? '—'} connected</b></div>
+              <div><span className="bil-k">Renews</span><b>{sub?.renewsAt ? new Date(sub.renewsAt).toLocaleDateString() : 'No renewal date'}</b></div>
+              <div><span className="bil-k">Payment method</span><b>{sub?.paymentMethod ?? 'None on file'}</b></div>
+            </div>
+          </div>
+
+          <div className="bil-plans">
+            {PLANS.map(pl => (
+              <div key={pl.id} className={`bil-card${pl.id === current ? ' on' : ''}${pl.id === 'trial' ? ' trial' : ''}`}>
+                <div className="bil-card-h">
+                  <span className="bil-name">{pl.name}</span>
+                  {pl.id === current && <span className="bil-badge">Current</span>}
+                </div>
+                <div className="bil-price">{pl.priceText}{pl.price ? <span className="bil-per"> / month</span> : null}</div>
+                <div className="bil-tag">{pl.tagline}</div>
+                <div className="bil-meter">
+                  <span className="bil-meter-n">{pl.concernsText}</span>
+                  <span className="bil-meter-s">{pl.sourcesText}</span>
+                </div>
+                <div className="bil-team">
+                  <span className="bil-team-k">Recommended</span>
+                  <span className="bil-team-v">{pl.teamGuide}</span>
+                  <span className="bil-team-n">users unlimited</span>
+                </div>
+                <ul className="bil-feats">{pl.features.slice(0, 4).map(f => (
+                  <li key={f}>{f}{pl.soon?.includes(f) ? <span className="bil-soon">Soon</span> : null}</li>
+                ))}</ul>
+                {pl.id !== current && (
+                  <div className="bil-acts">
+                    {pl.available
+                      ? <span className="bil-later">{pl.available}</span>
+                      : pl.selfServe
+                        ? <button className="bil-go" onClick={() => choose(pl.id, 'checkout')}>{pl.id === 'trial' ? 'Start the trial' : `Choose ${pl.name}`}</button>
+                        : <span className="bil-later" />}
+                    {pl.available
+                      ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Register interest</button>
+                      : pl.id !== 'trial'
+                        ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Request an invoice</button>
+                        : <span className="bil-alt-ph" />}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {billingMsg && <div className="bil-msg">{billingMsg}</div>}
+          <div className="bil-note">
+            Every plan is a flat fee for the company: invite as many people as you like. The band is how many Concerns Popsicle raises for you in a month, because that is what it costs us to read and check your channels. Team sizes are guidance, not limits.
+            {sub?.provider === 'none' ? ' Card payment is not switched on yet: choosing a plan records your interest and we follow up by email, and nothing is charged. Invoices with net 30 terms are available at any tier.' : ''}
+          </div>
+        </div>
+      )
+    })() },
     'Export data': { title: 'Export data', sub: 'Your accounts and signals, downloaded now', rows: [['Accounts', counts ? String(counts.accounts) : '--'], ['Signals', counts ? String(counts.signals) : '--'], ['Includes', 'Everything this workspace holds for you'], ['Leaves Popsicle', 'Yes, the file downloads to this device']], actions: [['Download JSON', true, () => exportData('json')], [exportBusy ? 'Preparing...' : 'Download CSV', false, () => exportData('csv')]] },
     'Two-factor authentication': { title: 'Two-factor authentication', sub: mfaFactors.some(f => f.status === 'verified') ? 'On. A code from your authenticator app is required at sign-in.' : 'Off. Add an authenticator app as a second step.', custom: (
       <div style={{ marginTop: 18 }}>
