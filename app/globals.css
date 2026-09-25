@@ -4341,3 +4341,11 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-meter-n, .bil-card.on .bil-meter-n { color: var(--good, #2f8f5b); }
 /* v11.236: the counts in the header read orange */
 .bil-num { color: var(--accent, #E85A25); font-weight: 700; }
+/* v11.238: the plan name sits on a peach band across the top of each card */
+.bil-card-h { margin: -13px -13px 0; padding: 9px 12px; background: #FCE6D6; }
+.bil-card.on .bil-card-h { background: #FBD8C0; }
+.bil-card.on::before { z-index: 1; }
+.bil-price { margin-top: 12px; }
+/* v11.239: a lighter peach, barely a tint */
+.bil-card-h { background: #FDF2EA; }
+.bil-card.on .bil-card-h { background: #FCE9DC; }
