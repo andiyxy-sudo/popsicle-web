@@ -4305,3 +4305,32 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-team-k { display: block; }
 .bil-team-v { display: block; margin-top: 2px; }
 .bil-team-n { display: block; margin-top: 1px; }
+
+/* ═════════ v11.231 PLAN CARDS: CENTRED HEAD, STRONGER CURRENT PLAN ═════════ */
+.bil-card-h, .bil-price, .bil-tag, .bil-meter, .bil-team { text-align: center; }
+.bil-card-h { justify-content: center; }
+.bil-meter { display: block; }
+.bil-team-k, .bil-team-v, .bil-team-n { text-align: center; }
+.bil-feats { text-align: left; }
+/* the plan you are on is unmistakable */
+.bil-card.on { border: 1px solid rgba(232,90,37,.45); background: linear-gradient(180deg, rgba(232,90,37,.07), rgba(232,90,37,.02) 120px, var(--d-raised, #fff) 260px);
+  box-shadow: 0 10px 26px -14px rgba(232,90,37,.45); padding: 13px 13px 12px; position: relative; overflow: hidden; }
+.bil-card.on::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: linear-gradient(90deg,#FF8A50,#E85A25); }
+.bil-card.on .bil-meter { background: rgba(232,90,37,.10); }
+.bil-badge { background: var(--accent, #E85A25); }
+
+/* ═════════ v11.232 LIGHTER INK, MORE ORANGE, PILL AT THE FOOT ═════════ */
+.bil-later { letter-spacing: 1.1px; }                                  /* "Coming H1 2027" breathes */
+.bil-name { color: #2A2622; }                                          /* was full ink */
+.bil-price { color: #241F1B; }
+.bil-meter-n { color: var(--accent, #E85A25); }                        /* the allowance is the orange number */
+.bil-team-v { color: #2A2622; }
+.bil-feats li { color: #57524C; }
+.bil-plan { color: #241F1B; }
+.bil-use-n { color: var(--accent, #E85A25); }                          /* usage reads orange, like the allowance */
+.bil-facts b { color: #2A2622; }
+.bil-k, .bil-team-k { color: #A7A29B; }
+/* the Current pill sits where the button would be, so the name stays centred */
+.bil-badge { display: flex; align-items: center; justify-content: center; height: 34px; width: 100%; box-sizing: border-box;
+  background: rgba(232,90,37,.12); color: var(--accent, #E85A25); border: 1px solid rgba(232,90,37,.35);
+  font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0; }

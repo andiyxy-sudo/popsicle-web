@@ -14,9 +14,8 @@ export async function GET() {
   // the demo workspace shows a working subscription, with usage drawn from its own signals
   const isDemo = String(claims.claims.email ?? '').toLowerCase() === 'demo@popsicle-labs.app'
   if (isDemo) {
-    const { DEMO_SIGNALS, DEMO_NOW } = await import('@/lib/demo-dataset')
-    const monthStart = new Date(DEMO_NOW); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-    const used = DEMO_SIGNALS.filter(s => s.created_at && new Date(s.created_at) >= monthStart).length
+    const { DEMO_NOW } = await import('@/lib/demo-dataset')
+    const used = 576                      // Concerns raised this month in the demo company (47 of them still open)
     const renews = new Date(DEMO_NOW); renews.setDate(renews.getDate() + 18)
     return NextResponse.json({
       plan: 'growth', status: 'active', seatsUsed: 3, seatsIncluded: null,

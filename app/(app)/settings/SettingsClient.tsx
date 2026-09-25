@@ -521,7 +521,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div key={pl.id} className={`bil-card${pl.id === current ? ' on' : ''}${pl.id === 'trial' ? ' trial' : ''}`}>
                 <div className="bil-card-h">
                   <span className="bil-name">{pl.name}</span>
-                  {pl.id === current && <span className="bil-badge">Current</span>}
                 </div>
                 <div className="bil-price">{pl.priceText}{pl.price ? <span className="bil-per"> / month</span> : null}</div>
                 <div className="bil-tag">{pl.tagline}</div>
@@ -537,6 +536,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 <ul className="bil-feats">{pl.features.slice(0, 4).map(f => (
                   <li key={f}>{f}{pl.soon?.includes(f) ? <span className="bil-soon">Soon</span> : null}</li>
                 ))}</ul>
+                {pl.id === current && (
+                  <div className="bil-acts">
+                    <span className="bil-badge">Your plan</span>
+                    <span className="bil-alt-ph" />
+                  </div>
+                )}
                 {pl.id !== current && (
                   <div className="bil-acts">
                     {pl.available
