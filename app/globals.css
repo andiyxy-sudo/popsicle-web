@@ -4334,3 +4334,8 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-badge { display: flex; align-items: center; justify-content: center; height: 34px; width: 100%; box-sizing: border-box;
   background: rgba(232,90,37,.12); color: var(--accent, #E85A25); border: 1px solid rgba(232,90,37,.35);
   font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 12.5px; font-weight: 700; letter-spacing: 0; text-transform: none; padding: 0; }
+/* v11.234: the allowance matches the line beneath it, and is legible on the tint */
+.bil-meter-n { font-size: 14px; font-weight: 600; color: #241F1B; letter-spacing: -.01em; }
+.bil-card.on .bil-meter-n { color: #241F1B; }
+/* v11.235: the allowance is a good thing, so it reads green */
+.bil-meter-n, .bil-card.on .bil-meter-n { color: var(--good, #2f8f5b); }
