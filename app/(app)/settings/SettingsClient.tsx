@@ -73,6 +73,13 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [sendMode, setSendMode] = useState<'with' | 'without'>('with')
   const [industry, setIndustry] = useState('')
   const [dealText, setDealText] = useState('')
+  // dates read the way we write them: 14th Oct 2026
+  const fmtDate = (iso: string) => {
+    const d = new Date(iso)
+    const n = d.getDate()
+    const th = n % 100 >= 11 && n % 100 <= 13 ? 'th' : (['th', 'st', 'nd', 'rd'][n % 10] ?? 'th')
+    return `${n}${th} ${d.toLocaleString('en-GB', { month: 'short' })} ${d.getFullYear()}`
+  }
   const [billing, setBilling] = useState<Subscription | null>(null)
   const [billingMsg, setBillingMsg] = useState('')
   useEffect(() => { let dead = false
@@ -499,7 +506,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div className="bil-k">Current plan</div>
               <div className="bil-plan">{partner ? 'Design partner' : (planOf(current)?.name ?? current)}</div>
               <div className="bil-sub">{partner
-                ? (sub?.renewsAt ? `Free until ${new Date(sub.renewsAt).toLocaleDateString()}` : 'Free while we build this with you')
+                ? (sub?.renewsAt ? `Free until ${fmtDate(sub.renewsAt)}` : 'Free while we build this with you')
                 : sub?.amount ? `$${sub.amount.toLocaleString()} a month` : ''}</div>
             </div>
             <div className="bil-use">
@@ -509,9 +516,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div className="bil-use-note">{cap ? 'Going over never cuts you off. We talk first.' : 'No cap while you are a design partner.'}</div>
             </div>
             <div className="bil-facts">
-              <div><span className="bil-k">People</span><b>{sub ? `${sub.seatsUsed} · never capped` : '—'}</b></div>
-              <div><span className="bil-k">Sources</span><b>{sub?.sourcesUsed ?? '—'} connected</b></div>
-              <div><span className="bil-k">Renews</span><b>{sub?.renewsAt ? new Date(sub.renewsAt).toLocaleDateString() : 'No renewal date'}</b></div>
+              <div><span className="bil-k">People</span><b>{sub ? <><span className="bil-num">{sub.seatsUsed}</span> · never capped</> : '—'}</b></div>
+              <div><span className="bil-k">Sources</span><b><span className="bil-num">{sub?.sourcesUsed ?? '—'}</span> connected</b></div>
+              <div><span className="bil-k">Renews</span><b>{sub?.renewsAt ? fmtDate(sub.renewsAt) : 'No renewal date'}</b></div>
               <div><span className="bil-k">Payment method</span><b>{sub?.paymentMethod ?? 'None on file'}</b></div>
             </div>
           </div>
