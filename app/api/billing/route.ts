@@ -11,6 +11,21 @@ export async function GET() {
   const meta = (claims.claims.user_metadata ?? {}) as Record<string, unknown>
   const billing = (meta.billing ?? {}) as Partial<Subscription> & { endsAt?: string }
 
+  // the demo workspace shows a working subscription, with usage drawn from its own signals
+  const isDemo = String(claims.claims.email ?? '').toLowerCase() === 'demo@popsicle-labs.app'
+  if (isDemo) {
+    const { DEMO_SIGNALS, DEMO_NOW } = await import('@/lib/demo-dataset')
+    const monthStart = new Date(DEMO_NOW); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
+    const used = DEMO_SIGNALS.filter(s => s.created_at && new Date(s.created_at) >= monthStart).length
+    const renews = new Date(DEMO_NOW); renews.setDate(renews.getDate() + 18)
+    return NextResponse.json({
+      plan: 'growth', status: 'active', seatsUsed: 3, seatsIncluded: null,
+      renewsAt: renews.toISOString(), amount: 1999,
+      invoiceEmail: 'billing@popsicle-labs.app', paymentMethod: 'Visa ending 4417',
+      concernsUsed: used, sourcesUsed: 4, provider: PROVIDER,
+    })
+  }
+
   const { count } = await supabase.from('org_members').select('id', { count: 'exact', head: true })
   const seatsUsed = count ?? 1
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)

@@ -946,8 +946,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
       {sheet && SHEETS[sheet] && (() => {
         const sh = SHEETS[sheet]
         return (
-          <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: sh.wide ? 720 : 520, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: sh.wide ? '30px 36px 30px' : '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+          <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'var(--d-tintbg, rgba(14,13,11,.52))', backdropFilter: 'blur(14px) saturate(.9)', WebkitBackdropFilter: 'blur(14px) saturate(.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
+            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: sh.wide ? 1120 : 520, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: sh.wide ? '30px 36px 30px' : '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>settings</span>
                 <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>

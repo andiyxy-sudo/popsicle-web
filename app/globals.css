@@ -4300,3 +4300,8 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* the primary action is exactly the same height and position on every card */
 .bil-go, .bil-later { height: 34px; display: flex; align-items: center; justify-content: center; padding: 0 10px; box-sizing: border-box; }
 .bil-alt, .bil-alt-ph { height: 16px; display: flex; align-items: center; justify-content: center; }
+/* v11.227: the recommendation block is the same three rows on every card */
+.bil-team { display: block; min-height: 52px; }
+.bil-team-k { display: block; }
+.bil-team-v { display: block; margin-top: 2px; }
+.bil-team-n { display: block; margin-top: 1px; }
