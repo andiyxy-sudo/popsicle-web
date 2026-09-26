@@ -4349,3 +4349,17 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.239: a lighter peach, barely a tint */
 .bil-card-h { background: #FDF2EA; }
 .bil-card.on .bil-card-h { background: #FCE9DC; }
+/* v11.241: a link inside the current-plan facts */
+.bil-link { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--accent, #E85A25); background: none; border: 0; padding: 0; cursor: pointer; }
+.bil-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.bil-facts { grid-template-columns: repeat(3, minmax(120px, auto)); }
+
+/* ═════════ v11.241 THE PANEL OPENS ON YOUR OWN PLAN ═════════ */
+.bil-own { display: grid; grid-template-columns: 1fr 260px; gap: 36px; align-items: start; margin-top: 16px; }
+.bil-own-feats .bil-feats { margin-top: 8px; max-width: 520px; }
+.bil-own-feats .bil-feats li { font-size: 13.5px; margin-bottom: 5px; }
+.bil-own-acts { display: flex; flex-direction: column; gap: 8px; }
+.bil-own-acts .bil-go { width: 100%; font-size: 13.5px; }
+.bil-back { margin-top: 14px; }
+.bil-link { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--accent, #E85A25); background: none; border: 0; padding: 0; cursor: pointer; }
+.bil-link:hover { text-decoration: underline; text-underline-offset: 3px; }

@@ -82,6 +82,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
   }
   const [billing, setBilling] = useState<Subscription | null>(null)
   const [billingMsg, setBillingMsg] = useState('')
+  const [showPlans, setShowPlans] = useState(false)   // the five-plan comparison is opt-in
   useEffect(() => { let dead = false
     fetch('/api/billing').then(r => r.ok ? r.json() : null).then(j => { if (!dead && j && !j.error) setBilling(j as Subscription) }).catch(() => {})
     return () => { dead = true } }, [])
@@ -523,7 +524,26 @@ export function SettingsClient({ user }: SettingsClientProps) {
             </div>
           </div>
 
-          <div className="bil-plans">
+          {!showPlans && (
+            <div className="bil-own">
+              <div className="bil-own-feats">
+                <div className="bil-k">What this plan includes</div>
+                <ul className="bil-feats">{(planOf(current)?.features ?? ['Reads your channels and raises Concerns', 'Every Concern quotes the message behind it', 'Drafts the reply and takes the action once you approve']).map(f => <li key={f}>{f}</li>)}</ul>
+              </div>
+              <div className="bil-own-acts">
+                <button className="bil-go" onClick={() => setShowPlans(true)}>Change plan</button>
+                <button className="bil-alt" onClick={() => choose(String(current), 'invoice')}>View billing history</button>
+              </div>
+            </div>
+          )}
+
+          {showPlans && (
+            <div className="bil-back">
+              <button className="bil-link" onClick={() => setShowPlans(false)}>← Back to your plan</button>
+            </div>
+          )}
+
+          {showPlans && <div className="bil-plans">
             {PLANS.map(pl => (
               <div key={pl.id} className={`bil-card${pl.id === current ? ' on' : ''}${pl.id === 'trial' ? ' trial' : ''}`}>
                 <div className="bil-card-h">
@@ -559,13 +579,13 @@ export function SettingsClient({ user }: SettingsClientProps) {
                     {pl.available
                       ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Register interest</button>
                       : pl.id !== 'trial'
-                        ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Request an invoice</button>
+                        ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Pay by invoice</button>
                         : <span className="bil-alt-ph" />}
                   </div>
                 )}
               </div>
             ))}
-          </div>
+          </div>}
 
           {billingMsg && <div className="bil-msg">{billingMsg}</div>}
           <div className="bil-note">
