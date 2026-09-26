@@ -540,6 +540,9 @@ export function SettingsClient({ user }: SettingsClientProps) {
               </div>
             </div>
           )}
+          {!showPlans && (
+            <div className="bil-foot">The band is how many Concerns Popsicle raises for you in a month, because that is what it costs us to read and check your channels.</div>
+          )}
 
           {showPlans && (
             <div className="bil-back">
@@ -585,17 +588,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
             ))}
           </div>}
           {showPlans && (
-            <div className="bil-foot">
-              <div>* Users are unlimited on every plan. The team sizes above are a recommendation, not a limit.</div>
-              <div style={{ marginTop: 5 }}>The band is how many Concerns Popsicle raises for you in a month, because that is what it costs us to do. Invoices with net 30 terms are available at any tier.</div>
-            </div>
+            <div className="bil-foot">* Users are unlimited on every plan. The team sizes above are a recommendation, not a limit.</div>
           )}
 
           {billingMsg && <div className="bil-msg">{billingMsg}</div>}
-          <div className="bil-note">
-            Every plan is a flat fee for the company: invite as many people as you like. The band is how many Concerns Popsicle raises for you in a month, because that is what it costs us to read and check your channels. Team sizes are guidance, not limits.
-            {sub?.provider === 'none' ? ' Invoices with net 30 terms are available at any tier.' : ''}
-          </div>
+
         </div>
       )
     })() },
