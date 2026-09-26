@@ -547,49 +547,45 @@ export function SettingsClient({ user }: SettingsClientProps) {
             </div>
           )}
 
-          {showPlans && <div className="bil-plans">
+          {showPlans && <div className="bil-cols">
             {PLANS.map(pl => (
-              <div key={pl.id} className={`bil-card${pl.id === current ? ' on' : ''}${pl.id === 'trial' ? ' trial' : ''}`}>
-                <div className="bil-card-h">
-                  <span className="bil-name">{pl.name}</span>
+              <div key={pl.id} className={`bil-col${pl.id === current ? ' on' : ''}`}>
+                <div className="bil-col-rule" />
+                <div className="bil-col-flag">{pl.id === current ? 'Your plan' : ''}</div>
+                <div className="bil-col-name">{pl.name}</div>
+                <div className="bil-col-price">{pl.priceText}{pl.price ? <span className="bil-per"> / mo</span> : null}</div>
+                <div className="bil-col-tag">{pl.tagline}</div>
+
+                <div className="bil-col-band">
+                  <div className="bil-col-n">{pl.concernsText.replace(' Concerns', '')}</div>
+                  <div className="bil-col-k">Concerns a month</div>
                 </div>
-                <div className="bil-price">{pl.priceText}{pl.price ? <span className="bil-per"> / month</span> : null}</div>
-                <div className="bil-tag">{pl.tagline}</div>
-                <div className="bil-meter">
-                  <span className="bil-meter-n">{pl.concernsText}</span>
-                  <span className="bil-meter-s">{pl.sourcesText}</span>
+
+                <div className="bil-col-rec">
+                  <div className="bil-col-k">Recommended</div>
+                  <div className="bil-col-v">{pl.teamGuide}</div>
+                  <div className="bil-col-k">{pl.sourcesText.split(' · ')[0]}</div>
                 </div>
-                <div className="bil-team">
-                  <span className="bil-team-k">Recommended</span>
-                  <span className="bil-team-v">{pl.teamGuide}</span>
-                  <span className="bil-team-n">users unlimited</span>
+
+                <div className="bil-col-feats">
+                  {pl.features.slice(0, 3).map(f => (
+                    <div key={f}>{f}{pl.soon?.includes(f) ? <span className="bil-soon">Soon</span> : null}</div>
+                  ))}
                 </div>
-                <ul className="bil-feats">{pl.features.slice(0, 4).map(f => (
-                  <li key={f}>{f}{pl.soon?.includes(f) ? <span className="bil-soon">Soon</span> : null}</li>
-                ))}</ul>
-                {pl.id === current && (
-                  <div className="bil-acts">
-                    <span className="bil-badge">Your plan</span>
-                    <span className="bil-alt-ph" />
-                  </div>
-                )}
-                {pl.id !== current && (
-                  <div className="bil-acts">
-                    {pl.available
-                      ? <span className="bil-later">{pl.available}</span>
+
+                <div className="bil-col-act">
+                  {pl.id === current
+                    ? <span className="bil-col-mine">Your plan</span>
+                    : pl.available
+                      ? <button className="bil-col-later" onClick={() => choose(pl.id, 'invoice')}>{pl.available}</button>
                       : pl.selfServe
                         ? <button className="bil-go" onClick={() => choose(pl.id, 'checkout')}>{pl.id === 'trial' ? 'Start the trial' : `Choose ${pl.name}`}</button>
-                        : <span className="bil-later" />}
-                    {pl.available
-                      ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Register interest</button>
-                      : pl.id !== 'trial'
-                        ? <button className="bil-alt" onClick={() => choose(pl.id, 'invoice')}>Pay by invoice</button>
-                        : <span className="bil-alt-ph" />}
-                  </div>
-                )}
+                        : <button className="bil-col-later" onClick={() => choose(pl.id, 'invoice')}>Pay by invoice</button>}
+                </div>
               </div>
             ))}
           </div>}
+          {showPlans && <div className="bil-foot">* Users are unlimited on every plan. The team sizes above are a recommendation, not a limit.</div>}
 
           {billingMsg && <div className="bil-msg">{billingMsg}</div>}
           <div className="bil-note">

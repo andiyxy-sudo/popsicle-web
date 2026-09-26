@@ -4388,3 +4388,32 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .askable > .ask-this:hover .ask-this-mark { background: #fff; }
 /* rows elsewhere keep the floating chip, but it fades instead of sliding in */
 .ask-this { transition: opacity .18s ease, background .15s ease, border-color .15s ease; }
+
+/* ═════════ v11.246 THE PLAN COMPARISON, EDITORIAL ═════════
+   No cards: five columns on a shared grid, marked by rules. The plan you are on carries an
+   orange rule and a faint wash. Buttons sit on one line at the foot. */
+.bil-cols { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; margin-top: 22px; }
+.bil-col { padding: 0 16px; display: flex; flex-direction: column; }
+.bil-col.on { background: linear-gradient(180deg, rgba(232,90,37,.06), rgba(232,90,37,0) 70%); }
+.bil-col-rule { height: 2px; background: var(--hairline, #EFEAE1); margin-bottom: 14px; }
+.bil-col.on .bil-col-rule { background: var(--accent, #E85A25); }
+.bil-col-flag { min-height: 19px; font-family: var(--font-mono, 'DM Mono', monospace); font-size: 8.5px; letter-spacing: 1.4px; text-transform: uppercase; color: var(--accent, #E85A25); }
+.bil-col-name { font-size: 12px; font-weight: 700; letter-spacing: .06em; color: #1A1713; }
+.bil-col-price { font-family: var(--font-sans, 'Outfit', sans-serif); font-weight: 800; font-size: 32px; letter-spacing: -.05em; color: #1A1713; margin-top: 8px; line-height: 1; font-variant-numeric: tabular-nums; }
+.bil-col-price .bil-per { font-size: 12px; font-weight: 400; letter-spacing: 0; color: var(--ink-faint); }
+.bil-col-tag { font-size: 12px; color: var(--ink-muted, #6B6560); margin-top: 6px; min-height: 32px; line-height: 1.35; }
+.bil-col-band { border-top: 1px solid var(--hairline, #EFEAE1); margin-top: 10px; padding-top: 12px; }
+.bil-col-n { font-family: var(--font-sans, 'Outfit', sans-serif); font-weight: 700; font-size: 21px; letter-spacing: -.03em; color: var(--good, #2f8f5b); line-height: 1; }
+.bil-col-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 8.5px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-faint); margin-top: 4px; }
+.bil-col-rec { border-top: 1px solid var(--hairline, #EFEAE1); margin-top: 12px; padding-top: 12px; min-height: 58px; }
+.bil-col-v { font-size: 12.5px; color: #1A1713; margin-top: 3px; }
+.bil-col-feats { border-top: 1px solid var(--hairline, #EFEAE1); margin-top: 12px; padding-top: 12px; flex: 1; }
+.bil-col-feats div { font-size: 12px; color: var(--ink-muted, #6B6560); line-height: 1.55; margin-bottom: 5px; }
+.bil-col-act { padding-top: 14px; }
+.bil-col-act .bil-go { width: 100%; height: 38px; font-size: 12.5px; }
+.bil-col-later, .bil-col-mine { display: block; width: 100%; padding: 11px 0; text-align: center; font-family: var(--font-mono, 'DM Mono', monospace);
+  font-size: 9px; letter-spacing: 1.3px; text-transform: uppercase; background: none; border: 0; cursor: pointer; color: var(--ink-faint); }
+.bil-col-later:hover { color: var(--accent, #E85A25); }
+.bil-col-mine { color: var(--accent, #E85A25); cursor: default; }
+.bil-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--hairline, #EFEAE1); font-size: 12px; color: var(--ink-faint); }
+@media (max-width: 1000px) { .bil-cols { grid-template-columns: repeat(2, 1fr); row-gap: 24px; } }
