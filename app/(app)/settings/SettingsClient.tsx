@@ -584,7 +584,12 @@ export function SettingsClient({ user }: SettingsClientProps) {
               </div>
             ))}
           </div>}
-          {showPlans && <div className="bil-foot">* Users are unlimited on every plan. The team sizes above are a recommendation, not a limit.</div>}
+          {showPlans && (
+            <div className="bil-foot">
+              <div>* Users are unlimited on every plan. The team sizes above are a recommendation, not a limit.</div>
+              <div style={{ marginTop: 5 }}>The band is how many Concerns Popsicle raises for you in a month, because that is what it costs us to do. Invoices with net 30 terms are available at any tier.</div>
+            </div>
+          )}
 
           {billingMsg && <div className="bil-msg">{billingMsg}</div>}
           <div className="bil-note">
