@@ -4417,3 +4417,7 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-col-mine { color: var(--accent, #E85A25); cursor: default; }
 .bil-foot { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--hairline, #EFEAE1); font-size: 12px; color: var(--ink-faint); }
 @media (max-width: 1000px) { .bil-cols { grid-template-columns: repeat(2, 1fr); row-gap: 24px; } }
+
+/* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
+.bil-col-flag { display: none; }
+.bil-col-rule { margin-bottom: 18px; }

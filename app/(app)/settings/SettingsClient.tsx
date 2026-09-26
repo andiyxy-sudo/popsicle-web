@@ -551,7 +551,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
             {PLANS.map(pl => (
               <div key={pl.id} className={`bil-col${pl.id === current ? ' on' : ''}`}>
                 <div className="bil-col-rule" />
-                <div className="bil-col-flag">{pl.id === current ? 'Your plan' : ''}</div>
                 <div className="bil-col-name">{pl.name}</div>
                 <div className="bil-col-price">{pl.priceText}{pl.price ? <span className="bil-per"> / mo</span> : null}</div>
                 <div className="bil-col-tag">{pl.tagline}</div>
