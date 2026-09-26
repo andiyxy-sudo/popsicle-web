@@ -4374,3 +4374,17 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-backbtn:hover { border-color: var(--accent, #E85A25); color: var(--accent, #E85A25); }
 .bil-back-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); }
 @media (max-width: 900px) { .bil-own { grid-template-columns: 1fr; gap: 16px; } }
+
+/* ═════════ v11.243 THE ASK CHIP HAS ITS OWN SLOT, AND STOPS JUMPING ═════════
+   It used to appear from nowhere on hover, absolutely positioned over the row's right-hand
+   columns. In the Pulse and Portfolio tables it now sits in a column of its own: always there,
+   quiet until you look at the row, and never covering anything. */
+.askable > .ask-this { position: static; transform: none; opacity: .2; pointer-events: auto;
+  width: 26px; height: 26px; padding: 0; justify-self: center; justify-content: center; gap: 0;
+  font-size: 0; box-shadow: none; background: transparent; border-color: rgba(232,90,37,.25); }
+.askable > .ask-this .ask-this-mark { width: 7px; height: 7px; }
+.askable:hover > .ask-this { opacity: 1; transform: none; background: var(--paper, #FBF8F3); border-color: rgba(232,90,37,.5); }
+.askable > .ask-this:hover { background: #FF6B35 !important; border-color: #FF6B35 !important; }
+.askable > .ask-this:hover .ask-this-mark { background: #fff; }
+/* rows elsewhere keep the floating chip, but it fades instead of sliding in */
+.ask-this { transition: opacity .18s ease, background .15s ease, border-color .15s ease; }

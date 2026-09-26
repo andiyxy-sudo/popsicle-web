@@ -543,7 +543,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
           {showPlans && (
             <div className="bil-back">
-              <button className="bil-backbtn" onClick={() => setShowPlans(false)}><span aria-hidden>←</span> Back to your plan</button>
               <span className="bil-back-k">Choose a plan</span>
             </div>
           )}
@@ -987,7 +986,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
             <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: sh.wide ? 1120 : 520, maxHeight: 'calc(100vh - 40px)', overflowY: 'auto', background: 'var(--paper, #FBF8F3)', padding: sh.wide ? '30px 36px 30px' : '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)' }}>settings</span>
+                {sheet === 'Plan & billing' && showPlans
+                  ? <button onClick={() => setShowPlans(false)} className="bil-backbtn"><span aria-hidden>←</span> Back to your plan</button>
+                  : (
                 <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
+                )}
               </div>
               <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', margin: '12px 0 4px', color: 'var(--ink)' }}>{sh.titleNode ?? sh.title.split(/(Popsicle)/).map((part, k) => part === 'Popsicle' ? <span key={k} style={{ color: 'var(--accent, #E85A25)' }}>{part}</span> : part)}</h2>
               {sh.sub && <div style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{sh.sub}</div>}

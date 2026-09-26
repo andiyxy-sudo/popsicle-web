@@ -233,7 +233,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       })()}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
-        const COLS = '34px minmax(120px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.75fr) minmax(84px,1.15fr) minmax(70px,.7fr) minmax(52px,.5fr) minmax(52px,.5fr) 112px'
+        const COLS = '34px minmax(120px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.75fr) minmax(84px,1.15fr) minmax(70px,.7fr) minmax(52px,.5fr) minmax(52px,.5fr) 112px 30px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
         const dark = (a: Account) => a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : 0
@@ -259,7 +259,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
           <>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
-              <span style={{ textAlign: 'center' }}>Stage</span><span>Signal</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span>
+              <span style={{ textAlign: 'center' }}>Stage</span><span>Signal</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
             </div>
             {ordered.length === 0 && <EmptyState line={view === 'all' ? 'No accounts yet.' : `Nothing ${view === 'high' ? 'high risk' : view} right now.`} hint={view === 'all' ? 'Let Popsicle scan your inbox and find the companies worth tracking.' : 'Switch the view, or wait for the next signal.'} compact />}
             {ordered.map(a => {
@@ -270,7 +270,6 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               return (
                 <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
-                  <AskThis q={`Is ${a.name} going to close, and what's the biggest risk?`} account={a.name} />
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
@@ -292,6 +291,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, justifySelf: 'center', padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>
+                  <AskThis q={`Is ${a.name} going to close, and what's the biggest risk?`} account={a.name} />
                 </div>
               )
             })}

@@ -1018,7 +1018,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       <div style={{ marginTop: 'var(--gap-l)' }}>
         {(() => {
-          const COLS = '34px minmax(104px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.8fr) minmax(84px,1.2fr) minmax(52px,.5fr) 112px'
+          const COLS = '34px minmax(104px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.8fr) minmax(84px,1.2fr) minmax(52px,.5fr) 112px 30px'
           const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
           const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
           const byAcct = new Map<string, Signal[]>()
@@ -1057,11 +1057,10 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
-                <span style={{ textAlign: 'center' }}>Stage</span><span>Top Signal</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span>
+                <span style={{ textAlign: 'center' }}>Stage</span><span>Top Signal</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div className="askable ask-offset" key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
-                  <AskThis q={`Why does ${a.name} need me today, and what should I do first?`} account={a.name} />
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
@@ -1082,6 +1081,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open account'}
                   </button>
+                  <AskThis q={`Why does ${a.name} need me today, and what should I do first?`} account={a.name} />
                 </div>
               ))}
             </>
