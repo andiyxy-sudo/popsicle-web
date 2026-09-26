@@ -161,6 +161,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     window.dispatchEvent(new Event('settings:changed'))
   }
   const [sheet, setSheet] = useState<string | null>(null)
+  useEffect(() => { setShowPlans(false) }, [sheet])   // reopening Plan & billing starts on your own plan, never mid-flow
   // timezone
   const TIMEZONES = ['Asia/Jakarta', 'Asia/Singapore', 'Asia/Kuala_Lumpur', 'Asia/Bangkok', 'Asia/Manila', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Shanghai', 'Asia/Hong_Kong', 'Asia/Kolkata', 'Asia/Dubai', 'Australia/Sydney', 'Pacific/Auckland', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Amsterdam', 'Europe/Madrid', 'Europe/Stockholm', 'Africa/Johannesburg', 'America/Sao_Paulo', 'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Toronto', 'America/Mexico_City']
   const [tzPick, setTzPick] = useState('')
@@ -520,7 +521,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
               <div><span className="bil-k">People</span><b>{sub ? <><span className="bil-num">{sub.seatsUsed}</span> · never capped</> : '—'}</b></div>
               <div><span className="bil-k">Sources</span><b><span className="bil-num">{sub?.sourcesUsed ?? '—'}</span> connected</b></div>
               <div><span className="bil-k">Renews</span><b>{sub?.renewsAt ? fmtDate(sub.renewsAt) : 'No renewal date'}</b></div>
-              <div><span className="bil-k">Payment method</span><b>{sub?.paymentMethod ?? 'None on file'}</b></div>
             </div>
           </div>
 
@@ -530,16 +530,21 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 <div className="bil-k">What this plan includes</div>
                 <ul className="bil-feats">{(planOf(current)?.features ?? ['Reads your channels and raises Concerns', 'Every Concern quotes the message behind it', 'Drafts the reply and takes the action once you approve']).map(f => <li key={f}>{f}</li>)}</ul>
               </div>
+              <div className="bil-own-pay">
+                <div className="bil-k">Payment method</div>
+                <div className="bil-pay-v">{sub?.paymentMethod ?? 'None on file'}</div>
+                <button className="bil-link" onClick={() => choose(String(current), 'invoice')}>View billing history</button>
+              </div>
               <div className="bil-own-acts">
                 <button className="bil-go" onClick={() => setShowPlans(true)}>Change plan</button>
-                <button className="bil-alt" onClick={() => choose(String(current), 'invoice')}>View billing history</button>
               </div>
             </div>
           )}
 
           {showPlans && (
             <div className="bil-back">
-              <button className="bil-link" onClick={() => setShowPlans(false)}>← Back to your plan</button>
+              <button className="bil-backbtn" onClick={() => setShowPlans(false)}><span aria-hidden>←</span> Back to your plan</button>
+              <span className="bil-back-k">Choose a plan</span>
             </div>
           )}
 

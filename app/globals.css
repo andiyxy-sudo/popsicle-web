@@ -4363,3 +4363,14 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .bil-back { margin-top: 14px; }
 .bil-link { font-family: inherit; font-size: 13px; font-weight: 600; color: var(--accent, #E85A25); background: none; border: 0; padding: 0; cursor: pointer; }
 .bil-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* v11.242: payment beside the button, a real back button on the comparison */
+.bil-own { grid-template-columns: 1fr auto 200px; gap: 32px; align-items: start; }
+.bil-own-pay { min-width: 150px; }
+.bil-pay-v { font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 14px; font-weight: 600; color: #2A2622; margin: 4px 0 6px; }
+.bil-back { display: flex; align-items: center; gap: 14px; margin: 16px 0 2px; }
+.bil-backbtn { display: inline-flex; align-items: center; gap: 7px; font-family: var(--font-sans, 'Outfit', sans-serif); font-size: 13px; font-weight: 600;
+  color: var(--ink); background: var(--d-raised, #fff); border: 1px solid var(--hairline, #EFEAE1); padding: 7px 13px; cursor: pointer; }
+.bil-backbtn:hover { border-color: var(--accent, #E85A25); color: var(--accent, #E85A25); }
+.bil-back-k { font-family: var(--font-mono, 'DM Mono', monospace); font-size: 9.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink-faint); }
+@media (max-width: 900px) { .bil-own { grid-template-columns: 1fr; gap: 16px; } }
