@@ -4444,3 +4444,9 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 
 /* the Ask opening: the briefing, the suggested questions, the reading rail and the ledger, 5% up */
 .ask-brief, .ask-open-cols, .ask-ledger { zoom: 1.05; }
+/* the Ask Popsicle eyebrow, on the opening screen and above an answer */
+.ask-open-top { zoom: 1.1; }
+/* the mover status words (CLOSING, RENEWAL AT RISK, STALLED, EXPANSION) sit 10% below the rest of the strip */
+.fc-tag { zoom: 0.9; }
+/* Today's plays: 20%, then 5% back down. Activity stays at 20% (.pl25) */
+.pl14 { zoom: 1.14; }

@@ -323,7 +323,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.name}</span>
-                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
+                      <span className="fc-tag" style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 6 }}>{m.note}</div>
                   </div>

@@ -976,7 +976,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
         <section style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
-          <div className="pl25">
+          <div className="pl14">
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as Concerns arrive.</div>}
           {briefRows.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, lineHeight: 1.55 }}>
