@@ -4452,3 +4452,5 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .int25 { zoom: 1.025; }
 /* "Ask Popsicle" matches the Settings eyebrow: DM Mono 11px, 2.2px letter-spacing, uppercase */
 .ask-open-top > span { font-size: 11px !important; letter-spacing: 2.2px !important; }
+/* the late commitments panel under the Pulse headline, 2.5% up */
+.late25 { zoom: 1.025; }

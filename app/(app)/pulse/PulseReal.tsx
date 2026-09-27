@@ -922,7 +922,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {!accounts.some(a => String(a.id).startsWith('demo-')) && <FirstRun />}
 
       {narrative}
-      <LateCommitments accounts={accounts} demoItems={demoLate} />
+      <div className="late25"><LateCommitments accounts={accounts} demoItems={demoLate} /></div>
 
       {mySettings.notifs.brief && <PreMeetingBrief />}
       {mySettings.notifs.digest && <div style={{ marginTop: 24 }}><WeekDigest /></div>}
@@ -989,7 +989,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           </div>
         </section>
         <section style={{ minWidth: 0 }}>
-          {secHead('Concern Engine', mono('live'))}
+          {secHead('Concern engine', mono('live'))}
           <div className="pulse10">
           {loopRows.map((l, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
