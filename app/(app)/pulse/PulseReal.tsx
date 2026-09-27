@@ -74,7 +74,7 @@ function PreMeetingBrief() {
       if (!ev || dead) return
       const account = String(ev.account_name)
       const [sigRes, blRes, acctRes] = await Promise.all([
-        supa.from('signals').select('id, title, severity')
+        supa.from('Concerns').select('id, title, severity')
           .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account)
           .eq('is_dismissed', false)
           .or('status.is.null,status.eq.open')
@@ -134,7 +134,7 @@ function PreMeetingBrief() {
       </div>
       <div style={{ padding: '12px 20px', display: 'grid', gridTemplateColumns: `repeat(${1 + (points.length ? 1 : 0) + (brief.commitments.length ? 1 : 0)}, 1fr)`, gap: 16 }}>
         <div>
-          <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Open signals</div>
+          <div style={{ fontSize: 9.5, fontWeight: 800, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.6px', marginBottom: 6 }}>Open Concerns</div>
           {brief.signals.length === 0 && <div style={{ fontSize: 11.5, color: 'var(--t4)' }}>None open. Clean slate.</div>}
           {brief.signals.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5, cursor: 'pointer' }}>
@@ -205,7 +205,7 @@ function ActivityFeed({ signals }: { signals: Signal[] }) {
     if (m < 1440) return `${Math.floor(m / 60)}h`
     return `${Math.floor(m / 1440)}d`
   }
-  if (!items.length) return <div style={{ padding: '24px 20px', fontSize: 11.5, color: 'var(--t4)', textAlign: 'center' }}>Activity appears as signals arrive.</div>
+  if (!items.length) return <div style={{ padding: '24px 20px', fontSize: 11.5, color: 'var(--t4)', textAlign: 'center' }}>Activity appears as Concerns arrive.</div>
   return (
     <div style={{ padding: '10px 20px' }}>
       {items.map(sg => (
@@ -254,7 +254,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
       </div>
       <div>
         <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ok)' }}>AI Confidence</div>
-        <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} signal{confs.length === 1 ? '' : 's'}</div>
+        <div style={{ fontSize: 9, color: 'var(--t3)' }}>{confs.length} Concern{confs.length === 1 ? '' : 's'}</div>
       </div>
       {big && typeof document !== 'undefined' && createPortal((() => {
         const hi = confs.filter(c => c >= 80).length
@@ -287,7 +287,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
               <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
               <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '18px 0 18px' }} />
 
-              {mlbl('average across ' + confs.length + ' analysed signal' + (confs.length === 1 ? '' : 's'))}
+              {mlbl('average across ' + confs.length + ' analysed Concern' + (confs.length === 1 ? '' : 's'))}
               <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
                 <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, color: clrOf(pct) }}>{pct}%</span>
                 <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
@@ -317,7 +317,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
 
               <div style={{ marginTop: 22, paddingLeft: 14, borderLeft: `2px solid var(--accent)` }}>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>how it improves</div>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>Transcribed calls give the clearest evidence. Removing wrong signals teaches detection what to skip.</div>
+                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink)', lineHeight: 1.5 }}>Transcribed calls give the clearest evidence. Removing wrong Concerns teaches detection what to skip.</div>
               </div>
             </div>
           </div>
@@ -344,13 +344,13 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
               <span style={{ fontSize: 11.5, fontWeight: 800, color: 'var(--t1)' }}>average AI confidence</span>
             </div>
             <div style={{ fontSize: 10.5, color: 'var(--t3)', lineHeight: 1.55, marginBottom: 10 }}>
-              Across {confs.length} analyzed signal{confs.length === 1 ? '' : 's'}. Confidence reflects how clear the evidence was in the source conversation.
+              Across {confs.length} analyzed Concern{confs.length === 1 ? '' : 's'}. Confidence reflects how clear the evidence was in the source conversation.
             </div>
             {bar('High ≥80%', hi, 'var(--ok)')}
             {bar('Medium', mid, 'var(--amber)')}
             {bar('Low <60%', lo, 'var(--danger)')}
             <div style={{ fontSize: 10, color: 'var(--t4)', lineHeight: 1.5, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line)' }}>
-              Open low-confidence signals and check the quoted evidence before acting. Marking wrong ones as removed teaches detection.
+              Open low-confidence Concerns and check the quoted evidence before acting. Marking wrong ones as removed teaches detection.
             </div>
           </div>
         )
@@ -639,7 +639,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in',
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip',
   reengaged: 'Re-engaged', call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying signal', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
+  call_buying_signal: 'Buying Concern', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
@@ -715,7 +715,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.6, maxWidth: 380, margin: '0 auto 20px' }}>
             {integrationCount > 0
               ? 'Your integration is connected. Next, let Popsicle scan your inbox and find the accounts worth watching.'
-              : 'Connect Gmail and Popsicle will scan your inbox, find your accounts, and start surfacing revenue signals automatically.'}
+              : 'Connect Gmail and Popsicle will scan your inbox, find your accounts, and start surfacing revenue Concerns automatically.'}
           </div>
           <button onClick={() => router.push('/welcome')} style={{ padding: '11px 22px', background: 'var(--o)', color: '#fff', border: 'none', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: "'Outfit',sans-serif", boxShadow: '0 3px 14px rgba(255,107,53,.22)' }}>
             {integrationCount > 0 ? 'Find my accounts →' : 'Set up Popsicle →'}
@@ -783,7 +783,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const third = topAcct && topSignal?.title
       ? <> <span style={{ color: 'var(--ink)', whiteSpace: longName ? 'normal' : 'nowrap' }}>{topAcct}</span> first: {keepName(shortTitle(String(topSignal.title)))}.</>
       : topAcct ? <> <span style={{ color: 'var(--ink)', whiteSpace: longName ? 'normal' : 'nowrap' }}>{topAcct}</span> first, the account carrying the most of it.</>
-      : freshCount > 0 ? <> {freshCount} signal{freshCount === 1 ? '' : 's'} arrived in the last day, none of them critical.</>
+      : freshCount > 0 ? <> {freshCount} Concern{freshCount === 1 ? '' : 's'} arrived in the last day, none of them critical.</>
       : protectedVal > 0 ? <> {formatCurrency(protectedVal)} has been protected so far this quarter.</> : null
     return (
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920 }}>
@@ -791,8 +791,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         <span style={{ color: 'var(--ink-muted)' }}>
           {atRiskTotal > 0 && riskAccts > 0
             ? <>{riskAccts === 1 ? 'One account holds' : `${riskAccts} accounts hold`} <span style={{ color: 'var(--critical, #c43d2b)' }}><X m="at_risk">{formatCurrency(atRiskTotal)}</X></span> of risk{highs.length > 0 ? <> and need <span style={{ color: 'var(--good, #2f8f5b)' }}>you</span> today</> : null}.</>
-            : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive signal{positives.length === 1 ? '' : 's'} in play.</>
-            : open.length > 0 ? <>{open.length} open signal{open.length === 1 ? '' : 's'} worth a look.</>
+            : positives.length > 0 ? <>Momentum is on your side, {positives.length} positive Concern{positives.length === 1 ? '' : 's'} in play.</>
+            : open.length > 0 ? <>{open.length} open Concern{open.length === 1 ? '' : 's'} worth a look.</>
             : <>All quiet across {accounts.length} account{accounts.length === 1 ? '' : 's'}.</>}
           {third}
         </span>
@@ -807,7 +807,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
       meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
       competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
-      legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
+      legal_loopin: 'loop legal in early', call_buying_Concern: 'strike while it is warm',
       call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
       commitment_overdue: 'close it out or reset the date',
     }
@@ -833,8 +833,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
     const nowMs = demo ? Math.floor(Date.now() / 3600e3) * 3600e3 : Date.now()
     const A = accounts as unknown as MX.Acct[], S = signals as unknown as MX.Sig[]
     return [
-      { m: 'new_today', name: 'Signals', sub: 'new in the last 24 hours', value: String(MX.newToday(A, S, nowMs).value), color: 'var(--critical, #c43d2b)' },
-      { m: 'cases', name: 'Active cases', sub: 'accounts with an open risk signal', value: String(MX.activeCases(A, S).value), color: 'var(--warn, #d38b1d)' },
+      { m: 'new_today', name: 'Concerns', sub: 'new in the last 24 hours', value: String(MX.newToday(A, S, nowMs).value), color: 'var(--critical, #c43d2b)' },
+      { m: 'cases', name: 'Active cases', sub: 'accounts with an open risk Concern', value: String(MX.activeCases(A, S).value), color: 'var(--warn, #d38b1d)' },
       { m: 'actions_ready', name: 'Actions ready', sub: 'next step drafted for you', value: String(MX.actionsReady(A, S).value), color: 'var(--accent)' },
       { m: 'protected', name: 'Revenue protected', sub: 'this quarter', value: MX.protectedRevenue(A, S).valueText, color: 'var(--good, #2f8f5b)' },
     ]
@@ -876,7 +876,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <button onClick={() => setInboxOpen(o => !o)} style={{ font: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 9, padding: '8px 14px', border: 0, background: inboxOpen ? 'var(--d-tintbg, rgba(14,13,11,.05))' : 'transparent', color: inboxOpen ? 'var(--ink)' : 'var(--ink-faint)', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', cursor: 'pointer' }}>
               <span className={open.length > 0 ? 'sig-pulse' : undefined}
                 style={{ width: 8, height: 8, flex: 'none', borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }}></span>
-              <span>{open.length} signal{open.length === 1 ? '' : 's'}</span>
+              <span>{open.length} Concern{open.length === 1 ? '' : 's'}</span>
             </button>
             {inboxOpen && (
               <div onClick={() => setInboxOpen(false)} aria-hidden
@@ -891,7 +891,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginTop: 8 }}>
                     <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{open.length}</span>
-                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.88)' }}>open signal{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: '#fff', fontWeight: 600, background: 'rgba(255,255,255,.22)', padding: '2px 8px', whiteSpace: 'nowrap' }}>{highs.length} critical</span></> : null}</span>
+                    <span style={{ fontSize: 14, color: 'rgba(255,255,255,.88)' }}>open Concern{open.length === 1 ? '' : 's'}{highs.length > 0 ? <> · <span style={{ color: '#fff', fontWeight: 600, background: 'rgba(255,255,255,.22)', padding: '2px 8px', whiteSpace: 'nowrap' }}>{highs.length} critical</span></> : null}</span>
                   </div>
                 </div>
                 <div style={{ maxHeight: 390, overflowY: 'auto' }}>
@@ -911,7 +911,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   {open.length === 0 && <div style={{ padding: '26px 22px', fontSize: 13, color: 'var(--ink-faint)' }}>Nothing open right now.</div>}
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 22px', borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
-                  <span onClick={() => { setInboxOpen(false); router.push('/signals') }} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>All signals →</span>
+                  <span onClick={() => { setInboxOpen(false); router.push('/signals') }} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>All Concerns →</span>
                 </div>
               </div>
             )}
@@ -957,7 +957,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 <div style={sub}>{st.saved} saves · {st.actions} actions this quarter</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
-                <div style={MONO}>Active signals</div>
+                <div style={MONO}>Active Concerns</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="active"><CountUp value={String(st.active)} style={big('var(--ink)')} /></X>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
@@ -976,7 +976,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
         <section style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
-          {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as signals arrive.</div>}
+          {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as Concerns arrive.</div>}
           {briefRows.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, lineHeight: 1.55 }}>
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', paddingTop: 6 }}>{String(i + 1).padStart(2, '0')}</span>
@@ -998,8 +998,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           ))}
         </section>
         <section style={{ minWidth: 0 }}>
-          {secHead('Activity', mono('signal events'))}
-          {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as signals arrive.</div>}
+          {secHead('Activity', mono('Concern events'))}
+          {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as Concerns arrive.</div>}
           {activityRows.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/signals?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
               <div style={{ width: 30, height: 30, borderRadius: 8, background: 'var(--wash, #F4F0E8)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{ACT_ICONS[sg.source_integration || ''] ?? <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ink-faint)', textTransform: 'uppercase' }}>{(sg.source_integration || '?').slice(0, 2)}</span>}</div>
@@ -1026,7 +1026,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           const ACTION_LABEL: Record<string, string> = {
             silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
             legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
-            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
+            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_Concern: 'Fast-track',
             call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
           }
           const rows = accounts.map(a => {
@@ -1057,7 +1057,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
-                <span style={{ textAlign: 'center' }}>Stage</span><span>Top Signal</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
+                <span style={{ textAlign: 'center' }}>Stage</span><span>Top Concern</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div className="askable ask-offset" key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>

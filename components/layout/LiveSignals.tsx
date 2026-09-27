@@ -31,7 +31,7 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
   const dismiss = useCallback((id: string) => setToasts(t => t.filter(x => x.id !== id)), [])
   const push = useCallback((t: Toast) => {
     // v11.88: with the agent on, the agent tells you about the signal instead of a toast
-    if (AGENT_ENABLED) { window.dispatchEvent(new CustomEvent('agent:signal', { detail: t })); return }
+    if (AGENT_ENABLED) { window.dispatchEvent(new CustomEvent('agent:Concern', { detail: t })); return }
     // don't talk over the Ask sheet: hold the note until it is closed
     if (typeof document !== 'undefined' && document.documentElement.dataset.askOpen === '1') { queued.current.push(t); return }
     setToasts(prev => [t, ...prev.filter(x => x.id !== t.id)].slice(0, 3))
@@ -56,8 +56,8 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
     }
     const supabase = createClient()
     const channel = supabase
-      .channel('signals-live')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'signals', filter: `user_id=eq.${userId}` }, (payload) => {
+      .channel('Concerns-live')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'Concerns', filter: `user_id=eq.${userId}` }, (payload) => {
         const s = payload.new as { id: string; title?: string; account_name?: string; severity?: string; is_dismissed?: boolean; source_integration?: string; ai_analysis?: { quote?: string } }
         if (s.is_dismissed) return
         push({ id: s.id, title: s.title || 'New signal detected', account: s.account_name, severity: s.severity, source: s.source_integration, quote: s.ai_analysis?.quote })
@@ -84,7 +84,7 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, position: 'relative' }}>
             <span className="live-dot" style={{ background: color(t.severity) }} />
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: color(t.severity) }}>{word(t.severity)}</span>
-            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>· new signal{t.source ? ` · ${SRC[t.source] ?? t.source}` : ''}</span>
+            <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>· new Concern{t.source ? ` · ${SRC[t.source] ?? t.source}` : ''}</span>
             <button onClick={e => { e.stopPropagation(); dismiss(t.id) }} aria-label="Dismiss" style={{ marginLeft: 'auto', font: 'inherit', background: 'none', border: 0, color: 'var(--ink-faint)', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 17 }}>×</button>
           </div>
           <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 16, letterSpacing: '-.02em', lineHeight: 1.3, color: 'var(--ink)', marginTop: 10, position: 'relative' }}>{t.title}</div>

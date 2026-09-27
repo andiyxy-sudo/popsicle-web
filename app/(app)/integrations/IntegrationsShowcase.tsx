@@ -45,13 +45,13 @@ const CATS: Cat[] = [
     { key: 'outlook', name: 'Outlook', desc: 'Microsoft 365 email · Same AI analysis', iconBg: '', iconBorder: true },
   ] },
   { label: 'Messaging', count: '3 active', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>, cards: [
-    { key: 'linkedin', name: 'LinkedIn', desc: 'Connection signals · Champion activity tracking', iconBg: '', iconBorder: true, connected: true, count: 128 },
-    { key: 'teams', name: 'Microsoft Teams', desc: 'Chat & channel signal monitoring', iconBg: 'rgba(80,89,201,.06)' },
+    { key: 'linkedin', name: 'LinkedIn', desc: 'Connection Concerns · Champion activity tracking', iconBg: '', iconBorder: true, connected: true, count: 128 },
+    { key: 'teams', name: 'Microsoft Teams', desc: 'Chat & channel Concern monitoring', iconBg: 'rgba(80,89,201,.06)' },
     { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', iconBg: '', iconBorder: true, connected: true, count: 152 },
     { key: 'whatsapp', name: 'WhatsApp Business', desc: 'Buyer message patterns & sentiment', iconBg: 'rgba(37,211,102,.06)', connected: true, count: 251 },
   ] },
   { label: 'CRM', count: '1 active', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--o)" strokeWidth="2" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>, cards: [
-    { key: 'hubspot', name: 'HubSpot', desc: 'Deal data sync · Churn probability signals', iconBg: '', iconBorder: true, connected: true, count: 94 },
+    { key: 'hubspot', name: 'HubSpot', desc: 'Deal data sync · Churn probability Concerns', iconBg: '', iconBorder: true, connected: true, count: 94 },
     { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', iconBg: 'rgba(0,161,224,.06)' },
     { key: 'zoho', name: 'Zoho CRM', desc: 'Pipeline sync · Deal stage tracking', iconBg: 'rgba(228,37,39,.06)' },
   ] },
@@ -97,7 +97,7 @@ export function IntegrationsShowcase() {
 
   return (
     <div className="dsk-screen on">
-      <div className="page-hdr"><h1>Integrations</h1><p>7 active · <span style={{ fontWeight: 700, color: 'var(--o)' }}>847 signals</span> indexed · 18 more available to connect</p></div>
+      <div className="page-hdr"><h1>Integrations</h1><p>7 active · <span style={{ fontWeight: 700, color: 'var(--o)' }}>847 Concerns</span> indexed · 18 more available to connect</p></div>
 
       {CATS.map(cat => (
         <div key={cat.label}>

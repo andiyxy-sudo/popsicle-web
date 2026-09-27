@@ -118,11 +118,11 @@ export const DEMO_SIGNALS: Signal[] = [
   S('demo-sg-4', 'Acme Corp', 'champion_change', 'high', 'Champion at risk',
     'Internal champion removed from latest email thread. Possible loss of internal backing.',
     'gmail', 1100, 480000, 83, undefined, 'Re-engage James Park directly and confirm he is still sponsoring'),
-  S('demo-sg-5', 'Acme Corp', 'call_buying_signal', 'positive', 'VP Eng confirmed technical fit',
+  S('demo-sg-5', 'Acme Corp', 'call_buying_Concern', 'positive', 'VP Eng confirmed technical fit',
     'VP Eng confirmed technical fit. Integration team standing by.', 'slack', 500, null, 92,
     'Technical integration looks solid. My team is ready to proceed once legal signs off.', undefined),
   S('demo-sg-6', 'Nexus AI', 'reengaged', 'positive', 'Champion re-engaged after break',
-    'Champion re-engaged after holiday break. Strong buying intent signals across 3 channels.',
+    'Champion re-engaged after holiday break. Strong buying intent Concerns across 3 channels.',
     'gmail', 20, null, 94, 'We are very close to signing. Just waiting on legal to clear the last two redlines.',
     'Lock the signature date this week'),
   S('demo-sg-7', 'Nexus AI', 'call_commitment', 'positive', 'Procurement confirmed budget approved',
@@ -182,13 +182,13 @@ export const DEMO_SIGNALS: Signal[] = [
   S('demo-sg-38', 'Vertex Systems', 'legal_loopin', 'watch', 'Contract with legal, no reviewer named', 'Legal received the contract; no reviewer assigned yet.', 'gmail', 480, 175000, 89),
   S('demo-sg-39', 'Nexus AI', 'legal_loopin', 'watch', 'MSA redlines returned with two clauses open', 'Liability cap and data residency still open.', 'gmail', 220, null, 87),
   // positive
-  S('demo-sg-40', 'Nexus AI', 'call_buying_signal', 'positive', 'Rollout sequencing discussed: enterprise team first', 'Marcus Webb moved to planning the rollout.', 'zoom', 90, null, 98, 'Then enterprise first. Send the deployment plan.'),
+  S('demo-sg-40', 'Nexus AI', 'call_buying_Concern', 'positive', 'Rollout sequencing discussed: enterprise team first', 'Marcus Webb moved to planning the rollout.', 'zoom', 90, null, 98, 'Then enterprise first. Send the deployment plan.'),
   S('demo-sg-41', 'Nexus AI', 'reengaged', 'positive', 'Expansion to two more regions raised', 'Expansion language appeared on the wrap call.', 'zoom', 500, null, 98),
-  S('demo-sg-42', 'Brightwave', 'call_buying_signal', 'positive', 'Finance reviewing, answer promised Friday', 'Tom Okafor opened the ROI deck three times.', 'gmail', 60, null, 98, 'Finance is reviewing, back to you Friday.'),
+  S('demo-sg-42', 'Brightwave', 'call_buying_Concern', 'positive', 'Finance reviewing, answer promised Friday', 'Tom Okafor opened the ROI deck three times.', 'gmail', 60, null, 98, 'Finance is reviewing, back to you Friday.'),
   S('demo-sg-43', 'Brightwave', 'reengaged', 'positive', 'RevOps lead joined the thread', 'A second stakeholder engaged.', 'gmail', 800, null, 95),
   S('demo-sg-44', 'Cobalt Health', 'reengaged', 'positive', 'Onboarding kickoff booked for Monday', 'Implementation lead confirmed.', 'gcal', 150, null, 98),
-  S('demo-sg-45', 'Cobalt Health', 'call_buying_signal', 'positive', 'Asked about a second business unit', 'Expansion interest after signing.', 'zoom', 900, null, 94),
-  S('demo-sg-46', 'Vertex Systems', 'call_buying_signal', 'positive', 'Dana Kim confirmed the January 28 close', 'Contract review in the final stage.', 'gmail', 100, null, 98, 'We are still aiming to close by January 28.'),
+  S('demo-sg-45', 'Cobalt Health', 'call_buying_Concern', 'positive', 'Asked about a second business unit', 'Expansion interest after signing.', 'zoom', 900, null, 94),
+  S('demo-sg-46', 'Vertex Systems', 'call_buying_Concern', 'positive', 'Dana Kim confirmed the January 28 close', 'Contract review in the final stage.', 'gmail', 100, null, 98, 'We are still aiming to close by January 28.'),
   S('demo-sg-47', 'TechFlow Inc', 'reengaged', 'positive', 'Controller replied within the hour', 'Faster than her usual reply time.', 'gmail', 130, null, 85),
   // handled this quarter: four saves (the $560K protected) and eight routine actions
   HD('demo-hd-1', 'Brightwave', 'silent_stall', 'high', 'Budget freeze mentioned by the VP', 'Brightwave paused new spend pending a budget review.', 'gmail', 900, 180000, 98, 860, 'Exec call'),
@@ -246,7 +246,7 @@ export const DEMO_PEOPLE: Record<string, Array<{ name: string; role: string; bad
     { name: 'Lisa Park', role: 'CFO', badge: 'EXEC SPONSOR', status: 'Active', last: '5d ago', eng: 86,
       desc: 'Signed the contract Dec 20. Praised the onboarding and is looking forward to the QBR.' },
     { name: 'Raj Kapoor', role: 'Head of Revenue Ops', badge: 'CHAMPION', status: 'Active', last: '1d ago', eng: 94,
-      desc: 'Reports 94% adoption after week 2. Credits WhatsApp signal capture with 3 hours saved per rep per week.' },
+      desc: 'Reports 94% adoption after week 2. Credits WhatsApp Concern capture with 3 hours saved per rep per week.' },
     { name: 'Amy Walsh', role: 'VP Product', badge: 'POWER USER', status: 'Active', last: '3d ago', eng: 80,
       desc: 'Wants to explore the analytics module and demo it to the wider product team. $75K upsell path.' },
   ],
@@ -328,7 +328,7 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
     { who: 'Mike Ross', role: 'Account Executive', via: 'Gmail', tone: 'positive', when: '3d ago',
       quote: 'Sent ROI calculator and phased pricing option (60/40 split). Kevin opened both attachments same day.' },
     { who: 'Kevin Cho', role: 'VP Engineering', via: 'Slack', tone: 'positive', when: '7d ago',
-      quote: 'Technical eval scored 9.2/10. My team loves the real-time signal detection. Budget is the only blocker.' },
+      quote: 'Technical eval scored 9.2/10. My team loves the real-time Concern detection. Budget is the only blocker.' },
     { who: 'James Burke', role: 'IT Director', via: 'Gmail', tone: 'positive', when: '12d ago',
       quote: 'Security review complete - no issues found. SSO integration tested successfully in our staging environment.' },
   ],
@@ -336,7 +336,7 @@ export const DEMO_COMMS: Record<string, Array<{ who: string; role: string; via: 
     { who: 'Lisa Park', role: 'CFO', via: 'Gmail', tone: 'positive', when: '5d ago',
       quote: 'Thanks for the seamless onboarding. Team is already using the dashboard daily. Looking forward to the QBR.' },
     { who: 'Raj Kapoor', role: 'Head of RevOps', via: 'Slack', tone: 'positive', when: '7d ago',
-      quote: 'Adoption is at 94% after week 2. The WhatsApp signal capture alone saved us 3 hours per rep per week.' },
+      quote: 'Adoption is at 94% after week 2. The WhatsApp Concern capture alone saved us 3 hours per rep per week.' },
     { who: 'Amy Walsh', role: 'VP Product', via: 'Gmail', tone: 'positive', when: '10d ago',
       quote: 'Would love to explore the analytics module. Can we schedule a demo for the wider product team?' },
     { who: 'Billing System', role: 'Auto-generated', via: 'Gmail', tone: 'positive', when: 'Dec 28',
@@ -378,7 +378,7 @@ export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; 
   'Nexus AI': [
     { title: 'Final Contract Sent', kind: 'positive', when: '1d ago',
       body: 'Executed agreement sent to Marcus Webb for e-signature. Close expected Jan 15.' },
-    { title: 'PO Expected Signal', kind: 'positive', when: '3d ago',
+    { title: 'PO Expected Concern', kind: 'positive', when: '3d ago',
       body: 'Procurement team confirmed budget allocation. Purchase order in drafting stage.' },
     { title: 'Security Audit Passed', kind: 'positive', when: '5d ago',
       body: 'SOC2 compliance verified. No blockers from InfoSec team.' },
@@ -444,7 +444,7 @@ export const DEMO_TIMELINE: Record<string, Array<{ title: string; body: string; 
     { title: 'Proposal Sent', kind: 'positive', when: '10d ago',
       body: 'Competitive pricing proposal delivered. Rachel forwarded to legal same day.' },
     { title: 'CTO Referral', kind: 'positive', when: '21d ago',
-      body: 'Maya Singh forwarded to procurement after initial interest. Positive signal.' },
+      body: 'Maya Singh forwarded to procurement after initial interest. Positive Concern.' },
   ],
   'Brightwave': [
     { title: 'Contract Review Started', kind: 'positive', when: '2d ago',
@@ -493,9 +493,9 @@ export const DEMO_TRANSCRIPTS: Record<string, DemoTranscript> = {
   duration: 42,
   when: '3 days ago',
   analyser: 'Gong analyzed',
-  summary: 'Sarah expressed interest in the platform but raised concerns about pricing vs current Gong contract. Her team wants a side-by-side comparison before committing budget. James (IT) confirmed technical readiness. Strong buying signals but finance is the blocker.',
+  summary: 'Sarah expressed interest in the platform but raised concerns about pricing vs current Gong contract. Her team wants a side-by-side comparison before committing budget. James (IT) confirmed technical readiness. Strong buying Concerns but finance is the blocker.',
   moments: [
-    { t: '2:14', who: 'Sarah Chen', tag: null, text: 'Tell me more about how you detect signals compared to what we currently have with Gong.' },
+    { t: '2:14', who: 'Sarah Chen', tag: null, text: 'Tell me more about how you detect Concerns compared to what we currently have with Gong.' },
     { t: '5:32', who: 'Andy G', tag: null, text: 'The key difference is we analyze across email, WhatsApp, and Slack in real-time - not just call recordings after the fact.' },
     { t: '12:08', who: 'Sarah Chen', tag: 'OBJECTION', text: 'The pricing feels high for what we need. We are paying $180K for Gong already and the board will not approve two overlapping tools.' },
     { t: '14:45', who: 'Andy G', tag: null, text: 'That is exactly why we built the migration path. You can phase out Gong as Popsicle ramps - most teams see full ROI within 60 days.' },
@@ -511,7 +511,7 @@ export const DEMO_TRANSCRIPTS: Record<string, DemoTranscript> = {
     summary: 'Alex Park walked through their current stack and the gap Popsicle would fill. Strong technical interest, but he flagged twice that budget sits with a VP who was not on the call. No decision-maker present, and no date set to get one. That gap is why this deal has since gone quiet.',
     moments: [
       { t: '1:52', who: 'Alex Park', tag: null, text: 'We have Gong for calls but nothing reads the email and WhatsApp side, which is where most of our deals actually happen.' },
-      { t: '8:30', who: 'Andy G', tag: null, text: 'That is the gap we built for. Every channel, same detection, and the signal reaches the rep the day it happens rather than in the weekly review.' },
+      { t: '8:30', who: 'Andy G', tag: null, text: 'That is the gap we built for. Every channel, same detection, and the Concern reaches the rep the day it happens rather than in the weekly review.' },
       { t: '15:10', who: 'Alex Park', tag: 'OBJECTION', text: 'The capability is clear. My concern is budget. This size of spend goes to our VP of Revenue Operations and she was not in this conversation.' },
       { t: '19:45', who: 'Alex Park', tag: 'RISK', text: 'I should be honest that we have three tools up for renewal this quarter and she is looking to consolidate, not add.' },
       { t: '26:20', who: 'Andy G', tag: null, text: 'Then the case has to be consolidation. If we replace two of those three, the conversation changes from cost to saving.' },
@@ -526,7 +526,7 @@ export const DEMO_TRANSCRIPTS: Record<string, DemoTranscript> = {
     moments: [
       { t: '2:40', who: 'Dana Kim', tag: null, text: 'Pricing is in the range we expected for fifty seats, so let us not spend time there.' },
       { t: '9:15', who: 'Dana Kim', tag: 'OBJECTION', text: 'What worries me is implementation. We have been burned before by a six-week onboarding that turned into five months.' },
-      { t: '12:50', who: 'Andy G', tag: null, text: 'Connect the sources and signals start landing the same day. Two weeks to full coverage, and we do the integration work, not your team.' },
+      { t: '12:50', who: 'Andy G', tag: null, text: 'Connect the sources and Concerns start landing the same day. Two weeks to full coverage, and we do the integration work, not your team.' },
       { t: '18:22', who: 'Dana Kim', tag: 'COMMITMENT', text: 'If that holds, I am comfortable putting this in front of our COO next week.' },
       { t: '24:05', who: 'Dana Kim', tag: 'NEXT STEP', text: 'Send the contract to legal and I will chase the COO. We are still aiming to close by January 28.' },
       { t: '29:30', who: 'Dana Kim', tag: null, text: 'One favour: put the two-week onboarding commitment in writing in the contract so I can point to it.' },
@@ -657,7 +657,7 @@ export const DEMO_CONTRACTS: Record<string, Array<{ name: string; type: string; 
 }
 
 
-// The Overview 'AI risk signals' lines, verbatim from the mobile app.
+// The Overview 'AI risk Concerns' lines, verbatim from the mobile app.
 export const DEMO_RISK_LINES: Record<string, Array<{ tone: 'high' | 'watch' | 'positive'; text: string }>> = {
   'Acme Corp': [
     { tone: 'high', text: 'Executive dark 8 days - email opened 3x with no reply. Escalation risk rising.' },
@@ -666,7 +666,7 @@ export const DEMO_RISK_LINES: Record<string, Array<{ tone: 'high' | 'watch' | 'p
     { tone: 'positive', text: 'VP Eng confirmed technical fit. Integration team standing by.' },
   ],
   'Nexus AI': [
-    { tone: 'positive', text: 'Champion re-engaged after holiday break. Strong buying intent signals across 3 channels.' },
+    { tone: 'positive', text: 'Champion re-engaged after holiday break. Strong buying intent Concerns across 3 channels.' },
     { tone: 'positive', text: 'Procurement confirmed budget approved. PO expected this week.' },
     { tone: 'watch', text: 'Legal review is the only remaining blocker. Standard NDA redlines outstanding.' },
   ],
@@ -763,7 +763,7 @@ export const DEMO_TEAM: TeamModel = {
   headline: 'Mike Ross is 2.5x slower on first action.',
   bullets: [
     { tone: '#2f8f5b', text: 'Exec calls have 83% success rate vs 74% for follow-ups, the highest-impact intervention by far.' },
-    { tone: '#E85A25', text: "Andy G's 2.1h response is half the team median. 12 signals caught, 4 deals recovered, $284K protected." },
+    { tone: '#E85A25', text: "Andy G's 2.1h response is half the team median. 12 Concerns caught, 4 deals recovered, $284K protected." },
     { tone: '#d38b1d', text: 'Mike Ross at 6.7h time-to-action. Loop closure 13 points below team average. Coaching on urgency recommended.' },
     { tone: '#0E0D0B', text: 'Jamie Torres closed the Meridian invoice dispute (+$44K) and holds Cobalt at NPS 72. Improving on follow-through, 81%.' },
   ],
@@ -959,7 +959,7 @@ export const DEMO_SIGNALS_HEAD = [
   { n: '2', lbl: 'critical · $1.33M at risk', tone: 'critical' as const },
   { n: '4', lbl: 'watch · $655K exposure', tone: 'warn' as const },
   { n: '1', lbl: 'positive · $320K closing', tone: 'good' as const },
-  { n: '47', lbl: 'signals this week · 12 new', tone: 'ink' as const, strong: true },
+  { n: '47', lbl: 'Concerns this week · 12 new', tone: 'ink' as const, strong: true },
 ]
 
 // ---------- Forecast movers (transcribed from the mobile Forecast screen, v11.14) ----------
@@ -1067,7 +1067,7 @@ export const DEMO_RATINGS = [
   { type: 'Silent stall', useful: 31, rated: 33 }, { type: 'Price flinch', useful: 24, rated: 27 },
   { type: 'Competitor mention', useful: 17, rated: 19 }, { type: 'Timeline slip', useful: 15, rated: 17 },
   { type: 'Legal loop-in', useful: 13, rated: 14 }, { type: 'Champion change', useful: 9, rated: 10 },
-  { type: 'Buying signal', useful: 7, rated: 8 },
+  { type: 'Buying Concern', useful: 7, rated: 8 },
 ]
 const _acc = DEMO_ACCOUNTS as unknown as M.Acct[], _sig = DEMO_SIGNALS as unknown as M.Sig[]
 export const DEMO_X = {

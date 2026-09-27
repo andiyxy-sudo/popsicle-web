@@ -56,10 +56,10 @@ export function suggest(d: SuggestInput): string[] {
         'Is any healthy account quietly slipping?',
         'Who owns the most exposure right now?',
       )
-    case 'signals':
+    case 'Concerns':
       return pick(
-        latestHigh?.account_name && latestHigh.title ? `Is the "${lower(latestHigh.title)}" signal on ${latestHigh.account_name} real?` : 'Which of these signals is most likely real?',
-        'Which of these signals can wait until next week?',
+        latestHigh?.account_name && latestHigh.title ? `Is the "${lower(latestHigh.title)}" signal on ${latestHigh.account_name} real?` : 'Which of these Concerns is most likely real?',
+        'Which of these Concerns can wait until next week?',
         latestHigh?.account_name ? `What should I send ${latestHigh.account_name} today?` : 'What should I act on first, and why?',
       )
     case 'forecast': {
@@ -75,7 +75,7 @@ export function suggest(d: SuggestInput): string[] {
       return pick(
         d.riskDeltaPct ? `Why is new risk up ${d.riskDeltaPct}%?` : 'What is driving new risk this month?',
         'Which action is working best, and who isn\'t using it?',
-        'Are we getting faster at acting on signals?',
+        'Are we getting faster at acting on Concerns?',
       )
     case 'team': {
       const slow = [...(d.reps ?? [])].filter(r => r.avgResp != null).sort((a, b) => Number(b.avgResp) - Number(a.avgResp))[0]
@@ -92,7 +92,7 @@ export function suggest(d: SuggestInput): string[] {
       for (const s of open) { const k = (s as { source_integration?: string | null }).source_integration; if (k) bySrc.set(k, (bySrc.get(k) ?? 0) + 1) }
       const topSrc = [...bySrc.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
       return pick(
-        topSrc ? `Why is ${NAME[topSrc] ?? topSrc} raising the most signals?` : 'Which source is raising the most signals?',
+        topSrc ? `Why is ${NAME[topSrc] ?? topSrc} raising the most signals?` : 'Which source is raising the most Concerns?',
         'Which source would catch more risk if I connected it next?',
         'Are any deals going quiet in a channel Popsicle can\u2019t see?',
       )

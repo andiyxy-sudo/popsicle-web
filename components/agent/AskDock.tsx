@@ -90,7 +90,7 @@ export function AskDock() {
   }, [screen, account])
   useEffect(() => { setOpen(false) }, [screen, account])
   useEffect(() => {
-    const pages = ['pulse', 'portfolio', 'signals', 'forecast', 'intelligence', 'team', 'integrations', 'settings']
+    const pages = ['pulse', 'portfolio', 'Concerns', 'forecast', 'intelligence', 'team', 'integrations', 'settings']
     let dead = false
     ;(async () => {
       for (const pg of pages) {
@@ -145,7 +145,7 @@ export function AskDock() {
         if (!critical && st.thresholds.minDeal && (d.msg.amount ?? Infinity) < st.thresholds.minDeal) return   // small deals stay quiet
         // push: a real browser notification when you're on another tab
         if (st.notifs.push && critical && typeof Notification !== 'undefined' && Notification.permission === 'granted' && document.hidden && !(timed && inQuietHours(st))) {
-          try { new Notification(`Popsicle · ${d.msg.account ?? 'New signal'}`, { body: d.msg.headline, tag: d.msg.key }) } catch { /* ignore */ }
+          try { new Notification(`Popsicle · ${d.msg.account ?? 'New Concern'}`, { body: d.msg.headline, tag: d.msg.key }) } catch { /* ignore */ }
         }
       }
       const id = d.kind === 'brief' ? `brief:${d.brief.generatedAt}` : d.msg.key
@@ -376,7 +376,7 @@ export function AskDock() {
                 ))}
               </div>
             )}
-            {busy && <div className="dock-thinking"><span /><span /><span />Reading your {account ? `${account} signals` : 'signals'}…</div>}
+            {busy && <div className="dock-thinking"><span /><span /><span />Reading your {account ? `${account} Concerns` : 'Concerns'}…</div>}
           </div>
         </div>
       )}

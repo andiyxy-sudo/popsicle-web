@@ -73,7 +73,7 @@ export function FirstRun() {
       <section className="fr">
         <div className="fr-k"><span className="fr-pulse" />Getting ready</div>
         <h2>We’re reading your last 30 days.</h2>
-        <p>Your first signals usually arrive within about an hour. You don’t need to keep this page open; Pulse fills itself in when they land.</p>
+        <p>Your first Concerns usually arrive within about an hour. You don’t need to keep this page open; Pulse fills itself in when they land.</p>
         <ul className="fr-steps">
           {steps.map(([done, label, state, go], k) => (
             <li key={k} className={done ? 'done' : ''}>

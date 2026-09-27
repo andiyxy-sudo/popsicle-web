@@ -20,11 +20,11 @@ const acctHref = (n: string) => `/accounts/${encodeURIComponent(n)}`
 function evidence(s: Sig, accts: Acct[]): Evidence {
   const q = (s.ai_analysis?.quote as string | undefined)?.replace(/^["“]|["”]$/g, '')
   // no speaker is inferred: a signal records where the words came from, not reliably who said them
-  return { signalId: s.id, title: s.title ?? 'Signal', quote: q, who: undefined,
+  return { signalId: s.id, title: s.title ?? 'Concern', quote: q, who: undefined,
     source: s.source_integration ?? undefined, when: (s.status === 'handled' ? s.handled_at : s.created_at) ?? undefined }
 }
 const sigNode = (s: Sig, accts: Acct[], showAmount = true): XNode => ({
-  id: s.id, label: s.title ?? 'Signal', value: showAmount ? Number(s.risk_amount || 0) || undefined : undefined,
+  id: s.id, label: s.title ?? 'Concern', value: showAmount ? Number(s.risk_amount || 0) || undefined : undefined,
   note: [s.severity === 'high' ? 'critical' : s.severity, s.status === 'handled' ? `handled · ${s.handled_action ?? 'action'}` : null].filter(Boolean).join(' · '),
   href: `/signals?signal=${s.id}`, evidence: evidence(s, accts),
 })
@@ -36,11 +36,11 @@ export function atRisk(accts: Acct[], sigs: Sig[]): Explanation {
   const parts: XNode[] = names.map(n => {
     const mine = open.filter(s => s.account_name === n && s.severity !== 'positive').sort((a, b) => (SEV_ORDER[a.severity ?? ''] - SEV_ORDER[b.severity ?? '']) || String(b.created_at).localeCompare(String(a.created_at)))
     const v = Math.max(0, ...mine.map(s => Number(s.risk_amount || 0)))
-    return { id: `acct:${n}`, label: n, value: v, note: `${mine.filter(s => s.severity === 'high').length} critical signals`, href: acctHref(n), children: mine.slice(0, 6).map(s => sigNode(s, accts, false)) }
+    return { id: `acct:${n}`, label: n, value: v, note: `${mine.filter(s => s.severity === 'high').length} critical Concerns`, href: acctHref(n), children: mine.slice(0, 6).map(s => sigNode(s, accts, false)) }
   }).sort((a, b) => (b.value ?? 0) - (a.value ?? 0))
   const value = parts.reduce((t, p) => t + (p.value ?? 0), 0)
   return { metric: 'at_risk', label: 'Revenue at risk', value, valueText: money(value), parts,
-    definition: 'For each account with an open critical signal, the largest amount at risk on that account. Each account is counted once.' }
+    definition: 'For each account with an open critical Concern, the largest amount at risk on that account. Each account is counted once.' }
 }
 
 /** Active signals: open signals, by severity. */
@@ -57,7 +57,7 @@ export function activeSignals(accts: Acct[], sigs: Sig[], nowMs = Date.now()): E
     const color = sev === 'high' ? 'var(--critical, #c43d2b)' : sev === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
     return { id: `sev:${sev}`, label: sev === 'high' ? 'Critical' : sev === 'watch' ? 'Watch' : 'Positive', value: mine.length, valueText: String(mine.length), color, children: byAcct }
   })
-  return { metric: 'active', label: 'Active signals', value: open.length, valueText: String(open.length), parts,
+  return { metric: 'active', label: 'Active Concerns', value: open.length, valueText: String(open.length), parts,
     definition: `Signals that are open (not handled, snoozed or dismissed). ${newToday} arrived in the last 24 hours.` }
 }
 
@@ -70,7 +70,7 @@ export function protectedRevenue(accts: Acct[], sigs: Sig[]): Explanation {
   const value = parts.reduce((t, p) => t + (p.value ?? 0), 0)
   const actions = sigs.filter(s => s.status === 'handled').length
   return { metric: 'protected', label: 'Revenue protected', value, valueText: money(value), parts,
-    definition: 'The amount at risk on signals your team acted on, where the account is no longer at high risk. Each save is counted once.',
+    definition: 'The amount at risk on Concerns your team acted on, where the account is no longer at high risk. Each save is counted once.',
     footnote: `${parts.length} saves out of ${actions} actions taken this quarter.` }
 }
 
@@ -107,7 +107,7 @@ export function accountHealth(name: string, accts: Acct[], sigs: Sig[], breakdow
   const value = Number(a?.health_score ?? 0)
   const parts: XNode[] = (breakdown ?? []).map(b => ({ id: `hb:${b.k}`, label: b.k, valueText: String(b.v), color: healthColor(b.v) }))
   const moving = sigs.filter(s => isOpen(s) && s.account_name === name).slice(0, 5)
-  if (moving.length) parts.push({ id: 'moving', label: 'Signals moving it', valueText: String(moving.length), children: moving.map(s => sigNode(s, accts, false)) })
+  if (moving.length) parts.push({ id: 'moving', label: 'Concerns moving it', valueText: String(moving.length), children: moving.map(s => sigNode(s, accts, false)) })
   return { metric: 'account_health', label: `${name} · health`, value, valueText: String(value), color: healthColor(value), parts,
     definition: breakdown?.length ? `The average of four components: ${breakdown.map(b => b.k.toLowerCase()).join(', ')}. 70 and above is healthy, below 40 is critical.` : 'Health score from the account record. 70 and above is healthy, below 40 is critical.' }
 }
@@ -116,8 +116,8 @@ export function accountHealth(name: string, accts: Acct[], sigs: Sig[], breakdow
 export function signalAmount(id: string, accts: Acct[], sigs: Sig[]): Explanation {
   const s = sigs.find(x => x.id === id)
   const value = Number(s?.risk_amount || 0)
-  return { metric: 'signal', label: s?.title ?? 'Signal', value, valueText: money(value),
-    definition: `The value of ${s?.account_name ?? 'the account'} at stake if this signal is right: the deal's annual value from the CRM.`,
+  return { metric: 'Concern', label: s?.title ?? 'Concern', value, valueText: money(value),
+    definition: `The value of ${s?.account_name ?? 'the account'} at stake if this Concern is right: the deal's annual value from the CRM.`,
     parts: s ? [sigNode(s, accts, false)] : [] }
 }
 
@@ -139,7 +139,7 @@ export function ratedPrecision(byType: Array<{ type: string; useful: number; rat
       note: r.rated >= 30 ? `${r.useful} of ${r.rated} · ${Math.round(lo * 100)}\u2013${Math.round(hi * 100)}%` : `${r.useful} of ${r.rated} so far · needs 30` }
   })
   return { metric: 'rated_precision', label: 'Rated precision', value, valueText: rated >= 30 ? `${value}%` : 'collecting', parts, n: rated, interval: iv, collecting: rated < 30,
-    definition: 'Signals your team marked useful, out of signals rated. Shown with its sample size and a 95% interval; per type once a type has 30 ratings.' }
+    definition: 'Concerns your team marked useful, out of Concerns rated. Shown with its sample size and a 95% interval; per type once a type has 30 ratings.' }
 }
 
 /** A group of accounts (by risk level or stage), with their value. */
@@ -178,8 +178,8 @@ export function caughtEarly(accts: Acct[], sigs: Sig[]): Explanation {
     note: `${risk.filter(s => s.account_name === n && s.status === 'handled').length} acted on`,
     children: risk.filter(s => s.account_name === n).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 5).map(s => sigNode(s, accts, false)) }))
     .sort((a, b) => Number(b.valueText) - Number(a.valueText))
-  return { metric: 'caught', label: 'Signals caught early', value: risk.length, valueText: String(risk.length), parts,
-    definition: 'Critical and watch signals raised this quarter, whether still open or already acted on: the risks Popsicle surfaced before they showed up in the CRM.' }
+  return { metric: 'caught', label: 'Concerns caught early', value: risk.length, valueText: String(risk.length), parts,
+    definition: 'Critical and watch Concerns raised this quarter, whether still open or already acted on: the risks Popsicle surfaced before they showed up in the CRM.' }
 }
 
 /** Accounts with an open risk signal (the Revenue Loop's "active cases"). */
@@ -189,7 +189,7 @@ export function activeCases(accts: Acct[], sigs: Sig[]): Explanation {
   const parts: XNode[] = names.map(n => ({ id: `acct:${n}`, label: n, valueText: `${open.filter(s => s.account_name === n).length} open`, href: acctHref(n),
     children: open.filter(s => s.account_name === n).slice(0, 5).map(s => sigNode(s, accts, false)) }))
   return { metric: 'cases', label: 'Active cases', value: names.length, valueText: String(names.length), parts,
-    definition: 'Accounts with at least one open critical or watch signal.' }
+    definition: 'Accounts with at least one open critical or watch Concern.' }
 }
 
 /** Critical signals with a recommended next step ready (the Revenue Loop's "actions ready"). */
@@ -197,15 +197,15 @@ export function actionsReady(accts: Acct[], sigs: Sig[]): Explanation {
   const ready = sigs.filter(s => isOpen(s) && s.severity === 'high' && (s.ai_analysis?.recommendation as string | undefined))
   const parts: XNode[] = ready.map(s => ({ ...sigNode(s, accts, false), note: `next step: ${String(s.ai_analysis?.recommendation)}` }))
   return { metric: 'actions_ready', label: 'Actions ready', value: ready.length, valueText: String(ready.length), parts,
-    definition: 'Open critical signals where Popsicle has already prepared the next step for you to approve.' }
+    definition: 'Open critical Concerns where Popsicle has already prepared the next step for you to approve.' }
 }
 
-/** New signals in the last 24 hours. */
+/** New Concerns in the last 24 hours. */
 export function newToday(accts: Acct[], sigs: Sig[], nowMs = Date.now()): Explanation {
   const fresh = sigs.filter(s => isOpen(s) && s.created_at && nowMs - new Date(s.created_at).getTime() <= 24 * 3600e3)
     .sort((a, b) => String(b.created_at).localeCompare(String(a.created_at)))
-  return { metric: 'new_today', label: 'New signals', value: fresh.length, valueText: String(fresh.length), parts: fresh.map(s => sigNode(s, accts)),
-    definition: 'Signals that arrived in the last 24 hours and are still open.' }
+  return { metric: 'new_today', label: 'New Concerns', value: fresh.length, valueText: String(fresh.length), parts: fresh.map(s => sigNode(s, accts)),
+    definition: 'Concerns that arrived in the last 24 hours and are still open.' }
 }
 
 /** One rep's exposure: money at stake on their accounts, each account counted once. */

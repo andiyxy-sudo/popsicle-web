@@ -353,7 +353,7 @@ export function WelcomeFlow({ name }: { name: string }) {
         {createdCount} account{createdCount === 1 ? '' : 's'} tracked
       </div>
       <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto 22px' }}>
-        Popsicle is now watching these relationships. Signal detection runs continuously in the background, and new signals will pop up live on your dashboard.
+        Popsicle is now watching these relationships. Signal detection runs continuously in the background, and new Concerns will pop up live on your dashboard.
       </div>
       <Cta label="Open my dashboard" onClick={() => { window.location.href = '/pulse' }} />
     </Card>

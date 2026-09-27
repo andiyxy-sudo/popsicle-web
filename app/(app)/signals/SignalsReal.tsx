@@ -11,7 +11,7 @@ import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal
 import { useEscape, useModalFlag } from '@/components/ui/useEscape'
 type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 
-// Live Signals with the ACTION LOOP: every signal can be snoozed, dismissed,
+// Live Concerns with the ACTION LOOP: every signal can be snoozed, dismissed,
 // or answered with an AI-drafted follow-up email grounded in the signal's own
 // analysis + the real thread. Snooze/dismiss update optimistically; the draft
 // opens in a modal with copy / open-in-email / regenerate.
@@ -49,7 +49,7 @@ const TYPE_LABELS: Record<string, string> = {
   price_flinch: 'Price Flinch', champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', deal_stage_backward: 'Deal Moved Backward',
   reengaged: 'Re-engaged',
   call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
-  call_buying_signal: 'Buying Signal', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
+  call_buying_signal: 'Buying Concern', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
   meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
 }
 
@@ -165,7 +165,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       setDeepNotFound(true)
       return
     }
-    createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
+    createClient().from('Concerns').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
       if (error || !data) { setDeepNotFound(true); return }
       const sig = data as DBSignal
       // Soft-deleted signals are gone as far as users are concerned.
@@ -219,7 +219,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     setSignals(prev.filter(x => x.id !== s.id))
     setDetailFor(null)
     if (isDemoSig(s)) { setBusyId(null); return }
-    const { error } = await createClient().from('signals')
+    const { error } = await createClient().from('Concerns')
       .update({ status: 'snoozed', snoozed_until: until.toISOString() }).eq('id', s.id)
     if (error) setSignals(prev)
     else router.refresh()
@@ -234,7 +234,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     const prev = signals
     setSignals(prev.filter(x => x.id !== s.id))
     if (isDemoSig(s)) { setBusyId(null); return }
-    const { error } = await createClient().from('signals').update({ [flag]: true }).eq('id', s.id)
+    const { error } = await createClient().from('Concerns').update({ [flag]: true }).eq('id', s.id)
     if (error) setSignals(prev)
     else router.refresh()
     setBusyId(null)
@@ -289,7 +289,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       setBusyId(null); return
     }
     const supa = createClient()
-    const { data: updated, error } = await supa.from('signals').update(patch).eq('id', s.id).select('id')
+    const { data: updated, error } = await supa.from('Concerns').update(patch).eq('id', s.id).select('id')
     if (!error && (updated?.length ?? 0) > 0) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
       setDetailFor(prev => prev && prev.id === s.id ? { ...prev, ...patch } : prev)
@@ -325,7 +325,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     setSignals(prev.filter(x => x.id !== s.id))
     setDetailFor(null)
     if (isDemoSig(s)) { setBusyId(null); return }
-    const { error } = await createClient().from('signals')
+    const { error } = await createClient().from('Concerns')
       .update({ status: 'deleted', deleted_reason: reason, deleted_at: new Date().toISOString() }).eq('id', s.id)
     if (error) setSignals(prev)
     else router.refresh()
@@ -345,11 +345,11 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     }
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
-    const { error } = await supa.from('signals').update({ account_name: accountName }).eq('id', s.id)
+    const { error } = await supa.from('Concerns').update({ account_name: accountName }).eq('id', s.id)
     const ok = !error
     if (ok && user) {
       await supa.from('remap_log').insert({
-        user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
+        user_id: user.id, account_id: accountId, entity_type: 'Concern', entity_id: s.id,
         method: 'manual_assign', prev_value: s.account_name ?? null,
       }).then(() => {}, () => {})
     }
@@ -383,7 +383,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       const j = await r.json().catch(() => ({}))
       if (!r.ok || !j.body) {
         setDraftErr(j?.error === 'draft_ungrounded'
-          ? 'The AI could not write a draft that stays strictly within what the thread and signal actually say, so nothing was shown. Try again, or write it yourself from the signal.'
+          ? 'The AI could not write a draft that stays strictly within what the thread and Concern actually say, so nothing was shown. Try again, or write it yourself from the Concern.'
           : j?.error === 'draft_timeout' ? 'Drafting took too long. Try again in a moment.' : 'Give it another try in a moment.')
         setDraftState('error'); return
       }
@@ -420,14 +420,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
   if (signals.length === 0) {
     return (
       <div className="dsk-screen on">
-        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Live Signals <span style={{ margin: '0 8px' }}>/</span> nothing open</div>
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Live Concerns <span style={{ margin: '0 8px' }}>/</span> nothing open</div>
         <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 40px', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
-          All quiet. <span style={{ color: 'var(--ink-muted)' }}>Signals appear here as your conversations come in.</span>
+          All quiet. <span style={{ color: 'var(--ink-muted)' }}>Concerns appear here as your conversations come in.</span>
         </h1>
         <div className="dcard" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '56px 24px', textAlign: 'center' }}>
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="1.5" strokeLinecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--t2)', margin: '12px 0 6px' }}>No signals yet</div>
-          <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 320 }}>Connect Gmail, Slack, or Zoom on the Integrations page and Popsicle will surface revenue signals here automatically as your conversations come in.</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--t2)', margin: '12px 0 6px' }}>No Concerns yet</div>
+          <div style={{ fontSize: 12, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 320 }}>Connect Gmail, Slack, or Zoom on the Integrations page and Popsicle will surface revenue Concerns here automatically as your conversations come in.</div>
         </div>
       </div>
     )
@@ -450,7 +450,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
     silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
     competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
     timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
-    deal_stage_backward: 'Book exec call', call_buying_signal: 'Fast-track', call_commitment: 'Confirm in writing',
+    deal_stage_backward: 'Book exec call', call_buying_Concern: 'Fast-track', call_commitment: 'Confirm in writing',
     reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
   }
 
@@ -459,7 +459,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       {/* breadcrumb */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap', minHeight: 36 }}>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-          Live Signals <span style={{ margin: '0 8px' }}>/</span> {signals.length} active{srcCount ? ` · ${srcCount} sources` : ''}
+          Live Concerns <span style={{ margin: '0 8px' }}>/</span> {signals.length} active{srcCount ? ` · ${srcCount} sources` : ''}
         </div>
         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <span className="sig-pulse" style={{ width: 6, height: 6, display: 'inline-block', borderRadius: '50%', background: 'var(--accent)' }} />
@@ -470,14 +470,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       {/* narrative headline */}
       <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
         {critical.length > 0 ? (
-          <>{critical.length === 1 ? 'One critical signal sits on the' : `${critical.length} critical signals sit on the`}{' '}
+          <>{critical.length === 1 ? 'One critical Concern sits on the' : `${critical.length} critical Concerns sit on the`}{' '}
             {totalRisk > 0 && <span style={{ color: 'var(--critical, #c43d2b)' }}>{fmtMoney(totalRisk)}</span>} at risk right now.{' '}
             <span style={{ color: 'var(--ink-muted)' }}>
               {positive.length > 0 ? <>{positive[0].account_name || 'One account'} is the bright spot: <span style={{ color: 'var(--good, #2f8f5b)' }}>{(positive[0].title || '').toLowerCase()}</span>.</> : <>Nothing positive is in play yet.</>}
             </span>
           </>
         ) : watch.length > 0 ? (
-          <>No critical signals today. <span style={{ color: 'var(--ink-muted)' }}>{watch.length} worth watching{totalWatchRisk > 0 ? <> across <span style={{ color: 'var(--warn, #d38b1d)' }}>{fmtMoney(totalWatchRisk)}</span> of exposure</> : null}.</span></>
+          <>No critical Concerns today. <span style={{ color: 'var(--ink-muted)' }}>{watch.length} worth watching{totalWatchRisk > 0 ? <> across <span style={{ color: 'var(--warn, #d38b1d)' }}>{fmtMoney(totalWatchRisk)}</span> of exposure</> : null}.</span></>
         ) : (
           <>All quiet across your pipeline. <span style={{ color: 'var(--ink-muted)' }}>Nothing needs you right now.</span></>
         )}
@@ -498,7 +498,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
             { n: String(critical.length), lbl: `critical${highRisk > 0 ? ` · ${fmtMoney(highRisk)} at risk` : ''}`, color: TONE.critical },
             { n: String(watch.length), lbl: `watch${totalWatchRisk > 0 ? ` · ${fmtMoney(totalWatchRisk)} exposure` : ''}`, color: TONE.warn },
             { n: String(positive.length), lbl: `positive${posValue > 0 ? ` · ${fmtMoney(posValue)} closing` : ''}`, color: TONE.good },
-            { n: String(weekN), lbl: `signals this week${newN ? ` · ${newN} new` : ''}`, color: TONE.ink, strong: true },
+            { n: String(weekN), lbl: `Concerns this week${newN ? ` · ${newN} new` : ''}`, color: TONE.ink, strong: true },
           ]
         return (
           <>
@@ -534,14 +534,14 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
         {smallDeals.length > 0 && (
           <button onClick={() => setShowSmall(v => !v)} style={{ font: 'inherit', fontSize: 13, color: 'var(--ink-faint)', background: 'none', border: 0, padding: '6px 0 14px', cursor: 'pointer', textAlign: 'left' }}>
-            {showSmall ? `Hide the ${smallDeals.length} smaller-deal signal${smallDeals.length === 1 ? '' : 's'}` : `${smallDeals.length} signal${smallDeals.length === 1 ? '' : 's'} on deals under $${Math.round(minDeal / 1000)}K hidden by your settings · Show`}
+            {showSmall ? `Hide the ${smallDeals.length} smaller-deal signal${smallDeals.length === 1 ? '' : 's'}` : `${smallDeals.length} Concern${smallDeals.length === 1 ? '' : 's'} on deals under $${Math.round(minDeal / 1000)}K hidden by your settings · Show`}
           </button>
         )}
-        {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New signals land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
+        {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New Concerns land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
         {shown.slice(0, listLimit).map(s => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
           const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
-          const label = TYPE_LABELS[s.signal_type || ''] || 'Signal'
+          const label = TYPE_LABELS[s.signal_type || ''] || 'Concern'
           const body = s.description || s.ai_analysis?.summary || ''
           const quote = typeof s.ai_analysis?.quote === 'string' ? s.ai_analysis.quote : null
           const isHandled = s.status === 'handled'
@@ -553,7 +553,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
-              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this signal'}. Is this real, and what should I do?`} account={s.account_name} />
+              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
@@ -622,7 +622,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, fontSize: 13 }}>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
-        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open signals should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritise →</span>
+        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open Concerns should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritise →</span>
       </div>
 
       {/* Recently handled: what was done, by when, so actions have somewhere to be seen */}
@@ -638,7 +638,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
               <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800, fontSize: 13 }}>✓</span>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{s.account_name || 'Signal'}</span>
+                  <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{s.account_name || 'Concern'}</span>
                   <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>{s.title}</span>
                 </div>
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--good, #2f8f5b)', marginTop: 5, textTransform: 'uppercase', letterSpacing: '1px' }}>{s.handled_action || 'handled'}</div>
@@ -682,7 +682,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
             <div onClick={e => e.stopPropagation()} style={{ width: 'min(440px,100%)', background: 'var(--paper, #FBF8F3)', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ padding: '26px 28px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
                 <div>
-                  <div style={{ ...mlab, color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{s.account_name || 'Signal'}</div>
+                  <div style={{ ...mlab, color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{s.account_name || 'Concern'}</div>
                   <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>{titleFor}</h2>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{s.title}</div>
                 </div>
@@ -729,7 +729,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   <>
                     <div style={mlab}>What happened?</div>
                     <div style={{ marginTop: 10 }}>
-                      {([['done', 'It got done', 'Mark the commitment complete and clear the signal.'], ['reset', 'Reset the date', 'Pick a new date and let the other side know.']] as const).map(([k, t, sub]) => (
+                      {([['done', 'It got done', 'Mark the commitment complete and clear the Concern.'], ['reset', 'Reset the date', 'Pick a new date and let the other side know.']] as const).map(([k, t, sub]) => (
                         <div key={k} onClick={() => setCloseMode(k)} style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr)', gap: 12, alignItems: 'start', padding: '12px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                           <span style={{ width: 14, height: 14, borderRadius: '50%', marginTop: 3, border: `2px solid ${closeMode === k ? 'var(--accent)' : 'var(--ink-faint)'}`, background: closeMode === k ? 'var(--accent)' : 'transparent', boxShadow: closeMode === k ? 'inset 0 0 0 3px var(--paper, #FBF8F3)' : 'none' }} />
                           <span><span style={{ fontSize: 14.5, color: 'var(--ink)', fontWeight: 600 }}>{t}</span><span style={{ display: 'block', fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</span></span>
@@ -784,7 +784,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
         const cleanAccount = d.account_name ? d.account_name.replace(/\s*\(unmapped\)\s*/i, '').trim() : null
         const topicRaw = typeof ai.topic === 'string' ? ai.topic : ''
         const topic = topicRaw.replace(/^(Zoom|Meet|Fireflies):\s*/i, '').trim()
-        const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Signal')
+        const headerTitle = (!unmapped && cleanAccount) ? cleanAccount : (topic || TYPE_LABELS[d.signal_type || ''] || 'Concern')
         const descText = String(d.description || (typeof ai.summary === 'string' ? ai.summary : '') || '').replace(/(call: )(Zoom: |Meet: |Fireflies: )/i, '$1')
         const conf = typeof ai.confidence === 'number' ? ai.confidence : null
 
@@ -856,7 +856,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', color: sevColor, display: 'inline-flex', alignItems: 'center', gap: 9 }}>
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor }} />{sev} severity
                   </div>
-                  <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Signal'}</h2>
+                  <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 23, letterSpacing: '-.03em', margin: '11px 0 0', color: 'var(--ink)' }}>{d.title || TYPE_LABELS[d.signal_type || ''] || 'Concern'}</h2>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 4 }}>{headerTitle} · {TYPE_LABELS[d.signal_type || ''] || 'signal'}{d.source_integration ? ` · via ${d.source_integration}` : ''}{inactive ? ` · ${inactive}` : ''}</div>
                 </div>
                 <button onClick={() => setDetailFor(null)} style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase', background: 'none', border: 0, cursor: 'pointer', color: 'var(--ink-faint)', flex: 'none', paddingTop: 4 }}>close</button>
@@ -879,7 +879,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {/* Signals detected: what the detector saw, as dotted rows */}
                 {evidence.length > 0 && (
                   <div style={{ marginBottom: 22 }}>
-                    <div style={{ ...mlab, paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Signals detected</div>
+                    <div style={{ ...mlab, paddingBottom: 10, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>Concerns detected</div>
                     {evidence.map((e, i) => (
                       <div key={i} style={{ display: 'grid', gridTemplateColumns: '10px minmax(0,1fr)', gap: 10, alignItems: 'baseline', padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 14, color: 'var(--ink)', lineHeight: 1.45 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', background: sevColor, position: 'relative', top: -1 }} />
@@ -957,7 +957,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Why remove this? It trains detection.</div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {[['not_a_signal', 'Not a signal'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
+                      {[['not_a_Concern', 'Not a Concern'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
                         <button key={k} onClick={() => removeSignal(d, k)} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{lbl}</button>
                       ))}
                       <button onClick={() => setModalMode('view')} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--t4)', cursor: 'pointer' }}>Cancel</button>
@@ -967,7 +967,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
 
                 {modalMode === 'assign' && (
                   <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
-                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Assign this signal to an account</div>
+                    <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Assign this Concern to an account</div>
                     {!acctOptions ? (
                       <div style={{ fontSize: 11.5, color: 'var(--t3)' }}>Loading accounts...</div>
                     ) : (
@@ -1001,7 +1001,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                   const C = { detected: 'var(--accent, #E85A25)', action: 'var(--good, #2f8f5b)', outcome: 'var(--good, #2f8f5b)', pending: 'var(--warn, #d38b1d)' }
                   return (
                     <div style={{ marginTop: 20 }}>
-                      <div style={{ ...mlab, marginBottom: 10 }}>Signal history</div>
+                      <div style={{ ...mlab, marginBottom: 10 }}>Concern history</div>
                       <div style={{ position: 'relative' }}>
                         <span aria-hidden style={{ position: 'absolute', left: 5, top: 14, bottom: 14, width: 1, background: 'var(--hairline, #EFEAE1)' }} />
                         {steps.map((st, i) => (
@@ -1022,7 +1022,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 {/* v11.84: was this signal right? feeds the accuracy figure */}
                 {modalMode === 'view' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--hairline, #EFEAE1)', flexWrap: 'wrap' }}>
-                    <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Was this signal right?</span>
+                    <span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Was this Concern right?</span>
                     {([['up', 'Yes, useful'], ['down', 'No, wrong call']] as const).map(([v, lbl]) => {
                       const on = feedback[d.id] === v
                       const c = v === 'up' ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)'
@@ -1080,8 +1080,8 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
             <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--inset)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', marginBottom: 6 }}>Signal not found</div>
-            <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 18 }}>This link points to a signal that does not exist or belongs to a different account. It may have been deleted, or you may be signed in as a different user.</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--t1)', marginBottom: 6 }}>Concern not found</div>
+            <div style={{ fontSize: 12.5, color: 'var(--t3)', lineHeight: 1.6, marginBottom: 18 }}>This link points to a Concern that does not exist or belongs to a different account. It may have been deleted, or you may be signed in as a different user.</div>
             <button onClick={() => { setDeepNotFound(false); if (typeof window !== 'undefined') window.history.replaceState({}, '', '/signals') }} style={{ padding: '9px 22px', borderRadius: 10, background: 'var(--o)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 800, cursor: 'pointer', fontFamily: "'Outfit'" }}>Got it</button>
           </div>
         </div>
@@ -1103,7 +1103,7 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
                 <div style={{ display: 'inline-flex', gap: 5 }}>
                   {[0, 1, 2].map(i => <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', opacity: .5, animation: 'ping 1.4s ease-out infinite', animationDelay: `${i * .18}s` }} />)}
                 </div>
-                <div style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 16 }}>{draftSlow ? 'Still writing, checking every fact against the thread...' : 'Writing a draft from the thread and the signal...'}</div>
+                <div style={{ fontSize: 14, color: 'var(--ink-muted)', marginTop: 16 }}>{draftSlow ? 'Still writing, checking every fact against the thread...' : 'Writing a draft from the thread and the Concern...'}</div>
               </div>
             )}
 

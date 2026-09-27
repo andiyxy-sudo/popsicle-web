@@ -28,7 +28,7 @@ function narrate(p: Point, prev: Point | undefined): { lead: string; rest: strin
   }
   if (crit.length) {
     const accts = [...new Set(crit.map(e => e.account))]
-    return { lead: `${accts.join(' and ')} ${crit.length === 1 ? 'raised a critical signal' : `raised ${crit.length} critical signals`}: “${crit[0].title}.”`, rest: tail([crit[0]]) }
+    return { lead: `${accts.join(' and ')} ${crit.length === 1 ? 'raised a critical Concern' : `raised ${crit.length} critical Concerns`}: “${crit[0].title}.”`, rest: tail([crit[0]]) }
   }
   if (dProt > 0 && acted.length) return { lead: `A save. ${acted[0].account} is out of danger, ${money(dProt)} protected.`, rest: tail([acted[0]]) }
   if (acted.length) return { lead: `${acted[0].account}: ${(acted[0].action ?? 'action taken').toLowerCase()} on “${acted[0].title}.”`, rest: tail([acted[0]]) }
@@ -136,7 +136,7 @@ export function ReplayView({ onClose, initial, days: daysProp = 56, inline = fal
   const figs = p && first ? [
     { k: 'Revenue at risk', v: money(p.atRisk), d: p.atRisk - first.atRisk, fmt: money, c: 'var(--critical, #c43d2b)', bad: true },
     { k: 'Revenue protected', v: money(p.protectedValue), d: p.protectedValue - first.protectedValue, fmt: money, c: 'var(--good, #2f8f5b)', bad: false },
-    { k: 'Open signals', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: 'var(--accent, #E85A25)', bad: true },
+    { k: 'Open Concerns', v: String(p.active), d: p.active - first.active, fmt: (n: number) => String(n), c: 'var(--accent, #E85A25)', bad: true },
     { k: 'Critical', v: String(p.critical), d: p.critical - first.critical, fmt: (n: number) => String(n), c: 'var(--critical, #c43d2b)', bad: true },
   ] : []
 
@@ -172,7 +172,7 @@ export function ReplayView({ onClose, initial, days: daysProp = 56, inline = fal
             </div>
 
             <div className="rp3-chart-wrap">
-              <div className="rp3-legend"><span><i style={{ background: '#c43d2b' }} />Revenue at risk</span><span><i style={{ background: '#2f8f5b' }} />Revenue protected</span><span><i className="sq" />A critical signal arrived</span></div>
+              <div className="rp3-legend"><span><i style={{ background: '#c43d2b' }} />Revenue at risk</span><span><i style={{ background: '#2f8f5b' }} />Revenue protected</span><span><i className="sq" />A critical Concern arrived</span></div>
               <Chart pts={pts} idx={idx} onPick={i => { setPlaying(false); setIdx(i) }} />
             </div>
 

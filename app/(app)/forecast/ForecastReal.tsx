@@ -115,7 +115,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
     const sigs = (signals ?? []).filter(sg => sg.account_name === m.a.name && !sg.is_dismissed && (!sg.status || sg.status === 'open'))
     const top = sigs.find(sg => sg.severity === 'high') ?? sigs[0]
     if (top?.title) return top.title
-    if (m.risky) return 'Open risk signal on this account'
+    if (m.risky) return 'Open risk Concern on this account'
     if (m.w >= .9) return 'Contract stage, awaiting signature'
     if (m.w >= .75) return 'Late stage, terms agreed'
     if (m.w >= .6) return 'Buyer bought in, paperwork pending'
@@ -467,7 +467,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       ))}
 
       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 22 }}>
-        weighting: closed 100 · contract 90 · negotiation 75 · bought-in 60 · proposal 45 · evaluation 30 · discovery 15 · open high signal −40%
+        weighting: closed 100 · contract 90 · negotiation 75 · bought-in 60 · proposal 45 · evaluation 30 · discovery 15 · open high Concern −40%
       </div>
     </div>
   )

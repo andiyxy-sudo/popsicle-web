@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const risk = M.atRisk(a, s), act = M.activeSignals(a, s, now), ready = M.actionsReady(a, s), book = M.totalArr(a)
     tiles = [
       { label: 'My revenue at risk', valueText: risk.valueText, sub: `${risk.parts.length} of my accounts critical`, m: 'at_risk', scope: 'me', tone: risk.value > 0 ? 'critical' : 'ink' },
-      { label: 'My open signals', valueText: act.valueText, sub: 'across my accounts', m: 'active', scope: 'me', tone: 'ink' },
+      { label: 'My open Concerns', valueText: act.valueText, sub: 'across my accounts', m: 'active', scope: 'me', tone: 'ink' },
       { label: 'Ready for me', valueText: ready.valueText, sub: 'next step already drafted', m: 'actions_ready', scope: 'me', tone: 'accent' },
       { label: 'My book', valueText: book.valueText, sub: `${names.length} accounts`, m: 'total_arr', scope: 'me', tone: 'ink' },
     ]
@@ -46,9 +46,9 @@ export async function GET(req: NextRequest) {
     const exp = M.teamExposure(reps, accts, sigs), cases = M.activeCases(accts, sigs), ready = M.actionsReady(accts, sigs), caught = M.caughtEarly(accts, sigs)
     tiles = [
       { label: 'Team exposure', valueText: exp.valueText, sub: `${exp.parts.filter(p => (p.value ?? 0) > 0).length} reps carrying risk`, m: 'team_exposure', tone: exp.value > 0 ? 'critical' : 'ink' },
-      { label: 'Active cases', valueText: cases.valueText, sub: 'accounts with an open risk signal', m: 'cases', tone: 'ink' },
+      { label: 'Active cases', valueText: cases.valueText, sub: 'accounts with an open risk Concern', m: 'cases', tone: 'ink' },
       { label: 'Waiting on the team', valueText: ready.valueText, sub: 'critical, next step drafted', m: 'actions_ready', tone: 'accent' },
-      { label: 'Caught early', valueText: caught.valueText, sub: 'risk signals this quarter', m: 'caught', tone: 'good' },
+      { label: 'Caught early', valueText: caught.valueText, sub: 'risk Concerns this quarter', m: 'caught', tone: 'good' },
     ]
   }
   return NextResponse.json({ lens, label: LENS_LABEL[lens], title: meta.role ?? null, tiles })

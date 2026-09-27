@@ -23,21 +23,21 @@ const PROVIDERS: Provider[] = [
   { key: 'whatsapp', name: 'WhatsApp Business', short: 'WhatsApp', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
   { key: 'teams', name: 'Microsoft Teams', short: 'Teams', desc: 'Shared channels & chats · Same stall detection', cat: 'Messaging' },
   { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence & stall detection · Cancelled and declined meetings', cat: 'Calendar', fn: 'oauth-gcal' },
-  { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk signals', cat: 'CRM', fn: 'oauth-hubspot' },
+  { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk Concerns', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
   { key: 'fireflies', name: 'Fireflies', desc: 'Meeting transcripts from any platform · Call analysis', cat: 'Voice & Meetings', fn: 'oauth-fireflies', token: true },
   { key: 'zoom', name: 'Zoom', desc: 'Call transcripts · Buyer sentiment analysis', cat: 'Voice & Meetings', fn: 'oauth-zoom' },
   { key: 'gmeet', name: 'Google Meet', desc: 'Meet call transcripts & analysis · Connects with your Google account', cat: 'Voice & Meetings', fn: 'oauth-gcal' },
   { key: 'miitel', name: 'MiiTel', desc: 'Phone call recordings & transcripts · Talk-listen ratio and sentiment', cat: 'Voice & Meetings' },
-  { key: 'zoho', name: 'Zoho CRM', desc: 'Deals, stages & owners · CRM risk signals', cat: 'CRM' },
+  { key: 'zoho', name: 'Zoho CRM', desc: 'Deals, stages & owners · CRM risk Concerns', cat: 'CRM' },
   { key: 'pipedrive', name: 'Pipedrive', desc: 'Pipeline stages & deal activity · Stalled-deal detection', cat: 'CRM' },
   { key: 'linkedin', name: 'LinkedIn Sales Navigator', short: 'LinkedIn', desc: 'Champion job changes · New stakeholders at your accounts', cat: 'Social' },
   { key: 'gdrive', name: 'Google Drive', desc: 'Proposals & contracts · Who opened what, and when', cat: 'Productivity' },
   { key: 'notion', name: 'Notion', desc: 'Account plans & meeting notes · Mutual action plans', cat: 'Productivity' },
   { key: 'zendesk', name: 'Zendesk', desc: 'Support tickets at your accounts · Escalations before renewals', cat: 'Support' },
   { key: 'freshdesk', name: 'Freshdesk', desc: 'Ticket volume & sentiment · Unhappy-customer early warning', cat: 'Support' },
-  { key: 'stripe', name: 'Stripe', desc: 'Failed payments & downgrades · Expansion signals from usage billing', cat: 'Data & Billing' },
+  { key: 'stripe', name: 'Stripe', desc: 'Failed payments & downgrades · Expansion Concerns from usage billing', cat: 'Data & Billing' },
   { key: 'snowflake', name: 'Snowflake', desc: 'Product usage from your warehouse · Adoption drops and spikes', cat: 'Data & Billing' },
 ]
 
@@ -492,7 +492,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
           </div>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--t3)', textTransform: 'uppercase', letterSpacing: '.8px', marginBottom: 8 }}>Activity</div>
           <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
-            {statBox(st?.total ?? 0, 'Signals total')}
+            {statBox(st?.total ?? 0, 'Concerns total')}
             {statBox(st?.thisMonth ?? 0, 'This month')}
           </div>
           {p.key === 'slack' ? (
@@ -532,7 +532,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
               style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', borderRadius: 12, background: 'var(--inset)', border: '1px solid var(--border)', cursor: 'pointer', marginBottom: 14, fontFamily: "'Outfit',sans-serif" }}
             >
               <div style={{ flex: 1, textAlign: 'left' }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{p.key === 'slack' ? 'Post ✓ when a signal is handled' : 'Log handled signals to the deal'}</div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--t1)' }}>{p.key === 'slack' ? 'Post ✓ when a Concern is handled' : 'Log handled Concerns to the deal'}</div>
                 <div style={{ fontSize: 11, color: 'var(--t3)' }}>{p.key === 'slack' ? 'Appends "Handled by..." to the original Slack card' : 'Writes a Popsicle note on the matching HubSpot deal'}</div>
               </div>
               <ResSwitch on={!!tNow[p.key as 'slack' | 'hubspot']} />
@@ -563,7 +563,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
         title={liveCount > 0
           ? <>
               {numWord(liveCount)} source{liveCount === 1 ? '' : 's'} feeding{' '}
-              {feeding > 0 ? <><span style={{ color: 'var(--accent)' }}>{feeding.toLocaleString()} signal{feeding === 1 ? '' : 's'}</span></> : 'your pipeline'}
+              {feeding > 0 ? <><span style={{ color: 'var(--accent)' }}>{feeding.toLocaleString()} Concern{feeding === 1 ? '' : 's'}</span></> : 'your pipeline'}
               {indexed30 > 0 ? <> in the last 30 days</> : null}.{' '}
               <span style={{ color: 'var(--ink-muted)' }}>
                 {leader && leaderShare > 0 ? <>{leader.name} carries <span style={{ color: 'var(--good, #2f8f5b)' }}>{leaderShare}%</span> of the volume{missing.length ? '; ' : '.'}</> : null}
@@ -571,15 +571,15 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                 {!leaderShare && !missing.length ? <>Every available source is connected.</> : null}
               </span>
             </>
-          : <>No sources connected yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect Gmail or Slack and signals start arriving.</span></>}
+          : <>No sources connected yet.{' '}<span style={{ color: 'var(--ink-muted)' }}>Connect Gmail or Slack and Concerns start arriving.</span></>}
       />
       {/* stats over the rule (design) */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))', paddingTop: 4, marginBottom: 20 }}>
         {[
           { n: String(liveCount), lbl: 'connected · all healthy', color: 'var(--good, #2f8f5b)' },
           { n: String(PROVIDERS.length - liveCount), lbl: 'available to connect', color: 'var(--accent, #E85A25)' },
-          { n: indexedAll ? indexedAll.toLocaleString() : '--', lbl: 'signals indexed · all time', color: 'var(--ink)' },
-          { n: indexed30 ? indexed30.toLocaleString() : '--', lbl: 'signals indexed · 30 days', color: 'var(--ink)' },
+          { n: indexedAll ? indexedAll.toLocaleString() : '--', lbl: 'Concerns indexed · all time', color: 'var(--ink)' },
+          { n: indexed30 ? indexed30.toLocaleString() : '--', lbl: 'Concerns indexed · 30 days', color: 'var(--ink)' },
           { n: lastSync ?? '--', lbl: 'since last sync', color: lastSync ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' },
         ].map((st, i, arr) => (
           <div key={i} style={{ paddingRight: 32 }}>
@@ -616,7 +616,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                       <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', marginTop: 3 }}>{p.desc}</div>
                       {on && (
                         <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 5 }}>
-                          {stats[p.key]?.total ? `${stats[p.key]?.total} signals · ` : ''}{stats[p.key]?.lastSynced ? `synced ${new Date(stats[p.key]!.lastSynced!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'connected'}
+                          {stats[p.key]?.total ? `${stats[p.key]?.total} Concerns · ` : ''}{stats[p.key]?.lastSynced ? `synced ${new Date(stats[p.key]!.lastSynced!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'connected'}
                         </div>
                       )}
                     </div>
@@ -650,10 +650,10 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
         const rows: Array<[string, string]> = [
           ['Status', on ? 'Connected and syncing' : 'Not connected'],
           ['Account', st?.identity || (on ? 'linked' : '--')],
-          ['Signals raised', st ? String(st.total) : '--'],
+          ['Concerns raised', st ? String(st.total) : '--'],
           ['This month', st ? String(st.thisMonth) : '--'],
           ['Severity split', st ? `${st.high} high · ${st.watch} watch · ${st.positive} positive` : '--'],
-          ['Last signal', fmtDate(st?.lastSignal)],
+          ['Last Concern', fmtDate(st?.lastSignal)],
           ['Last synced', fmtDate(st?.lastSynced)],
           ['Connected', fmtDate(st?.connectedAt)],
         ]
@@ -681,7 +681,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
               {on && isToggleable && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <div>
-                    <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{p.key === 'slack' ? 'Post ✓ when a signal is handled' : 'Log handled signals to the deal'}</div>
+                    <div style={{ fontSize: 14.5, color: 'var(--ink)' }}>{p.key === 'slack' ? 'Post ✓ when a Concern is handled' : 'Log handled Concerns to the deal'}</div>
                     <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{p.key === 'slack' ? 'Appends "Handled by…" to the original card' : 'Writes a Popsicle note on the matching deal'}</div>
                   </div>
                   <button onClick={async () => { await flipResToggle(p) }}

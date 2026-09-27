@@ -50,7 +50,7 @@ interface Payload { account: Record<string, unknown>; messages: Msg[]; signals: 
 const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent Stall', competitor_mention: 'Competitor', legal_loopin: 'Legal', price_flinch: 'Price Flinch',
   champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', reengaged: 'Re-engaged', call_objection: 'Objection',
-  call_sentiment_drop: 'Sentiment Drop', call_buying_signal: 'Buying Signal', call_commitment: 'Commitment',
+  call_sentiment_drop: 'Sentiment Drop', call_buying_Concern: 'Buying Signal', call_commitment: 'Commitment',
   call_summary: 'Call Summary', meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
   deal_stage_backward: 'Stage Backward', commitment_overdue: 'Commitment Overdue',
 }
@@ -497,7 +497,7 @@ export function Account360() {
                 {sevsPresent.map(sv => chip(sv.toUpperCase(), fSev === sv, () => setFSev(fSev === sv ? null : sv)))}
                 {['open', 'handled', 'dismissed'].map(st => chip(st, fStatus === st, () => setFStatus(fStatus === st ? null : st)))}
               </div>
-              {timelineSigs.length === 0 && <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--t4)' }}>No signals match.</div>}
+              {timelineSigs.length === 0 && <div style={{ textAlign: 'center', padding: '40px 0', fontSize: 12.5, color: 'var(--t4)' }}>No Concerns match.</div>}
               {(() => { let lastD = ''; return timelineSigs.map(sg => {
                 const day = sg.created_at ? dayKey(sg.created_at) : ''
                 const showDay = day && day !== lastD; if (day) lastD = day
@@ -511,7 +511,7 @@ export function Account360() {
                       <div style={{ fontSize: 12.5, fontWeight: 800, color: 'var(--t1)', marginBottom: 3 }}>{handled && <span style={{ color: 'var(--ok)' }}>✓ </span>}{sg.title}</div>
                       {sg.description && <div style={{ fontSize: 11.5, color: 'var(--t2)', lineHeight: 1.55, marginBottom: 7 }}>{sg.description}</div>}
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{TYPE_LABELS[sg.signal_type || ''] || 'Signal'}</span>
+                        <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, textTransform: 'uppercase' }}>{TYPE_LABELS[sg.signal_type || ''] || 'Concern'}</span>
                         <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: sevColor, padding: '2px 8px', borderRadius: 20 }}>{(sg.severity || 'watch').toUpperCase()}</span>
                         {handled && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ok)', border: '1px solid rgba(42,157,92,.3)', padding: '2px 8px', borderRadius: 20 }}>HANDLED</span>}
                         {sg.is_dismissed && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20 }}>DISMISSED</span>}

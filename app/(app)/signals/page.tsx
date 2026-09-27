@@ -21,8 +21,8 @@ export default async function SignalsPage() {
   // "Recently handled" strip; the list itself shows them in batches so it stays fast
   const ids = await orgIdsServer(supabase, userId)
   const [{ data: open }, { data: handled }] = await Promise.all([
-    fetchAllData(async (a, b) => supabase.from('signals').select('*').in('user_id', ids).eq('is_dismissed', false).or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }).range(a, b)),
-    supabase.from('signals').select('*').in('user_id', ids).eq('is_dismissed', false).eq('status', 'handled').order('handled_at', { ascending: false }).limit(100),
+    fetchAllData(async (a, b) => supabase.from('Concerns').select('*').in('user_id', ids).eq('is_dismissed', false).or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }).range(a, b)),
+    supabase.from('Concerns').select('*').in('user_id', ids).eq('is_dismissed', false).eq('status', 'handled').order('handled_at', { ascending: false }).limit(100),
   ])
 
   return <SignalsReal signals={[...(open ?? []), ...(handled ?? [])]} />

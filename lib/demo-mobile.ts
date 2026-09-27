@@ -116,7 +116,7 @@ export const MOBILE_INTELLIGENCE = {
     breakdowns: ['Segment', 'Account Size', 'Region'],
   },
   signalSources: {
-    sub: '847 signals · 4 active sources',
+    sub: '847 Concerns · 4 active sources',
     rows: [
       { k: 'Gmail / Outlook', n: 372, pct: 44 },
       { k: 'WhatsApp', n: 251, pct: 30 },

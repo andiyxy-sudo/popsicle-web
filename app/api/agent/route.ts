@@ -42,7 +42,7 @@ export async function GET() {
     const after = sigs.find(x => x.account_name === s.account_name && x.id !== s.id && x.created_at && s.handled_at && x.created_at > s.handled_at)
     return {
       id: s.id, account: s.account_name!, when: s.handled_at!,
-      did: `You ${String(s.handled_action || 'handled').toLowerCase()} on ${s.account_name}: ${s.title ?? 'a signal'}`,
+      did: `You ${String(s.handled_action || 'handled').toLowerCase()} on ${s.account_name}: ${s.title ?? 'a Concern'}`,
       since: after ? `Since then: ${after.title}` : 'Nothing back from them yet',
       view: after ? 'Worth looking at before you reply again' : 'Give it a day before chasing',
     }

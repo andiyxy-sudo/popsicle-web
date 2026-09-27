@@ -213,7 +213,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
           {m.headline
             ? <>{markUp(m.headline)}</>
             : m.waitingCount > 0
-            ? <>{word(m.waitingCount)} signal{m.waitingCount === 1 ? '' : 's'} worth <span style={{ color: RED }}>{formatCurrency(m.waitingValue)}</span> {m.waitingCount === 1 ? 'is' : 'are'} still waiting for a response{m.criticalWithOneRep && crit === 2 ? ', and both critical accounts sit with one rep' : m.criticalWithOneRep ? `, and all ${crit} critical accounts sit with one rep` : ''}.</>
+            ? <>{word(m.waitingCount)} Concern{m.waitingCount === 1 ? '' : 's'} worth <span style={{ color: RED }}>{formatCurrency(m.waitingValue)}</span> {m.waitingCount === 1 ? 'is' : 'are'} still waiting for a response{m.criticalWithOneRep && crit === 2 ? ', and both critical accounts sit with one rep' : m.criticalWithOneRep ? `, and all ${crit} critical accounts sit with one rep` : ''}.</>
             : <>Nothing is waiting for a response.</>}
         </span>
       </h1>
@@ -275,7 +275,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>
             {m.timeToActionDelta
               ? <><span style={{ color: m.timeToActionDelta < 0 ? GREEN : RED, fontWeight: 600 }}>{m.timeToActionDelta < 0 ? '▼' : '▲'} {fmtH(Math.abs(m.timeToActionDelta))}</span> vs last month</>
-              : 'median time from signal to first action'}
+              : 'median time from Concern to first action'}
           </div>
           <div style={{ marginTop: 25 }}>
             {m.reps.map(r => (
@@ -289,11 +289,11 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
 
         {/* Coverage */}
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Signal coverage</div>
+          <div style={{ ...MONO, fontSize: 10, color: FAINT }}>Concern coverage</div>
           <div style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 'clamp(38px,4.2vw,58px)', letterSpacing: '-.05em', lineHeight: 1, marginTop: 14, color: GREEN }}>{m.coveragePct}%</div>
           <div style={{ fontSize: 13.5, color: MUTED, marginTop: 10 }}>{m.covered} of {m.accountCount} accounts covered</div>
           <div style={{ marginTop: 25 }}>
-            <Row><span>Signals this week</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.signalsThisWeek}</span></Row>
+            <Row><span>Concerns this week</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.signalsThisWeek}</span></Row>
             <Row><span>Actioned</span><span style={{ ...MONO_NUM, fontSize: 12, color: GREEN }}>{m.actioned} / {m.signalsThisWeek}</span></Row>
             <Row><span>Auto-deployed without edit</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.autoDeployedPct ? `${m.autoDeployedPct}%` : '--'}</span></Row>
           </div>
@@ -313,7 +313,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
         return (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 10, color: FAINT }}>
-              <span>#</span><span>Rep</span><span>Signals</span><span>Recovered</span><span>Protected</span><span>Avg response</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
+              <span>#</span><span>Rep</span><span>Concerns</span><span>Recovered</span><span>Protected</span><span>Avg response</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
               <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
@@ -463,7 +463,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
       })()}
 
       {/* unactioned queue */}
-      <H2 title="Unactioned signal queue"  right={
+      <H2 title="Unactioned Concern queue"  right={
         <span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>
           <span style={{ color: RED }}>{m.queue.length} unactioned</span> · of {m.signalsThisWeek} this week · {m.unresolvedPct}% unresolved
         </span>
@@ -484,7 +484,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
         </div>
         <span style={{ fontSize: 14, fontWeight: 600, color: RED }}>{formatCurrency(m.waitingValue)} ARR waiting</span>
       </div>
-      {queue.length === 0 && <EmptyState line={queueRep === 'All' ? 'Nothing is waiting.' : `Nothing is waiting on ${queueRep}.`} hint={queueRep === 'All' ? 'Every signal raised has been actioned. The queue refills as new ones land.' : 'Switch the filter to see the rest of the queue.'} compact />}
+      {queue.length === 0 && <EmptyState line={queueRep === 'All' ? 'Nothing is waiting.' : `Nothing is waiting on ${queueRep}.`} hint={queueRep === 'All' ? 'Every Concern raised has been actioned. The queue refills as new ones land.' : 'Switch the filter to see the rest of the queue.'} compact />}
       {queue.map((q, i) => {
         const s = sevMeta[q.sev]
         const rep = repBy(q.rep)
@@ -507,7 +507,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
           </div>
         )
       })}
-      <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned signals should the team prioritise?')}`)}
+      <div onClick={() => router.push(`/ask?q=${encodeURIComponent('Which unactioned Concerns should the team prioritise?')}`)}
         style={{ fontSize: 14, fontWeight: 600, color: ACCENT, marginTop: 22, cursor: 'pointer', display: 'inline-block' }}>Ask Popsicle to prioritise →</div>
 
       <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-l) 0 30px' }} />
@@ -519,7 +519,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
           <Row pad="14px 0"><span>New critical accounts</span><span style={{ ...MONO_NUM, fontSize: 12, color: m.newCritical ? RED : INK }}>+{m.newCritical}</span></Row>
           <Row pad="14px 0"><span>Accounts stabilized</span><span style={{ ...MONO_NUM, fontSize: 12, color: GREEN }}>+{m.stabilized}</span></Row>
           <Row pad="14px 0"><span>Actions taken</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.actionsTaken}</span></Row>
-          <Row pad="14px 0"><span>Signals per day</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.signalsPerDay}{m.signalsPerDayDelta ? <span style={{ color: GREEN }}> ▲ {m.signalsPerDayDelta}</span> : null}</span></Row>
+          <Row pad="14px 0"><span>Concerns per day</span><span style={{ ...MONO_NUM, fontSize: 12 }}>{m.signalsPerDay}{m.signalsPerDayDelta ? <span style={{ color: GREEN }}> ▲ {m.signalsPerDayDelta}</span> : null}</span></Row>
         </div>
 
         <div>

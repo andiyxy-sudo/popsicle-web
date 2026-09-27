@@ -9,7 +9,7 @@ import { money } from '@/lib/agent/compose'
 import { AgentNote, Dateline } from './AgentNote'
 
 // The agent putting a note on your desk, on any page. The morning brief (once a day),
-// critical items and late promises, and new signals as they land. One note at a time,
+// critical items and late promises, and new Concerns as they land. One note at a time,
 // the rest wait their turn. Never over a modal.
 const today = () => new Date().toISOString().slice(0, 10)
 const LS = {
@@ -72,7 +72,7 @@ export function AgentPopup() {
   }
   const close = () => { setLeaving(true); setTimeout(() => setShown(null), 240) }
 
-  // new signals, handed over by LiveSignals
+  // new Concerns, handed over by LiveSignals
   useEffect(() => {
     const onSig = (e: Event) => {
       const sig = (e as CustomEvent<LiveSig>).detail
@@ -80,8 +80,8 @@ export function AgentPopup() {
       if (shownRef.current || document.body.dataset.modal === '1') { queue.current.push(sig); return }
       present({ kind: 'signal', msg: noteFromSignal(sig), sig })
     }
-    window.addEventListener('agent:signal', onSig)
-    return () => window.removeEventListener('agent:signal', onSig)
+    window.addEventListener('agent:Concern', onSig)
+    return () => window.removeEventListener('agent:Concern', onSig)
   }, [])
   useEffect(() => {
     if (shown || queue.current.length === 0) return

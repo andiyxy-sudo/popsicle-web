@@ -63,7 +63,7 @@ export function voiceRule(s: Settings): string {
   return `Write in a tone that is ${tone[s.voice.tone] ?? tone.Direct}. Length: ${len[s.voice.length] ?? len.Short}.${s.voice.signOff ? ` End with this sign-off, exactly: "${s.voice.signOff}".` : ''}`
 }
 
-/** Inside working hours (local time)? Outside them, only critical signals interrupt. */
+/** Inside working hours (local time)? Outside them, only critical Concerns interrupt. */
 export function inWorkingHours(s: Settings, at = new Date()): boolean {
   const now = at.getHours() * 60 + at.getMinutes(), a = mins(s.work.start), b = mins(s.work.end)
   if (a === b) return true

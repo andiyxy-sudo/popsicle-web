@@ -18,7 +18,7 @@ export default async function ForecastPage() {
 
   const [acc, sig] = await Promise.all([
     supabase.from('accounts').select('*').in('user_id', await orgIdsServer(supabase, user.id)),
-    fetchAllData(async (a, b) => supabase.from('signals').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open').range(a, b)),
+    fetchAllData(async (a, b) => supabase.from('Concerns').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open').range(a, b)),
   ])
   return <ForecastReal accounts={acc.data ?? []} signals={sig.data ?? []} />
 }

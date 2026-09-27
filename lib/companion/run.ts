@@ -90,7 +90,7 @@ export async function runAction(a: Action, go: (path: string) => void): Promise<
       const preview = `To: ${j.to}\nSubject: ${j.subject}\n\n${j.body}`
       const tail = a.params.send
         ? 'You asked me to send it as well: say "send it" and it goes from your Gmail. I will not send anything you have not seen.'
-        : 'Say "send it" and I will send it from your Gmail, or edit it on the Signals page.'
+        : 'Say "send it" and I will send it from your Gmail, or edit it on the Concerns page.'
       return { ok: true, done: `Here it is, from "${sig.title}":\n\n${preview}\n\n${tail}` }
     }
     case 'send_draft': {

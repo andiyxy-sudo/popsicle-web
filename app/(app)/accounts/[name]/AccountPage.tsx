@@ -30,7 +30,7 @@ type Acct = { id?: string; name: string; domain?: string | null; value?: number 
 const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in', price_flinch: 'Price flinch',
   champion_change: 'Champion change', timeline_slip: 'Timeline slip', reengaged: 'Re-engaged', call_objection: 'Objection',
-  call_sentiment_drop: 'Sentiment drop', call_buying_signal: 'Buying signal', call_commitment: 'Commitment',
+  call_sentiment_drop: 'Sentiment drop', call_buying_Concern: 'Buying signal', call_commitment: 'Commitment',
   call_summary: 'Call summary', meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
   deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
@@ -49,9 +49,9 @@ const CHANNEL: Record<string, { label: string; glyph: string; color: string }> =
   linkedin: { label: 'LinkedIn', glyph: 'in', color: '#2f6f9f' }, hubspot: { label: 'HubSpot', glyph: 'H', color: '#E85A25' }, fireflies: { label: 'Fireflies', glyph: 'F', color: '#7C5CFC' }, gcal: { label: 'Calendar', glyph: 'C', color: '#2f6f9f' },
 }
 const TONE_META = {
-  positive: { c: 'var(--good, #2f8f5b)', t: 'Positive signal' },
-  neutral: { c: 'var(--warn, #d38b1d)', t: 'Neutral signal' },
-  negative: { c: 'var(--critical, #c43d2b)', t: 'Negative signal' },
+  positive: { c: 'var(--good, #2f8f5b)', t: 'Positive Concern' },
+  neutral: { c: 'var(--warn, #d38b1d)', t: 'Neutral Concern' },
+  negative: { c: 'var(--critical, #c43d2b)', t: 'Negative Concern' },
   internal: { c: 'var(--ink-faint, #A09C97)', t: 'Internal' },
 } as const
 
@@ -247,7 +247,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
 
   const flags = open.slice(0, 4).map(s => ({
     sig: s,
-    label: TYPE_LABELS[s.signal_type || ''] || s.title || 'Signal',
+    label: TYPE_LABELS[s.signal_type || ''] || s.title || 'Concern',
     color: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)',
   }))
 
@@ -312,7 +312,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
           <svg width="120" height="34" viewBox="0 0 120 34" style={{ overflow: 'visible' }}>
             <path d={`M${spark}`} fill="none" stroke={riskColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-        </>, open.length ? `${open.length} open signal${open.length === 1 ? '' : 's'}` : 'no open signals')}
+        </>, open.length ? `${open.length} open signal${open.length === 1 ? '' : 's'}` : 'no open Concerns')}
         {stat('Churn risk', `${Math.max(0, Math.min(100, 100 - health))}%`, health >= 70 ? 'low' : health >= 40 ? 'medium' : 'high', healthTone(health))}
         {stat('Renewal', extra?.expiry ?? (acct.close_date && mounted ? new Date(acct.close_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '--'), acct.stage || '')}
         {extra && stat('Trend', extra.trend, `rep score ${extra.repScore}`, extra.trend.startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)')}
@@ -344,7 +344,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
               ))}
               {flags.length === 0 && <span style={{ fontSize: 13.5, color: 'var(--ink-faint)' }}>No open flags.</span>}
             </div>
-            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk signals</div>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.8px', textTransform: 'uppercase', color: 'var(--accent)', paddingBottom: 12, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>AI risk Concerns</div>
             {demo.riskLines?.map((r, i) => {
               const c = r.tone === 'high' ? 'var(--critical, #c43d2b)' : r.tone === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
               return (

@@ -20,7 +20,7 @@ interface Msg { role: 'user' | 'assistant'; content: string }
 
 // Quick actions answer "what do I do now". Deep dive answers "what is going on".
 const QUICK = [
-  { label: 'Top risks', sub: "This week's critical signals", q: 'What are my top risks this week and what should I do about each?' },
+  { label: 'Top risks', sub: "This week's critical Concerns", q: 'What are my top risks this week and what should I do about each?' },
   { label: 'Interventions', sub: 'Accounts needing help now', q: 'Which accounts need intervention right now, ranked by exposure?' },
   { label: "Today's actions", sub: 'Priority queue, ranked', q: 'What should I do today, in priority order?' },
   { label: 'Gone quiet', sub: 'Accounts past their cadence', q: 'Which accounts have gone quiet past their normal reply cadence?' },
@@ -30,7 +30,7 @@ const QUICK = [
 const deepCatalogue = (): Array<{ group: string; items: string[] }> => [
   { group: 'Risk analysis', items: [
     'Where is executive engagement declining?',
-    'Which deals show accelerating churn signals?',
+    'Which deals show accelerating churn Concerns?',
     'How much revenue is exposed to delays right now?',
     'Which accounts are at risk of losing to do-nothing?',
   ] },
@@ -49,7 +49,7 @@ const deepCatalogue = (): Array<{ group: string; items: string[] }> => [
 ]
 let DEEP_CACHE: Array<{ group: string; items: string[] }> | null = null
 const DEEP = () => (DEEP_CACHE ??= deepCatalogue())
-const THINKING = ['Reading your signals', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
+const THINKING = ['Reading your Concerns', 'Cross-referencing context', 'Checking the correspondence', 'Drafting response']
 
 // ---- markdown-lite renderer -------------------------------------------------
 // Emoji status markers the model sometimes adds become quiet coloured dots.
@@ -412,7 +412,7 @@ export function AskClient() {
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
     if (!user) { router.push('/signals'); return }
-    const { data } = await supa.from('signals').select('id, severity')
+    const { data } = await supa.from('Concerns').select('id, severity')
       .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', acct).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('created_at', { ascending: false }).limit(10)
     const rows = (data ?? []) as Array<{ id: string; severity: string | null }>
@@ -434,7 +434,7 @@ export function AskClient() {
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('integration', inspect)
         .order('received_at', { ascending: false }).limit(6)
       if (acct) msgQ.eq('account_name', acct)
-      const sigQ = supa.from('signals').select('id, title, description, created_at')
+      const sigQ = supa.from('Concerns').select('id, title, description, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('source_integration', inspect)
         .order('created_at', { ascending: false }).limit(6)
       if (acct) sigQ.eq('account_name', acct)
@@ -444,7 +444,7 @@ export function AskClient() {
         ...((m1.data ?? []) as Array<{ id: string; sender: string | null; subject: string | null; content: string | null; received_at: string | null }>)
           .map(m => ({ id: `m${m.id}`, title: m.subject || (m.sender || 'Message'), sub: String(m.content || '').slice(0, 160), at: m.received_at })),
         ...((s1.data ?? []) as Array<{ id: string; title: string | null; description: string | null; created_at: string | null }>)
-          .map(x => ({ id: `s${x.id}`, title: x.title || 'Signal', sub: String(x.description || '').slice(0, 160), at: x.created_at })),
+          .map(x => ({ id: `s${x.id}`, title: x.title || 'Concern', sub: String(x.description || '').slice(0, 160), at: x.created_at })),
       ].sort((a, b) => String(b.at).localeCompare(String(a.at))).slice(0, 8)
       setInspectRows(rows)
     })()
@@ -485,7 +485,7 @@ export function AskClient() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || dead) return
-      const { data } = await supa.from('signals')
+      const { data } = await supa.from('Concerns')
         .select('account_name, title, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false).eq('severity', 'high')
         .or('status.is.null,status.eq.open')
@@ -669,15 +669,15 @@ export function AskClient() {
     <div className="dsk-screen on ask-open">
       <div className="ask-open-top">
         {mono('Ask Popsicle', 'var(--accent)')}
-        {mono(open0 ? `${open0.readCount} signals read \u00b7 live` : 'live')}
+        {mono(open0 ? `${open0.readCount} Concerns read \u00b7 live` : 'live')}
       </div>
       {lineField('What do you want to know?', 30)}
       {open0 && (
         <p className="ask-brief">
-          {greeting()}, {firstName}. I read <b style={{ color: 'var(--accent, #E85A25)' }}>{open0.readCount} signal{open0.readCount === 1 ? '' : 's'}</b> since yesterday.{' '}
+          {greeting()}, {firstName}. I read <b style={{ color: 'var(--accent, #E85A25)' }}>{open0.readCount} Concern{open0.readCount === 1 ? '' : 's'}</b> since yesterday.{' '}
           {open0.needCount > 0
             ? <>{' '}<b>{open0.needCount === 1 ? 'One needs' : `${numWords(open0.needCount)} need`} you</b>, <b style={{ color: 'var(--critical, #c43d2b)' }}>{money(open0.needValue)}</b> between them. The rest I&rsquo;m watching.</>
-            : <>Nothing needs you right now. I&rsquo;m watching {open0.watching} open signal{open0.watching === 1 ? '' : 's'}.</>}
+            : <>Nothing needs you right now. I&rsquo;m watching {open0.watching} open Concern{open0.watching === 1 ? '' : 's'}.</>}
         </p>
       )}
       <div className="ask-open-cols">
@@ -736,7 +736,7 @@ export function AskClient() {
           transition: 'max-height .45s cubic-bezier(.22,.61,.36,1), opacity .25s ease',
         }}>
           <h1 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(30px,3.4vw,44px)', letterSpacing: '-.035em', margin: '18px 0 0', lineHeight: 1.14, maxWidth: 920, color: 'var(--ink)' }}>
-            Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your <span style={{ color: 'var(--accent)' }}>signals</span>, accounts and correspondence.</span>
+            Ask anything. <span style={{ color: 'var(--ink-muted)' }}>Answers come from your <span style={{ color: 'var(--accent)' }}>Concerns</span>, accounts and correspondence.</span>
           </h1>
           <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '32px 0 0' }} />
         </div>
@@ -876,7 +876,7 @@ export function AskClient() {
             <span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{THINKING[phase]}</span>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 14 }}>
-            {['Signals', 'Accounts', 'Email', 'Calls'].map(x => (
+            {['Concerns', 'Accounts', 'Email', 'Calls'].map(x => (
               <span key={x} style={{ fontSize: 11.5, fontWeight: 500, color: 'var(--ink-faint)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 'var(--toggle-radius, 0px)', padding: '4px 12px' }}>{x}</span>
             ))}
           </div>

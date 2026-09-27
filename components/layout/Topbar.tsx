@@ -37,7 +37,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || cancelled) return
-      const { data } = await supa.from('signals')
+      const { data } = await supa.from('Concerns')
         .select('id, title, account_name, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
@@ -89,7 +89,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
           <div className="pipeline-step-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
-          <span className="pipeline-step-label">Signals</span>
+          <span className="pipeline-step-label">Concerns</span>
           {signalCount > 0 && <span className="pipeline-count" id="pipeline-sig-count">{signalCount}</span>}
         </div>
         <span className="pipeline-chevron">›</span>
@@ -137,7 +137,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
                   <div key={n.id} onClick={() => { setNotifOpen(false); router.push('/signals') }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line, var(--border))', cursor: 'pointer' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0, background: n.severity === 'high' ? 'var(--danger)' : n.severity === 'positive' ? 'var(--ok)' : 'var(--amber)' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.4 }}>{n.title || 'Signal'}</div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.4 }}>{n.title || 'Concern'}</div>
                       <div style={{ fontSize: 10.5, color: 'var(--t3)', marginTop: 2 }}>{n.account_name ? `${n.account_name} · ` : ''}{notifAgo(n.created_at)}</div>
                     </div>
                   </div>

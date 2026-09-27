@@ -26,8 +26,8 @@ export function riskChange(accts: M.Acct[], sigs: M.Sig[], now: number, days: nu
   const fresh = sigs.filter(s => isRisk(s) && inWin(s.created_at, from, now))
   const counts = new Map<string, number>(); for (const s of fresh) { const t = THEME[s.signal_type ?? ''] ?? 'other signals'; counts.set(t, (counts.get(t) ?? 0) + 1) }
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]
-  const driver = top && top[0] !== 'other signals' ? top[0] : null
-  parts.push({ id: 'drivers', label: 'New risk signals by theme', valueText: String(fresh.length),
+  const driver = top && top[0] !== 'other Concerns' ? top[0] : null
+  parts.push({ id: 'drivers', label: 'New risk Concerns by theme', valueText: String(fresh.length),
     children: [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ id: `t:${k}`, label: k, valueText: String(v) })) })
   return { metric: 'risk_change', label: `Revenue at risk, last ${days} days`, value: pct, valueText: `${pct >= 0 ? '+' : ''}${pct}%`, parts, driver,
     definition: `Revenue at risk today (${after.valueText}) compared with ${days} days ago (${before.valueText}), replayed from when each signal arrived. The driver is the most common theme among the ${fresh.length} risk signals raised in that time.` }
@@ -62,8 +62,8 @@ export function speed(accts: M.Acct[], sigs: M.Sig[], now: number, days: number)
     { id: 'prev', label: `The ${days} days before`, valueText: mp != null ? `${Math.round(mp / 24 * 10) / 10} days` : 'no actions', note: `median of ${prev.length} actions`,
       children: prev.slice(0, 8).map(s => ({ id: s.id, label: `${s.account_name}: ${s.title}`, valueText: `${Math.round(hrs(s))}h`, href: `/signals?signal=${s.id}` })) },
   ]
-  return { metric: 'speed', label: 'Time from signal to action', value: faster, valueText: faster > 0 ? `${faster} days faster` : faster < 0 ? `${Math.abs(faster)} days slower` : 'no change', parts,
-    definition: 'The median time between a signal arriving and someone acting on it, in this window compared with the window before.' }
+  return { metric: 'speed', label: 'Time from Concern to action', value: faster, valueText: faster > 0 ? `${faster} days faster` : faster < 0 ? `${Math.abs(faster)} days slower` : 'no change', parts,
+    definition: 'The median time between a Concern arriving and someone acting on it, in this window compared with the window before.' }
 }
 
 /** Saves (recovered deals) and signals caught early, within the window. */

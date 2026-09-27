@@ -109,7 +109,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
 
   // 2) this account's signals (newest first)
   const { data: sigRows } = await supa
-    .from('signals')
+    .from('Concerns')
     .select('signal_type, severity, title, description, risk_amount, ai_analysis, created_at, source_integration')
     .ilike('account_name', name)
     .eq('is_dismissed', false)
@@ -161,7 +161,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
   // brief (overview) - the freshest few signals, worded from title/summary
   if (sigs.length) {
     const top = sigs.slice(0, 4)
-    out.brief = top.map(s => s.title || (s.ai_analysis?.summary as string) || 'Signal detected')
+    out.brief = top.map(s => s.title || (s.ai_analysis?.summary as string) || 'Concern detected')
     out.briefTypes = top.map(s => sevType(s.severity))
   }
 
@@ -169,7 +169,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
   if (sigs.length) {
     out.sigItems = sigs.map<SigItem>(s => ({
       sev: sevType(s.severity),
-      msg: s.title || (s.ai_analysis?.summary as string) || 'Signal detected',
+      msg: s.title || (s.ai_analysis?.summary as string) || 'Concern detected',
       time: timeAgo(s.created_at),
       via: cap(s.source_integration) || 'Gmail',
     }))
@@ -214,7 +214,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
   // timeline tab - each signal as a dated event (real, chronological)
   if (sigs.length) {
     out.timeline = sigs.slice(0, 8).map<TimelineItem>(s => ({
-      title: s.title || cap(s.signal_type) || 'Signal',
+      title: s.title || cap(s.signal_type) || 'Concern',
       time: timeAgo(s.created_at),
       desc: s.description || (s.ai_analysis?.summary as string) || '',
       color: sevColor(s.severity),

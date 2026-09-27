@@ -26,9 +26,9 @@ export function changesBetween(accts: M.Acct[], sigs: M.Sig[], since: number, no
   const events: ChangeEvent[] = []
   for (const s of sigs) {
     const c = s.created_at ? new Date(s.created_at).getTime() : 0
-    if (c > since && c <= now) events.push({ t: s.created_at!, kind: 'new', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined })
+    if (c > since && c <= now) events.push({ t: s.created_at!, kind: 'new', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Concern', id: s.id, amount: Number(s.risk_amount || 0) || undefined })
     const h = s.status === 'handled' && s.handled_at ? new Date(s.handled_at).getTime() : 0
-    if (h > since && h <= now) events.push({ t: s.handled_at!, kind: 'handled', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined, action: s.handled_action ?? undefined })
+    if (h > since && h <= now) events.push({ t: s.handled_at!, kind: 'handled', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Concern', id: s.id, amount: Number(s.risk_amount || 0) || undefined, action: s.handled_action ?? undefined })
   }
   events.sort((a, b) => b.t.localeCompare(a.t))
 
@@ -55,9 +55,9 @@ export function timeline(accts: M.Acct[], sigs: M.Sig[], now: number, days = 56)
   const dayOf = (t: number) => Math.ceil((t - start) / 864e5)   // the snapshot at the end of that day
   for (const s of sigs) {
     const c = s.created_at ? new Date(s.created_at).getTime() : NaN
-    if (c > start - 864e5 && c <= now) { const i = Math.max(0, dayOf(c)); if (i <= days) buckets[i].push({ t: s.created_at!, kind: 'new', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined }) }
+    if (c > start - 864e5 && c <= now) { const i = Math.max(0, dayOf(c)); if (i <= days) buckets[i].push({ t: s.created_at!, kind: 'new', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Concern', id: s.id, amount: Number(s.risk_amount || 0) || undefined }) }
     const h = s.status === 'handled' && s.handled_at ? new Date(s.handled_at).getTime() : NaN
-    if (h > start - 864e5 && h <= now) { const i = Math.max(0, dayOf(h)); if (i <= days) buckets[i].push({ t: s.handled_at!, kind: 'handled', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Signal', id: s.id, amount: Number(s.risk_amount || 0) || undefined, action: s.handled_action ?? undefined }) }
+    if (h > start - 864e5 && h <= now) { const i = Math.max(0, dayOf(h)); if (i <= days) buckets[i].push({ t: s.handled_at!, kind: 'handled', severity: s.severity ?? 'watch', account: s.account_name ?? '', title: s.title ?? 'Concern', id: s.id, amount: Number(s.risk_amount || 0) || undefined, action: s.handled_action ?? undefined }) }
   }
   // Lean daily snapshots: the same figures as snapshot() (open = created by then and not yet acted on;
   // at risk = the largest open non-positive amount per account that has an open critical signal, summed;

@@ -29,8 +29,8 @@ export async function GET(req: NextRequest) {
   } else {
     const loaded = await loadMetricsData(supabase, claims.claims as Record<string, unknown>)
     accts = loaded.accts; sigs = loaded.sigs
-    try { const { data: r } = await supabase.rpc('signal_accuracy'); const row = Array.isArray(r) ? r[0] as { rated?: number; useful?: number } : null
-      if (row && Number(row.rated) > 0) ratings = [{ type: 'All signal types', useful: Number(row.useful), rated: Number(row.rated) }] } catch { /* optional */ }
+    try { const { data: r } = await supabase.rpc('Concern_accuracy'); const row = Array.isArray(r) ? r[0] as { rated?: number; useful?: number } : null
+      if (row && Number(row.rated) > 0) ratings = [{ type: 'All Concern types', useful: Number(row.useful), rated: Number(row.rated) }] } catch { /* optional */ }
   }
 
   if (q.get('scope') === 'me') {

@@ -29,7 +29,7 @@ const TYPE_LABELS: Record<string, string> = {
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Deal moved backward',
   reengaged: 'Re-engaged', commitment_overdue: 'Commitment overdue',
   call_objection: 'Call objection', call_sentiment_drop: 'Call sentiment drop',
-  call_buying_signal: 'Buying signal', call_commitment: 'Call commitment', call_summary: 'Call summary',
+  call_buying_signal: 'Buying Concern', call_commitment: 'Call commitment', call_summary: 'Call summary',
   meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
 }
 const SOURCE_LABELS: Record<string, string> = { gmail: 'Gmail / Outlook', outlook: 'Gmail / Outlook', slack: 'Slack', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', zoom: 'Calls & CRM', fireflies: 'Calls & CRM', meet: 'Calls & CRM', hubspot: 'Calls & CRM', gcal: 'Calendar' }
@@ -68,7 +68,7 @@ function buildLiveModel(signals: Sig[], accounts: Acct[], range: number): IntelM
     const biggest = [...w.filter(s => s.severity !== 'positive')].sort((a, b) => amt(b) - amt(a))[0]
     weeks.push({
       label: `W${8 - i}`,
-      top: biggest ? { account: biggest.account_name ?? '', title: biggest.title ?? 'Signal', amount: amt(biggest) } : undefined,
+      top: biggest ? { account: biggest.account_name ?? '', title: biggest.title ?? 'Concern', amount: amt(biggest) } : undefined,
       added: w.filter(s => s.severity !== 'positive').reduce((a, s) => a + amt(s), 0),
       stabilized: w.filter(s => s.severity === 'positive' || s.status === 'handled').reduce((a, s) => a + amt(s), 0),
     })
@@ -223,7 +223,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
     if (demo) { setAcc({ rated: 128, pct: 91 }); return }
     void (async () => {
       try {
-        const { data } = await createClient().rpc('signal_accuracy')
+        const { data } = await createClient().rpc('Concern_accuracy')
         const row = Array.isArray(data) ? data[0] as { rated?: number; pct?: number } : null
         if (row && Number(row.rated) > 0) setAcc({ rated: Number(row.rated), pct: Number(row.pct) })
       } catch { /* migration not applied yet */ }
@@ -590,7 +590,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
 
         {m.sources.length > 0 && (
         <div>
-          <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Signal sources · {srcTotal} signals</div>
+          <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Concern sources · {srcTotal} Concerns</div>
           {m.sources.map(s => (
             <Row key={s.k} pad="13px 0">
               <span style={{ color: MUTED }}>{s.k}</span>

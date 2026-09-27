@@ -87,7 +87,7 @@ export function SettingsShowcase({ email }: { email: string }) {
         <div style={{ padding: 16, background: 'rgba(42,157,92,.05)', border: '1px solid rgba(42,157,92,.12)', borderRadius: 12, marginBottom: 20, textAlign: 'center' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 4 }}>Current Plan</div>
           <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--ok)' }}>Enterprise</div>
-          <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 4 }}>Unlimited integrations · Unlimited signals · Priority support</div>
+          <div style={{ fontSize: 12, color: 'var(--t3)', marginTop: 4 }}>Unlimited integrations · Unlimited Concerns · Priority support</div>
         </div>
         <SRow label="Billing Cycle" value="Annual" />
         <SRow label="Next Invoice" value="Jan 1, 2027" />
@@ -109,10 +109,10 @@ export function SettingsShowcase({ email }: { email: string }) {
     const dl = <><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></>
     show('Export Data',
       <>
-        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 20 }}>Export your pipeline data, signals, and team metrics. Enterprise plans include scheduled auto-exports.</div>
+        <div style={{ fontSize: 13, color: 'var(--t2)', lineHeight: 1.6, marginBottom: 20 }}>Export your pipeline data, Concerns, and team metrics. Enterprise plans include scheduled auto-exports.</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          {row('Pipeline Data (CSV)', '9 accounts · All deal stages & signals', 'Download', dl, () => success('Export Started', 'Your CSV export is being generated and will be emailed to you shortly.'))}
-          {row('Full Export (JSON)', 'API-compatible dump with signal metadata', 'Download', dl, () => success('Export Started', 'Your JSON export is being generated and will be emailed to you shortly.'))}
+          {row('Pipeline Data (CSV)', '9 accounts · All deal stages & Concerns', 'Download', dl, () => success('Export Started', 'Your CSV export is being generated and will be emailed to you shortly.'))}
+          {row('Full Export (JSON)', 'API-compatible dump with Concern metadata', 'Download', dl, () => success('Export Started', 'Your JSON export is being generated and will be emailed to you shortly.'))}
           {row('Intelligence Report (PDF)', 'Formatted weekly analysis with charts', 'Generate', <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>, () => success('Report Generating', 'Your intelligence report (PDF) is being generated and will be emailed to you shortly.'))}
         </div>
       </>
@@ -129,7 +129,7 @@ export function SettingsShowcase({ email }: { email: string }) {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginBottom: 12 }}>
             <div style={{ padding: 10, background: 'var(--surface)', borderRadius: 10, textAlign: 'center' }}><div style={{ fontSize: 20, fontWeight: 900, color: 'var(--o)' }}>74</div><div style={{ fontSize: 9, color: 'var(--t3)' }}>Health (+6)</div></div>
-            <div style={{ padding: 10, background: 'var(--surface)', borderRadius: 10, textAlign: 'center' }}><div style={{ fontSize: 20, fontWeight: 900, color: 'var(--t1)' }}>47</div><div style={{ fontSize: 9, color: 'var(--t3)' }}>Signals</div></div>
+            <div style={{ padding: 10, background: 'var(--surface)', borderRadius: 10, textAlign: 'center' }}><div style={{ fontSize: 20, fontWeight: 900, color: 'var(--t1)' }}>47</div><div style={{ fontSize: 9, color: 'var(--t3)' }}>Concerns</div></div>
             <div style={{ padding: 10, background: 'var(--surface)', borderRadius: 10, textAlign: 'center' }}><div style={{ fontSize: 20, fontWeight: 900, color: 'var(--danger)' }}>3</div><div style={{ fontSize: 9, color: 'var(--t3)' }}>Critical</div></div>
           </div>
           <div style={{ fontSize: 12, color: 'var(--t1)', lineHeight: 1.6 }}><strong>Accounts That Need You:</strong> Acme Corp ($480K, 8d dark), Axion ($95K, legal stall), Meridian ($850K, Q2 slip)</div>
@@ -226,7 +226,7 @@ export function SettingsShowcase({ email }: { email: string }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}><span style={{ fontSize: 12, fontWeight: 800, color: '#fff', background: 'var(--o)', padding: '3px 10px', borderRadius: 20 }}>v1.0</span><span style={{ fontSize: 11, color: 'var(--t3)', fontFamily: 'DM Mono,monospace' }}>June 2026</span></div>
         <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 10 }}>Launch Release</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-          {item('Revenue Loop - Signals to Cases to Actions to Impact')}
+          {item('Revenue Loop - Concerns to Cases to Actions to Impact')}
           {item('Ask Popsicle: questions answered from your own data')}
           {item('Account 360 with AI executive briefs')}
           {item('Interactive Forecast with scenario modelling')}
@@ -323,7 +323,7 @@ export function SettingsShowcase({ email }: { email: string }) {
         <div className="dcard" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
           <div style={{ padding: '14px 20px 10px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 8 }}>{catIcon(<><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></>)}<span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'var(--o)', fontFamily: "'DM Mono',monospace" }}>Notifications</span></div>
           <div style={{ padding: '4px 20px', flex: 1 }}>
-            {[['risk', 'Risk Alerts'], ['signal', 'Signal Digest'], ['weekly', 'Weekly Summary'], ['push', 'Push Notifications'], ['emailDigest', 'Email Digest']].map(([k, label]) => (
+            {[['risk', 'Risk Alerts'], ['Concern', 'Concern Digest'], ['weekly', 'Weekly Summary'], ['push', 'Push Notifications'], ['emailDigest', 'Email Digest']].map(([k, label]) => (
               <div key={k} className="set-row" onClick={() => setNotif(n => ({ ...n, [k]: !n[k] }))}><span>{label}</span><div className={`dm-toggle${notif[k] ? ' on' : ''}`} style={{ width: 36, height: 20, borderRadius: 10, pointerEvents: 'none' }}></div></div>
             ))}
           </div>

@@ -54,7 +54,7 @@ export function RiskFlagSheet({ flag, onClose }: { flag: RiskFlag | null; onClos
           </div>
         </div>
 
-        <div style={{ ...label, color: 'var(--ink-faint)', marginTop: 26 }}>Signals detected</div>
+        <div style={{ ...label, color: 'var(--ink-faint)', marginTop: 26 }}>Concerns detected</div>
         {flag.signals.map((t, i) => (
           <div key={i} className="read-prose read-prose-ink" style={{ display: 'grid', gridTemplateColumns: '6px minmax(0,1fr)', gap: 12, padding: '12px 0', borderTop: '1px solid var(--hairline, #EFEAE1)' }}>
             <span style={{ width: 5, height: 5, borderRadius: '50%', background: c, marginTop: 7 }} />
@@ -111,10 +111,10 @@ export function buildFlag(
     color: c,
     confidence,
     title: top?.title || `${account} needs attention`,
-    signals: sigs.slice(0, 5).map(s => s.description || s.title || 'Signal'),
+    signals: sigs.slice(0, 5).map(s => s.description || s.title || 'Concern'),
     pattern: patterns[top?.signal_type || ''] || (exposure > 0
       ? `${sigs.length} open signal${sigs.length === 1 ? '' : 's'} sit against this account's exposure.`
-      : 'Open signals on an account are worth clearing before they compound.'),
+      : 'Open Concerns on an account are worth clearing before they compound.'),
     actions: [
       ...(top ? [{ label: 'Draft a follow-up email', go: () => push(`/signals?signal=${top.id}&action=reply`) }] : []),
       { label: 'Ask Popsicle what to do', go: () => push(`/ask?q=${encodeURIComponent(`What should I do about ${account}?`)}`) },

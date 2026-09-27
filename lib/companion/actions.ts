@@ -58,7 +58,7 @@ export function readIntent(raw: string): Action | null {
   if (/quiet hours|don'?t (ping|disturb|notify)|no alerts (at night|after)/.test(t)) {
     const hits = raw.match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/gi) ?? []
     const from = hits[0] ? time(hits[0]) : '19:00', to = hits[1] ? time(hits[1]) : '08:00'
-    return { id: 'set_quiet_hours', params: { from: from ?? '19:00', to: to ?? '08:00' }, say: `Quiet hours set to ${from} – ${to}. Only critical signals get through.` }
+    return { id: 'set_quiet_hours', params: { from: from ?? '19:00', to: to ?? '08:00' }, say: `Quiet hours set to ${from} – ${to}. Only critical Concerns get through.` }
   }
   if (/working hours|i work from|office hours/.test(t)) {
     const hits = raw.match(/\d{1,2}(?::\d{2})?\s*(?:am|pm)?/gi) ?? []
@@ -116,7 +116,7 @@ export function readIntent(raw: string): Action | null {
     const andSend = /and send|then send|^send/i.test(t)
     const acct = m ? m[1].trim() : ''
     return { id: 'draft_reply', params: { account: acct, send: andSend, intent: about ? about[1].trim() : '' },
-      say: acct ? `Drafting${about ? ` a note about ${about[1].trim()}` : ' a reply'} for ${acct}, grounded in their latest signal${andSend ? '. You will see it before anything is sent' : ''}.` : 'Which account should I draft for?' }
+      say: acct ? `Drafting${about ? ` a note about ${about[1].trim()}` : ' a reply'} for ${acct}, grounded in their latest Concern${andSend ? '. You will see it before anything is sent' : ''}.` : 'Which account should I draft for?' }
   }
   if (/^(send it|send that|send the draft|go ahead and send)\b/.test(t)) return { id: 'send_draft', params: {}, say: 'Sending it from your Gmail.', confirm: 'Send this message from your Gmail?' }
 

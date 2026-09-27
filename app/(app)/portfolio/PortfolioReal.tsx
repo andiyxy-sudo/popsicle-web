@@ -95,7 +95,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
-      supa.from('signals')
+      supa.from('Concerns')
         .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
@@ -259,9 +259,9 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
           <>
             <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
-              <span style={{ textAlign: 'center' }}>Stage</span><span>Signal</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
+              <span style={{ textAlign: 'center' }}>Stage</span><span>Concern</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
             </div>
-            {ordered.length === 0 && <EmptyState line={view === 'all' ? 'No accounts yet.' : `Nothing ${view === 'high' ? 'high risk' : view} right now.`} hint={view === 'all' ? 'Let Popsicle scan your inbox and find the companies worth tracking.' : 'Switch the view, or wait for the next signal.'} compact />}
+            {ordered.length === 0 && <EmptyState line={view === 'all' ? 'No accounts yet.' : `Nothing ${view === 'high' ? 'high risk' : view} right now.`} hint={view === 'all' ? 'Let Popsicle scan your inbox and find the companies worth tracking.' : 'Switch the view, or wait for the next Concern.'} compact />}
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)

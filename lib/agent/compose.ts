@@ -59,7 +59,7 @@ export function composeAgent(input: { firstName: string; accounts: Acct[]; signa
   for (const c of [...input.commitments].sort((a, b) => b.daysLate - a.daysLate)) {
     if (c.daysLate < 0) continue
     const acc = c.account ? byAcct.get(c.account) : undefined
-    // the account's most serious open signal, preferring one with the buyer's own words
+    // the account's most serious open Concern, preferring one with the buyer's own words
     const worst = open.filter(s => s.account_name === c.account && s.severity === 'high')
       .sort((a, b) => (Number(b.risk_amount || 0) - Number(a.risk_amount || 0)) || (quoteOf(b) ? 1 : 0) - (quoteOf(a) ? 1 : 0))[0]
     const withQuote = open.find(s => s.account_name === c.account && quoteOf(s)) ?? worst
@@ -145,8 +145,8 @@ export function composeAgent(input: { firstName: string; accounts: Acct[]; signa
   const watching = Math.max(0, open.length - action.length)
   const behind = action.reduce((s, m) => s + (m.amount || 0), 0)
   const summary = action.length === 0
-    ? `I read ${read} signals. Nothing needs you right now; I'll say something the moment that changes.`
-    : `I read ${read} signals since yesterday. ${action.length === 1 ? 'One needs' : `${['', '', 'Two', 'Three', 'Four'][action.length] ?? action.length} need`} you${behind ? `, ${money(behind)} between them` : ''}. The rest I'm watching.`
+    ? `I read ${read} Concerns. Nothing needs you right now; I'll say something the moment that changes.`
+    : `I read ${read} Concerns since yesterday. ${action.length === 1 ? 'One needs' : `${['', '', 'Two', 'Three', 'Four'][action.length] ?? action.length} need`} you${behind ? `, ${money(behind)} between them` : ''}. The rest I'm watching.`
   const hour = new Date(now).getHours()
   return {
     greeting: `${hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}, ${input.firstName}.`,

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   if (!account || typeof account !== 'string') return NextResponse.json({ points: [] })
 
   const [sigs, cms, msgs] = await Promise.all([
-    supabase.from('signals').select('title, description, severity, ai_analysis')
+    supabase.from('Concerns').select('title, description, severity, ai_analysis')
       .in('user_id', await orgIdsServer(supabase, user.id)).eq('account_name', account).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('surfaced_at', { ascending: false }).limit(4),
     supabase.from('commitments').select('text, owner, due_at').in('user_id', await orgIdsServer(supabase, user.id))

@@ -21,7 +21,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   } else {
     const [accts, sigs, ints] = await Promise.all([
       supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)),
-      supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
+      supabase.from('Concerns').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).or('status.is.null,status.eq.open'),
       supabase.from('integrations').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)).eq('is_active', true),
     ])
     badges = {

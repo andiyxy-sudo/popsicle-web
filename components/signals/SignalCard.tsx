@@ -57,13 +57,13 @@ export function SignalCard({ signal, onUpdate }: SignalCardProps) {
 
   async function handleSnooze() {
     setActioning('snooze')
-    await supabase.from('signals').update({ status: 'snoozed', snoozed_until: new Date(Date.now() + 24 * 3600_000).toISOString() }).eq('id', signal.id)
+    await supabase.from('Concerns').update({ status: 'snoozed', snoozed_until: new Date(Date.now() + 24 * 3600_000).toISOString() }).eq('id', signal.id)
     onUpdate?.()
   }
 
   async function handleDismiss() {
     setActioning('dismiss')
-    await supabase.from('signals').update({ is_dismissed: true }).eq('id', signal.id)
+    await supabase.from('Concerns').update({ is_dismissed: true }).eq('id', signal.id)
     onUpdate?.()
   }
 

@@ -73,7 +73,7 @@ export function SlackDigest() {
       <div className="sd-head"><h2>Daily Slack briefing</h2><span>{s.enabled && s.channel_name ? `on · #${s.channel_name} at ${hourLabel(s.send_hour)}` : 'off'}</span></div>
       <div className="sd-grid">
         <div className="sd-form">
-          <p className="sd-intro">Each morning Popsicle posts the day&apos;s top 5 risks to one channel: the account, the money, the lead signal in the buyer&apos;s words, and a link back.</p>
+          <p className="sd-intro">Each morning Popsicle posts the day&apos;s top 5 risks to one channel: the account, the money, the lead Concern in the buyer&apos;s words, and a link back.</p>
           <label className="sd-toggle">
             <input type="checkbox" checked={s.enabled} onChange={e => set({ enabled: e.target.checked })} />
             <span className="sd-switch" aria-hidden /><span>Post the daily briefing</span>

@@ -69,7 +69,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
 
   // work out up front which rows start a new day, so nothing is reassigned while rendering
   const firstOfDay = items.map((it, i) => i === 0 || dayKey(it.t) !== dayKey(items[i - 1].t))
-  if (!events.length && !decisions.length) return <div className="tl2-empty">No timeline yet. Every signal and decision on this account lands here in order.</div>
+  if (!events.length && !decisions.length) return <div className="tl2-empty">No timeline yet. Every Concern and decision on this account lands here in order.</div>
   return (
     <section className="tl2">
       <div className="tl2-head">
@@ -96,7 +96,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
                 <a className="tl2-ev" href={`/signals?signal=${s.id}`} onClick={e => { e.preventDefault(); router.push(`/signals?signal=${s.id}`) }}>
                   <span className="tl2-ev-h">
                     {s.status === 'handled' && <span className="tl2-acted">{s.handled_action ? `${s.handled_action.replace(/^\w/, c => c.toUpperCase())}` : 'Acted on'}</span>}
-                    {s.title ?? 'Signal'}
+                    {s.title ?? 'Concern'}
                     {src && <em title={src[1]}>{s.source_integration && LOGOS[s.source_integration] ? <span className="tl2-logo">{LOGOS[s.source_integration]}</span> : <b style={{ background: src[0] }} />}{src[1]}</em>}
                   </span>
                   {q && <span className="tl2-ev-q">{q}</span>}
@@ -145,7 +145,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
                       {f.atRisk ? <div><span>At risk</span><b style={{ color: 'var(--critical, #c43d2b)' }}>{money(f.atRisk)}</b></div> : null}
                       {f.health != null ? <div><span>Health</span><b style={{ color: healthTone(f.health) }}>{f.health}</b></div> : null}
                       {f.stage ? <div><span>Stage</span><b>{f.stage}</b></div> : null}
-                      {f.openSignals != null ? <div><span>Open signals</span><b>{f.openSignals}</b></div> : null}
+                      {f.openSignals != null ? <div><span>Open Concerns</span><b>{f.openSignals}</b></div> : null}
                     </div>
                   </div>
                 )}

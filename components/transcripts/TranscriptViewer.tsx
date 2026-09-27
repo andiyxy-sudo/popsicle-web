@@ -122,7 +122,7 @@ export function TranscriptViewer({ row, userEmail }: { row: TRow | null; userEma
   const sentColor = sent === 'positive' ? 'var(--ok)' : sent === 'negative' ? 'var(--danger)' : 'var(--t3)'
   const counts = [
     ['Objections', (row.objections || []).length],
-    ['Buying signals', (row.buying_signals || []).length],
+    ['Buying Concerns', (row.buying_signals || []).length],
     ['Commitments', (row.commitments || []).length],
     ['Risks', (row.risk_flags || []).length],
   ] as const
@@ -170,7 +170,7 @@ export function TranscriptViewer({ row, userEmail }: { row: TRow | null; userEma
               )}
               {(row.buying_signals || []).length > 0 && (
                 <div style={{ marginTop: 10 }}>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Buying signals</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: 'var(--ok)', textTransform: 'uppercase', letterSpacing: '.6px' }}>Buying Concerns</div>
                   {(row.buying_signals || []).map((b, i) => (
                     <div key={i}>
                       <div style={{ fontSize: 11.5, color: 'var(--t2)', marginTop: 6 }}>{b.note}</div>

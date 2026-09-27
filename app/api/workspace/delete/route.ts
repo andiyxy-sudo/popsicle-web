@@ -6,7 +6,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 // their accounts, signals, commitments, decisions, connected sources, Slack channel choices and briefing
 // settings, and their place in the organisation. Teammates' own data is untouched. The sign-in itself
 // remains, so they can start again. The demo account can't be deleted.
-const TABLES = ['signals', 'commitments', 'decisions', 'slack_tracked_channels', 'slack_digests', 'integrations', 'accounts', 'org_members']
+const TABLES = ['Concerns', 'commitments', 'decisions', 'slack_tracked_channels', 'slack_digests', 'integrations', 'accounts', 'org_members']
 
 export async function POST(req: NextRequest) {
   const { confirm } = await req.json().catch(() => ({})) as { confirm?: string }

@@ -31,8 +31,8 @@ export async function POST(req: NextRequest) {
 ${languageRule(my)}
 Thresholds: a buyer counts as gone dark after ${my.thresholds.daysDark} days of silence.${my.thresholds.minDeal ? ` Deals under $${Math.round(my.thresholds.minDeal / 1000)}K are low priority unless a signal is critical.` : ''} A commitment counts as overdue ${my.thresholds.graceDays} day${my.thresholds.graceDays === 1 ? '' : 's'} after its date.${my.industry && my.industry !== 'Other' ? ` The user's company sells in ${my.industry}; frame advice for that market where it matters.` : ''}
 Role: ${(meta as { role?: string }).role?.trim() || 'not set'} ${(meta as { role?: string }).role?.trim() ? `(so Pulse opens in the ${LENS_LABEL[resolveLens((meta as { role?: string }).role, null)]}: ${LENS_WHAT[resolveLens((meta as { role?: string }).role, null)]})` : '(with no title set, Pulse shows the standard view; setting a title in the profile changes what it shows first)'}
-Alerts (Settings > Notifications, each on/off): Risk alerts ${my.notifs.risk ? 'ON' : 'OFF'} (new signals in the Ask bar; respects quiet hours and the minimum deal size), Weekly summary ${my.notifs.digest ? 'ON' : 'OFF'} (the week-in-review card on Pulse), Pre-meeting briefs ${my.notifs.brief ? 'ON' : 'OFF'} (the brief card on Pulse), Push notifications ${my.notifs.push ? 'ON' : 'OFF'} (browser notifications for critical signals). Email digest, Slack DMs and handled-signal emails are not built yet.
-Quiet hours ${my.quiet.from} to ${my.quiet.to}; working hours ${my.work.start} to ${my.work.end} (outside these, only critical signals interrupt); the morning brief appears at ${my.morningDigest}.
+Alerts (Settings > Notifications, each on/off): Risk alerts ${my.notifs.risk ? 'ON' : 'OFF'} (new Concerns in the Ask bar; respects quiet hours and the minimum deal size), Weekly summary ${my.notifs.digest ? 'ON' : 'OFF'} (the week-in-review card on Pulse), Pre-meeting briefs ${my.notifs.brief ? 'ON' : 'OFF'} (the brief card on Pulse), Push notifications ${my.notifs.push ? 'ON' : 'OFF'} (browser notifications for critical Concerns). Email digest, Slack DMs and handled-signal emails are not built yet.
+Quiet hours ${my.quiet.from} to ${my.quiet.to}; working hours ${my.work.start} to ${my.work.end} (outside these, only critical Concerns interrupt); the morning brief appears at ${my.morningDigest}.
 Sending (Settings > Drafting > Sending): ${isDemo
   ? 'This is the DEMO workspace: there is no mailbox behind it. Drafting works and is worth showing, but nothing can actually be sent; say so plainly rather than quoting connection problems.'
   : canSend
@@ -62,7 +62,7 @@ When asked what to turn off or turn down, answer with these settings by name, sa
   // Fetch context: recent signals + at-risk accounts
   const [signalsRes, accountsRes] = await Promise.all([
     supabase
-      .from('signals')
+      .from('Concerns')
       .select('title, severity, account_name, source_integration, ai_analysis, created_at')
       .in('user_id', await orgIdsServer(supabase, user.id))
       .eq('is_dismissed', false)
@@ -111,7 +111,7 @@ When asked what to turn off or turn down, answer with these settings by name, sa
   if (nameSet.size) {
     await fetchFor(Array.from(nameSet))
   } else {
-    const stop = new Set(['about', 'which', 'their', 'there', 'would', 'could', 'should', 'email', 'emails', 'gmail', 'slack', 'message', 'messages', 'analyse', 'analyze', 'recommend', 'account', 'accounts', 'signal', 'signals', 'popsicle', 'please', 'latest', 'recent', 'between', 'against', 'steps'])
+    const stop = new Set(['about', 'which', 'their', 'there', 'would', 'could', 'should', 'email', 'emails', 'gmail', 'slack', 'message', 'messages', 'analyse', 'analyze', 'recommend', 'account', 'accounts', 'Concern', 'Concerns', 'popsicle', 'please', 'latest', 'recent', 'between', 'against', 'steps'])
     const words = Array.from(new Set((question.match(/[a-z0-9][a-z0-9&.-]{4,}/g) ?? []).filter(w => !stop.has(w)))).slice(0, 3)
     if (words.length) await fetchFor(words)
   }

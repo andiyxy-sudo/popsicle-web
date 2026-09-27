@@ -22,14 +22,14 @@ export function buildDigest(accts: M.Acct[], sigs: M.Sig[], now: number, tz = 'U
   const day = new Date(now).toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: tz })
   const lines = [
     `*Popsicle · Top ${ranked.length} risks, ${day}*`,
-    `Revenue at risk *${risk.valueText}* across ${risk.parts.length} critical account${risk.parts.length === 1 ? '' : 's'} · ${fresh} new signal${fresh === 1 ? '' : 's'} in the last 24 hours`,
+    `Revenue at risk *${risk.valueText}* across ${risk.parts.length} critical account${risk.parts.length === 1 ? '' : 's'} · ${fresh} new Concern${fresh === 1 ? '' : 's'} in the last 24 hours`,
     '',
   ]
   ranked.forEach((r, i) => {
     const raw = (r.lead?.ai_analysis?.quote as string | undefined)?.replace(/^["“]|["”]$/g, '')
     const norm = (t: string) => t.toLowerCase().replace(/[^a-z0-9 ]/g, '').trim()
     const q = raw && !norm(r.lead?.title ?? '').includes(norm(raw)) ? raw : undefined   // never repeat the title
-    lines.push(`*${i + 1}. ${r.n}* · ${M.money(r.amt)} · ${r.critical ? 'critical' : 'watch'}${r.count > 1 ? ` · ${r.count} open signals` : ''}`)
+    lines.push(`*${i + 1}. ${r.n}* · ${M.money(r.amt)} · ${r.critical ? 'critical' : 'watch'}${r.count > 1 ? ` · ${r.count} open Concerns` : ''}`)
     if (r.lead) lines.push(`      ${r.lead.title}${q ? ` — _“${q}”_` : ''}`.replace(' — ', ': '))
     lines.push(`      <${SITE()}/accounts/${encodeURIComponent(r.n)}|Open ${r.n}>`)
   })
