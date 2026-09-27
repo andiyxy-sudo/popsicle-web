@@ -48,9 +48,9 @@ export const MOBILE_TEAM = {
     filters: ['All', 'Critical only', 'My accounts'],
     rows: [
       { rep: 'Andy G', account: 'Brightwave', when: '6mo ago', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
-      { rep: 'Mike Ross', account: 'Nexus AI', when: '6mo ago', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },
-      { rep: 'Jamie Torres', account: 'Meridian Labs', when: '6mo ago', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice Delay', from: 66, to: 48, recovered: 44_000 },
-      { rep: 'Andy G', account: 'Vertex Systems', when: '6mo ago', action: 'Competitive battle card delivered to champion', driver: 'Competitor Activity', from: 61, to: 38, recovered: 36_000 },
+      { rep: 'Mike Ross', account: 'Nexus AI', when: '6mo ago', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent stall', from: 55, to: 28, recovered: 38_000 },
+      { rep: 'Jamie Torres', account: 'Meridian Labs', when: '6mo ago', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice delay', from: 66, to: 48, recovered: 44_000 },
+      { rep: 'Andy G', account: 'Vertex Systems', when: '6mo ago', action: 'Competitive battle card delivered to champion', driver: 'Competitor mention', from: 61, to: 38, recovered: 36_000 },
     ],
   },
   executionQuality: {
@@ -98,7 +98,7 @@ export const MOBILE_INTELLIGENCE = {
     rows: [
       { k: 'Executive Disengagement', pct: 34 },
       { k: 'Invoice Delays', pct: 28 },
-      { k: 'Competitor Activity', pct: 22 },
+      { k: 'Competitor mention', pct: 22 },
       { k: 'Product Usage Decline', pct: 16 },
     ],
   },
@@ -180,10 +180,10 @@ export const MOBILE_PORTFOLIO_CARDS: Record<string, { statusChip?: string; mix?:
   'Acme Corp': { mix: [{ k: 'Eng', pct: 30 }, { k: 'SLA', pct: 20 }, { k: 'Invoice', pct: 35 }] },
   'Nexus AI': { statusChip: 'On track' },
   'TechFlow Inc': { mix: [{ k: 'Eng', pct: 25 }, { k: 'Budget', pct: 40 }] },
-  'Meridian Labs': { statusChip: 'Timeline Slip' },
+  'Meridian Labs': { statusChip: 'Timeline slip' },
   'Brightwave': { statusChip: 'Re-engaged' },
   'Axion Partners': { mix: [{ k: 'Legal', pct: 40 }, { k: 'Eng', pct: 40 }] },
-  'TechVault Inc': { statusChip: 'Price Flinch' },
+  'TechVault Inc': { statusChip: 'Price flinch' },
   'Cobalt Health': { statusChip: 'Onboarding' },
 }
 export const MOBILE_PORTFOLIO_ACTIVE_COUNT = 9

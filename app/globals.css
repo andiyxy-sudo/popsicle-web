@@ -4421,3 +4421,10 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
 .bil-col-flag { display: none; }
 .bil-col-rule { margin-bottom: 18px; }
+
+/* ═════════ PULSE: FOUR BLOCKS AT +10% ═════════
+   Today, the Concern Engine, Activity and the accounts needing attention table, magnified as
+   blocks so every proportion holds and a re-render cannot undo it. The headings and their rules
+   sit outside, at the page's own size, so the three columns stay aligned.
+   TO REVERT: delete this block and the pulse10 class names in PulseReal.tsx. */
+.pulse10 { zoom: 1.1; }

@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import { useSettings } from '@/lib/useSettings'
+import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 interface DBSignal {
   id: string
@@ -45,11 +46,11 @@ interface DBSignal {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent Stall', competitor_mention: 'Competitor Mention', legal_loopin: 'Legal Loop-in',
-  price_flinch: 'Price Flinch', champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', deal_stage_backward: 'Deal Moved Backward',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
+  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Deal Moved Backward',
   reengaged: 'Re-engaged',
   call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
+  call_buying_signal: 'Buying intent', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
   meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
 }
 
@@ -446,13 +447,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
   const minDeal = mySettings.thresholds.minDeal
   const smallDeals = minDeal ? openShown.filter(s => s.severity !== 'high' && Number(s.risk_amount || 0) > 0 && Number(s.risk_amount) < minDeal) : []
   const shown = showSmall ? openShown : openShown.filter(s => !smallDeals.includes(s))
-  const ACTION_LABEL: Record<string, string> = {
-    silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
-    competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
-    timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
-    deal_stage_backward: 'Book exec call', call_buying_Concern: 'Fast-track', call_commitment: 'Confirm in writing',
-    reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
-  }
+  const ACTION_LABEL = CONCERN_ACTIONS
 
   return (
     <div className="dsk-screen on">
@@ -548,12 +543,11 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset"
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-slot"
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
-              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
@@ -610,6 +604,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                   }}>{action}</button>
                 )}
               </div>
+              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
             </div>
           )
         })}

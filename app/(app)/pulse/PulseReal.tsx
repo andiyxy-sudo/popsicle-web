@@ -20,6 +20,7 @@ import { useChanges } from '@/components/changes/useChanges'
 import { useSettings } from '@/lib/useSettings'
 import { FirstRun } from '@/components/onboarding/FirstRun'
 import { healthOf } from '@/lib/health'
+import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -639,7 +640,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in',
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip',
   reengaged: 'Re-engaged', call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
+  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
@@ -976,6 +977,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
         <section style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
+          <div className="pulse10">
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as Concerns arrive.</div>}
           {briefRows.map((b, i) => (
             <div key={i} style={{ display: 'grid', gridTemplateColumns: '32px 1fr', gap: 12, padding: '20px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', fontSize: 15, lineHeight: 1.55 }}>
@@ -984,9 +986,11 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             </div>
           ))}
           <span onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>
+          </div>
         </section>
         <section style={{ minWidth: 0 }}>
           {secHead('Concern Engine', mono('live'))}
+          <div className="pulse10">
           {loopRows.map((l, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, minWidth: 0 }}>
@@ -999,9 +1003,11 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               <X m={(l as { m?: string }).m ?? 'active'}><CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></X>
             </div>
           ))}
+          </div>
         </section>
         <section style={{ minWidth: 0 }}>
           {secHead('Activity', mono('Concern events'))}
+          <div className="pulse10">
           {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as Concerns arrive.</div>}
           {activityRows.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/concerns?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
@@ -1013,6 +1019,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', flexShrink: 0 }}>{ago(sg.created_at)}</span>
             </div>
           ))}
+          </div>
         </section>
       </div>
 
@@ -1026,12 +1033,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
           const byAcct = new Map<string, Signal[]>()
           for (const sg of openT) if (sg.account_name) { const a = byAcct.get(sg.account_name) ?? []; a.push(sg); byAcct.set(sg.account_name, a) }
-          const ACTION_LABEL: Record<string, string> = {
-            silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
-            legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
-            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_Concern: 'Fast-track',
-            call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
-          }
+          const ACTION_LABEL = CONCERN_ACTIONS
           const rows = accounts.map(a => {
             const sigs = byAcct.get(a.name) ?? []
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null
@@ -1056,7 +1058,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           if (!rows.length) return null
           const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
           return (
-            <>
+            <div className="pulse10 pulse10-table">
               {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
@@ -1087,7 +1089,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <AskThis q={`Why does ${a.name} need me today, and what should I do first?`} account={a.name} />
                 </div>
               ))}
-            </>
+            </div>
           )
         })()}
       </div>

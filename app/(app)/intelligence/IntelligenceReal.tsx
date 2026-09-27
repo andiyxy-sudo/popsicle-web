@@ -29,7 +29,7 @@ const TYPE_LABELS: Record<string, string> = {
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Deal moved backward',
   reengaged: 'Re-engaged', commitment_overdue: 'Commitment overdue',
   call_objection: 'Call objection', call_sentiment_drop: 'Call sentiment drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Call commitment', call_summary: 'Call summary',
+  call_buying_signal: 'Buying intent', call_commitment: 'Call commitment', call_summary: 'Call summary',
   meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
 }
 const SOURCE_LABELS: Record<string, string> = { gmail: 'Gmail / Outlook', outlook: 'Gmail / Outlook', slack: 'Slack', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', zoom: 'Calls & CRM', fireflies: 'Calls & CRM', meet: 'Calls & CRM', hubspot: 'Calls & CRM', gcal: 'Calendar' }
@@ -49,7 +49,7 @@ const RULE = 'var(--rule-strong, #0E0D0B)'
 const ACCENT = 'var(--accent, #E85A25)'
 
 function fmtMoney(v: number) {
-  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/0$/, '')}M`
+  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/\.?0+$/, '')}M`
   if (v >= 1000) return `$${Math.round(v / 1000)}K`
   return `$${v}`
 }

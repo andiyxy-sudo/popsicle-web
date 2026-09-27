@@ -36,12 +36,12 @@ export const DEMO_EXTRA: Record<string, Extra> = {
   },
   'TechFlow Inc': {
     contact_name: 'Jordan Reyes', trend: '-3%', repScore: 61, expiry: 'Feb 01',
-    flags: ['Price Flinch', 'Finance Review'],
+    flags: ['Price flinch', 'Finance Review'],
     breakdown: [{ k: 'Engagement', v: 40 }, { k: 'Product Fit', v: 78 }, { k: 'Legal', v: 62 }, { k: 'Financial', v: 64 }],
   },
   'Meridian Labs': {
     contact_name: 'Alex Park', trend: '-11%', repScore: 58, expiry: 'Mar 30',
-    flags: ['Timeline Slip'],
+    flags: ['Timeline slip'],
     breakdown: [{ k: 'Engagement', v: 42 }, { k: 'Product Fit', v: 82 }, { k: 'Legal', v: 18 }, { k: 'Financial', v: 90 }],
   },
   'Brightwave': {
@@ -79,9 +79,9 @@ const A = (id: string, name: string, domain: string, value: number, stage: strin
 
 export const DEMO_ACCOUNTS: Account[] = [
   A('demo-acme', 'Acme Corp', 'acmecorp.com', 480000, 'Negotiation', 'Sarah Chen', 'high', 36, at(12, 31), 192, ['Exec Unresponsive', '8d Dark', 'Champion at Risk']),
-  A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 58, at(3, 30), 120, ['Timeline Slip']),
+  A('demo-meridian', 'Meridian Labs', 'meridianlabs.com', 850000, 'Discovery', 'Alex Park', 'medium', 58, at(3, 30), 120, ['Timeline slip']),
   A('demo-nexus', 'Nexus AI', 'nexus.ai', 320000, 'Closing', 'Marcus Webb', 'low', 91, at(1, 15), 20, ['Legal Clearing', 'PO Expected']),
-  A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jordan Reyes', 'medium', 61, at(2, 1), 72, ['Price Flinch', 'Finance Review']),
+  A('demo-techflow', 'TechFlow Inc', 'techflow.com', 210000, 'Proposal', 'Jordan Reyes', 'medium', 61, at(2, 1), 72, ['Price flinch', 'Finance Review']),
   A('demo-brightwave', 'Brightwave', 'brightwave.io', 180000, 'Closing', 'Tom Okafor', 'low', 82, at(2, 10), 30, ['Buyer Active', 'Onboarding Interest']),
   A('demo-axion', 'Axion Partners', 'axionpartners.com', 95000, 'Negotiation', 'Rachel Voss', 'high', 38, at(2, 28), 24, ['Legal Blocker', '+3-5 Weeks']),
   A('demo-techvault', 'TechVault Inc', 'techvault.com', 140000, 'Proposal', 'Kevin Cho', 'medium', 59, at(3, 15), 72, ['Budget Concern', 'Finance Review']),
@@ -844,9 +844,9 @@ export const DEMO_TEAM: TeamModel = {
   executionInsight: 'Mike Ross is 2.5x slower than team median on first action. Loop closure rate 13 points below team average.',
   actionsFeed: [
     { rep: 'Andy G', account: 'Brightwave', when: 'Mar 18', action: 'Executive sponsor call - re-engagement confirmed', driver: 'Exec Disengagement', from: 74, to: 31, recovered: 62_000 },
-    { rep: 'Mike Ross', account: 'Nexus AI', when: 'Mar 11', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent Stall', from: 55, to: 28, recovered: 38_000 },
-    { rep: 'Jamie Torres', account: 'Meridian Labs', when: 'Mar 6', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice Delay', from: 66, to: 48, recovered: 44_000 },
-    { rep: 'Andy G', account: 'Vertex Systems', when: 'Mar 3', action: 'Competitive battle card delivered to champion', driver: 'Competitor Activity', from: 61, to: 38, recovered: 36_000 },
+    { rep: 'Mike Ross', account: 'Nexus AI', when: 'Mar 11', action: 'Multi-stakeholder follow-up after 5-day dark period', driver: 'Silent stall', from: 55, to: 28, recovered: 38_000 },
+    { rep: 'Jamie Torres', account: 'Meridian Labs', when: 'Mar 6', action: 'Invoice dispute resolved - AP contact re-engaged', driver: 'Invoice delay', from: 66, to: 48, recovered: 44_000 },
+    { rep: 'Andy G', account: 'Vertex Systems', when: 'Mar 3', action: 'Competitive battle card delivered to champion', driver: 'Competitor mention', from: 61, to: 38, recovered: 36_000 },
   ],
 }
 
@@ -1067,7 +1067,7 @@ export const DEMO_RATINGS = [
   { type: 'Silent stall', useful: 31, rated: 33 }, { type: 'Price flinch', useful: 24, rated: 27 },
   { type: 'Competitor mention', useful: 17, rated: 19 }, { type: 'Timeline slip', useful: 15, rated: 17 },
   { type: 'Legal loop-in', useful: 13, rated: 14 }, { type: 'Champion change', useful: 9, rated: 10 },
-  { type: 'Buying Concern', useful: 7, rated: 8 },
+  { type: 'Buying intent', useful: 7, rated: 8 },
 ]
 const _acc = DEMO_ACCOUNTS as unknown as M.Acct[], _sig = DEMO_SIGNALS as unknown as M.Sig[]
 export const DEMO_X = {
@@ -1093,7 +1093,7 @@ export const DEMO_X = {
     { n: String(DEMO_X.atRisk.parts.length), lbl: `critical · ${DEMO_X.atRisk.valueText} at risk`, tone: 'critical' as const },
     { n: String(watchOnly.length), lbl: `watch · ${M.money(watchVal)} exposure`, tone: 'warn' as const },
     { n: String(posAccts.length), lbl: 'positive · momentum', tone: 'good' as const },
-    { n: String(open.length), lbl: `open signals · ${DEMO_PULSE_STRIP.newToday} new today`, tone: 'ink' as const, strong: true } as never,
+    { n: String(open.length), lbl: `open Concerns · ${DEMO_PULSE_STRIP.newToday} new today`, tone: 'ink' as const, strong: true } as never,
   )
 }
 
