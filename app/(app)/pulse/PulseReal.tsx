@@ -974,7 +974,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
 
       {/* three editorial columns */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
-        <section className="pl15" style={{ minWidth: 0 }}>
+        <section className="pl25" style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as Concerns arrive.</div>}
           {briefRows.map((b, i) => (
@@ -1000,7 +1000,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             </div>
           ))}
         </section>
-        <section className="pl15" style={{ minWidth: 0 }}>
+        <section className="pl25" style={{ minWidth: 0 }}>
           {secHead('Activity', mono('Concern events'))}
           {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as Concerns arrive.</div>}
           {activityRows.map(sg => (

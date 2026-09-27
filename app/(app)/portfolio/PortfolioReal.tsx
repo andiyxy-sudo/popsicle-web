@@ -257,7 +257,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
         })
         return (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            <div className="pl15" style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 10px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
               <span style={{ textAlign: 'center' }}>Stage</span><span>Concern</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
             </div>
@@ -268,7 +268,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset ask-slot"
+                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset ask-slot pl15 pl15-table"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
