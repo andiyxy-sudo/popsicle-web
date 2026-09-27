@@ -4421,3 +4421,595 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
 .bil-col-flag { display: none; }
 .bil-col-rule { margin-bottom: 18px; }
+
+/* ═════════ v11.255 SMALL TEXT +20% ═════════
+   Every small size grows by a fifth: labels, body copy, table cells, captions, buttons.
+   Left alone: page titles, the opening paragraph, the big figures, section headings and the footer,
+   all of which are 17px and up.
+   TO REVERT: delete this whole block. Nothing else depends on it. */
+[style*="font-size:8px"]:not(h1):not(h2):not(.no-grow) { font-size: 9.6px !important; }
+[style*="font-size:8.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 10.2px !important; }
+[style*="font-size:9px"]:not(h1):not(h2):not(.no-grow) { font-size: 10.8px !important; }
+[style*="font-size:9.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 11.4px !important; }
+[style*="font-size:10px"]:not(h1):not(h2):not(.no-grow) { font-size: 12px !important; }
+[style*="font-size:10.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 12.6px !important; }
+[style*="font-size:11px"]:not(h1):not(h2):not(.no-grow) { font-size: 13.2px !important; }
+[style*="font-size:11.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 13.8px !important; }
+[style*="font-size:12px"]:not(h1):not(h2):not(.no-grow) { font-size: 14.4px !important; }
+[style*="font-size:12.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 15px !important; }
+[style*="font-size:13px"]:not(h1):not(h2):not(.no-grow) { font-size: 15.6px !important; }
+[style*="font-size:13.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 16.2px !important; }
+[style*="font-size:14px"]:not(h1):not(h2):not(.no-grow) { font-size: 16.8px !important; }
+[style*="font-size:14.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 17.4px !important; }
+[style*="font-size:15px"]:not(h1):not(h2):not(.no-grow) { font-size: 18px !important; }
+[style*="font-size:15.5px"]:not(h1):not(h2):not(.no-grow) { font-size: 18.6px !important; }
+[style*="font-size:16px"]:not(h1):not(h2):not(.no-grow) { font-size: 19.2px !important; }
+
+/* and the same for the sizes set in this stylesheet rather than inline */
+html, body { font-size: 16.8px; }
+.sb-logo-text span:last-child { font-size: 10.8px; }
+.sb-section { font-size: 13.2px; }
+.sb-item { font-size: 15.6px; }
+.sb-item .badge { font-size: 10.8px; }
+.sb-avatar { font-size: 14.4px; }
+.sb-user-name { font-size: 15.6px; }
+.sb-user-role { font-size: 12px; }
+.topbar-eyebrow { font-size: 11.4px; }
+.topbar-search input { font-size: 15.6px; }
+.topbar-search-kbd { font-size: 12px; }
+.empty-state .es-title { font-size: 18px; }
+.empty-state .es-sub { font-size: 14.4px; }
+.page-hdr p { font-size: 16.2px; }
+.dcard-title { font-size: 13.2px; }
+.dcard-sub { font-size: 15px; }
+.dcard-delta { font-size: 13.2px; }
+.sec-hdr .see-all { font-size: 13.2px; }
+.dtable th { font-size: 10.8px; }
+/* ════ RISK PILLS ════ */
+.rp { font-size: 10.8px; }
+.sig-account { font-size: 15.6px; }
+.sig-msg { font-size: 15px; }
+.sig-tag { font-size: 10.8px; }
+.sig-filter { font-size: 14.4px; }
+.sig-card-btn { font-size: 13.2px; }
+.loop-step .loop-num { font-size: 14.4px; }
+.kpi-mini-item { font-size: 12px; }
+.kpi-mini-item strong { font-size: 15.6px; }
+.conf-ring-val { font-size: 12px; }
+.activity-time { font-size: 12px; }
+.activity-body { font-size: 15px; }
+.fc-tab { font-size: 14.4px; }
+/* ════ PORT HEALTH ════ */
+.port-health { font-size: 14.4px; }
+.port-tag { font-size: 10.8px; }
+/* ════ TEAM ════ */
+.team-rank { font-size: 14.4px; }
+.int-signal { font-size: 10.8px; }
+.int-status { font-size: 10.8px; }
+/* ════ SETTINGS ════ */
+.set-row { font-size: 15.6px; }
+.ai-hdr-title { font-size: 16.2px; }
+.ai-hdr-sub { font-size: 10.8px; }
+.ai-hdr-stat .v { font-size: 15.6px; }
+.ai-hdr-stat .l { font-size: 8.4px; }
+.ai-ctx-chip { font-size: 12px; }
+.ai-msg.user { font-size: 15.6px; }
+.ai-msg.bot { font-size: 15.6px; }
+.ai-act-title { font-size: 15px; }
+.ai-act-sub { font-size: 12.6px; }
+.ai-act-go { font-size: 14.4px; }
+.ai-act-num { font-size: 13.2px; }
+.ai-sug-cat { font-size: 11.4px; }
+.ai-suggestion { font-size: 14.4px; }
+.ai-input-row input { font-size: 16.2px; }
+.ai-input-hint { font-size: 11.4px; }
+.a360-tab { font-size: 14.4px; }
+.a360-action-label { font-size: 10.8px; }
+.a360-action-btn { font-size: 15.6px; }
+.smodal-hdr h3 { font-size: 19.2px; }
+.smodal-btn { font-size: 15.6px; }
+.smodal-row label { font-size: 15.6px; }
+.smodal-row .val { font-size: 15.6px; }
+.login-sub { font-size: 15.6px; }
+.login-input { font-size: 16.8px; }
+.login-btn { font-size: 16.8px; }
+.login-divider { font-size: 13.2px; }
+.login-social button { font-size: 14.4px; }
+.search-section { font-size: 10.8px; }
+.si-name { font-size: 15.6px; }
+.si-sub { font-size: 13.2px; }
+.tour-step { font-size: 10.8px; }
+.tour-desc { font-size: 15.6px; }
+.tour-btn { font-size: 15.6px; }
+.tl-expand { font-size: 13.8px; }
+.tl-chevron { font-size: 12px; }
+/* ═══ V13 UPGRADES ═══ */
+
+/* TOOLTIP — JS-driven fixed position */
+#tt { font-size: 14.4px; }
+.kpi-hero-lbl { font-size: 11.4px; }
+.kpi-hero-sub { font-size: 14.4px; }
+.kpi-hero-badge { font-size: 13.2px; }
+.kpi-hero-stat { font-size: 12px; }
+.kpi-hero-stat strong { font-size: 15.6px; }
+.sig-src-time { font-size: 10.8px; }
+.sig-row-account { font-size: 16.2px; }
+.sig-row-delta { font-size: 10.8px; }
+.sig-row-text { font-size: 15.6px; }
+.sig-row-tag { font-size: 12px; }
+.ai-act-title { font-size: 15.6px; }
+.ai-act-sub { font-size: 13.2px; }
+.ai-act-go { font-size: 13.2px; }
+.ai-msg-text { font-size: 15.6px; }
+.a360-hring-lbl { font-size: 8.4px; }
+.a360-stat .l { font-size: 9.6px; }
+.settings-nav-item { font-size: 15.6px; }
+.empty-state-sub { font-size: 16.2px; }
+.sb-onboard-lbl { font-size: 13.2px; }
+.sb-onboard-pct { font-size: 12px; }
+.sb-recents-lbl { font-size: 9.6px; }
+.sb-recent-mono { font-size: 10.8px; }
+.sb-recent-name { font-size: 14.4px; }
+.pipeline-step-label { font-size: 15px; }
+.pipeline-chevron { font-size: 12px; }
+/* Count badge on signals step */
+.pipeline-count { font-size: 10.8px; }
+.topbar-search input { font-size: 15px; }
+.topbar-search input::placeholder { font-size: 15px; }
+.pipeline-count { font-size: 11.4px; }
+.pipeline-chevron { font-size: 13.2px; }
+/* Ask Popsicle button — more refined */
+.ask-btn { font-size: 15px; }
+/* Avatar */
+.topbar-avatar { font-size: 13.2px; }
+/* Reserve DM Mono for numbers/codes only */
+.dcard-title, .section-label { font-size: 10.8px; }
+.kpi-hero-lbl { font-size: 10.8px; }
+/* Greeting line */
+#greeting-text { font-size: 16.8px; }
+.cs-logo-sub { font-size: 13.2px; }
+.cs-row-label { font-size: 13.2px; }
+.cs-row-stat { font-size: 12px; }
+.cs-status { font-size: 12px; }
+/* ── Visual polish pass ── */
+
+/* Global label override — Outfit everywhere except timestamps/numbers */
+[style*="DM Mono"][style*="text-transform:uppercase"][style*="font-size:9px"],
+[style*="DM Mono"][style*="text-transform:uppercase"][style*="font-size:8px"] { font-size: 12px; }
+/* Stat sub-labels */
+.dcard-sub, .kpi-sub { font-size: 13.2px; }
+/* softer focus on secondary text */
+.sig-account { font-size: 15.6px; }
+.sig-text { font-size: 14.4px; }
+.sig-time { font-size: 12px; }
+.page-hdr p { font-size: 15.6px; }
+/* reduce heading monospace overuse */
+.overline-sm { font-size: 12px; }
+.page-hdr p { font-size: 18px; }
+/* Sidebar — ink panel voice */
+.sb-item { font-size: 17.28px; }
+.sb-item .badge { font-size: 12.96px; }
+/* ============================================================
+   PHASE 2b — DESIGN SHELL (footer, floating Ask bar, sidebar voice)
+   ============================================================ */
+.ed-footer { font-size: 12.6px; }
+.ed-askbar input { font-size: 18px; }
+.ed-askbar button { font-size: 16.2px; }
+/* sidebar: design voice (ink panel, hairline rules, dot markers) */
+.sb-section { font-size: 11.4px; }
+.sb-user-role { font-size: 13.8px; }
+.ed-sb-item { font-size: 17.28px; }
+.ed-sb-count { font-size: 12.96px; }
+.ed-sb-avatar { font-size: 13.2px; }
+/* ============================================================
+   BASE TYPOGRAPHY — design spec (html/body + weights)
+   ============================================================ */
+html, body { font-size: 16.8px; }
+/* sidebar nav sizing per spec */
+.ed-sb-item { font-size: 17.28px; }
+/* screen body copy per spec */
+.dsk-screen { font-size: 16.8px; }
+.dsk-screen p { font-size: 18px; }
+.note-dateline { font-size: 12.6px; }
+.note-quote { font-size: 18px; }
+.note-quote cite { font-size: 12.6px; }
+.note-view { font-size: 17.4px; }
+.note-act { font-size: 16.2px; }
+.note-link { font-size: 15.6px; }
+.note.compact .note-quote { font-size: 16.8px; }
+.note.compact .note-view { font-size: 16.2px; }
+.agent-card-from { font-size: 12.6px; }
+.brief-row .note-dateline { font-size: 12px; }
+.brief-row-t { font-size: 16.8px; }
+.desk-sub { font-size: 12.6px; }
+.desk-foot { font-size: 16.2px; }
+/* v11.90: Ask · Start fresh */
+.ask-fresh { font-size: 15px; }
+.sb-presence-label { font-size: 12px; }
+.sb-presence-av { font-size: 11.4px; }
+.sb-presence-name { font-size: 15px; }
+.sb-presence-where { font-size: 13.2px; }
+.sb-presence-more { font-size: 13.2px; }
+.desk-toggle { font-size: 15.6px; }
+.desk-chev { font-size: 14.4px; }
+.dock-from { font-size: 12.6px; }
+.dock-about { font-size: 12.6px; }
+.dock-head-actions button { font-size: 15px; }
+.dock-q { font-size: 17.4px; }
+.dock-q-label { font-size: 12px; }
+.dock-a p { font-size: 17.4px; }
+.dock-thinking { font-size: 15.6px; }
+.dock-reopen { font-size: 15px; }
+.dock-hint { font-size: 15px; }
+.dock-sheet .note-head, .dock-sheet .note.compact .note-head { font-size: 16.8px; }
+.dock-sheet .brief-row-t { font-size: 16.8px; }
+.dock-sheet .note-view, .dock-sheet .note-quote { font-size: 16.2px; }
+.agent-card .note-head, .agent-card .note.compact .note-head { font-size: 16.8px; }
+.ask-this { font-size: 14.4px; }
+.dock-a p, .dock-a div, .dock-a span, .dock-a li, .dock-a strong, .dock-a em, .dock-a code { font-size: 16.8px; }
+.dock-a .vb-label { font-size: 12.6px; }
+.dock-a .vb-word { font-size: 19.2px; }
+.dock-a .vb-reason { font-size: 16.8px; }
+.dock-sheet .note-view, .dock-sheet .note-quote, .dock-sheet .brief-row-t { font-size: 16.8px; }
+.dock-sheet .note-dateline, .dock-sheet .note-quote cite { font-size: 12.6px; }
+/* v11.101: the rule, closed properly. Every text element an answer can contain is sized in the
+   sheet, including section headings (h3, which the renderer used at 17px). */
+.dock-a h1, .dock-a h2, .dock-a h3, .dock-a h4, .dock-a h5, .dock-a h6 { font-size: 16.8px; }
+.dock-a ul, .dock-a ol, .dock-a blockquote, .dock-a a, .dock-a b, .dock-a i, .dock-a small { font-size: 16.8px; }
+.dock-suggest-label, .dock-next-label { font-size: 12.6px; }
+.dock-suggest-q { font-size: 16.8px; }
+.dock-next-q { font-size: 15px; }
+.va .va-label { font-size: 12.6px; }
+.va .va-reason { font-size: 18px; }
+.va .va-intro { font-size: 16.8px; }
+.va .va-lead { font-size: 12.6px; }
+.va .va-text { font-size: 16.8px; }
+.va .va-src { font-size: 14.4px; }
+.xp-eyebrow { font-size: 13.2px; }
+.xp-title { font-size: 15.6px; }
+.xp-def { font-size: 15px; }
+.xp-stat { font-size: 13.8px; }
+.xp-row-label { font-size: 16.2px; }
+.xp-row-val { font-size: 16.2px; }
+.xp-row-note { font-size: 13.8px; }
+.xp-ev-title { font-size: 15.6px; }
+.xp-ev-quote { font-size: 15.6px; }
+.xp-ev-meta { font-size: 13.8px; }
+.xp-pill { font-size: 13.2px; }
+.xp-ev-open { font-size: 14.4px; }
+.xp-sum { font-size: 16.2px; }
+.xp-foot, .xp-empty, .xp-err { font-size: 14.4px; }
+.sb-eyebrow { font-size: 13.8px; }
+.sb-deck { font-size: 17.4px; }
+.sb-btn { font-size: 15.6px; }
+.sb-stat-k { font-size: 14.4px; }
+.sb-day-h { font-size: 18px; }
+.sb-day-h span { font-size: 14.4px; }
+.sb-ev-top b { font-size: 16.2px; }
+.sb-ev-t { font-size: 13.8px; }
+.sb-ev-title { font-size: 16.2px; }
+.sb-ev-amt { font-size: 16.8px; }
+.rp2-kicker { font-size: 13.8px; }
+.rp2-legend { font-size: 14.4px; }
+.rp2-tick { font-size: 12.6px; }
+.rp2-ctl-l { font-size: 15px; }
+.rp2-chip { font-size: 14.4px; }
+.rp2-tk { font-size: 14.4px; }
+.rp2-td { font-size: 13.8px; }
+.rp2-feed-h { font-size: 18px; }
+.rp2-quiet { font-size: 16.8px; }
+.rp2-ev-acct { font-size: 16.2px; }
+.rp2-ev-title { font-size: 16.2px; }
+.rp2-ev-amt { font-size: 16.8px; }
+.lens-lbl { font-size: 14.4px; }
+.lens-seg button { font-size: 15px; }
+.lens-q { font-size: 15px; }
+.lens-tile-k { font-size: 12px; }
+.lens-tile-s { font-size: 15px; }
+.rv-kicker { font-size: 13.8px; }
+.rv-chip { font-size: 15px; }
+.rv-chip-n { font-size: 13.2px; }
+.rv-end { font-size: 15.6px; }
+.rv-why { font-size: 14.4px; }
+.rv-meta { font-size: 16.8px; }
+.rv-meta b { font-size: 19.2px; }
+.rv-quiet { font-size: 16.8px; }
+.rv-wk-t { font-size: 16.8px; }
+.rv-wk-when { font-size: 14.4px; }
+.rv-ev-title { font-size: 16.8px; }
+.rv-ev-when { font-size: 14.4px; }
+.rv-ev-q { font-size: 18px; }
+.rv-past-top { font-size: 16.8px; }
+.rv-past-meta { font-size: 14.4px; }
+.rv-past-then { font-size: 15px; }
+.rv-status { font-size: 13.2px; }
+.rv-side-h { font-size: 18px; }
+.rv-presets button { font-size: 16.2px; }
+.rv-q { font-size: 15.6px; }
+.rv-a { font-size: 16.8px; }
+.rv-a p { font-size: 16.8px; }
+.rv-ask-bar input, .rv-dec textarea, .rv-dec input { font-size: 16.2px; }
+.rv-ask-bar button, .rv-dec-btn { font-size: 15.6px; }
+.rv-dec-note { font-size: 14.4px; }
+.rv-err { font-size: 15px; }
+.rv-made-row { font-size: 16.2px; }
+.rv-made-row em { font-size: 14.4px; }
+.rv-check { font-size: 13.2px; }
+.rv-nav { font-size: 16.2px; }
+.rv-count { font-size: 15px; }
+.rv-sum-sub { font-size: 17.4px; }
+.dt-n { font-size: 15px; }
+.dt-date { font-size: 14.4px; }
+.dt-text { font-size: 16.8px; }
+.dt-meta { font-size: 14.4px; }
+.dt-then-h { font-size: 14.4px; }
+.dt-figs { font-size: 15px; }
+.dt-figs b { font-size: 16.8px; }
+.dt-sig-t { font-size: 15.6px; }
+.dt-sig-q { font-size: 15.6px; }
+.xpp-label { font-size: 15.6px; }
+.xpp-def { font-size: 15.6px; }
+.xpp-name { font-size: 17.4px; }
+.xpp-sub { font-size: 15px; }
+.xpp-val { font-size: 17.4px; }
+.xpp-pct { font-size: 14.4px; }
+.xpp-ev-h { font-size: 14.4px; }
+.xpp-ev-t { font-size: 16.2px; }
+.xpp-ev-q { font-size: 16.2px; }
+.xpp-foot { font-size: 15.6px; }
+.xpp-foot b { font-size: 17.4px; }
+.xpp-stat { font-size: 14.4px; }
+.xpp-note { font-size: 15px; }
+.xpp-item.nested .xpp-name, .xpp-item.nested .xpp-val { font-size: 16.2px; }
+.rv2-eyebrow { font-size: 15.6px; }
+.rv2-end { font-size: 16.8px; }
+.rv2-step-l { font-size: 15px; }
+.rv2-tag { font-size: 15px; }
+.rv2-contact { font-size: 18px; }
+.rv2-kpi-l { font-size: 15px; }
+.rv2-sec-h span { font-size: 15.6px; }
+.rv2-wk { font-size: 17.4px; }
+.rv2-wk em { font-size: 15px; }
+.rv2-ev-h { font-size: 15px; }
+.rv2-ev-t { font-size: 18px; }
+.rv2-card p.s { font-size: 15.6px; }
+.rv2-q { font-size: 16.8px; }
+.rv2-input input, .rv2-field { font-size: 16.8px; }
+.rv2-go { font-size: 16.8px; }
+.rv2-rec { font-size: 17.4px; }
+.rv2-fine { font-size: 14.4px; }
+.rv2-past-t { font-size: 18px; }
+.rv2-past-m { font-size: 15px; }
+.rv2-then { font-size: 15.6px; }
+.rv2-pill { font-size: 13.8px; }
+.rv2-bar button { font-size: 16.2px; }
+.rv2-bar span { font-size: 15px; }
+.rv2-kpi-u { font-size: 15.6px; }
+.rv2-quiet { font-size: 16.8px; }
+.rv2-asked { font-size: 15.6px; }
+.rv2-ans { font-size: 16.8px; }
+.rv2-ans p { font-size: 16.8px; }
+.rv2-more button { font-size: 15px; }
+.rv2-err { font-size: 15.6px; }
+.rv2-made { font-size: 16.8px; }
+.rv2-made em { font-size: 15px; }
+.rv2-check { font-size: 13.2px; }
+.rv2-sum-sub { font-size: 18px; }
+.xpp-label { font-size: 12px; }
+.xpp-def { font-size: 16.2px; }
+.xpp-name, .xpp-val { font-size: 18px; }
+.xpp-sub, .xpp-pct { font-size: 15px; }
+.xpp-ev-h, .xpp-ev-h * { font-size: 12.6px; }
+.xpp-ev-open { font-size: 15px; }
+.xpp-ev-t { font-size: 16.8px; }
+.xpp-ev-q { font-size: 16.8px; }
+.xpp-foot b { font-size: 18px; }
+.xpp-stat, .xpp-note { font-size: 15px; }
+.rv2-eyebrow { font-size: 13.2px; }
+.rv2-step-l { font-size: 15.6px; }
+.rv2-tag { font-size: 12.6px; }
+.rv2-kpi-l { font-size: 12px; }
+.rv2-kpi-u { font-size: 16.8px; }
+.rv2-sec-h span { font-size: 13.2px; }
+.rv2-wk { font-size: 18px; }
+.rv2-wk em { font-size: 13.2px; }
+.rv2-ev-h, .rv2-ev-h * { font-size: 12.6px; }
+.rv2-past-m { font-size: 13.2px; }
+.rv2-then { font-size: 16.8px; }
+.rv2-pill { font-size: 12px; }
+.rv2-card p.s { font-size: 16.2px; }
+.rv2-q { font-size: 17.4px; }
+.rv2-field, .rv2-input input { font-size: 17.4px; }
+.rv2-asked { font-size: 13.2px; }
+.rv2-nav-k { font-size: 12px; }
+.rv2-nav-c { font-size: 13.2px; }
+.rv2-date button { font-size: 17.4px; }
+.rp3-k { font-size: 13.2px; }
+.rp3-today { font-size: 13.2px; }
+.rp3-fig-k { font-size: 12px; }
+.rp3-fig-d { font-size: 13.2px; }
+.rp3-legend { font-size: 13.2px; }
+.rp3-tick { font-size: 12.6px; }
+.rp3-play { font-size: 16.8px; }
+.rp3-seg button { font-size: 15.6px; }
+.rp3-hint { font-size: 13.2px; }
+.rp3-ghost { font-size: 15.6px; }
+.rp3-sec-h span { font-size: 13.2px; }
+.rp3-quiet { font-size: 18px; }
+.rp3-ev { font-size: 18px; }
+.sd-head span { font-size: 13.2px; }
+.sd-intro { font-size: 18px; }
+.sd-toggle { font-size: 18px; }
+.sd-toggle em { font-size: 15.6px; }
+.sd-field > span { font-size: 12px; }
+.sd-field select { font-size: 17.4px; }
+.sd-tz { font-size: 13.2px; }
+.sd-save, .sd-test { font-size: 16.8px; }
+.sd-msg { font-size: 16.2px; }
+.sd-note { font-size: 15.6px; }
+.sd-prev-k { font-size: 12px; }
+.sd-msg-card { font-size: 17.4px; }
+.sd-msg-from b { font-size: 18px; }
+.sd-msg-from em { font-size: 14.4px; }
+.sd-av { font-size: 16.8px; }
+.sdw-k { font-size: 13.2px; }
+.sd-msg-from b { font-size: 18.6px; }
+.sd-msg-from em { font-size: 12.6px; }
+.intel-replay-h span { font-size: 13.2px; }
+.rv2-intro-go { font-size: 16.8px; }
+.rv2-replay { font-size: 16.8px; }
+.rv2-sum .rv2-eyebrow { font-size: 13.2px; }
+.rv2-sum-sub { font-size: 17.4px; }
+.rv2-sum .rv2-made { font-size: 18px; }
+.rv2-sum .rv2-made em { font-size: 15.6px; }
+.rv2-sum .sb-btn { font-size: 16.8px; }
+/* v11.139: the review's deal counter in the reading font, like Pulse's "Today" */
+.rv2-nav-c { font-size: 16.8px; }
+.dock-live-q { font-size: 17.4px; }
+.dock-live-go { font-size: 15.6px; }
+.ed-askbar .dock-live-go { font-size: 15px; }
+/* v11.142: the sheet shows only the newest alert; earlier ones fold behind one quiet line */
+.dock-earlier { font-size: 15px; }
+.rv2-crumb { font-size: 13.2px; }
+.rv2-head-actions .rv2-replay, .rv2-head-actions .rv2-end { font-size: 15.6px; }
+.rv2-prev, .rv2-next { font-size: 16.8px; }
+.rp3-story { font-size: 19.2px; }
+.rp3-more { font-size: 15px; }
+.rp3:not(.rp3-inline) .rp3-story { font-size: 17.4px; }
+.rp3-range button { font-size: 15.6px; }
+.dt2-head span { font-size: 16.8px; }
+.dt2-date span { font-size: 12px; }
+.dt2-status { font-size: 14.4px; }
+.dt2-meta { font-size: 16.2px; }
+.dt2-toggle { font-size: 16.2px; }
+.dt2-then-k { font-size: 12px; }
+.dt2-figs span { font-size: 14.4px; }
+.dt2-sig-h { font-size: 17.4px; }
+.dt2-sig-h em { font-size: 12.6px; }
+.dt2-sig-q { font-size: 18px; }
+.tl2-filter button { font-size: 15.6px; }
+.tl2-date span { font-size: 12px; }
+.tl2-ev-h { font-size: 18px; }
+.tl2-ev-h em { font-size: 12.6px; }
+.tl2-acted { font-size: 13.8px; }
+.tl2-ev-q { font-size: 17.4px; }
+.tl2-card-k { font-size: 12px; }
+.tl2-card-meta { font-size: 16.2px; }
+.tl2-why { font-size: 15px; }
+.tl2-why button { font-size: 15px; }
+.tl2-empty { font-size: 17.4px; }
+.tl2-date span { font-size: 16.2px; }
+.tl2-date b { font-size: 16.2px; }
+.tl2-st-menu button { font-size: 16.2px; }
+.tl2-err { font-size: 15.6px; }
+.fr-k { font-size: 12.6px; }
+.fr > p { font-size: 18px; }
+.fr-actions button, .fr-role-opts button { font-size: 16.8px; }
+.fr-steps li { font-size: 17.4px; }
+.fr-steps li i { font-size: 13.2px; }
+.fr-steps em { font-size: 15.6px; }
+.fr-steps button { font-size: 15.6px; }
+.fr-role b { font-size: 18px; }
+.fr-role span { font-size: 15.6px; }
+.fr-role-opts button { font-size: 16.2px; }
+.snd-card-t { font-size: 18.6px; }
+.snd-card-d { font-size: 15px; }
+.snd-row-l { font-size: 17.4px; }
+.snd-row-h { font-size: 14.4px; }
+.snd-check { font-size: 15.6px; }
+.snd-seg button { font-size: 15px; }
+.snd-note { font-size: 15px; }
+.snd-check { font-size: 15px; }
+.snd-card-d { font-size: 14.4px; }
+.snd-deal-in { font-size: 15px; }
+/* v11.183: the risk chart plays itself; the full replay opens in a window */
+.intel-play { font-size: 15.6px; }
+.intel-play-i { font-size: 12px; }
+.intel-replay-link { font-size: 15.6px; }
+.intel-narrate { font-size: 16.2px; }
+.intel-narrate-w { font-size: 13.2px; }
+.ask-line button { font-size: 16.8px; }
+.ask-q-title { font-size: 18.6px; }
+.ask-q-why { font-size: 15px; }
+.ask-q-amt { font-size: 17.4px; }
+.ask-read-t { font-size: 16.2px; }
+.ask-ledger { font-size: 15.6px; }
+/* v11.195: the orange Ask button on the line, and a page that never scrolls */
+.ask-line button.ask-line-go { font-size: 16.8px; }
+.cm-sub { font-size: 12.6px; }
+.cm-meter-key { font-size: 11.4px; }
+.cm-who { font-size: 17.4px; }
+.cm-role, .cm-when { font-size: 10.8px; }
+.cm-chan-txt { font-size: 10.8px; }
+.cm-tone { font-size: 10.8px; }
+.cm-label { font-size: 10.8px; }
+.cm-text { font-size: 18px; }
+.cm-acts button, .cm-summary { font-size: 11.4px; }
+.cm-summary { font-size: 12px; }
+.cm-rail-k { font-size: 11.4px; }
+.cm-person-n { font-size: 16.8px; }
+.cm-person-r { font-size: 10.8px; }
+.cm-person-l { font-size: 15px; }
+.cm-quiet { font-size: 16.2px; }
+/* v11.198: "Start fresh" in the house action style; bold inside answers a touch lighter */
+.ask-fresh { font-size: 11.4px; }
+.ask-fresh span[aria-hidden] { font-size: 13.2px; }
+/* v11.202: the companion's confirm row */
+.cmp-confirm { font-size: 16.8px; }
+.cmp-yes, .cmp-no { font-size: 11.4px; }
+.va .va-src-go span { font-size: 12px; }
+/* v11.212: the sheet's title uses the page font (Outfit), not the mono label style */
+.dock-head .dock-from { font-size: 17.4px; }
+.dock-head .dock-about { font-size: 16.2px; }
+.bil-k { font-size: 11.4px; }
+.bil-sub { font-size: 16.2px; }
+.bil-facts b { font-size: 16.8px; }
+.bil-name { font-size: 18px; }
+.bil-badge { font-size: 10.2px; }
+.bil-per { font-size: 14.4px; }
+.bil-tag { font-size: 15px; }
+.bil-feats li { font-size: 15px; }
+.bil-go { font-size: 15.6px; }
+.bil-alt { font-size: 11.4px; }
+.bil-msg { font-size: 16.2px; }
+.bil-note { font-size: 15px; }
+.bil-use-cap { font-size: 15.6px; }
+.bil-use-note { font-size: 13.8px; }
+.bil-meter-n { font-size: 16.2px; }
+.bil-meter-s { font-size: 13.8px; }
+.bil-team-k { font-size: 10.8px; }
+.bil-team-v { font-size: 16.8px; }
+.bil-team-n { font-size: 13.2px; }
+.bil-tag { font-size: 14.4px; }
+.bil-meter-n { font-size: 15px; }
+.bil-meter-s { font-size: 13.2px; }
+.bil-team-v { font-size: 15.6px; }
+.bil-team-n { font-size: 12.6px; }
+.bil-feats li { font-size: 14.4px; }
+.bil-go { font-size: 15px; }
+.bil-soon { font-size: 9.6px; }
+.bil-facts b { font-size: 15.6px; }
+.bil-note { font-size: 14.4px; }
+.bil-later { font-size: 15px; }
+/* the Current pill sits where the button would be, so the name stays centred */
+.bil-badge { font-size: 15px; }
+/* v11.234: the allowance matches the line beneath it, and is legible on the tint */
+.bil-meter-n { font-size: 16.8px; }
+/* v11.241: a link inside the current-plan facts */
+.bil-link { font-size: 15.6px; }
+.bil-own-feats .bil-feats li { font-size: 16.2px; }
+.bil-own-acts .bil-go { font-size: 16.2px; }
+.bil-link { font-size: 15.6px; }
+.bil-pay-v { font-size: 16.8px; }
+.bil-backbtn { font-size: 15.6px; }
+.bil-back-k { font-size: 11.4px; }
+.bil-col-flag { font-size: 10.2px; }
+.bil-col-name { font-size: 14.4px; }
+.bil-col-price .bil-per { font-size: 14.4px; }
+.bil-col-tag { font-size: 14.4px; }
+.bil-col-k { font-size: 10.2px; }
+.bil-col-v { font-size: 15px; }
+.bil-col-feats div { font-size: 14.4px; }
+.bil-col-act .bil-go { font-size: 15px; }
+.bil-col-later, .bil-col-mine { font-size: 10.8px; }
+.bil-foot { font-size: 14.4px; }
