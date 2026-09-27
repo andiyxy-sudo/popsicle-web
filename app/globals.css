@@ -4421,3 +4421,29 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
 .bil-col-flag { display: none; }
 .bil-col-rule { margin-bottom: 18px; }
+
+/* ═════════ v11.258 PULSE: FIVE BLOCKS AT +15% ═════════
+   The late commitments panel, Today, the Concern Engine stages, Activity, and the accounts
+   needing attention table (its health figures included). Sizes are set inline in this app, so
+   these match the inline value and raise it by 15%.
+   TO REVERT: delete this block and the pl15 / pl15-table class names in PulseReal.tsx. */
+.pl15 [style*="font-size:9px"] { font-size: 10.35px !important; }
+.pl15 [style*="font-size:9.5px"] { font-size: 10.93px !important; }
+.pl15 [style*="font-size:10px"] { font-size: 11.5px !important; }
+.pl15 [style*="font-size:10.5px"] { font-size: 12.08px !important; }
+.pl15 [style*="font-size:11px"] { font-size: 12.65px !important; }
+.pl15 [style*="font-size:11.5px"] { font-size: 13.23px !important; }
+.pl15 [style*="font-size:12px"] { font-size: 13.8px !important; }
+.pl15 [style*="font-size:12.5px"] { font-size: 14.38px !important; }
+.pl15 [style*="font-size:13px"] { font-size: 14.95px !important; }
+.pl15 [style*="font-size:13.5px"] { font-size: 15.53px !important; }
+.pl15 [style*="font-size:14px"] { font-size: 16.1px !important; }
+.pl15 [style*="font-size:14.5px"] { font-size: 16.68px !important; }
+.pl15 [style*="font-size:15px"] { font-size: 17.25px !important; }
+.pl15 [style*="font-size:15.5px"] { font-size: 17.83px !important; }
+.pl15 [style*="font-size:16px"] { font-size: 18.4px !important; }
+/* the stage numbers on the Concern Engine and the health figures in the table */
+.pl15 [style*="font-size:36px"] { font-size: 41.4px !important; }
+.pl15-table [style*="font-size:22px"] { font-size: 25.3px !important; }
+/* the late-commitment label column needs a little more room at the larger size */
+.pl15 [style*="grid-template-columns:58px"] { grid-template-columns: 70px minmax(0,1fr) !important; }
