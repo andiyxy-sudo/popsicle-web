@@ -921,7 +921,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {!accounts.some(a => String(a.id).startsWith('demo-')) && <FirstRun />}
 
       {narrative}
-      <div className="sz20"><LateCommitments accounts={accounts} demoItems={demoLate} /></div>
+      <LateCommitments accounts={accounts} demoItems={demoLate} />
 
       {mySettings.notifs.brief && <PreMeetingBrief />}
       {mySettings.notifs.digest && <div style={{ marginTop: 24 }}><WeekDigest /></div>}
@@ -974,7 +974,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
 
       {/* three editorial columns */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 56, marginTop: 'var(--gap-l)' }}>
-        <section className="sz20" style={{ minWidth: 0 }}>
+        <section style={{ minWidth: 0 }}>
           {secHead('Today', liveDot)}
           {briefRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>All quiet. This fills in as Concerns arrive.</div>}
           {briefRows.map((b, i) => (
@@ -985,7 +985,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           ))}
           <span onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>
         </section>
-        <section className="sz20" style={{ minWidth: 0 }}>
+        <section style={{ minWidth: 0 }}>
           {secHead('Concern Engine', mono('live'))}
           {loopRows.map((l, i) => (
             <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
@@ -1000,7 +1000,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             </div>
           ))}
         </section>
-        <section className="sz20" style={{ minWidth: 0 }}>
+        <section style={{ minWidth: 0 }}>
           {secHead('Activity', mono('Concern events'))}
           {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as Concerns arrive.</div>}
           {activityRows.map(sg => (
@@ -1056,7 +1056,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           if (!rows.length) return null
           const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
           return (
-            <div className="sz20 sz20-health">
+            <>
               {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
@@ -1087,7 +1087,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <AskThis q={`Why does ${a.name} need me today, and what should I do first?`} account={a.name} />
                 </div>
               ))}
-            </div>
+            </>
           )
         })()}
       </div>

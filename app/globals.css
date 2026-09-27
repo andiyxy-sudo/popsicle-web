@@ -4421,29 +4421,3 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
 .bil-col-flag { display: none; }
 .bil-col-rule { margin-bottom: 18px; }
-
-/* ═════════ v11.257 A FIFTH LARGER, IN THE PLACES YOU ASKED FOR ═════════
-   Scoped to six areas only: the late commitments panel, and the Today, Concern Engine and
-   Activity columns on Pulse, the accounts tables on Pulse and Portfolio, and the rows under
-   All alerts on the Concerns page. Text only, so the big figures keep their size (the at risk
-   and health numbers are 22px, above the range); the two account tables also grow their health
-   number deliberately.
-   TO REVERT: delete this block and the sz20 class names on those sections. */
-.sz20 [style*="font-size:8px"] { font-size: 9.6px !important; }
-.sz20 [style*="font-size:8.5px"] { font-size: 10.2px !important; }
-.sz20 [style*="font-size:9px"] { font-size: 10.8px !important; }
-.sz20 [style*="font-size:9.5px"] { font-size: 11.4px !important; }
-.sz20 [style*="font-size:10px"] { font-size: 12px !important; }
-.sz20 [style*="font-size:10.5px"] { font-size: 12.6px !important; }
-.sz20 [style*="font-size:11px"] { font-size: 13.2px !important; }
-.sz20 [style*="font-size:11.5px"] { font-size: 13.8px !important; }
-.sz20 [style*="font-size:12px"] { font-size: 14.4px !important; }
-.sz20 [style*="font-size:12.5px"] { font-size: 15px !important; }
-.sz20 [style*="font-size:13px"] { font-size: 15.6px !important; }
-.sz20 [style*="font-size:13.5px"] { font-size: 16.2px !important; }
-.sz20 [style*="font-size:14px"] { font-size: 16.8px !important; }
-.sz20 [style*="font-size:14.5px"] { font-size: 17.4px !important; }
-.sz20 [style*="font-size:15px"] { font-size: 18px !important; }
-.sz20 [style*="font-size:15.5px"] { font-size: 18.6px !important; }
-.sz20 [style*="font-size:16px"] { font-size: 19.2px !important; }
-.sz20-health [style*="font-size:22px"] { font-size: 26.4px !important; }   /* the health figure in the two tables */
