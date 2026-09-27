@@ -28,9 +28,9 @@ type Msg = { id: string; account_name?: string | null; integration?: string | nu
 type Acct = { id?: string; name: string; domain?: string | null; value?: number | null; stage?: string | null; owner?: string | null; health_score?: number | null; risk_level?: string | null; close_date?: string | null; last_contact_date?: string | null; contact_name?: string }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in', price_flinch: 'Price flinch',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in', price_flinch: 'Price flinch',
   champion_change: 'Champion change', timeline_slip: 'Timeline slip', reengaged: 'Re-engaged', call_objection: 'Objection',
-  call_sentiment_drop: 'Sentiment drop', call_buying_signal: 'Buying intent', call_commitment: 'Commitment',
+  call_sentiment_drop: 'Sentiment drop', call_buying_Concern: 'Buying signal', call_commitment: 'Commitment',
   call_summary: 'Call summary', meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
   deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }

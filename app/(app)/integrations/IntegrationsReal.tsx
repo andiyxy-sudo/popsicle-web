@@ -591,7 +591,6 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
 
       {briefingOpen && <BriefingWindow onClose={() => setBriefingOpen(false)} />}
       {/* category label column + provider rows (design) */}
-      <div className="pl05">
       {cats.map(cat => {
         const inCat = PROVIDERS.filter(p => p.cat === cat)
         const onCount = inCat.filter(p => active.includes(p.key)).length
@@ -640,7 +639,6 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
           </div>
         )
       })}
-      </div>
 
 
       {sheet && (() => {

@@ -725,7 +725,7 @@ export function AskClient() {
             conversation takes over and the utility row moves under the input */}
         {!started && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, minHeight: 36 }}>
-            <div className="pl10" style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
               Ask Popsicle <span style={{ margin: '0 8px' }}>/</span> grounded in your data
             </div>
           </div>

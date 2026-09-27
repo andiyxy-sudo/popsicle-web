@@ -22,7 +22,6 @@ import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import { useSettings } from '@/lib/useSettings'
-import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 interface DBSignal {
   id: string
@@ -46,12 +45,12 @@ interface DBSignal {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
-  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Stage backward',
+  silent_stall: 'Silent Stall', competitor_mention: 'Competitor Mention', legal_loopin: 'Legal Loop-in',
+  price_flinch: 'Price Flinch', champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', deal_stage_backward: 'Deal Moved Backward',
   reengaged: 'Re-engaged',
-  call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', call_summary: 'Call summary',
-  meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
+  call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
+  call_buying_signal: 'Buying Concern', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
+  meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
 }
 
 function fmtMoney(v?: number) {
@@ -350,7 +349,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
     const ok = !error
     if (ok && user) {
       await supa.from('remap_log').insert({
-        user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
+        user_id: user.id, account_id: accountId, entity_type: 'Concern', entity_id: s.id,
         method: 'manual_assign', prev_value: s.account_name ?? null,
       }).then(() => {}, () => {})
     }
@@ -447,7 +446,13 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
   const minDeal = mySettings.thresholds.minDeal
   const smallDeals = minDeal ? openShown.filter(s => s.severity !== 'high' && Number(s.risk_amount || 0) > 0 && Number(s.risk_amount) < minDeal) : []
   const shown = showSmall ? openShown : openShown.filter(s => !smallDeals.includes(s))
-  const ACTION_LABEL = CONCERN_ACTIONS
+  const ACTION_LABEL: Record<string, string> = {
+    silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
+    competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
+    timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
+    deal_stage_backward: 'Book exec call', call_buying_Concern: 'Fast-track', call_commitment: 'Confirm in writing',
+    reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
+  }
 
   return (
     <div className="dsk-screen on">
@@ -543,11 +548,12 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-slot pl15"
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset"
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
+              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
@@ -569,7 +575,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
-                  <div className="pl15-keep" style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
+                  <div style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
                     <div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
@@ -604,7 +610,6 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                   }}>{action}</button>
                 )}
               </div>
-              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
             </div>
           )
         })}
@@ -628,7 +633,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>
           </div>
           {handledList.slice(0, 6).map(s => (
-            <div key={s.id} className="tbl-row pl10" onClick={() => setDetailFor(s)}
+            <div key={s.id} className="tbl-row" onClick={() => setDetailFor(s)}
               style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
               <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800, fontSize: 13 }}>✓</span>
               <div style={{ minWidth: 0 }}>
@@ -812,20 +817,20 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
 
         // Why this pattern matters, stated plainly per signal type.
         const PATTERNS: Record<string, string> = {
-          silent_stall: 'Silent stall',
-          competitor_mention: 'Competitor mention',
-          price_flinch: 'Price flinch',
-          legal_loopin: 'Legal loop-in',
-          timeline_slip: 'Timeline slip',
-          deal_stage_backward: 'Stage backward',
-          meeting_cancelled: 'Meeting cancelled',
-          meeting_declined: 'Meeting declined',
-          champion_change: 'Champion change',
-          call_objection: 'Objection',
-          call_sentiment_drop: 'Sentiment drop',
-          call_buying_signal: 'Buying intent',
-          reengaged: 'Re-engaged',
-          commitment_overdue: 'Commitment overdue',
+          silent_stall: 'Accounts that go quiet past their own reply cadence stall far more often than they close.',
+          competitor_mention: 'A named competitor in the thread usually means an evaluation is already running.',
+          price_flinch: 'Pricing pushback this late typically adds a finance loop and weeks to the close.',
+          legal_loopin: 'Once outside counsel joins, review cycles historically add two to three weeks.',
+          timeline_slip: 'A second date change is the strongest single predictor of a slipped quarter.',
+          deal_stage_backward: 'Stage regressions rarely recover without an executive conversation.',
+          meeting_cancelled: 'Cancelled reviews without a rebook are where momentum quietly dies.',
+          meeting_declined: 'A declined invite from the decision maker is worth more attention than a quiet week.',
+          champion_change: 'A champion change resets the buying case; the new contact has not heard it yet.',
+          call_objection: 'Objections raised on a call and left unanswered tend to resurface at signature.',
+          call_sentiment_drop: 'A sentiment drop mid-cycle usually precedes a slower reply cadence.',
+          call_buying_signal: 'Explicit buying language is the cheapest moment to ask for the next step.',
+          reengaged: 'Re-engagement after silence is a short window; it closes again quickly.',
+          commitment_overdue: 'Overdue promises are the most common reason a deal quietly loses trust.',
         }
         const pattern = PATTERNS[d.signal_type || ''] || null
         const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
@@ -952,7 +957,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                   <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Why remove this? It trains detection.</div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {[['not_a_signal', 'Not a Concern'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
+                      {[['not_a_Concern', 'Not a Concern'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
                         <button key={k} onClick={() => removeSignal(d, k)} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{lbl}</button>
                       ))}
                       <button onClick={() => setModalMode('view')} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--t4)', cursor: 'pointer' }}>Cancel</button>

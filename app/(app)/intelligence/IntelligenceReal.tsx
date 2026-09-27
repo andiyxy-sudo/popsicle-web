@@ -25,11 +25,11 @@ interface Baseline { account_name?: string; emails_per_week?: number; total_mess
 interface Acct { name: string; value?: number | null; close_date?: string | null; risk_level?: string | null }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
-  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Stage backward',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor activity', legal_loopin: 'Legal loop-in',
+  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Deal moved backward',
   reengaged: 'Re-engaged', commitment_overdue: 'Commitment overdue',
-  call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', call_summary: 'Call summary',
+  call_objection: 'Call objection', call_sentiment_drop: 'Call sentiment drop',
+  call_buying_signal: 'Buying Concern', call_commitment: 'Call commitment', call_summary: 'Call summary',
   meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
 }
 const SOURCE_LABELS: Record<string, string> = { gmail: 'Gmail / Outlook', outlook: 'Gmail / Outlook', slack: 'Slack', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', zoom: 'Calls & CRM', fireflies: 'Calls & CRM', meet: 'Calls & CRM', hubspot: 'Calls & CRM', gcal: 'Calendar' }
@@ -49,7 +49,7 @@ const RULE = 'var(--rule-strong, #0E0D0B)'
 const ACCENT = 'var(--accent, #E85A25)'
 
 function fmtMoney(v: number) {
-  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/\.?0+$/, '')}M`   // $1M, not $1.0M, like every other page
+  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/0$/, '')}M`
   if (v >= 1000) return `$${Math.round(v / 1000)}K`
   return `$${v}`
 }
@@ -366,7 +366,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       </div>
 
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 'var(--gap-m)', alignItems: 'start' }}>
-        <div className="pl15">
+        <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Key movement drivers</div>
           {m.drivers.length === 0 && <EmptyState line="No movement to explain yet." hint="Drivers appear once signals carry a dollar amount at risk." compact />}
           {m.drivers.map(d => (
@@ -519,7 +519,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {/* ---- what's working ---- */}
       <H2 title="What's working" right={<span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>action → outcome · this quarter</span>} />
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 96, marginTop: 8, alignItems: 'start' }}>
-        <div className="pl15">
+        <div>
           <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 10, color: FAINT, padding: '16px 0 12px' }}>
             <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ{demo ? '' : ' est.'}</span>}
           </div>
@@ -573,7 +573,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {(() => { const cols = [!!m.forecast, m.sources.length > 0, m.renewals.length > 0].filter(Boolean).length || 1; return (
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: 72 }}>
         {m.forecast && (
-        <div className="pl15">
+        <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Forecast vs actual · MTD</div>
           {m.forecast ? (() => {
             const v = m.forecast.actual - m.forecast.forecast
@@ -589,7 +589,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         )}
 
         {m.sources.length > 0 && (
-        <div className="pl15">
+        <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Concern sources · {srcTotal} Concerns</div>
           {m.sources.map(s => (
             <Row key={s.k} pad="13px 0">
@@ -608,7 +608,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         )}
 
         {m.renewals.length > 0 && (
-        <div className="pl15">
+        <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Renewals · next 90 days{renewTotal ? <> · {fmtMoney(renewTotal)}</> : null}</div>
           {m.renewals.map(r => {
             const s = renewMeta[r.status]

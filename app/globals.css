@@ -4421,31 +4421,3 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* v11.247: the top flag is gone; the orange rule and the wash still mark your plan */
 .bil-col-flag { display: none; }
 .bil-col-rule { margin-bottom: 18px; }
-
-/* ═════════ v11.258 SCALED BLOCKS ═════════
-   Whole blocks are magnified rather than each font matched by its inline size: that keeps every
-   proportion (columns, gaps, the late-commitment labels) and cannot be undone by a re-render,
-   which is why the sizes used to snap back when you navigated into an account and out again.
-     .pl15  = 15% larger: the late commitments panel, the Concern Engine, the accounts tables
-     .pl25  = 20%: Today and Activity (15%, then 10% up, then 5% back down)
-   TO REVERT: delete this block and the pl15 / pl25 / pl15-table class names in PulseReal.tsx
-   and PortfolioReal.tsx. */
-.pl15 { zoom: 1.15; }
-/* the Concerns rows grow, but the at-risk and health figures beside them stay as they were */
-.pl15-keep { zoom: 0.8696; }
-/* the movers strip carries four columns, so at +15% it needs its gaps back */
-.pl15.stat-row { column-gap: 14px !important; zoom: 1.09; }   /* the movers strip: 15%, then 5% back down */
-
-/* Settings from Account down, and the integrations catalogue: a gentler 5% */
-.pl05 { zoom: 1.05; }
-
-.pl10 { zoom: 1.1; }   /* the recently handled strip on Concerns */
-
-/* the Ask opening: the briefing, the suggested questions, the reading rail and the ledger, 5% up */
-.ask-brief, .ask-open-cols, .ask-ledger { zoom: 1.05; }
-/* the Ask Popsicle eyebrow, on the opening screen and above an answer */
-.ask-open-top { zoom: 1.1; }
-/* the mover status words (CLOSING, RENEWAL AT RISK, STALLED, EXPANSION) sit 10% below the rest of the strip */
-.fc-tag { zoom: 0.9; }
-/* Today's plays: 20%, then 5% back down. Activity stays at 20% (.pl25) */
-.pl14 { zoom: 1.14; }

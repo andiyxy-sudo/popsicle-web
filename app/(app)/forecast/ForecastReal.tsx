@@ -313,7 +313,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
             <h2 style={{ margin: 0, fontFamily: "'Outfit',sans-serif", fontSize: 21, fontWeight: 700, letterSpacing: '-.03em', color: 'var(--ink)' }}>What moves the number</h2>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>weighted by AI probability</span>
           </div>
-          <div className="pl15 stat-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, moverCards.length)}, minmax(0,1fr))`, columnGap: 32 }}>
+          <div className="stat-row" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(4, moverCards.length)}, minmax(0,1fr))`, columnGap: 32 }}>
             {moverCards.map(m => {
               const tone = m.tone === 'critical' ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)'
               return (
@@ -323,7 +323,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                   <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                       <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{m.name}</span>
-                      <span className="fc-tag" style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone }}>{m.tag}</span>
                     </div>
                     <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 6 }}>{m.note}</div>
                   </div>
@@ -341,7 +341,7 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       )}
 
       {/* forecast vs actual · AI accuracy · scenario model */}
-      <div className="pl15" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48, marginTop: 'var(--gap-m)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(240px,1fr))', gap: 48, marginTop: 'var(--gap-m)' }}>
         <div>
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             Forecast vs actual · MTD
@@ -449,11 +449,11 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       })}
 
       {secHead('Every dated deal', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by close date</span>)}
-      <div className="pl15" style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <span>Close</span><span>Account</span><span>Value</span><span>Stage</span><span>Odds</span><span>Weighted</span>
       </div>
       {rows.map(r => (
-        <div className="pl15" key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
+        <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
           style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14 }}>
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>
