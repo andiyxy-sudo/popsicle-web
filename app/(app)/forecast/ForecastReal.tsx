@@ -449,11 +449,11 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
       })}
 
       {secHead('Every dated deal', <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>by close date</span>)}
-      <div style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+      <div className="fc5" style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
         <span>Close</span><span>Account</span><span>Value</span><span>Stage</span><span>Odds</span><span>Weighted</span>
       </div>
       {rows.map(r => (
-        <div key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
+        <div className="fc5" key={r.a.id} onClick={() => router.push(`/accounts?open=${encodeURIComponent(r.a.name)}`)}
           style={{ display: 'grid', gridTemplateColumns: '104px minmax(136px,1.6fr) minmax(84px,.7fr) minmax(104px,.9fr) minmax(68px,.5fr) 104px', columnGap: 12, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer', fontSize: 14 }}>
           <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 12, color: r.risky ? 'var(--critical, #c43d2b)' : 'var(--ink-muted)' }}>{mounted ? new Date(r.a.close_date!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : ''}</span>
           <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>

@@ -4439,3 +4439,5 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* Concerns, under All alerts: the rows 5% up, with the at-risk and health figures held where they were */
 .alerts5 { zoom: 1.05; }
 .alerts5-keep { zoom: 0.952; }
+/* Forecast: the "Every dated deal" table, header and rows together so the columns stay aligned */
+.fc5 { zoom: 1.05; }
