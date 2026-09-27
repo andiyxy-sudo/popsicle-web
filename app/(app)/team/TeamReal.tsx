@@ -313,7 +313,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
         return (
           <>
             <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 10, color: FAINT }}>
-              <span>#</span><span>Rep</span><span>Concerns</span><span>Recovered</span><span>Protected</span><span>Avg response</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
+              <span>#</span><span>Rep</span><span style={{ textAlign: 'center' }}>Concerns</span><span style={{ textAlign: 'center' }}>Recovered</span><span style={{ textAlign: 'center' }}>Protected</span><span style={{ textAlign: 'center' }}>Avg response</span><span style={{ textAlign: 'center' }}>Follow-thru</span><span style={{ textAlign: 'center' }}>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
               <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
@@ -328,12 +328,12 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
                     <span style={{ display: 'block', fontSize: 12, color: FAINT, marginTop: 2 }}>{r.title} · {r.accounts.length} accounts</span>
                   </span>
                 </span>
-                <span style={num}>{r.signals}</span>
-                <span style={{ ...num, color: GREEN }}>{r.saved}</span>
-                <span style={{ ...num, color: GREEN }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</span>
-                <span style={num}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
-                <span style={{ ...num, color: r.saveRate >= 70 ? GREEN : AMBER }}>{r.saveRate}%</span>
-                <span style={{ ...num, color: r.churnDelta < 0 ? GREEN : r.churnDelta > 0 ? RED : INK }}>{r.churnDelta ? `${r.churnDelta}%` : '--'}</span>
+                <span style={{ ...num, textAlign: 'center' }}>{r.signals}</span>
+                <span style={{ ...num, textAlign: 'center', color: GREEN }}>{r.saved}</span>
+                <span style={{ ...num, textAlign: 'center', color: GREEN }}>{r.protectedValue > 0 ? formatCurrency(r.protectedValue) : '--'}</span>
+                <span style={{ ...num, textAlign: 'center' }}>{r.avgResp ? fmtH(r.avgResp) : '--'}</span>
+                <span style={{ ...num, textAlign: 'center', color: r.saveRate >= 70 ? GREEN : AMBER }}>{r.saveRate}%</span>
+                <span style={{ ...num, textAlign: 'center', color: r.churnDelta < 0 ? GREEN : r.churnDelta > 0 ? RED : INK }}>{r.churnDelta ? `${r.churnDelta}%` : '--'}</span>
                 <span style={{ height: 3, background: HAIR, position: 'relative' }}>
                   <span style={{ position: 'absolute', inset: 0, width: `${r.performance}%`, background: 'linear-gradient(90deg, var(--accent-light, #FF8A50), var(--accent, #E85A25))' }} />
                 </span>

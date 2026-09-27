@@ -4450,3 +4450,5 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .set25 { zoom: 1.025; }
 /* Integrations: the provider catalogue, 2.5% up. The headline and the summary above it stay */
 .int25 { zoom: 1.025; }
+/* "Ask Popsicle" matches the Settings eyebrow: DM Mono 11px, 2.2px letter-spacing, uppercase */
+.ask-open-top > span { font-size: 11px !important; letter-spacing: 2.2px !important; }
