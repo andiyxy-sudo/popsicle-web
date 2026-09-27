@@ -316,7 +316,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
               <span>#</span><span>Rep</span><span>Concerns</span><span>Recovered</span><span>Protected</span><span>Avg response</span><span>Follow-thru</span><span>Churn Δ</span><span>Performance</span>
             </div>
             {m.reps.map((r, i) => (
-              <div key={r.name} className="tbl-row" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
+              <div key={r.name} className="tbl-row pl10" style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '20px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14 }}>
                 <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 18, color: i === 0 ? ACCENT : INK }}>{i + 1}</span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
                   <Avatar rep={r} size={36} />
@@ -402,7 +402,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
                   const crit = m.queue.filter(q => q.rep === r.name && q.sev === 'critical').length
                   const share = Math.round(((r.exposure ?? 0) / Math.max(1, r.arr)) * 100)
                   return (
-                    <div key={r.name} className="tbl-row" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
+                    <div key={r.name} className="tbl-row pl10" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar rep={r} size={30} /><span><span style={{ fontWeight: 600, color: INK }}>{r.name}</span><span style={{ display: 'block', fontSize: 12, color: FAINT, marginTop: 2 }}>{r.accounts.join(' · ')}</span></span></span>
                       <span style={num}>{r.accounts.length}</span>
                       <span style={num}>{formatCurrency(r.arr)}</span>
