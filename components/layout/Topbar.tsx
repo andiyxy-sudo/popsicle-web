@@ -37,7 +37,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || cancelled) return
-      const { data } = await supa.from('Concerns')
+      const { data } = await supa.from('signals')
         .select('id, title, account_name, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
@@ -85,7 +85,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
 
       {/* Center pipeline */}
       <div className="topbar-pipeline">
-        <div className={step('/signals')} onClick={() => router.push('/signals')} id="ps-signals">
+        <div className={step('/concerns')} onClick={() => router.push('/concerns')} id="ps-signals">
           <div className="pipeline-step-icon">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           </div>
@@ -134,7 +134,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
                   <div style={{ padding: '26px 16px', textAlign: 'center', fontSize: 12, color: 'var(--t3)' }}>No open signals. All quiet.</div>
                 )}
                 {notifs.map(n => (
-                  <div key={n.id} onClick={() => { setNotifOpen(false); router.push('/signals') }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line, var(--border))', cursor: 'pointer' }}>
+                  <div key={n.id} onClick={() => { setNotifOpen(false); router.push('/concerns') }} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 16px', borderBottom: '1px solid var(--line, var(--border))', cursor: 'pointer' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', marginTop: 5, flexShrink: 0, background: n.severity === 'high' ? 'var(--danger)' : n.severity === 'positive' ? 'var(--ok)' : 'var(--amber)' }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--t1)', lineHeight: 1.4 }}>{n.title || 'Concern'}</div>
@@ -143,7 +143,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
                   </div>
                 ))}
               </div>
-              <div onClick={() => { setNotifOpen(false); router.push('/signals') }} style={{ padding: '11px 16px', textAlign: 'center', fontSize: 11.5, fontWeight: 700, color: 'var(--o)', cursor: 'pointer' }}>View all signals</div>
+              <div onClick={() => { setNotifOpen(false); router.push('/concerns') }} style={{ padding: '11px 16px', textAlign: 'center', fontSize: 11.5, fontWeight: 700, color: 'var(--o)', cursor: 'pointer' }}>View all signals</div>
             </div>
           )}
         </div>

@@ -93,7 +93,7 @@ export function MergedTimeline({ account, signals, initialDecisions }: { account
               <div key={`e-${s.id}`} id={`tl-sig-${s.id}`} className={`tl2-row${showDate ? ' first' : ''}${flash === s.id ? ' flash' : ''}`}>
                 {dateCell}
                 <div className="tl2-node"><i style={{ background: DOT[sev] ?? DOT.watch }} /></div>
-                <a className="tl2-ev" href={`/signals?signal=${s.id}`} onClick={e => { e.preventDefault(); router.push(`/signals?signal=${s.id}`) }}>
+                <a className="tl2-ev" href={`/concerns?signal=${s.id}`} onClick={e => { e.preventDefault(); router.push(`/concerns?signal=${s.id}`) }}>
                   <span className="tl2-ev-h">
                     {s.status === 'handled' && <span className="tl2-acted">{s.handled_action ? `${s.handled_action.replace(/^\w/, c => c.toUpperCase())}` : 'Acted on'}</span>}
                     {s.title ?? 'Concern'}

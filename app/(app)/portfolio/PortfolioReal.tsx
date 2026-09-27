@@ -95,7 +95,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
-      supa.from('Concerns')
+      supa.from('signals')
         .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
@@ -287,7 +287,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                   <span style={{ ...cell, color: 'var(--ink-muted)', textAlign: 'center' }}>{meta[a.name]?.rep ?? '--'}</span>
                   <span style={{ ...cell, textAlign: 'center', fontSize: 13, color: (meta[a.name]?.trend ?? '').startsWith('-') ? 'var(--critical, #c43d2b)' : (meta[a.name]?.trend ?? '').startsWith('+') ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }}>{meta[a.name]?.trend ? `${(meta[a.name].trend!.startsWith('-') ? '↘ ' : '↗ ')}${meta[a.name].trend}` : '--'}</span>
                   <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
-                  <button onClick={e => { e.stopPropagation(); if (top) router.push(`/signals?signal=${top.id}&action=reply`); else openA360(a) }}
+                  <button onClick={e => { e.stopPropagation(); if (top) router.push(`/concerns?signal=${top.id}&action=reply`); else openA360(a) }}
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, justifySelf: 'center', padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {top ? 'Draft email' : 'Open account'}
                   </button>

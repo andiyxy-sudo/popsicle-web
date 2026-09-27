@@ -90,6 +90,35 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const INDUSTRIES = ['Software & SaaS', 'Financial services', 'Healthcare & life sciences', 'Manufacturing', 'Retail & e-commerce', 'Logistics & supply chain', 'Real estate', 'Professional services', 'Media & advertising', 'Telecommunications', 'Education', 'Hospitality & travel', 'Energy & utilities', 'Public sector', 'Other']
   const [sendRules, setSendRules] = useState<{ kinds: string[]; neverExecs: boolean; neverCritical: boolean; maxDeal: string; hold: string; notify: string }>(
     { kinds: ['Follow-ups on threads', 'Rebooking cancelled meetings'], neverExecs: true, neverCritical: true, maxDeal: '$100K', hold: '30 min', notify: 'Every time' })
+  // The Concern Engine: which kinds of Concern to raise, and how eagerly. Saved on the account
+  // (user_metadata.concern_engine) so the mobile app and the portal read the same settings.
+  const CE_TYPES = [
+    ['ce_exec', 'Executive disengagement', 'Senior contacts going quiet'],
+    ['ce_price', 'Pricing pressure', 'Budget framing, discount asks'],
+    ['ce_comp', 'Competitor mentions', 'Rival vendors named in threads'],
+    ['ce_time', 'Timeline slippage', 'Reschedules and moved dates'],
+    ['ce_legal', 'Legal and procurement delays', 'Holds, redlines, open clauses'],
+    ['ce_champ', 'Champion change', 'Sponsor leaves or changes role'],
+    ['ce_usage', 'Usage drop', 'Product activity falling'],
+    ['ce_sent', 'Sentiment shift', 'Tone turning negative across replies'],
+    ['ce_expand', 'Expansion intent', 'Seat and upgrade questions'],
+  ] as const
+  const CE_DEFAULTS: Record<string, boolean> = { ce_exec: true, ce_price: true, ce_comp: true, ce_time: true, ce_legal: true, ce_champ: true, ce_usage: true, ce_sent: false, ce_expand: true }
+  const [ce, setCe] = useState<Record<string, boolean>>(CE_DEFAULTS)
+  const [ceSens, setCeSens] = useState('Balanced')
+  const [ceOpen, setCeOpen] = useState(false)
+  const ceOn = CE_TYPES.filter(([k]) => ce[k]).length
+  async function toggleCe(k: string) {
+    const next = { ...ce, [k]: !ce[k] }
+    setCe(next)
+    await supabase.auth.updateUser({ data: { concern_engine: { ...next, sens: ceSens } } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
+  }
+  async function setSensitivity(v: string) {
+    setCeSens(v); setSheet(null)
+    await supabase.auth.updateUser({ data: { concern_engine: { ...ce, sens: v } } }).catch(() => {})
+    window.dispatchEvent(new Event('settings:changed'))
+  }
   const [thresholds, setThresholds] = useState<Record<string, string>>({ 'Days dark': '5 days', 'Minimum deal size': '$50K', 'Commitment overdue': '3 days' })
   const [quiet, setQuiet] = useState<Record<string, string>>({ From: '19:00', To: '08:00' })
   const [customQuiet, setCustomQuiet] = useState<Record<string, string>>({ From: '20:00', To: '07:00' })
@@ -127,7 +156,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     try {
       const [{ data: accts }, { data: sigs }] = await Promise.all([
         supabase.from('accounts').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)),
-        supabase.from('Concerns').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
+        supabase.from('signals').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
       ])
       let blob: Blob
       let name: string
@@ -283,6 +312,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
       loadOrg()
       if (m.draft_voice) setVoice(m.draft_voice as Record<string, string>)
       if (m.thresholds) setThresholds(m.thresholds as Record<string, string>)
+      if (m.concern_engine) {
+        const stored = m.concern_engine as Record<string, unknown>
+        setCeSens(typeof stored.sens === 'string' ? stored.sens : 'Balanced')
+        setCe({ ...CE_DEFAULTS, ...Object.fromEntries(Object.entries(stored).filter(([k]) => k.startsWith('ce_'))) } as Record<string, boolean>)
+      }
       if (m.quiet_hours) setQuiet(m.quiet_hours as Record<string, string>)
       if (typeof m.auto_send === 'boolean') setAutoSend(m.auto_send)
       if (m.send_mode === 'with' || m.send_mode === 'without') setSendMode(m.send_mode)
@@ -296,7 +330,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     ;(async () => {
       const [{ data: integ }, { count: sigCount }, { count: acctCount }] = await Promise.all([
         supabase.from('integrations').select('provider').in('user_id', await orgIdsBrowser(supabase, user.id)).eq('is_active', true),
-        supabase.from('Concerns').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
+        supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
         supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
       ])
       if (dead) return
@@ -353,6 +387,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
     Tone: { title: 'Tone', sub: 'How drafts read', options: [['Direct', 'Short sentences, no preamble'], ['Warm', 'Friendly, still concise'], ['Formal', 'Full sentences, measured'], ['Match the thread', 'Mirror how they write to you']] },
     Length: { title: 'Length', sub: 'How long a first draft runs', options: [['Short', 'Three or four sentences'], ['Medium', 'A paragraph and a clear ask'], ['Detailed', 'Context, evidence, then the ask']] },
     'Sign-off': { title: 'Sign-off', sub: 'The closing line on your emails', options: [['Best, Andy', 'Standard'], ['Thanks, Andy', 'Warmer'], ['Regards, Andy', 'Formal'], ['No sign-off', 'Ends on the last line']] },
+    Sensitivity: { title: 'Sensitivity', sub: 'How much evidence the engine wants before raising a Concern',
+      options: [['Balanced', 'The default'], ['Early warning', 'Raises sooner, more to sift'], ['High confidence only', 'Raises less, each one strong']] },
     'Days dark': { title: 'Days dark before flagging', sub: 'How long silence runs before Popsicle raises it', options: [['3 days', 'Aggressive'], ['5 days', 'Balanced'], ['7 days', 'Relaxed'], ['10 days', 'Only long silences']] },
     'Minimum deal size': { title: 'Minimum deal size', sub: 'Smaller deals stay quiet unless critical', options: [['No minimum', 'Surface everything'], ['$25K', 'Skip the smallest'], ['$50K', 'Focus on real pipeline'], ['$100K', 'Enterprise only']] },
     'Commitment overdue': { title: 'Commitment overdue', sub: 'Grace period before a promise is chased', options: [['1 day', 'Immediately after the date'], ['3 days', 'Balanced'], ['7 days', 'Only clear misses']] },
@@ -922,7 +958,26 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Sending" sub="Whether Popsicle sends after drafting, or waits for you" value={sendMode === 'without' ? 'Without you' : 'With you'} onClick={() => setSheet('Sending')} />
       </Section>
 
-      <Section title="Escalation" sub="When a signal becomes your problem.">
+      <Section title="Concern Engine" sub={`Watching ${ceOn} of 9 · Sensitivity · ${ceSens}`}>
+        <Row label="Sensitivity" sub="How much evidence the engine wants before it raises a Concern" value={ceSens} onClick={() => setSheet('Sensitivity')} />
+        {!ceOpen && <Row label="Concern types" sub={`${ceOn} of 9 switched on`} value={<span style={{ color: 'var(--accent)' }}>Manage</span>} onClick={() => setCeOpen(true)} />}
+        {ceOpen && CE_TYPES.map(([k, label, sub]) => (
+          <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div>
+              <div style={{ fontSize: 15, color: 'var(--ink)' }}>{label}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2 }}>{sub}</div>
+            </div>
+            <button onClick={() => toggleCe(k)} aria-label={label} role="switch" aria-checked={!!ce[k]}
+              style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: 'pointer', position: 'relative', flex: '0 0 38px', marginRight: 2,
+                background: ce[k] ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
+              <span style={{ position: 'absolute', top: 3, left: ce[k] ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--d-raised, #fff)', transition: 'left .18s ease' }} />
+            </button>
+          </div>
+        ))}
+        {ceOpen && <Row label="Done" sub="Fold these away" value={<span style={{ color: 'var(--accent)' }}>Done</span>} onClick={() => setCeOpen(false)} />}
+      </Section>
+
+      <Section title="Escalation" sub="When a Concern becomes your problem.">
         <Row label="Days dark before flagging" sub="How long silence runs before Popsicle raises it" value={thresholds['Days dark']} onClick={() => setSheet('Days dark')} />
         <Row label="Minimum deal size" sub="Smaller deals stay quiet unless critical" value={thresholds['Minimum deal size']} onClick={() => setSheet('Minimum deal size')} />
         <Row label="Commitment overdue" sub="Grace period before a promise is chased" value={thresholds['Commitment overdue']} onClick={() => setSheet('Commitment overdue')} />
@@ -1005,6 +1060,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 const key = sh.title
                 const chosen = isTime ? digestTime === label
                   : ['Tone', 'Length', 'Sign-off'].includes(key) ? voice[key] === label
+                  : key === 'Sensitivity' ? ceSens === label
                   : ['Days dark', 'Minimum deal size', 'Commitment overdue'].includes(key) ? thresholds[key] === label
                   : key === 'Quiet hours' ? `${quiet.From} - ${quiet.To}` === label
                   : prefs[key] === label
@@ -1012,6 +1068,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
                 return (
                   <div key={label} onClick={() => {
                     if (disabled) return
+                    if (key === 'Sensitivity') { setSensitivity(label); return }
                     if (isTime) { setDigestTime(label); saveJson('digest_time', label); setSheet(null) }
                     else if (['Tone', 'Length', 'Sign-off'].includes(key)) { const n = { ...voice, [key]: label }; setVoice(n); saveJson('draft_voice', n); setSheet(null) }
                     else if (['Days dark', 'Minimum deal size', 'Commitment overdue'].includes(key)) { const n = { ...thresholds, [key]: label }; setThresholds(n); saveJson('thresholds', n); setSheet(null) }

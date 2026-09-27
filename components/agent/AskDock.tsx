@@ -90,7 +90,7 @@ export function AskDock() {
   }, [screen, account])
   useEffect(() => { setOpen(false) }, [screen, account])
   useEffect(() => {
-    const pages = ['pulse', 'portfolio', 'Concerns', 'forecast', 'intelligence', 'team', 'integrations', 'settings']
+    const pages = ['pulse', 'portfolio', 'concerns', 'forecast', 'intelligence', 'team', 'integrations', 'settings']
     let dead = false
     ;(async () => {
       for (const pg of pages) {

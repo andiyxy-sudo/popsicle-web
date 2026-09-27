@@ -14,7 +14,7 @@ export async function GET() {
   const ids = await orgIdsServer(supabase, me)
   const [integ, sigs, accts, tracked] = await Promise.all([
     supabase.from('integrations').select('provider, connected_at, last_synced_at, deep_backfilled_at, needs_reconnect').in('user_id', ids).eq('is_active', true),
-    supabase.from('Concerns').select('id', { count: 'exact', head: true }).in('user_id', ids),
+    supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', ids),
     supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', ids),
     supabase.from('slack_tracked_channels').select('channel_id', { count: 'exact', head: true }).in('user_id', ids).eq('is_tracked', true),
   ])

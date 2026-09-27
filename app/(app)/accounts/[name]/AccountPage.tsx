@@ -356,7 +356,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
             })}
             {!demo.riskLines && open.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Nothing open on this account.</div>}
             {!demo.riskLines && open.map(s => (
-              <div key={s.id} onClick={() => router.push(`/signals?signal=${s.id}`)}
+              <div key={s.id} onClick={() => router.push(`/concerns?signal=${s.id}`)}
                 style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
                 <div className="read-prose read-prose-ink">{s.description || s.title}</div>
@@ -382,7 +382,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
                 style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 'var(--toggle-radius, 0px)', border: 0, background: 'linear-gradient(135deg,#FF8A50,#FF6B35)', color: '#fff', cursor: 'pointer', boxShadow: '0 8px 22px -10px rgba(255,107,53,.6)' }}>
                 Ask Popsicle about this account
               </button>
-              <button onClick={() => open[0] ? router.push(`/signals?signal=${open[0].id}&action=reply`) : router.push('/signals')}
+              <button onClick={() => open[0] ? router.push(`/concerns?signal=${open[0].id}&action=reply`) : router.push('/concerns')}
                 style={{ font: 'inherit', fontSize: 14, fontWeight: 600, padding: '14px 0', borderRadius: 'var(--toggle-radius, 0px)', border: '1px solid var(--border)', background: 'var(--raised, #FFFDFA)', color: 'var(--ink)', cursor: 'pointer' }}>
                 Draft email
               </button>
@@ -397,7 +397,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
 
       {/* COMMS */}
       {tab === 'comms' && demo.comms && (
-        <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined}
+        <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/concerns?signal=${open[0].id}&action=reply`) : undefined}
           items={demo.comms.map(c => ({ who: c.who, role: c.role, via: c.via, when: c.when, text: c.quote, tone: (c.who.startsWith('#') ? 'internal' : c.tone === 'positive' ? 'positive' : c.tone === 'negative' ? 'negative' : 'neutral') as ThreadItem['tone'], mine: /^(Andy G|Mike Ross|Jamie Torres)$/.test(c.who), source: demo.threads?.[c.who] }))} />
       )}
       {tab === 'comms' && !demo.comms && (() => {
@@ -408,7 +408,7 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
           const who = out ? 'You' : ((m.sender || '').replace(/<.*>/, '').split('@')[0].replace(/[._]/g, ' ').trim() || 'Them')
           return { who, via: m.integration || 'gmail', when: mounted && m.received_at ? formatWhen(m.received_at) : '', text: (m.content || m.subject || '').replace(/\s+/g, ' ').trim().slice(0, 600), tone: out ? 'neutral' : 'neutral', mine: out, label: m.subject && m.content ? m.subject : undefined }
         })
-        return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/signals?signal=${open[0].id}&action=reply`) : undefined} />
+        return <CommsThread account={accountName} items={items} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/concerns?signal=${open[0].id}&action=reply`) : undefined} />
       })()}
 
       {tab === 'people' && (() => {

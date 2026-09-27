@@ -10,7 +10,7 @@ export type ActionId =
 export type Action = { id: ActionId; params: Record<string, string | boolean | number>; say: string; confirm?: string }
 
 export const PAGES: Record<string, string> = {
-  pulse: '/pulse', portfolio: '/portfolio', signals: '/signals', forecast: '/forecast', review: '/review',
+  pulse: '/pulse', portfolio: '/portfolio', signals: '/concerns', forecast: '/forecast', review: '/review',
   intelligence: '/intelligence', team: '/team', integrations: '/integrations', settings: '/settings', ask: '/ask',
 }
 const SOURCES = ['gmail', 'slack', 'zoom', 'outlook', 'hubspot', 'fireflies', 'gcal', 'whatsapp', 'google calendar', 'google meet']

@@ -62,7 +62,7 @@ When asked what to turn off or turn down, answer with these settings by name, sa
   // Fetch context: recent signals + at-risk accounts
   const [signalsRes, accountsRes] = await Promise.all([
     supabase
-      .from('Concerns')
+      .from('signals')
       .select('title, severity, account_name, source_integration, ai_analysis, created_at')
       .in('user_id', await orgIdsServer(supabase, user.id))
       .eq('is_dismissed', false)
@@ -111,7 +111,7 @@ When asked what to turn off or turn down, answer with these settings by name, sa
   if (nameSet.size) {
     await fetchFor(Array.from(nameSet))
   } else {
-    const stop = new Set(['about', 'which', 'their', 'there', 'would', 'could', 'should', 'email', 'emails', 'gmail', 'slack', 'message', 'messages', 'analyse', 'analyze', 'recommend', 'account', 'accounts', 'Concern', 'Concerns', 'popsicle', 'please', 'latest', 'recent', 'between', 'against', 'steps'])
+    const stop = new Set(['about', 'which', 'their', 'there', 'would', 'could', 'should', 'email', 'emails', 'gmail', 'slack', 'message', 'messages', 'analyse', 'analyze', 'recommend', 'account', 'accounts', 'concern', 'concerns', 'signal', 'signals', 'popsicle', 'please', 'latest', 'recent', 'between', 'against', 'steps'])
     const words = Array.from(new Set((question.match(/[a-z0-9][a-z0-9&.-]{4,}/g) ?? []).filter(w => !stop.has(w)))).slice(0, 3)
     if (words.length) await fetchFor(words)
   }

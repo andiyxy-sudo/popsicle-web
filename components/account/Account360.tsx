@@ -423,7 +423,7 @@ export function Account360() {
                       {en.kind === 'msg' && en.msg!.subject && <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--t2)', marginBottom: 3 }}>{en.msg!.subject}</div>}
                       {en.kind === 'msg' && en.msg!.content && <div style={{ fontSize: 11.5, color: 'var(--t2)', lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{en.msg!.content}</div>}
                       {en.linked && (
-                        <button onClick={e => { e.stopPropagation(); close(); router.push(`/signals?signal=${en.linked!.id}`) }} style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'rgba(255,107,53,.07)', border: '1px solid rgba(255,107,53,.2)', padding: '3px 10px', borderRadius: 20, cursor: 'pointer' }}>⚡ {en.linked.title || 'View signal'}</button>
+                        <button onClick={e => { e.stopPropagation(); close(); router.push(`/concerns?signal=${en.linked!.id}`) }} style={{ marginTop: 7, fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'rgba(255,107,53,.07)', border: '1px solid rgba(255,107,53,.2)', padding: '3px 10px', borderRadius: 20, cursor: 'pointer' }}>⚡ {en.linked.title || 'View signal'}</button>
                       )}
                     </div>
                   </div>
@@ -486,7 +486,7 @@ export function Account360() {
 
           {/* ============ COMMITMENTS: promises with state ============ */}
           {!loading && data && tab === 'commitments' && (
-            <CommitmentsPanel account={acc.name || openFor.name} onOpenSignal={(id) => { close(); router.push(`/signals?signal=${id}`) }} />
+            <CommitmentsPanel account={acc.name || openFor.name} onOpenSignal={(id) => { close(); router.push(`/concerns?signal=${id}`) }} />
           )}
 
           {/* ============ TIMELINE: judgment ============ */}
@@ -516,7 +516,7 @@ export function Account360() {
                         {handled && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--ok)', border: '1px solid rgba(42,157,92,.3)', padding: '2px 8px', borderRadius: 20 }}>HANDLED</span>}
                         {sg.is_dismissed && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20 }}>DISMISSED</span>}
                         {sg.status === 'snoozed' && <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--t4)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20 }}>SNOOZED</span>}
-                        {sg.corroboration?.with?.length ? <span onClick={() => { close(); router.push(`/signals?signal=${sg.corroboration!.with![0].signal_id}`) }} title={sg.corroboration.reason || ''} style={{ fontSize: 9, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}>Corroborated · {Array.from(new Set([sg.source_integration, ...sg.corroboration.with.map(w => w.source)].filter(Boolean))).join(' + ')}</span> : null}
+                        {sg.corroboration?.with?.length ? <span onClick={() => { close(); router.push(`/concerns?signal=${sg.corroboration!.with![0].signal_id}`) }} title={sg.corroboration.reason || ''} style={{ fontSize: 9, fontWeight: 700, color: 'var(--t3)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: 20, cursor: 'pointer' }}>Corroborated · {Array.from(new Set([sg.source_integration, ...sg.corroboration.with.map(w => w.source)].filter(Boolean))).join(' + ')}</span> : null}
                         {fmtMoney(sg.risk_amount) && <span style={{ fontSize: 10, fontWeight: 800, color: 'var(--t2)', fontFamily: "'DM Mono',monospace" }}>{fmtMoney(sg.risk_amount)}</span>}
                         {canLink && <button onClick={() => jumpToSource(sg)} style={{ marginLeft: 'auto', fontSize: 10, fontWeight: 700, color: 'var(--o)', background: 'none', border: 'none', cursor: 'pointer' }}>View source →</button>}
                       </div>

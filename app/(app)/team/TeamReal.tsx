@@ -194,7 +194,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
   const splitTotal = m.split.reduce((a, x) => a + x.value, 0) || 1
   const crit = m.split.find(x => x.k === 'Critical')?.accts ?? 0
 
-  const openQueueItem = (q: TeamQueueItem) => router.push(q.signalId ? `/signals?signal=${q.signalId}` : `/accounts/${encodeURIComponent(q.account)}`)
+  const openQueueItem = (q: TeamQueueItem) => router.push(q.signalId ? `/concerns?signal=${q.signalId}` : `/accounts/${encodeURIComponent(q.account)}`)
 
   return (
     <div className="dsk-screen on">

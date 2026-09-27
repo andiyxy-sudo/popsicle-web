@@ -72,7 +72,7 @@ export function composeAgent(input: { firstName: string; accounts: Acct[]; signa
       judgment: c.daysLate === 0
         ? 'Due today. Doing it before noon keeps the date you gave them.'
         : `${worst ? `${sentence(worst.title)} ` : ''}This promise is now ${c.daysLate} day${c.daysLate === 1 ? '' : 's'} late, and on their side that reads as a signal too. Send it before anything else today.`,
-      receipts: [{ type: 'commitment', id: c.id, label: c.text, href: c.account ? acctHref(c.account) : '/pulse' }, ...(worst ? [{ type: 'signal' as const, id: worst.id, label: worst.title ?? 'Signal', href: `/signals?signal=${worst.id}` }] : [])],
+      receipts: [{ type: 'commitment', id: c.id, label: c.text, href: c.account ? acctHref(c.account) : '/pulse' }, ...(worst ? [{ type: 'signal' as const, id: worst.id, label: worst.title ?? 'Signal', href: `/concerns?signal=${worst.id}` }] : [])],
       actions: [{ label: 'Draft it', ask: `Draft the message to complete this commitment: "${c.text}"${c.account ? ` for ${c.account}` : ''}. Keep it short and specific.` }, ...(c.account ? [{ label: 'Open account', href: acctHref(c.account) }] : [])],
     })
     if (c.account) used.add(c.account)
@@ -90,8 +90,8 @@ export function composeAgent(input: { firstName: string; accounts: Acct[]; signa
       headline: sentence(s.title ?? 'Needs a look'),
       quote: q, quoteBy: q ? (byAcct.get(acct)?.owner ?? undefined) : undefined,
       judgment: [sentence(desc), sentence(recOf(s))].filter(Boolean).join(' ') || undefined,
-      receipts: [{ type: 'signal', id: s.id, label: s.title ?? 'Signal', href: `/signals?signal=${s.id}` }, { type: 'account', id: acct, label: acct, href: acctHref(acct) }],
-      actions: [{ label: 'Draft a reply', href: `/signals?signal=${s.id}&action=reply` }, { label: 'Ask about this', ask: `What should I do about ${acct}: ${s.title}?` }],
+      receipts: [{ type: 'signal', id: s.id, label: s.title ?? 'Signal', href: `/concerns?signal=${s.id}` }, { type: 'account', id: acct, label: acct, href: acctHref(acct) }],
+      actions: [{ label: 'Draft a reply', href: `/concerns?signal=${s.id}&action=reply` }, { label: 'Ask about this', ask: `What should I do about ${acct}: ${s.title}?` }],
     })
     used.add(acct)
   }

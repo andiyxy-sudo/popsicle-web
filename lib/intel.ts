@@ -40,7 +40,7 @@ export function holding(accts: M.Acct[], sigs: M.Sig[], now: number, days: numbe
   const parts: M.XNode[] = acted.map(s => {
     const after = sigs.find(x => x.account_name === s.account_name && x.severity === 'high' && x.created_at && s.handled_at && x.created_at > s.handled_at)
     return { id: s.id, label: `${s.account_name}: ${s.handled_action ?? 'action'}`, valueText: after ? 'slipped' : 'holding',
-      note: after ? `critical again: ${after.title}` : s.title ?? undefined, href: `/signals?signal=${s.id}` }
+      note: after ? `critical again: ${after.title}` : s.title ?? undefined, href: `/concerns?signal=${s.id}` }
   }).sort((a, b) => (a.valueText === 'slipped' ? -1 : 1) - (b.valueText === 'slipped' ? -1 : 1))
   const held = parts.filter(p => p.valueText === 'holding').length
   const value = acted.length ? Math.round(held / acted.length * 100) : 0
@@ -58,9 +58,9 @@ export function speed(accts: M.Acct[], sigs: M.Sig[], now: number, days: number)
   const faster = mc != null && mp != null ? Math.round((mp - mc) / 24 * 10) / 10 : 0
   const parts: M.XNode[] = [
     { id: 'cur', label: `Last ${days} days`, valueText: mc != null ? `${Math.round(mc / 24 * 10) / 10} days` : 'no actions', note: `median of ${cur.length} actions`,
-      children: cur.slice(0, 8).map(s => ({ id: s.id, label: `${s.account_name}: ${s.title}`, valueText: `${Math.round(hrs(s))}h`, href: `/signals?signal=${s.id}` })) },
+      children: cur.slice(0, 8).map(s => ({ id: s.id, label: `${s.account_name}: ${s.title}`, valueText: `${Math.round(hrs(s))}h`, href: `/concerns?signal=${s.id}` })) },
     { id: 'prev', label: `The ${days} days before`, valueText: mp != null ? `${Math.round(mp / 24 * 10) / 10} days` : 'no actions', note: `median of ${prev.length} actions`,
-      children: prev.slice(0, 8).map(s => ({ id: s.id, label: `${s.account_name}: ${s.title}`, valueText: `${Math.round(hrs(s))}h`, href: `/signals?signal=${s.id}` })) },
+      children: prev.slice(0, 8).map(s => ({ id: s.id, label: `${s.account_name}: ${s.title}`, valueText: `${Math.round(hrs(s))}h`, href: `/concerns?signal=${s.id}` })) },
   ]
   return { metric: 'speed', label: 'Time from Concern to action', value: faster, valueText: faster > 0 ? `${faster} days faster` : faster < 0 ? `${Math.abs(faster)} days slower` : 'no change', parts,
     definition: 'The median time between a Concern arriving and someone acting on it, in this window compared with the window before.' }

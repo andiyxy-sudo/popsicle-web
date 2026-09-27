@@ -100,7 +100,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
             {deal.week.length === 0 ? <div className="rv2-week rv2-quiet">Nothing new on this deal this week.</div> : (
               <div className="rv2-week">
                 {deal.week.map(e => (
-                  <button key={e.id + e.kind} className="rv2-wk" onClick={() => router.push(`/signals?signal=${e.id}`)}>
+                  <button key={e.id + e.kind} className="rv2-wk" onClick={() => router.push(`/concerns?signal=${e.id}`)}>
                     <i className={e.kind === 'handled' || e.severity === 'positive' ? 'g' : e.severity === 'high' ? 'h' : ''} />
                     <span>{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>
                     <em>{formatWhen(e.t)}</em>
@@ -115,7 +115,7 @@ export function ReviewClient({ deals, team, demo, now }: { deals: ReviewDeal[]; 
               <div className="rv2-sec-h"><h3>The evidence</h3><span>in their words</span></div>
               <div className="rv2-evs">
                 {deal.evidence.map(ev => (
-                  <button key={ev.id} className="rv2-ev" onClick={() => router.push(`/signals?signal=${ev.id}`)}>
+                  <button key={ev.id} className="rv2-ev" onClick={() => router.push(`/concerns?signal=${ev.id}`)}>
                     <div className="rv2-ev-h">{ev.source && <b><i style={{ background: SRC_COLOR[ev.source] ?? '#A7A098' }} />{SRC[ev.source] ?? ev.source}</b>}{ev.at && <span>· {formatWhen(ev.at)}</span>}</div>
                     <div className="rv2-ev-t">{ev.title}</div>
                     {ev.quote && <div className="rv2-ev-q">{ev.quote.replace(/^["\u201c]|["\u201d]$/g, '')}</div>}

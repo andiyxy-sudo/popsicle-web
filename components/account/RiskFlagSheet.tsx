@@ -116,9 +116,9 @@ export function buildFlag(
       ? `${sigs.length} open signal${sigs.length === 1 ? '' : 's'} sit against this account's exposure.`
       : 'Open Concerns on an account are worth clearing before they compound.'),
     actions: [
-      ...(top ? [{ label: 'Draft a follow-up email', go: () => push(`/signals?signal=${top.id}&action=reply`) }] : []),
+      ...(top ? [{ label: 'Draft a follow-up email', go: () => push(`/concerns?signal=${top.id}&action=reply`) }] : []),
       { label: 'Ask Popsicle what to do', go: () => push(`/ask?q=${encodeURIComponent(`What should I do about ${account}?`)}`) },
-      ...(top ? [{ label: 'Open the signal', go: () => push(`/signals?signal=${top.id}`) }] : []),
+      ...(top ? [{ label: 'Open the signal', go: () => push(`/concerns?signal=${top.id}`) }] : []),
     ],
   }
 }

@@ -26,7 +26,7 @@ function evidence(s: Sig, accts: Acct[]): Evidence {
 const sigNode = (s: Sig, accts: Acct[], showAmount = true): XNode => ({
   id: s.id, label: s.title ?? 'Concern', value: showAmount ? Number(s.risk_amount || 0) || undefined : undefined,
   note: [s.severity === 'high' ? 'critical' : s.severity, s.status === 'handled' ? `handled · ${s.handled_action ?? 'action'}` : null].filter(Boolean).join(' · '),
-  href: `/signals?signal=${s.id}`, evidence: evidence(s, accts),
+  href: `/concerns?signal=${s.id}`, evidence: evidence(s, accts),
 })
 
 /** Revenue at risk: for each account with an open high-severity signal, the largest amount at risk on it. */

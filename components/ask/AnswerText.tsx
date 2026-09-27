@@ -89,14 +89,14 @@ function sourceHref(src: string): string | null {
   const quoted = /[""]([^""]+)[""]/.exec(src)
   const acct = /^([A-Z][\w.&-]*(?: [A-Z][\w.&-]*){0,2})\s+(?:deal\s+|account\s+)?(?:timeline|history|record)/.exec(src.trim())
   if (acct) return `/accounts/${encodeURIComponent(acct[1])}?tab=timeline`
-  if (/^signal\b/i.test(src) && quoted) return `/signals?q=${encodeURIComponent(quoted[1])}`
+  if (/^signal\b/i.test(src) && quoted) return `/concerns?q=${encodeURIComponent(quoted[1])}`
   if (/forecast/i.test(src)) return '/forecast'
   if (/commit/i.test(src)) return '/forecast'
   if (/review/i.test(src)) return '/review'
   if (/decision/i.test(src)) return '/review?tab=decisions'
   if (/portfolio|book/i.test(src)) return '/portfolio'
   if (/team|rep\b/i.test(src)) return '/team'
-  if (quoted) return `/signals?q=${encodeURIComponent(quoted[1])}`
+  if (quoted) return `/concerns?q=${encodeURIComponent(quoted[1])}`
   const bare = /^(gmail|slack|whatsapp|zoom|outlook|hubspot|calendar|fireflies)\b/i.exec(src)
   if (bare) return '/integrations'
   return null

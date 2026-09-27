@@ -197,7 +197,7 @@ export function ReplayView({ onClose, initial, days: daysProp = 56, inline = fal
               <div className="rp3-day-list" ref={listRef} onScroll={measure}>
               {p.events.length === 0 && <div className="rp3-quiet">Nothing came in, and nothing moved.</div>}
               {p.events.map(e => (
-                <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose?.(); router.push(`/signals?signal=${e.id}`) }}>
+                <button key={e.id + e.kind} className="rp3-ev" onClick={() => { onClose?.(); router.push(`/concerns?signal=${e.id}`) }}>
                   <i className={`sev-${e.kind === 'handled' ? 'done' : e.severity}`} />
                   <span className="rp3-ev-a">{e.account}</span>
                   <span className="rp3-ev-t">{e.kind === 'handled' ? `${e.action ?? 'Acted on'} · ${e.title}` : e.title}</span>

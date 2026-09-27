@@ -19,7 +19,7 @@ export default async function TeamPage() {
 
   const [acc, sig, integ] = await Promise.all([
     supabase.from('accounts').select('*').in('user_id', await orgIdsServer(supabase, user.id)),
-    fetchAllData(async (a, b) => supabase.from('Concerns').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).order('created_at', { ascending: false }).range(a, b)),
+    fetchAllData(async (a, b) => supabase.from('signals').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).order('created_at', { ascending: false }).range(a, b)),
     supabase.from('integrations').select('provider').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_active', true),
   ])
   // reps are the Popsicle users who own the accounts (accounts.user_id), with their names

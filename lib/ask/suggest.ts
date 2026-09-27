@@ -56,7 +56,8 @@ export function suggest(d: SuggestInput): string[] {
         'Is any healthy account quietly slipping?',
         'Who owns the most exposure right now?',
       )
-    case 'Concerns':
+    case 'concerns':
+    case 'signals':
       return pick(
         latestHigh?.account_name && latestHigh.title ? `Is the "${lower(latestHigh.title)}" signal on ${latestHigh.account_name} real?` : 'Which of these Concerns is most likely real?',
         'Which of these Concerns can wait until next week?',

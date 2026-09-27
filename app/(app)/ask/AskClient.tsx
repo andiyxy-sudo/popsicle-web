@@ -408,16 +408,16 @@ export function AskClient() {
   // (1) turn a recommended play into a real draft: open the composer on the
   // account's live signal, which is where the send pipeline already lives.
   async function draftFromPlay(acct: string | null, _play: string) {
-    if (!acct) { router.push('/signals'); return }
+    if (!acct) { router.push('/concerns'); return }
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
-    if (!user) { router.push('/signals'); return }
-    const { data } = await supa.from('Concerns').select('id, severity')
+    if (!user) { router.push('/concerns'); return }
+    const { data } = await supa.from('signals').select('id, severity')
       .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', acct).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('created_at', { ascending: false }).limit(10)
     const rows = (data ?? []) as Array<{ id: string; severity: string | null }>
     const top = rows.find(r => r.severity === 'high') ?? rows[0]
-    if (top) router.push(`/signals?signal=${top.id}&action=reply`)
+    if (top) router.push(`/concerns?signal=${top.id}&action=reply`)
     else router.push(`/accounts/${encodeURIComponent(acct)}`)
   }
 
@@ -434,7 +434,7 @@ export function AskClient() {
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('integration', inspect)
         .order('received_at', { ascending: false }).limit(6)
       if (acct) msgQ.eq('account_name', acct)
-      const sigQ = supa.from('Concerns').select('id, title, description, created_at')
+      const sigQ = supa.from('signals').select('id, title, description, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('source_integration', inspect)
         .order('created_at', { ascending: false }).limit(6)
       if (acct) sigQ.eq('account_name', acct)
@@ -485,7 +485,7 @@ export function AskClient() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || dead) return
-      const { data } = await supa.from('Concerns')
+      const { data } = await supa.from('signals')
         .select('account_name, title, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false).eq('severity', 'high')
         .or('status.is.null,status.eq.open')
