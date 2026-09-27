@@ -22,6 +22,7 @@ import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import { useSettings } from '@/lib/useSettings'
+import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 interface DBSignal {
   id: string
@@ -45,12 +46,12 @@ interface DBSignal {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent Stall', competitor_mention: 'Competitor Mention', legal_loopin: 'Legal Loop-in',
-  price_flinch: 'Price Flinch', champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', deal_stage_backward: 'Deal Moved Backward',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
+  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Stage backward',
   reengaged: 'Re-engaged',
-  call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
-  meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
+  call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
+  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', call_summary: 'Call summary',
+  meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
 }
 
 function fmtMoney(v?: number) {
@@ -446,13 +447,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
   const minDeal = mySettings.thresholds.minDeal
   const smallDeals = minDeal ? openShown.filter(s => s.severity !== 'high' && Number(s.risk_amount || 0) > 0 && Number(s.risk_amount) < minDeal) : []
   const shown = showSmall ? openShown : openShown.filter(s => !smallDeals.includes(s))
-  const ACTION_LABEL: Record<string, string> = {
-    silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
-    competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
-    timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
-    deal_stage_backward: 'Book exec call', call_buying_signal: 'Fast-track', call_commitment: 'Confirm in writing',
-    reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
-  }
+  const ACTION_LABEL = CONCERN_ACTIONS
 
   return (
     <div className="dsk-screen on">
@@ -817,20 +812,20 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
 
         // Why this pattern matters, stated plainly per signal type.
         const PATTERNS: Record<string, string> = {
-          silent_stall: 'Accounts that go quiet past their own reply cadence stall far more often than they close.',
-          competitor_mention: 'A named competitor in the thread usually means an evaluation is already running.',
-          price_flinch: 'Pricing pushback this late typically adds a finance loop and weeks to the close.',
-          legal_loopin: 'Once outside counsel joins, review cycles historically add two to three weeks.',
-          timeline_slip: 'A second date change is the strongest single predictor of a slipped quarter.',
-          deal_stage_backward: 'Stage regressions rarely recover without an executive conversation.',
-          meeting_cancelled: 'Cancelled reviews without a rebook are where momentum quietly dies.',
-          meeting_declined: 'A declined invite from the decision maker is worth more attention than a quiet week.',
-          champion_change: 'A champion change resets the buying case; the new contact has not heard it yet.',
-          call_objection: 'Objections raised on a call and left unanswered tend to resurface at signature.',
-          call_sentiment_drop: 'A sentiment drop mid-cycle usually precedes a slower reply cadence.',
-          call_buying_signal: 'Explicit buying language is the cheapest moment to ask for the next step.',
-          reengaged: 'Re-engagement after silence is a short window; it closes again quickly.',
-          commitment_overdue: 'Overdue promises are the most common reason a deal quietly loses trust.',
+          silent_stall: 'Silent stall',
+          competitor_mention: 'Competitor mention',
+          price_flinch: 'Price flinch',
+          legal_loopin: 'Legal loop-in',
+          timeline_slip: 'Timeline slip',
+          deal_stage_backward: 'Stage backward',
+          meeting_cancelled: 'Meeting cancelled',
+          meeting_declined: 'Meeting declined',
+          champion_change: 'Champion change',
+          call_objection: 'Objection',
+          call_sentiment_drop: 'Sentiment drop',
+          call_buying_signal: 'Buying intent',
+          reengaged: 'Re-engaged',
+          commitment_overdue: 'Commitment overdue',
         }
         const pattern = PATTERNS[d.signal_type || ''] || null
         const mlab = { fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.5px', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }

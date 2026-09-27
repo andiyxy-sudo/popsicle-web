@@ -1093,7 +1093,7 @@ export const DEMO_X = {
     { n: String(DEMO_X.atRisk.parts.length), lbl: `critical · ${DEMO_X.atRisk.valueText} at risk`, tone: 'critical' as const },
     { n: String(watchOnly.length), lbl: `watch · ${M.money(watchVal)} exposure`, tone: 'warn' as const },
     { n: String(posAccts.length), lbl: 'positive · momentum', tone: 'good' as const },
-    { n: String(open.length), lbl: `open signals · ${DEMO_PULSE_STRIP.newToday} new today`, tone: 'ink' as const, strong: true } as never,
+    { n: String(open.length), lbl: `open Concerns · ${DEMO_PULSE_STRIP.newToday} new today`, tone: 'ink' as const, strong: true } as never,
   )
 }
 

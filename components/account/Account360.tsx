@@ -48,11 +48,11 @@ interface Tr { meeting_id: string | null; meeting_uuid: string; topic: string | 
 interface Payload { account: Record<string, unknown>; messages: Msg[]; signals: Sig[]; dismissed_signals: Sig[]; transcripts: Tr[]; baseline: Record<string, unknown> | null; slack_channels: Array<{ channel_id: string; is_external: boolean }>; slack_anchor_sigs: string[] }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent Stall', competitor_mention: 'Competitor', legal_loopin: 'Legal', price_flinch: 'Price Flinch',
-  champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', reengaged: 'Re-engaged', call_objection: 'Objection',
-  call_sentiment_drop: 'Sentiment Drop', call_buying_signal: 'Buying Signal', call_commitment: 'Commitment',
-  call_summary: 'Call Summary', meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
-  deal_stage_backward: 'Stage Backward', commitment_overdue: 'Commitment Overdue',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in', price_flinch: 'Price flinch',
+  champion_change: 'Champion change', timeline_slip: 'Timeline slip', reengaged: 'Re-engaged', call_objection: 'Objection',
+  call_sentiment_drop: 'Sentiment drop', call_buying_signal: 'Buying intent', call_commitment: 'Commitment',
+  call_summary: 'Call summary', meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
+  deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 const SRC_LABEL: Record<string, string> = { gmail: 'Email', slack: 'Slack message', zoom: 'Call · Zoom', meet: 'Call · Meet', fireflies: 'Call · Fireflies' }
 

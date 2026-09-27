@@ -20,6 +20,7 @@ import { useChanges } from '@/components/changes/useChanges'
 import { useSettings } from '@/lib/useSettings'
 import { FirstRun } from '@/components/onboarding/FirstRun'
 import { healthOf } from '@/lib/health'
+import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -636,10 +637,10 @@ function WeekDigest() {
 }
 
 const TYPE_LABEL_SHORT: Record<string, string> = {
-  silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip',
   reengaged: 'Re-engaged', call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
+  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
@@ -802,14 +803,14 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
 
   const briefRows = (() => {
     const ACTION_BY_TYPE: Record<string, string> = {
-      silent_stall: 'book a check-in this week', call_objection: 'address it in your next reply',
-      call_sentiment_drop: 'call before the mood hardens', timeline_slip: 'confirm the real date with your champion',
-      deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
-      meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
-      competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
-      legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
-      call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
-      commitment_overdue: 'close it out or reset the date',
+      silent_stall: 'Silent stall', call_objection: 'Objection',
+      call_sentiment_drop: 'Sentiment drop', timeline_slip: 'Timeline slip',
+      deal_stage_backward: 'Stage backward', meeting_cancelled: 'Meeting cancelled',
+      meeting_declined: 'Meeting declined', price_flinch: 'Price flinch',
+      competitor_mention: 'Competitor mention', champion_change: 'Champion change',
+      legal_loopin: 'Legal loop-in', call_buying_signal: 'Buying intent',
+      call_commitment: 'Commitment', reengaged: 'Re-engaged',
+      commitment_overdue: 'Commitment overdue',
     }
     const actFor = (sg: Signal) => {
       const rec = (sg.ai_analysis as { recommendation?: string } | null)?.recommendation
@@ -1006,7 +1007,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
         </section>
         <section style={{ minWidth: 0 }}>
           {secHead('Activity', mono('Concern events'))}
-          <div className="pl25">
+          <div className="pl14">
           {activityRows.length === 0 && <div style={{ padding: '22px 0', fontSize: 14, color: 'var(--ink-faint)' }}>Activity appears as Concerns arrive.</div>}
           {activityRows.map(sg => (
             <div key={sg.id} onClick={() => router.push(`/concerns?signal=${sg.id}`)} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
@@ -1032,12 +1033,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           const openT = signals.filter(sg => !sg.is_dismissed && (!sg.status || sg.status === 'open'))
           const byAcct = new Map<string, Signal[]>()
           for (const sg of openT) if (sg.account_name) { const a = byAcct.get(sg.account_name) ?? []; a.push(sg); byAcct.set(sg.account_name, a) }
-          const ACTION_LABEL: Record<string, string> = {
-            silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
-            legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
-            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
-            call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
-          }
+          const ACTION_LABEL = CONCERN_ACTIONS
           const rows = accounts.map(a => {
             const sigs = byAcct.get(a.name) ?? []
             const dark = a.last_contact_date ? Math.floor((Date.now() - new Date(a.last_contact_date).getTime()) / 86400000) : null

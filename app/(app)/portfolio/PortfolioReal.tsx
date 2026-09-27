@@ -14,6 +14,7 @@ import { buildA360 } from '@/lib/demo-accounts'
 import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
 import { healthOf } from '@/lib/health'
+import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -233,12 +234,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       })()}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
-        const ACTION_LABEL: Record<string, string> = {
-          silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
-          legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
-          meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
-          call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
-        }
+        const ACTION_LABEL = CONCERN_ACTIONS
         const COLS = '34px minmax(120px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.75fr) minmax(84px,1.15fr) minmax(70px,.7fr) minmax(52px,.5fr) minmax(52px,.5fr) 112px 30px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }

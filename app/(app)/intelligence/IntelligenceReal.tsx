@@ -25,11 +25,11 @@ interface Baseline { account_name?: string; emails_per_week?: number; total_mess
 interface Acct { name: string; value?: number | null; close_date?: string | null; risk_level?: string | null }
 
 const TYPE_LABELS: Record<string, string> = {
-  silent_stall: 'Silent stall', competitor_mention: 'Competitor activity', legal_loopin: 'Legal loop-in',
-  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Deal moved backward',
+  silent_stall: 'Silent stall', competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in',
+  price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip', deal_stage_backward: 'Stage backward',
   reengaged: 'Re-engaged', commitment_overdue: 'Commitment overdue',
-  call_objection: 'Call objection', call_sentiment_drop: 'Call sentiment drop',
-  call_buying_signal: 'Buying Concern', call_commitment: 'Call commitment', call_summary: 'Call summary',
+  call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
+  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', call_summary: 'Call summary',
   meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
 }
 const SOURCE_LABELS: Record<string, string> = { gmail: 'Gmail / Outlook', outlook: 'Gmail / Outlook', slack: 'Slack', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', zoom: 'Calls & CRM', fireflies: 'Calls & CRM', meet: 'Calls & CRM', hubspot: 'Calls & CRM', gcal: 'Calendar' }
@@ -49,7 +49,7 @@ const RULE = 'var(--rule-strong, #0E0D0B)'
 const ACCENT = 'var(--accent, #E85A25)'
 
 function fmtMoney(v: number) {
-  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/0$/, '')}M`
+  if (v >= 1000000) return `$${(v / 1000000).toFixed(2).replace(/\.?0+$/, '')}M`   // $1M, not $1.0M, like every other page
   if (v >= 1000) return `$${Math.round(v / 1000)}K`
   return `$${v}`
 }

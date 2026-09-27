@@ -740,10 +740,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
       )
     })() },
     Currency: { title: 'Currency', sub: 'Every amount in Popsicle is shown in this currency, at live exchange rates', options: CURRENCIES.map(c => [c.code, `${c.name} · ${c.symbol.trim()}`] as [string, string]) },
-    'Connected sources': { title: 'Connected sources', sub: `${integrations.length} live`, rows: (integrations.length ? integrations.map(i => [i, 'Connected'] as [string, string]) : [['None', 'Connect Gmail or Slack to start']]), actions: [
-      ...(integrations.some(x => /slack/i.test(x)) ? [['Manage Slack channels', true, () => router.push('/integrations?slack_channels=1')], ['Daily briefing settings', false, () => router.push('/integrations?slack_briefing=1')]] as Array<[string, boolean, () => void]> : []),
-      ['All integrations', !integrations.some(x => /slack/i.test(x)), () => router.push('/integrations')],
-    ] },
     'Sending': { title: 'Sending', sub: 'What happens after Popsicle drafts a message', wide: true, custom: (() => {
       const setRules = (patch: Partial<typeof sendRules>) => { const next = { ...sendRules, ...patch }; setSendRules(next); saveJson('send_rules', next) }
       const choose = (m: 'with' | 'without') => { setSendMode(m); saveJson('send_mode', m) }
@@ -921,13 +917,6 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Export data" sub="Download your accounts and signals" value="JSON · CSV" onClick={() => setSheet('Export data')} />
       </Section>
 
-      <Section title="Sources" sub="Channels Popsicle reads to raise signals.">
-        <Row label="Connected sources" sub={integrations.length ? integrations.join(' · ') : 'None connected yet'}
-          value={`${integrations.length} live`} onClick={() => setSheet('Connected sources')} />
-        <Row label="Resolution broadcasts" sub="Slack ✓ and HubSpot notes when you mark a signal handled"
-          value="Manage" onClick={() => setSheet('Resolution broadcasts')} />
-      </Section>
-
       <Section title="Notifications" sub="What Popsicle should interrupt you for.">
         {([['risk', 'Risk alerts', 'New Concerns in the Ask bar; respects quiet hours and minimum deal size'],
            ['digest', 'Weekly summary', 'The week-in-review card on Pulse'],
@@ -949,6 +938,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
             </button>}
           </div>
         ))}
+        <Row label="Resolution broadcasts" sub="Slack ✓ and HubSpot notes when you mark a Concern handled"
+          value="Manage" onClick={() => setSheet('Resolution broadcasts')} />
         <Row label="Quiet hours" sub="Nothing interrupts you inside this window" value={`${quiet.From} - ${quiet.To}`} onClick={() => setSheet('Quiet hours')} />
       </Section>
 

@@ -4431,7 +4431,6 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
    TO REVERT: delete this block and the pl15 / pl25 / pl15-table class names in PulseReal.tsx
    and PortfolioReal.tsx. */
 .pl15 { zoom: 1.15; }
-.pl25 { zoom: 1.2; }   /* was 1.265: Today and Activity down 5% */
 /* the Concerns rows grow, but the at-risk and health figures beside them stay as they were */
 .pl15-keep { zoom: 0.8696; }
 /* the movers strip carries four columns, so at +15% it needs its gaps back */
