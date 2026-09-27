@@ -4441,3 +4441,8 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .alerts5-keep { zoom: 0.952; }
 /* Forecast: the "Every dated deal" table, header and rows together so the columns stay aligned */
 .fc5 { zoom: 1.05; }
+
+/* Ask, the opening screen: the briefing, the suggested questions with their evidence and amounts,
+   the bigger questions, the reading rail and the ledger, all 5% up. The field "What do you want to
+   know?" and the Ask Popsicle eyebrow keep their size. */
+.ask-brief, .ask-open-cols, .ask-ledger { zoom: 1.05; }
