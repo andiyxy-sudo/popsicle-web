@@ -34,7 +34,7 @@ function riskClass(r?: string) {
   return 'rlo'
 }
 
-type SigLite = { id: string; corroboration?: unknown; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; created_at: string | null }
+type SigLite = { id: string; corroboration?: unknown; signal_type?: string | null; account_name: string | null; title: string | null; severity: string | null; status: string | null; is_dismissed: boolean | null; created_at: string | null }
 
 // Demo-parity derivations, honest fallbacks: real values win; when absent we
 // derive from live signals rather than showing blanks or inventing numbers.
@@ -233,6 +233,12 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       })()}
       <RiskFlagSheet flag={flag} onClose={() => setFlag(null)} />
       {(() => {
+        const ACTION_LABEL: Record<string, string> = {
+          silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
+          legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
+          meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
+          call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
+        }
         const COLS = '34px minmax(120px,1.5fr) minmax(62px,.62fr) minmax(62px,.58fr) minmax(66px,.75fr) minmax(84px,1.15fr) minmax(70px,.7fr) minmax(52px,.5fr) minmax(52px,.5fr) 112px 30px'
         const cell: React.CSSProperties = { minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
         const riskColor: Record<string, string> = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
@@ -289,7 +295,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                   <span style={{ ...cell, color: 'var(--ink-faint)', textAlign: 'center' }}>{mounted ? agoDays(a.last_contact_date) : ''}</span>
                   <button onClick={e => { e.stopPropagation(); if (top) router.push(`/concerns?signal=${top.id}&action=reply`); else openA360(a) }}
                     style={{ font: 'inherit', fontSize: 12.5, fontWeight: 500, width: 112, justifySelf: 'center', padding: '8px 0', borderRadius: 0, border: 0, background: 'var(--accent-tint, #FFF1EA)', color: 'var(--accent)', cursor: 'pointer', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {top ? 'Draft email' : 'Open account'}
+                    {top ? (ACTION_LABEL[top.signal_type || ''] || 'Follow up') : 'Open account'}
                   </button>
                   <AskThis q={`Is ${a.name} going to close, and what's the biggest risk?`} account={a.name} />
                 </div>

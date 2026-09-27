@@ -50,7 +50,7 @@ interface Payload { account: Record<string, unknown>; messages: Msg[]; signals: 
 const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent Stall', competitor_mention: 'Competitor', legal_loopin: 'Legal', price_flinch: 'Price Flinch',
   champion_change: 'Champion Change', timeline_slip: 'Timeline Slip', reengaged: 'Re-engaged', call_objection: 'Objection',
-  call_sentiment_drop: 'Sentiment Drop', call_buying_Concern: 'Buying Signal', call_commitment: 'Commitment',
+  call_sentiment_drop: 'Sentiment Drop', call_buying_signal: 'Buying Signal', call_commitment: 'Commitment',
   call_summary: 'Call Summary', meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
   deal_stage_backward: 'Stage Backward', commitment_overdue: 'Commitment Overdue',
 }

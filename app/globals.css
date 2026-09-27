@@ -4427,8 +4427,12 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
    proportion (columns, gaps, the late-commitment labels) and cannot be undone by a re-render,
    which is why the sizes used to snap back when you navigated into an account and out again.
      .pl15  = 15% larger: the late commitments panel, the Concern Engine, the accounts tables
-     .pl25  = 15% then 10% again: Today and Activity
+     .pl25  = 20%: Today and Activity (15%, then 10% up, then 5% back down)
    TO REVERT: delete this block and the pl15 / pl25 / pl15-table class names in PulseReal.tsx
    and PortfolioReal.tsx. */
 .pl15 { zoom: 1.15; }
-.pl25 { zoom: 1.265; }
+.pl25 { zoom: 1.2; }   /* was 1.265: Today and Activity down 5% */
+/* the Concerns rows grow, but the at-risk and health figures beside them stay as they were */
+.pl15-keep { zoom: 0.8696; }
+/* the movers strip carries four columns, so at +15% it needs its gaps back */
+.pl15.stat-row { column-gap: 14px !important; }

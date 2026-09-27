@@ -807,7 +807,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       deal_stage_backward: 'call to find out what changed', meeting_cancelled: 'get it rebooked before momentum fades',
       meeting_declined: 'follow up and re-book it', price_flinch: 'lead with ROI in the next touch',
       competitor_mention: 'send the comparison one-pager', champion_change: 'map the new decision-maker now',
-      legal_loopin: 'loop legal in early', call_buying_Concern: 'strike while it is warm',
+      legal_loopin: 'loop legal in early', call_buying_signal: 'strike while it is warm',
       call_commitment: 'hold them to it in writing', reengaged: 'lock the next step today',
       commitment_overdue: 'close it out or reset the date',
     }
@@ -1029,7 +1029,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           const ACTION_LABEL: Record<string, string> = {
             silent_stall: 'Draft email', call_objection: 'Send redline', price_flinch: 'Share ROI', competitor_mention: 'Send compare',
             legal_loopin: 'Send redline', champion_change: 'Map contact', timeline_slip: 'Confirm date', meeting_cancelled: 'Schedule call',
-            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_Concern: 'Fast-track',
+            meeting_declined: 'Schedule call', deal_stage_backward: 'Schedule call', call_buying_signal: 'Fast-track',
             call_commitment: 'Confirm', reengaged: 'Fast-track', commitment_overdue: 'Close out', call_sentiment_drop: 'Schedule call',
           }
           const rows = accounts.map(a => {

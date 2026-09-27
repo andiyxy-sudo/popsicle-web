@@ -349,7 +349,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
     const ok = !error
     if (ok && user) {
       await supa.from('remap_log').insert({
-        user_id: user.id, account_id: accountId, entity_type: 'Concern', entity_id: s.id,
+        user_id: user.id, account_id: accountId, entity_type: 'signal', entity_id: s.id,
         method: 'manual_assign', prev_value: s.account_name ?? null,
       }).then(() => {}, () => {})
     }
@@ -450,7 +450,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
     silent_stall: 'Follow up', call_objection: 'Send redline', price_flinch: 'Share ROI sheet',
     competitor_mention: 'Send comparison', legal_loopin: 'Send redline', champion_change: 'Map contact',
     timeline_slip: 'Confirm date', meeting_cancelled: 'Rebook', meeting_declined: 'Rebook',
-    deal_stage_backward: 'Book exec call', call_buying_Concern: 'Fast-track', call_commitment: 'Confirm in writing',
+    deal_stage_backward: 'Book exec call', call_buying_signal: 'Fast-track', call_commitment: 'Confirm in writing',
     reengaged: 'Fast-track', commitment_overdue: 'Close it out', call_sentiment_drop: 'Book exec call',
   }
 
@@ -548,7 +548,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset"
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset pl15"
               style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
@@ -575,7 +575,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
-                  <div style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
+                  <div className="pl15-keep" style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
                     <div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
@@ -957,7 +957,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                   <div style={{ border: '1px solid var(--border)', borderRadius: 12, padding: 14, marginBottom: 12, background: 'var(--bg, #FBF8F3)' }}>
                     <div style={{ fontSize: 11, fontWeight: 800, color: 'var(--t2)', marginBottom: 8 }}>Why remove this? It trains detection.</div>
                     <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {[['not_a_Concern', 'Not a Concern'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
+                      {[['not_a_signal', 'Not a Concern'], ['wrong_account', 'Wrong account'], ['duplicate', 'Duplicate'], ['other', 'Other']].map(([k, lbl]) => (
                         <button key={k} onClick={() => removeSignal(d, k)} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--t2)', cursor: 'pointer' }}>{lbl}</button>
                       ))}
                       <button onClick={() => setModalMode('view')} style={{ fontSize: 10.5, fontWeight: 700, padding: '5px 12px', borderRadius: 20, border: 'none', background: 'none', color: 'var(--t4)', cursor: 'pointer' }}>Cancel</button>

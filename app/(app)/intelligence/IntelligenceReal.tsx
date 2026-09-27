@@ -366,7 +366,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       </div>
 
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(260px,.85fr) minmax(320px,1.4fr)', gap: 48, marginTop: 'var(--gap-m)', alignItems: 'start' }}>
-        <div>
+        <div className="pl15">
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Key movement drivers</div>
           {m.drivers.length === 0 && <EmptyState line="No movement to explain yet." hint="Drivers appear once signals carry a dollar amount at risk." compact />}
           {m.drivers.map(d => (
@@ -519,7 +519,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {/* ---- what's working ---- */}
       <H2 title="What's working" right={<span style={{ ...MONO, fontSize: 11, color: FAINT, textTransform: 'none', letterSpacing: '.3px' }}>action → outcome · this quarter</span>} />
       <div className="g2" style={{ display: 'grid', gridTemplateColumns: 'minmax(280px,.95fr) minmax(300px,1fr)', gap: 96, marginTop: 8, alignItems: 'start' }}>
-        <div>
+        <div className="pl15">
           <div style={{ display: 'grid', gridTemplateColumns: hasChurn ? 'minmax(0,1fr) 60px 80px 80px' : 'minmax(0,1fr) 60px 80px', gap: 12, ...MONO, fontSize: 10, color: FAINT, padding: '16px 0 12px' }}>
             <span>Action</span><span style={{ textAlign: 'right' }}>Used</span><span style={{ textAlign: 'right' }}>Success</span>{hasChurn && <span style={{ textAlign: 'right' }}>Churn Δ{demo ? '' : ' est.'}</span>}
           </div>
@@ -573,7 +573,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
       {(() => { const cols = [!!m.forecast, m.sources.length > 0, m.renewals.length > 0].filter(Boolean).length || 1; return (
       <div className="g3" style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0,1fr))`, gap: 72 }}>
         {m.forecast && (
-        <div>
+        <div className="pl15">
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Forecast vs actual · MTD</div>
           {m.forecast ? (() => {
             const v = m.forecast.actual - m.forecast.forecast
@@ -589,7 +589,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         )}
 
         {m.sources.length > 0 && (
-        <div>
+        <div className="pl15">
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Concern sources · {srcTotal} Concerns</div>
           {m.sources.map(s => (
             <Row key={s.k} pad="13px 0">
@@ -608,7 +608,7 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
         )}
 
         {m.renewals.length > 0 && (
-        <div>
+        <div className="pl15">
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Renewals · next 90 days{renewTotal ? <> · {fmtMoney(renewTotal)}</> : null}</div>
           {m.renewals.map(r => {
             const s = renewMeta[r.status]
