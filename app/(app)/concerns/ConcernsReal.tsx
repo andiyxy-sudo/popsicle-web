@@ -548,12 +548,11 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-offset pl15"
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px', alignItems: 'center', gap: 20,
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-slot pl15"
+              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
-              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
@@ -610,6 +609,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                   }}>{action}</button>
                 )}
               </div>
+              <AskThis q={`${s.account_name ? `${s.account_name}: ` : ''}${s.title ?? 'this Concern'}. Is this real, and what should I do?`} account={s.account_name} />
             </div>
           )
         })}
@@ -633,7 +633,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{handledList.length} this period · newest first</span>
           </div>
           {handledList.slice(0, 6).map(s => (
-            <div key={s.id} className="tbl-row" onClick={() => setDetailFor(s)}
+            <div key={s.id} className="tbl-row pl10" onClick={() => setDetailFor(s)}
               style={{ display: 'grid', gridTemplateColumns: '14px minmax(0,1fr) auto', gap: 14, alignItems: 'baseline', padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
               <span style={{ color: 'var(--good, #2f8f5b)', fontWeight: 800, fontSize: 13 }}>✓</span>
               <div style={{ minWidth: 0 }}>

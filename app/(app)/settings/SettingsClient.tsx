@@ -853,6 +853,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
+      <div className="pl05">
       <Section title="Account" sub="Profile, workspace and data.">
         <Row label="Workspace" sub={[org?.name ?? 'Your workspace', industry].filter(Boolean).join(' · ')} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
         <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
@@ -1030,6 +1031,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Delete workspace" sub="Removes every account, signal and connection" danger
           value={<span style={{ color: 'var(--critical, #c43d2b)' }}>Delete</span>} onClick={() => setSheet('Delete workspace')} />
       </Section>
+
+      </div>
 
       {sheet && SHEETS[sheet] && (() => {
         const sh = SHEETS[sheet]
