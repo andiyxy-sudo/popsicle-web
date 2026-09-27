@@ -217,6 +217,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
             : <>Nothing is waiting for a response.</>}
         </span>
       </h1>
+      <div className="pl10">
 
       {/* takeaways */}
       {m.bullets.length > 0 && (
@@ -572,6 +573,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
           ))}
           {m.executionInsight && <div style={{ fontSize: 13.5, color: MUTED, lineHeight: 1.55, marginTop: 18, padding: '14px 16px', background: 'var(--inset, #F4F0E8)', borderRadius: 12 }}>{m.executionInsight}</div>}
         </div>
+      </div>
       </div>
     </div>
   )
