@@ -4379,13 +4379,13 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
    It used to appear from nowhere on hover, absolutely positioned over the row's right-hand
    columns. In the Pulse and Portfolio tables it now sits in a column of its own: always there,
    quiet until you look at the row, and never covering anything. */
-.askable > .ask-this { position: static; transform: none; opacity: .2; pointer-events: auto;
+.ask-slot > .ask-this { position: static; transform: none; opacity: .2; pointer-events: auto;
   width: 26px; height: 26px; padding: 0; justify-self: center; justify-content: center; gap: 0;
   font-size: 0; box-shadow: none; background: transparent; border-color: rgba(232,90,37,.25); }
-.askable > .ask-this .ask-this-mark { width: 7px; height: 7px; }
-.askable:hover > .ask-this { opacity: 1; transform: none; background: var(--paper, #FBF8F3); border-color: rgba(232,90,37,.5); }
-.askable > .ask-this:hover { background: #FF6B35 !important; border-color: #FF6B35 !important; }
-.askable > .ask-this:hover .ask-this-mark { background: #fff; }
+.ask-slot > .ask-this .ask-this-mark { width: 7px; height: 7px; }
+.ask-slot:hover > .ask-this { opacity: 1; transform: none; background: var(--paper, #FBF8F3); border-color: rgba(232,90,37,.5); }
+.ask-slot > .ask-this:hover { background: #FF6B35 !important; border-color: #FF6B35 !important; }
+.ask-slot > .ask-this:hover .ask-this-mark { background: #fff; }
 /* rows elsewhere keep the floating chip, but it fades instead of sliding in */
 .ask-this { transition: opacity .18s ease, background .15s ease, border-color .15s ease; }
 

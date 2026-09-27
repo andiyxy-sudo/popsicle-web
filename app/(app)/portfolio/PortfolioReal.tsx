@@ -268,7 +268,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset"
+                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset ask-slot"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
                   <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
