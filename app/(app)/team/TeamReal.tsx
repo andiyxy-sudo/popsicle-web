@@ -438,7 +438,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
             {feed.map((a, i) => {
               const rep = repBy(a.rep)
               return (
-                <div key={i} className="tbl-row askable" onClick={() => router.push(`/accounts/${encodeURIComponent(a.account)}`)}
+                <div key={i} className="tbl-row askable pl10" onClick={() => router.push(`/accounts/${encodeURIComponent(a.account)}`)}
                   style={{ display: 'grid', gridTemplateColumns: '32px minmax(0,1fr) auto', gap: 16, alignItems: 'start', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
                   <AskThis q={`Did ${a.rep}'s action on ${a.account} work? What should happen next?`} account={a.account} />
                   <Avatar rep={rep} size={32} />
@@ -482,14 +482,14 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
             )
           })}
         </div>
-        <span style={{ fontSize: 14, fontWeight: 600, color: RED }}>{formatCurrency(m.waitingValue)} ARR waiting</span>
+        <span className="pl10" style={{ fontSize: 14, fontWeight: 600, color: RED }}>{formatCurrency(m.waitingValue)} ARR waiting</span>
       </div>
       {queue.length === 0 && <EmptyState line={queueRep === 'All' ? 'Nothing is waiting.' : `Nothing is waiting on ${queueRep}.`} hint={queueRep === 'All' ? 'Every Concern raised has been actioned. The queue refills as new ones land.' : 'Switch the filter to see the rest of the queue.'} compact />}
       {queue.map((q, i) => {
         const s = sevMeta[q.sev]
         const rep = repBy(q.rep)
         return (
-          <div key={i} onClick={() => openQueueItem(q)} className="tbl-row"
+          <div key={i} onClick={() => openQueueItem(q)} className="tbl-row pl10"
             style={{ display: 'grid', gridTemplateColumns: '3px minmax(0,1fr) auto 32px', gap: 16, alignItems: 'center', padding: '16px 0', borderBottom: `1px solid ${HAIR}`, cursor: 'pointer' }}>
             <span style={{ width: 3, height: 34, background: s.c }} />
             <div style={{ minWidth: 0 }}>
@@ -513,7 +513,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
       <div style={{ height: 0, borderTop: `1px solid ${RULE}`, margin: 'var(--gap-l) 0 30px' }} />
 
       {/* execution summary */}
-      <div className="g3" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>
+      <div className="g3 pl10" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0,1fr))', gap: 88 }}>
         <div>
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Revenue movement · this week</div>
           <Row pad="14px 0"><span>New critical accounts</span><span style={{ ...MONO_NUM, fontSize: 12, color: m.newCritical ? RED : INK }}>+{m.newCritical}</span></Row>
