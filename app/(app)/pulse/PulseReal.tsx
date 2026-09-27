@@ -985,7 +985,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               <div className="read-prose read-prose-ink">{b.pre}<strong style={{ fontWeight: 550 }}>{b.strong}</strong></div>
             </div>
           ))}
-          <span onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>
+          <span className="pulse10-keep" onClick={() => router.push('/ask')} style={{ display: 'inline-block', marginTop: 20, fontSize: 14, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>Expand any insight →</span>
           </div>
         </section>
         <section style={{ minWidth: 0 }}>
@@ -1000,7 +1000,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
                 </div>
               </div>
-              <X m={(l as { m?: string }).m ?? 'active'}><CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></X>
+              <X m={(l as { m?: string }).m ?? 'active'}><span className="pulse10-keep"><CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></span></X>
             </div>
           ))}
           </div>
@@ -1058,8 +1058,10 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           if (!rows.length) return null
           const riskColor = { high: 'var(--critical, #c43d2b)', medium: 'var(--warn, #d38b1d)', low: 'var(--good, #2f8f5b)' }
           return (
+            <>
+            {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
             <div className="pulse10 pulse10-table">
-              {secHead('Accounts needing attention', <span onClick={() => router.push('/portfolio')} style={{ fontSize: 13, fontWeight: 600, color: 'var(--accent)', cursor: 'pointer' }}>View all {accounts.length} accounts →</span>)}
+              
               <div style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, padding: '14px 0 8px', fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 <span>Hlth</span><span style={{ paddingLeft: 26 }}>Account</span><span style={{ textAlign: 'center' }}>ARR</span><span style={{ textAlign: 'center' }}>Risk</span>
                 <span style={{ textAlign: 'center' }}>Stage</span><span>Top Concern</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
@@ -1090,6 +1092,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                 </div>
               ))}
             </div>
+            </>
           )
         })()}
       </div>

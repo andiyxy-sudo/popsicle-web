@@ -4428,3 +4428,14 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
    sit outside, at the page's own size, so the three columns stay aligned.
    TO REVERT: delete this block and the pulse10 class names in PulseReal.tsx. */
 .pulse10 { zoom: 1.1; }
+/* inside a scaled Pulse block, these hold the size they had: the four Concern Engine figures
+   and the "Expand any insight" link */
+.pulse10-keep { zoom: 0.909; }
+
+/* Portfolio: the accounts table at +10%, header included so the columns still line up */
+.port10 { zoom: 1.1; }
+/* Concerns: the Recently handled rows, 5% up. The heading and its rule stay at the page's size */
+.handled5 { zoom: 1.05; }
+/* Concerns, under All alerts: the rows 5% up, with the at-risk and health figures held where they were */
+.alerts5 { zoom: 1.05; }
+.alerts5-keep { zoom: 0.952; }
