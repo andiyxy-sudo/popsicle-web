@@ -849,6 +849,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       </div>
       <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '28px 0 0' }} />
 
+      <div className="set25">
       <Section title="Account" sub="Profile, workspace and data.">
         <Row label="Workspace" sub={[org?.name ?? 'Your workspace', industry].filter(Boolean).join(' · ')} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
         <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
@@ -913,7 +914,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Language" value={prefs.Language} onClick={() => setSheet('Language')} />
         <Row label="Timezone" value={(tzPick || tz || '--').replace(/_/g, ' ')} onClick={() => setSheet('Timezone')} />
         <Row label="Currency" value={prefs.Currency} onClick={() => setSheet('Currency')} />
-        <Row label="Export data" sub="Download your accounts and signals" value="JSON · CSV" onClick={() => setSheet('Export data')} />
+        <Row label="Export data" sub="Download your accounts and Concerns" value="JSON · CSV" onClick={() => setSheet('Export data')} />
       </Section>
 
       <Section title="Notifications" sub="What Popsicle should interrupt you for.">
@@ -976,8 +977,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
 
       <Section title="Team" sub="Who else can see this workspace.">
         <Row label="Your team" sub={org ? `${org.name} · everyone here sees the same accounts` : 'Who is in your organisation'} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'person' : 'people'}`} onClick={() => setSheet('Your team')} />
-        <Row label="Invite a teammate" sub="Share signals and coverage" value="Invite" onClick={() => setSheet('Invite a teammate')} />
-        <Row label="Signal visibility" sub="Everyone in your organisation sees the same accounts and signals" value="Organisation" onClick={() => setSheet('Concern visibility')} />
+        <Row label="Invite a teammate" sub="Share Concerns and coverage" value="Invite" onClick={() => setSheet('Invite a teammate')} />
+        <Row label="Concern visibility" sub="Everyone in your organisation sees the same accounts and Concerns" value="Organisation" onClick={() => setSheet('Concern visibility')} />
       </Section>
 
       <Section title="Security" sub="Access to this account.">
@@ -1018,9 +1019,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="About Popsicle" value={APP_VERSION} onClick={() => setSheet('About Popsicle')} />
         <Row label="Data & privacy" sub="What Popsicle reads and keeps · privacy policy, terms and DPA" value="Read" onClick={() => setSheet('Data & privacy')} />
         <Row label="Email support" value="support@popsicle-labs.app" onClick={() => setSheet('Email support')} />
-        <Row label="Delete workspace" sub="Removes every account, signal and connection" danger
+        <Row label="Delete workspace" sub="Removes every account, Concern and connection" danger
           value={<span style={{ color: 'var(--critical, #c43d2b)' }}>Delete</span>} onClick={() => setSheet('Delete workspace')} />
       </Section>
+
+      </div>
 
       {sheet && SHEETS[sheet] && (() => {
         const sh = SHEETS[sheet]

@@ -396,7 +396,7 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
             return (
               <>
                 <div style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, padding: '16px 0 10px', ...MONO, fontSize: 10, color: FAINT }}>
-                  <span>Rep</span><span>Accounts</span><span>Pipeline ARR</span><span>Critical</span><span>Coverage</span><span style={{ textAlign: 'right' }}>Exposure</span>
+                  <span>Rep</span><span style={{ textAlign: 'center' }}>Accounts</span><span style={{ textAlign: 'center' }}>Pipeline ARR</span><span style={{ textAlign: 'center' }}>Critical</span><span style={{ textAlign: 'center' }}>Coverage</span><span style={{ textAlign: 'right' }}>Exposure</span>
                 </div>
                 {[...m.reps].sort((a, b) => (b.exposure ?? 0) - (a.exposure ?? 0)).map(r => {
                   const crit = m.queue.filter(q => q.rep === r.name && q.sev === 'critical').length
@@ -404,10 +404,10 @@ export function TeamReal({ accounts, signals, me, demo, repNames }: { accounts: 
                   return (
                     <div key={r.name} className="tbl-row" onClick={() => setQueueRep(r.name)} style={{ display: 'grid', gridTemplateColumns: cols, columnGap: 14, alignItems: 'center', padding: '16px 0', borderTop: `1px solid ${HAIR}`, fontSize: 14, cursor: 'pointer' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}><Avatar rep={r} size={30} /><span><span style={{ fontWeight: 600, color: INK }}>{r.name}</span><span style={{ display: 'block', fontSize: 12, color: FAINT, marginTop: 2 }}>{r.accounts.join(' · ')}</span></span></span>
-                      <span style={num}>{r.accounts.length}</span>
-                      <span style={num}>{formatCurrency(r.arr)}</span>
-                      <span style={{ ...num, color: crit ? RED : FAINT }}>{crit || '--'}</span>
-                      <span style={{ ...num, color: r.ownership === 'active' ? GREEN : AMBER }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
+                      <span style={{ ...num, textAlign: 'center' }}>{r.accounts.length}</span>
+                      <span style={{ ...num, textAlign: 'center' }}>{formatCurrency(r.arr)}</span>
+                      <span style={{ ...num, textAlign: 'center', color: crit ? RED : FAINT }}>{crit || '--'}</span>
+                      <span style={{ ...num, textAlign: 'center', color: r.ownership === 'active' ? GREEN : AMBER }}>{r.ownership === 'active' ? 'Active' : (r.ownershipNote ?? 'Stale')}</span>
                       <span style={{ textAlign: 'right' }}>
                         <span style={{ fontFamily: OUTFIT, fontWeight: 700, fontSize: 17, letterSpacing: '-.03em', color: share >= 40 ? RED : share >= 25 ? AMBER : INK }}><X m="rep_exposure" account={r.name}>{formatCurrency(r.exposure ?? 0)}</X></span>
                         <span style={{ display: 'block', height: 3, background: HAIR, marginTop: 8, position: 'relative' }}><span style={{ position: 'absolute', inset: 0, width: `${((r.exposure ?? 0) / maxExp) * 100}%`, background: share >= 40 ? RED : share >= 25 ? AMBER : ACCENT }} /></span>

@@ -4446,3 +4446,7 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
    the bigger questions, the reading rail and the ledger, all 5% up. The field "What do you want to
    know?" and the Ask Popsicle eyebrow keep their size. */
 .ask-brief, .ask-open-cols, .ask-ledger { zoom: 1.05; }
+/* Settings, from the Account section down to the sign-out line: 2.5% up */
+.set25 { zoom: 1.025; }
+/* Integrations: the provider catalogue, 2.5% up. The headline and the summary above it stay */
+.int25 { zoom: 1.025; }
