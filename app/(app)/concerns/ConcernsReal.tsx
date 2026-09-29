@@ -60,7 +60,7 @@ const TYPE_LABELS: Record<string, string> = {
 function srcName(v?: string | null) {
   const k = String(v ?? '').toLowerCase()
   return ({ gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack', whatsapp: 'WhatsApp', zoom: 'Zoom',
-    hubspot: 'HubSpot', calendar: 'Google Calendar', google_calendar: 'Google Calendar', teams: 'Microsoft Teams',
+    hubspot: 'HubSpot', calendar: 'Google Calendar', gcal: 'Google Calendar', google_calendar: 'Google Calendar', meet: 'Google Meet', drive: 'Google Drive', teams: 'Microsoft Teams',
     salesforce: 'Salesforce' } as Record<string, string>)[k] ?? (k ? k[0].toUpperCase() + k.slice(1) : 'Source')
 }
 

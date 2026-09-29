@@ -1,38 +1,30 @@
 'use client'
 import { V, confColor } from '@/lib/pk/tokens';
+import { MARKS } from '@/lib/pk/marks';
 
 // Visuals 6, 7 and 15: a source's tile (official icon when you have it, otherwise its brand colour and a
 // letter) with a tone dot on the corner, and a confidence ring. Put the official icons (from each company's
 // brand kit) in your public folder and list them in ICONS.
-export const BRAND: Record<string, { bg: string; letter: string }> = {
-  Gmail: { bg: '#EA4335', letter: 'M' },
-  Outlook: { bg: '#0A64D6', letter: 'O' },
-  Slack: { bg: '#611F69', letter: '#' },
-  WhatsApp: { bg: '#25D366', letter: 'W' },
-  Zoom: { bg: '#2D8CFF', letter: 'Z' },
-  HubSpot: { bg: '#FF7A59', letter: 'H' },
-  'Google Calendar': { bg: '#1A73E8', letter: 'C' },
-  Calendar: { bg: '#1A73E8', letter: 'C' },
-  Salesforce: { bg: '#00A1E0', letter: 'S' },
-  'Microsoft Teams': { bg: '#5059C9', letter: 'T' },
-  Teams: { bg: '#5059C9', letter: 'T' },
-};
-/** Official icon files, e.g. { Gmail: '/brand/gmail.png' }. Empty until you add them. */
-export const ICONS: Record<string, string> = {};
 
 export function SourceIcon({ name, size = 32, dot }: { name: string; size?: number; dot?: string }) {
-  const b = BRAND[name] ?? { bg: V.ink2, letter: name.slice(0, 1).toUpperCase() };
-  const icon = ICONS[name];
+  const mark = MARKS[name];
+  const initials = name.split(/[\s-]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?';
   return (
-    <span aria-hidden style={{ position: 'relative', display: 'inline-block', width: size, height: size, flexShrink: 0 }}>
-      {icon ? (
-        <img src={icon} alt="" width={size} height={size} style={{ borderRadius: size * 0.22 }} />
+    <span aria-label={name} title={name} style={{ position: 'relative', display: 'inline-block', width: size, height: size, flexShrink: 0 }}>
+      {mark ? (
+        // the company's own glyph, unmodified, in its own brand colour on a neutral tile
+        <span style={{ display: 'flex', width: size, height: size, borderRadius: size * 0.3, background: 'var(--pk-block, rgba(14,13,11,.045))', alignItems: 'center', justifyContent: 'center' }}>
+          <svg width={size * 0.58} height={size * 0.58} viewBox="0 0 24 24" role="img" aria-hidden>
+            <path d={mark.path} fill={mark.hex} />
+          </svg>
+        </span>
       ) : (
-        <span style={{ display: 'flex', width: size, height: size, borderRadius: size * 0.3, background: b.bg, alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: size * 0.45, fontFamily: V.font }}>
-          {b.letter}
+        // no freely licensed mark for this one: initials on a neutral tile, never a recoloured logo
+        <span style={{ display: 'flex', width: size, height: size, borderRadius: size * 0.3, background: 'var(--pk-block, rgba(14,13,11,.045))', alignItems: 'center', justifyContent: 'center', color: V.ink2, fontWeight: 700, fontSize: size * 0.36, fontFamily: V.font, letterSpacing: '-.02em' }}>
+          {initials}
         </span>
       )}
-      {dot ? <span style={{ position: 'absolute', right: -3, bottom: -3, width: 12, height: 12, borderRadius: 6, background: dot, boxShadow: `0 0 0 2px ${V.paper}` }} /> : null}
+      {dot ? <span style={{ position: 'absolute', right: -3, bottom: -3, width: 11, height: 11, borderRadius: 6, background: dot, boxShadow: `0 0 0 2px ${V.paper}` }} /> : null}
     </span>
   );
 }
