@@ -23,6 +23,8 @@ import { AskThis } from '@/components/agent/AskThis'
 import { exposureOf } from '@/lib/metrics'
 import { useSettings } from '@/lib/useSettings'
 import { CONCERN_ACTIONS } from '@/lib/concern-labels'
+import { CountUp } from '@/components/ui/CountUp'
+import { SourceIcon, ConfArc } from '@/components/pk/SourceIcon'
 
 interface DBSignal {
   id: string
@@ -54,6 +56,14 @@ const TYPE_LABELS: Record<string, string> = {
   meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
 }
 
+// our sources are stored lowercase ("gmail"); the shared icon set is keyed by brand name
+function srcName(v?: string | null) {
+  const k = String(v ?? '').toLowerCase()
+  return ({ gmail: 'Gmail', outlook: 'Outlook', slack: 'Slack', whatsapp: 'WhatsApp', zoom: 'Zoom',
+    hubspot: 'HubSpot', calendar: 'Google Calendar', google_calendar: 'Google Calendar', teams: 'Microsoft Teams',
+    salesforce: 'Salesforce' } as Record<string, string>)[k] ?? (k ? k[0].toUpperCase() + k.slice(1) : 'Source')
+}
+
 function fmtMoney(v?: number) {
   if (!v) return null
   if (v >= 1000000) return `$${(v / 1000000).toFixed(1)}M`
@@ -67,13 +77,15 @@ interface Draft { subject: string; body: string; to: string; cc?: string; proven
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
-export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal[]; demoHead?: DemoHead }) {
+export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: { signals: DBSignal[]; demoHead?: DemoHead; heldByEngine?: number }) {
   const mySettings = useSettings()
   const [showSmall, setShowSmall] = useState(false)
   const [listLimit, setListLimit] = useState(60)   // render in batches so very large lists stay quick
   const router = useRouter()
   const [signals, setSignals] = useState<DBSignal[]>(initial)
   const [busyId, setBusyId] = useState<string | null>(null)
+  const [leaving, setLeaving] = useState<Set<string>>(new Set())
+  const [justProtected, setJustProtected] = useState(0)
   // Draft modal state
   const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
   // per-action popups (row buttons): each row action has its own window instead of
@@ -280,6 +292,8 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
   async function markHandled(s: DBSignal, action: string) {
     if (busyId) return
     setBusyId(s.id)
+    setLeaving(prev => new Set(prev).add(s.id))   // tick draws, row folds (handoff motion 6)
+    setJustProtected(v => v + (Number(s.risk_amount) || 0))
     const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
     if (isDemoSig(s)) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
@@ -533,7 +547,7 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           </button>
         )}
         {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New Concerns land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
-        {shown.slice(0, listLimit).map(s => {
+        {shown.slice(0, listLimit).map((s, rowIndex) => {
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
           const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
           const label = TYPE_LABELS[s.signal_type || ''] || 'Concern'
@@ -543,12 +557,13 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className="tbl-row askable ask-slot alerts5"
-              style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className={`tbl-row askable ask-slot alerts5 pk-rise${leaving.has(s.id) ? " pk-leaving" : ""}`}
+              style={{ ['--i' as string]: Math.min(rowIndex, 12), display: 'grid', gridTemplateColumns: '34px minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
+              <SourceIcon name={srcName(s.source_integration)} size={30} dot={accent} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                   {isHandled && <span style={{ color: 'var(--good)', fontWeight: 800, fontSize: 13 }}>✓</span>}
@@ -569,7 +584,9 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
                 {isHandled ? (
                   <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.1px', textTransform: 'uppercase', color: 'var(--good)' }}>{s.handled_action || 'handled'}</div>
                 ) : money ? (
-                  <div className="alerts5-keep" style={{ display: 'inline-flex', gap: 44, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
+                  <div className="alerts5-keep" style={{ display: 'inline-flex', gap: 30, alignItems: 'flex-start', justifyContent: 'flex-end', width: '100%' }}>
+                    {typeof (s.ai_analysis as { confidence?: number } | null)?.confidence === 'number' &&
+                      <ConfArc conf={(s.ai_analysis as { confidence: number }).confidence} size={26} />}
                     <div>
                       <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
@@ -619,6 +636,23 @@ export function ConcernsReal({ signals: initial, demoHead }: { signals: DBSignal
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
         <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open Concerns should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritise →</span>
       </div>
+
+      {justProtected > 0 && (
+        <div className="pk-rise" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 0 0' }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <path className="pk-tick" pathLength={1} d="M4 12.5l5.2 5.2L20 7" stroke="var(--good, #2f8f5b)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <span style={{ fontSize: 13.5, color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>
+            <CountUp k="protected-now" value={fmtMoney(justProtected) ?? `$${justProtected}`} /> protected this session
+          </span>
+        </div>
+      )}
+
+      {heldByEngine > 0 && (
+        <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.3px', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '10px 0 0' }}>
+          {heldByEngine} held back by your Concern Engine settings
+        </div>
+      )}
 
       {/* Recently handled: what was done, by when, so actions have somewhere to be seen */}
       {handledList.length > 0 && (

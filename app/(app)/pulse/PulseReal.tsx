@@ -949,17 +949,17 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
             <div className="g4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0,1fr))', columnGap: 32 }}>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue at risk</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big(st.atRisk > 0 ? 'var(--critical, #c43d2b)' : 'var(--ink)')} /></X>{(() => { const d = since ? since.changes.after.atRisk - since.changes.before.atRisk : 0; return d ? delta(`${d > 0 ? '+' : '\u2212'}${formatCurrency(Math.abs(d))} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, d > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)') : null })()}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="at_risk"><CountUp k="at_risk" value={st.atRisk > 0 ? formatCurrency(st.atRisk) : '$0'} style={big(st.atRisk > 0 ? 'var(--critical, #c43d2b)' : 'var(--ink)')} /></X>{(() => { const d = since ? since.changes.after.atRisk - since.changes.before.atRisk : 0; return d ? delta(`${d > 0 ? '+' : '\u2212'}${formatCurrency(Math.abs(d))} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, d > 0 ? 'var(--critical, #c43d2b)' : 'var(--good, #2f8f5b)') : null })()}</div>
                 <div style={sub}>{st.high} high-risk accounts · {st.med} medium · {st.low} low</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Revenue protected</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="protected"><CountUp value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} /></X>{(() => { const d = since ? since.changes.after.protectedValue - since.changes.before.protectedValue : 0; return d > 0 ? delta(`+${formatCurrency(d)} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, 'var(--good, #2f8f5b)') : null })()}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="protected"><CountUp k="protected" value={st.protectedTotal > 0 ? formatCurrency(st.protectedTotal) : '$0'} style={big('var(--accent, #E85A25)')} /></X>{(() => { const d = since ? since.changes.after.protectedValue - since.changes.before.protectedValue : 0; return d > 0 ? delta(`+${formatCurrency(d)} ${since!.label.replace(/^Since /, 'since ').replace(/^since your last visit.*/, 'since last visit')}`, 'var(--good, #2f8f5b)') : null })()}</div>
                 <div style={sub}>{st.saved} saves · {st.actions} actions this quarter</div>
               </div>
               <div style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                 <div style={MONO}>Active Concerns</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="active"><CountUp value={String(st.active)} style={big('var(--ink)')} /></X>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 14 }}><X m="active"><CountUp k="active" value={String(st.active)} style={big('var(--ink)')} /></X>{st.newToday ? delta(`${st.newToday} new today`, 'var(--good, #2f8f5b)') : null}</div>
                 <div style={sub}>{st.critical} critical · {st.warn} warn · {st.positive} positive</div>
               </div>
               <div onClick={() => setConfOpen(true)} className="xp-tile" style={{ paddingTop: 22, paddingBottom: 18, borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
@@ -1000,7 +1000,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
                   <div style={{ fontSize: 13, color: 'var(--ink-faint)', marginTop: 2 }}>{l.sub}</div>
                 </div>
               </div>
-              <X m={(l as { m?: string }).m ?? 'active'}><span className="pulse10-keep"><CountUp value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></span></X>
+              <X m={(l as { m?: string }).m ?? 'active'}><span className="pulse10-keep"><CountUp k={(l as { m?: string }).m ?? 'active'} value={l.value} style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.04em', fontSize: 36, lineHeight: 1, color: l.color }} /></span></X>
             </div>
           ))}
           </div>

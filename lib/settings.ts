@@ -11,10 +11,50 @@ export type Settings = {
   currency: string
   appearance: string
   industry: string
+  engine: { sens: 'Balanced' | 'Early warning' | 'High confidence only'; types: Record<string, boolean> }
   easyRead?: boolean
   demo?: boolean     // the demo account ignores time-based settings so it always performs
 }
 type Meta = Record<string, unknown>
+
+// The Concern Engine switches, and which detector types each one covers. Sentiment shift is off by
+// default, as on the phone.
+export const CE_DEFAULTS: Record<string, boolean> = {
+  ce_exec: true, ce_price: true, ce_comp: true, ce_time: true, ce_legal: true,
+  ce_champ: true, ce_usage: true, ce_sent: false, ce_expand: true,
+}
+export const CE_COVERS: Record<string, string[]> = {
+  ce_exec: ['silent_stall', 'meeting_declined'],
+  ce_price: ['price_flinch'],
+  ce_comp: ['competitor_mention'],
+  ce_time: ['timeline_slip', 'meeting_cancelled', 'deal_stage_backward'],
+  ce_legal: ['legal_loopin'],
+  ce_champ: ['champion_change'],
+  ce_usage: [],
+  ce_sent: ['call_sentiment_drop'],
+  ce_expand: ['call_buying_signal', 'reengaged'],
+}
+
+/** Is this Concern type switched on? Types no switch covers are always on. */
+export function typeEnabled(s: Settings, signalType: string | null | undefined): boolean {
+  const t = String(signalType ?? '')
+  for (const [key, covers] of Object.entries(CE_COVERS)) if (covers.includes(t)) return s.engine.types[key] !== false
+  return true
+}
+
+/** Does this Concern clear the sensitivity bar? Critical ones always do. */
+export function meetsSensitivity(s: Settings, sig: { severity?: string | null; ai_analysis?: unknown }): boolean {
+  if (sig.severity === 'high') return true
+  const conf = Number((sig.ai_analysis as { confidence?: number } | null)?.confidence ?? 100)
+  if (s.engine.sens === 'Early warning') return true              // raise it, let the person judge
+  if (s.engine.sens === 'High confidence only') return conf >= 90  // only the ones it is sure of
+  return conf >= 70                                                // Balanced
+}
+
+/** Everything the engine should surface for this person: their switches and their sensitivity. */
+export function passesEngine(s: Settings, sig: { signal_type?: string | null; severity?: string | null; ai_analysis?: unknown }): boolean {
+  return typeEnabled(s, sig.signal_type) && meetsSensitivity(s, sig)
+}
 
 const num = (s: unknown, fallback: number) => { const m = /(\d+)/.exec(String(s ?? '')); return m ? Number(m[1]) : fallback }
 const money = (s: unknown, fallback: number) => { const t = String(s ?? ''); if (/no minimum/i.test(t)) return 0; const n = num(t, NaN); return Number.isFinite(n) ? n * (/k/i.test(t) ? 1000 : /m/i.test(t) ? 1e6 : 1) : fallback }
@@ -26,6 +66,7 @@ export function readSettings(meta: Meta | null | undefined): Settings {
   const t = (m.thresholds ?? {}) as Record<string, string>
   const v = (m.draft_voice ?? {}) as Record<string, string>
   const p = (m.prefs ?? {}) as Record<string, string>
+  const ce = (m.concern_engine ?? {}) as Record<string, unknown>
   return {
     notifs: { risk: n.risk ?? true, digest: n.digest ?? true, brief: n.brief ?? true, push: n.push ?? false },
     quiet: { from: q.From ?? '19:00', to: q.To ?? '08:00' },
@@ -37,6 +78,10 @@ export function readSettings(meta: Meta | null | undefined): Settings {
     currency: (p.Currency ?? 'USD').split(' ')[0],
     appearance: p.Appearance ?? '',
     industry: String(m.industry ?? ''),
+    engine: {
+      sens: (typeof ce.sens === 'string' ? ce.sens : 'Balanced') as Settings['engine']['sens'],
+      types: { ...CE_DEFAULTS, ...Object.fromEntries(Object.entries(ce).filter(([k]) => k.startsWith('ce_'))) } as Record<string, boolean>,
+    },
     easyRead: typeof m.easy_read === 'boolean' ? m.easy_read : undefined,
   }
 }

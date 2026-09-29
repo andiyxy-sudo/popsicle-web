@@ -81,11 +81,11 @@ export const TONE = { good: 'var(--good, #2f8f5b)', warn: 'var(--warn, #d38b1d)'
 export function healthTone(score: number | null | undefined): string {
   if (score == null || Number.isNaN(Number(score))) return 'var(--ink-faint, #A09C97)'
   const s = Number(score)
-  return s >= 70 ? TONE.good : s >= 40 ? TONE.warn : TONE.critical
+  return s >= 65 ? TONE.good : s >= 40 ? TONE.warn : TONE.critical   // one rule, shared with the mobile app
 }
 export function churnTone(pct: number | null | undefined): string { return pct == null ? 'var(--ink-faint, #A09C97)' : healthTone(100 - Number(pct)) }
 export function riskTone(level: string | null | undefined): string { return level === 'high' ? TONE.critical : level === 'medium' ? TONE.warn : level === 'low' ? TONE.good : 'var(--ink-faint, #A09C97)' }
-export function riskFromHealth(score: number | null | undefined): 'high' | 'medium' | 'low' { const s = Number(score ?? 0); return s >= 70 ? 'low' : s >= 40 ? 'medium' : 'high' }
+export function riskFromHealth(score: number | null | undefined): 'high' | 'medium' | 'low' { const s = Number(score ?? 0); return s >= 65 ? 'low' : s >= 40 ? 'medium' : 'high' }
 
 
 // ---------------------------------------------------------------------------
@@ -114,4 +114,11 @@ export function formatWhen(input: string | number | Date | null | undefined, now
   if (days < 14) return `${days}d ago`
   const d = new Date(t)
   return d.toLocaleDateString('en-US', d.getFullYear() === new Date(now).getFullYear() ? { month: 'short', day: 'numeric' } : { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+/** AI confidence, the same rule as the mobile app: 80% and up green, 50 to 79 orange, under 50 red. */
+export function confTone(conf: number | string | null | undefined): string {
+  const n = typeof conf === 'number' ? conf : parseFloat(String(conf ?? ''))
+  if (!Number.isFinite(n)) return 'var(--ink-faint, #A09C97)'
+  return n >= 80 ? TONE.good : n >= 50 ? 'var(--accent, #E85A25)' : TONE.critical
 }

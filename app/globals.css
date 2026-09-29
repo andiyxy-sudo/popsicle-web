@@ -4454,3 +4454,73 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .ask-open-top > span { font-size: 11px !important; letter-spacing: 2.2px !important; }
 /* the late commitments panel under the Pulse headline, 2.5% up */
 .late25 { zoom: 1.025; }
+/* ═════════ SHARED TOKENS WITH THE MOBILE APP ═════════
+   The handoff pack's components use --pk-* variables. Rather than carry a second palette, these point at
+   the portal's own tokens, so both apps share one set of names and this app keeps one source of colour.
+   Light values already match the mobile app hex for hex; dark follows the portal's darker paper. */
+:root {
+  --pk-paper: var(--paper); --pk-sheet: var(--paper-raised, var(--paper)); --pk-card: var(--surface, var(--paper-raised));
+  --pk-ink: var(--ink); --pk-ink2: var(--ink-muted, #5C5855); --pk-muted: var(--ink-muted, #5C5855); --pk-faint: var(--ink-faint, #C6BFB4);
+  --pk-rule: var(--hairline, #EFEAE1); --pk-border: var(--border, #E5DFD4); --pk-block: rgba(14,13,11,.035);
+  --pk-orange: var(--accent); --pk-orange-bright: #FF6B35; --pk-orange-light: #FF8A50; --pk-orange-tint: var(--accent-tint, #FFF1EA);
+  --pk-red: var(--critical); --pk-red-tint: var(--critical-tint, rgba(196,61,43,.08));
+  --pk-amber: var(--warn); --pk-green: var(--good); --pk-support: #FFC9AE;
+  --pk-gradient: linear-gradient(135deg, #FF8A50, #FF6B35);
+  --pk-font: var(--font-sans, 'Outfit', system-ui, sans-serif); --pk-mono: 'DM Mono', ui-monospace, monospace;
+  --pk-ease-out: cubic-bezier(.2,.9,.25,1); --pk-ease-glide: cubic-bezier(.2,.8,.2,1); --pk-ease-inout: cubic-bezier(.65,0,.35,1);
+}
+[data-theme="dark"] { --pk-block: rgba(242,236,227,.05); }
+
+/* Popsicle motion for the web, matching the mobile app. Everything stops with Reduce motion. */
+
+/* 1 · lines draw themselves; fills fade in; bars grow */
+.pk-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pk-draw 1.3s var(--pk-ease-out) .15s forwards; }
+@keyframes pk-draw { to { stroke-dashoffset: 0; } }
+.pk-fade-in { opacity: 0; animation: pk-fade .9s ease .3s forwards; }
+@keyframes pk-fade { to { opacity: 1; } }
+.pk-pop { opacity: 0; transform-box: fill-box; transform-origin: center; animation: pk-pop .35s var(--pk-ease-out) forwards; }
+@keyframes pk-pop { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: scale(1); } }
+.pk-grow { transform-origin: left center; animation: pk-grow .7s var(--pk-ease-out) both; }
+@keyframes pk-grow { from { transform: scaleX(0); } }
+
+/* 2 · a changed figure flashes the direction it moved */
+.pk-flash-up { animation: pk-flash-up 1.4s ease; border-radius: 8px; }
+.pk-flash-down { animation: pk-flash-down 1.4s ease; border-radius: 8px; }
+@keyframes pk-flash-up { 15% { background: rgba(47,143,91,.16); color: var(--pk-green); } }
+@keyframes pk-flash-down { 15% { background: rgba(228,87,74,.16); color: var(--pk-red); } }
+
+/* 4 · pages arrive from the side you moved toward (set --pk-dir to 1 or -1), or rise on first load */
+.pk-page { animation: pk-page .38s var(--pk-ease-out) both; }
+@keyframes pk-page { from { opacity: 0; transform: translate(calc(var(--pk-dir, 0) * 36px), calc((1 - var(--pk-dir, 0) * var(--pk-dir, 0)) * 10px)); } }
+
+/* 5 · rows rise in one after another: style="--i: 3" (index) */
+.pk-rise { animation: pk-rise .42s var(--pk-ease-out) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes pk-rise { from { opacity: 0; transform: translateY(12px); } }
+
+/* 6 · mark handled: the tick draws, then the row folds away (add .pk-leaving) */
+.pk-tick { stroke-dasharray: 1; stroke-dashoffset: 1; animation: pk-draw .35s var(--pk-ease-out) forwards; }
+.pk-leaving { animation: pk-fold .45s var(--pk-ease-inout) .45s forwards; overflow: hidden; }
+@keyframes pk-fold { to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; } }
+
+/* 8 · the "Sent" chip pops in */
+.pk-sent { animation: pk-sent .4s cubic-bezier(.3,1.6,.5,1) both; }
+@keyframes pk-sent { from { opacity: 0; transform: scale(.4); } }
+.pk-fly-away { animation: pk-fly .38s cubic-bezier(.55,0,1,.45) forwards; transform-origin: 50% 0; }
+@keyframes pk-fly { to { opacity: 0; transform: translateY(-40px) scale(.15); } }
+
+/* 9 · a new Concern slides in with a red glow that fades (.pk-arrive, plus .pk-critical for the glow) */
+.pk-arrive { animation: pk-arrive .5s var(--pk-ease-out) both; }
+@keyframes pk-arrive { from { opacity: 0; transform: translateY(-24px); } }
+.pk-critical { animation: pk-arrive .5s var(--pk-ease-out) both, pk-glow 2.4s ease .4s both; }
+@keyframes pk-glow { 0% { box-shadow: 0 0 0 0 rgba(228,87,74,0); } 12% { box-shadow: 0 0 22px 6px rgba(228,87,74,.4); } 100% { box-shadow: 0 0 0 0 rgba(228,87,74,0); } }
+
+/* 12 · a meeting about to start pulses */
+.pk-pulse { animation: pk-pulse 1.6s ease-in-out infinite; }
+@keyframes pk-pulse { 50% { transform: scale(1.35); box-shadow: 0 0 0 6px rgba(232,90,37,.22); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-draw, .pk-tick { animation: none; stroke-dashoffset: 0; }
+  .pk-fade-in, .pk-pop, .pk-grow, .pk-page, .pk-rise, .pk-arrive, .pk-critical, .pk-sent, .pk-pulse,
+  .pk-flash-up, .pk-flash-down { animation: none; opacity: 1; transform: none; }
+  .pk-leaving, .pk-fly-away { animation-duration: .01s; animation-delay: 0s; }
+}

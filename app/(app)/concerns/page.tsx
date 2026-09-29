@@ -4,6 +4,7 @@ import { DEMO_SIGNALS, DEMO_PULSE_WEEK, DEMO_SIGNALS_HEAD } from '@/lib/demo-dat
 import { ConcernsReal } from './ConcernsReal'
 import { orgIdsServer } from '@/lib/org'
 import { fetchAllData } from '@/lib/fetchAll'
+import { readSettings, passesEngine } from '@/lib/settings'
 
 export default async function SignalsPage() {
   const supabase = await createClient()
@@ -25,5 +26,10 @@ export default async function SignalsPage() {
     supabase.from('signals').select('*').in('user_id', ids).eq('is_dismissed', false).eq('status', 'handled').order('handled_at', { ascending: false }).limit(100),
   ])
 
-  return <ConcernsReal signals={[...(open ?? []), ...(handled ?? [])]} />
+  // the Concern Engine settings decide what reaches the screen: types switched off never appear,
+  // and low-confidence Concerns are held back unless the sensitivity asks for them
+  const settings = readSettings(claims.user_metadata as Record<string, unknown> | null)
+  const kept = (open ?? []).filter(sg => passesEngine(settings, sg as never))
+  const held = (open ?? []).length - kept.length
+  return <ConcernsReal signals={[...kept, ...(handled ?? [])]} heldByEngine={held} />
 }
