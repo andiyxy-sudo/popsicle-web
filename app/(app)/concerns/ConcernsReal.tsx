@@ -16,7 +16,7 @@ type DemoHead = { week: typeof DEMO_PULSE_WEEK; head: typeof DEMO_SIGNALS_HEAD }
 // analysis + the real thread. Snooze/dismiss update optimistically; the draft
 // opens in a modal with copy / open-in-email / regenerate.
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { AskThis } from '@/components/agent/AskThis'
@@ -25,6 +25,7 @@ import { useSettings } from '@/lib/useSettings'
 import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 import { CountUp } from '@/components/ui/CountUp'
 import { SourceIcon, ConfArc } from '@/components/pk/SourceIcon'
+import { useFlip, flyTo, useArrivals, useTypewriter } from '@/lib/pk/motion'
 
 interface DBSignal {
   id: string
@@ -86,6 +87,9 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
   const [busyId, setBusyId] = useState<string | null>(null)
   const [leaving, setLeaving] = useState<Set<string>>(new Set())
   const [justProtected, setJustProtected] = useState(0)
+  const protectedRef = useRef<HTMLSpanElement | null>(null)
+  const [typing, setTyping] = useState(false)
+  const fresh = useArrivals(signals.map(x => String(x.id)))
   // Draft modal state
   const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
   // per-action popups (row buttons): each row action has its own window instead of
@@ -97,6 +101,8 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
   const [closeMode, setCloseMode] = useState<'done' | 'reset'>('done'); const [closeDate, setCloseDate] = useState('')
   const [draftIntent, setDraftIntent] = useState<string>('')
   const [draft, setDraft] = useState<Draft | null>(null)
+  // a draft writes itself in rather than appearing whole, then becomes an ordinary editable field
+  const typedBody = useTypewriter(draft?.body ?? '', typing)
   const [draftErr, setDraftErr] = useState<string>('')
   const [draftSlow, setDraftSlow] = useState(false)
   const [contacts, setContacts] = useState<string[]>([])
@@ -293,7 +299,10 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
     if (busyId) return
     setBusyId(s.id)
     setLeaving(prev => new Set(prev).add(s.id))   // tick draws, row folds (handoff motion 6)
-    setJustProtected(v => v + (Number(s.risk_amount) || 0))
+    // the amount leaves the row and lands on the figure it adds to, so the two read as one event
+    const amountEl = document.querySelector<HTMLElement>(`#sig-${CSS.escape(s.id)} [data-amount]`)
+    void flyTo(amountEl, protectedRef.current, { text: fmtMoney(Number(s.risk_amount) || 0) ?? '', color: 'var(--good, #2f8f5b)' })
+    setTimeout(() => setJustProtected(v => v + (Number(s.risk_amount) || 0)), 420)
     const patch = { status: 'handled', handled_at: new Date().toISOString(), handled_action: action || 'Handled' }
     if (isDemoSig(s)) {
       setSignals(prev => prev.map(x => x.id === s.id ? { ...x, ...patch } : x))
@@ -403,6 +412,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
         setDraftState('error'); return
       }
       setDraft({ subject: j.subject || '', body: j.body, to: j.to || '', provenance: j.provenance })
+      setTyping(true); setTimeout(() => setTyping(false), Math.min(2600, 380 + (j.body?.length ?? 0) * 2.4))
       setDraftState('ready')
     } catch { setDraftErr('Give it another try in a moment.'); setDraftState('error') }
   }
@@ -461,6 +471,8 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
   const minDeal = mySettings.thresholds.minDeal
   const smallDeals = minDeal ? openShown.filter(s => s.severity !== 'high' && Number(s.risk_amount || 0) > 0 && Number(s.risk_amount) < minDeal) : []
   const shown = showSmall ? openShown : openShown.filter(s => !smallDeals.includes(s))
+  // the rows move to their new places when the filter changes, instead of the table blinking
+  const listRef = useFlip<HTMLDivElement>(`${filter}|${showSmall}|${listLimit}`)
   const ACTION_LABEL = CONCERN_ACTIONS
 
   return (
@@ -540,7 +552,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
       </div>
 
       {/* alert rows */}
-      <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
+      <div ref={listRef} style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)' }}>
         {smallDeals.length > 0 && (
           <button onClick={() => setShowSmall(v => !v)} style={{ font: 'inherit', fontSize: 13, color: 'var(--ink-faint)', background: 'none', border: 0, padding: '6px 0 14px', cursor: 'pointer', textAlign: 'left' }}>
             {showSmall ? `Hide the ${smallDeals.length} smaller-deal signal${smallDeals.length === 1 ? '' : 's'}` : `${smallDeals.length} Concern${smallDeals.length === 1 ? '' : 's'} on deals under $${Math.round(minDeal / 1000)}K hidden by your settings · Show`}
@@ -557,7 +569,8 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
           const money = fmtMoney(s.risk_amount)
           const action = ACTION_LABEL[s.signal_type || ''] || 'Follow up'
           return (
-            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} className={`tbl-row askable ask-slot alerts5 pk-rise${leaving.has(s.id) ? " pk-leaving" : ""}`}
+            <div key={s.id} id={`sig-${s.id}`} onClick={() => setDetailFor(s)} data-flip={String(s.id)}
+              className={`tbl-row askable ask-slot alerts5 pk-rise${leaving.has(s.id) ? " pk-leaving" : ""}${fresh.has(String(s.id)) ? " pk-arrive" : ""}`}
               style={{ ['--i' as string]: Math.min(rowIndex, 12), display: 'grid', gridTemplateColumns: '34px minmax(0,1fr) 230px 132px 30px', alignItems: 'center', gap: 20,
                 padding: '20px 0 20px 18px', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative', cursor: 'pointer',
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
@@ -588,7 +601,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                     {typeof (s.ai_analysis as { confidence?: number } | null)?.confidence === 'number' &&
                       <ConfArc conf={(s.ai_analysis as { confidence: number }).confidence} size={26} />}
                     <div>
-                      <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
+                      <div data-amount style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
                     </div>
                     {(() => {
@@ -643,7 +656,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
             <path className="pk-tick" pathLength={1} d="M4 12.5l5.2 5.2L20 7" stroke="var(--good, #2f8f5b)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
           <span style={{ fontSize: 13.5, color: 'var(--good, #2f8f5b)', fontWeight: 600 }}>
-            <CountUp k="protected-now" value={fmtMoney(justProtected) ?? `$${justProtected}`} /> protected this session
+            <span ref={protectedRef}><CountUp k="protected-now" value={fmtMoney(justProtected) ?? `$${justProtected}`} /></span> protected this session
           </span>
         </div>
       )}
@@ -1176,7 +1189,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                   style={{ width: '100%', font: 'inherit', fontSize: 19, fontWeight: 700, letterSpacing: '-.02em', color: 'var(--ink)', border: 0, outline: 0, background: 'transparent', padding: '24px 0 16px' }} />
 
                 {/* body */}
-                <textarea value={draft.body} onChange={e => setDraft({ ...draft, body: e.target.value })} rows={11}
+                <textarea value={typing ? typedBody : draft.body} readOnly={typing} onChange={e => setDraft({ ...draft, body: e.target.value })} rows={11}
                   style={{ width: '100%', boxSizing: 'border-box', padding: '22px 26px', fontSize: 15.5, lineHeight: 1.75, color: 'var(--ink)', background: 'var(--d-raised, #FFFDFA)', border: '1px solid var(--hairline, #EFEAE1)', borderRadius: 0, outline: 'none', resize: 'vertical', fontFamily: "'Outfit',sans-serif", display: 'block' }} />
 
                 {draft.provenance && (

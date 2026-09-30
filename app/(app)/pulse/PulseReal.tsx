@@ -992,7 +992,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           {secHead('Concern engine', mono('live'))}
           <div className="pulse10">
           {loopRows.map((l, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+            <div key={i} className="pk-thread" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, minWidth: 0 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.4px', color: 'var(--ink-faint)' }}>{(l as { step?: string }).step}</span>
                 <div style={{ minWidth: 0 }}>
@@ -1068,7 +1068,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
               </div>
               {rows.map(({ a, sigs, dark, top, risk, health }) => (
                 <div className="askable ask-offset ask-slot" key={a.id} style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '16px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13.5, lineHeight: 1.5, letterSpacing: 'normal', fontWeight: 400, color: 'var(--ink-muted)' }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
+                  <span className="pk-tone" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(health), fontVariantNumeric: 'tabular-nums' }}>{health}</span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <span onClick={() => router.push(`/accounts/${encodeURIComponent(a.name)}`)} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14.5, color: 'var(--ink)', letterSpacing: '-.005em', cursor: 'pointer' }}>{a.name}</span>
                     <div style={{ ...cell, fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 3, letterSpacing: 'normal' }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>

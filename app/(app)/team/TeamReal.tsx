@@ -137,7 +137,7 @@ function Spark({ pts, color }: { pts: number[]; color: string }) {
   const [ex, ey] = xy[xy.length - 1]
   return (
     <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={72} preserveAspectRatio="none" style={{ display: 'block', overflow: 'visible' }}>
-      <path d={d} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
+      <path key={d} className="pk-draw" d={d} fill="none" stroke={color} strokeWidth="1.8" vectorEffect="non-scaling-stroke" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={ex} cy={ey} r="2.2" fill={color} vectorEffect="non-scaling-stroke" />
     </svg>
   )

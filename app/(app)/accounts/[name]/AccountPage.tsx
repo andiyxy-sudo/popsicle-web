@@ -12,7 +12,7 @@ import { ThreadModal, type ThreadSource } from '@/components/account/ThreadModal
 // the account's real signals. Demo accounts read from the bundled dataset;
 // real accounts read the get_account_360 RPC.
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES } from '@/lib/demo-dataset'
 
@@ -222,6 +222,12 @@ function TimelineRail({ items, account, onAsk }: { items: RailItem[]; account: s
 export function AccountPage({ accountName, account, signals, messages, demo = {} }: { accountName: string; account: Acct | null; signals: Sig[]; messages: Msg[]; demo?: DemoSlices }) {
   const router = useRouter()
   const [tab, setTab] = useState<'overview' | 'comms' | 'people' | 'timeline' | 'contracts'>('overview')
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
+  const [ink, setInk] = useState({ x: 0, w: 0 })
+  useEffect(() => {
+    const el = tabRefs.current[tab]
+    if (el) setInk({ x: el.offsetLeft, w: el.offsetWidth })
+  }, [tab])
   const acct = account
   const [flag, setFlag] = useState<RiskFlag | null>(null)
   const [mounted, setMounted] = useState(false)
@@ -321,13 +327,14 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       </div>
 
       {/* tabs */}
-      <div style={{ display: 'flex', gap: 26, marginTop: 'var(--gap-m)', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+      <div className="pk-tabs" style={{ display: 'flex', gap: 26, marginTop: 'var(--gap-m)', borderBottom: '1px solid var(--hairline, #EFEAE1)', position: 'relative' }}>
         {(['overview', 'comms', 'people', 'timeline', 'contracts'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
+          <button key={t} ref={el => { tabRefs.current[t] = el }} onClick={() => setTab(t)}
             style={{ font: 'inherit', fontSize: 15, fontWeight: tab === t ? 600 : 400, color: tab === t ? 'var(--accent)' : 'var(--ink-muted)', background: 'none', border: 0, borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent', padding: '0 0 12px', cursor: 'pointer', textTransform: 'capitalize' }}>
             {t}
           </button>
         ))}
+        <span className="pk-ink" style={{ left: 0, width: ink.w, transform: `translateX(${ink.x}px)` }} />
       </div>
 
       {/* OVERVIEW */}

@@ -2754,8 +2754,31 @@ body[data-modal="1"] .agent-card { display: none; }
   background: rgba(255,255,255,.86); backdrop-filter: blur(24px) saturate(1.4); -webkit-backdrop-filter: blur(24px) saturate(1.4);
   border: 1px solid var(--d-hair, rgba(14,13,11,.08)); border-radius: 22px;
   box-shadow: 0 40px 90px -30px rgba(14,13,11,.35), 0 2px 8px rgba(14,13,11,.04);
-  transform-origin: bottom center; animation: dockUp .42s cubic-bezier(.2,.9,.25,1.05) both; }
-@keyframes dockUp { from { opacity: 0; transform: translateY(24px) scaleY(.94); } to { opacity: 1; transform: none; } }
+  transform-origin: bottom center;
+  /* the sheet unfolds upward FROM the bar rather than sliding in as a finished block: it reveals top-down
+     with clip-path while it settles, so the bar and the sheet read as one object opening */
+  animation: dockUnfold .40s cubic-bezier(.45,.05,.25,1) both, dockSettle .52s cubic-bezier(.16,1,.3,1) both; }
+@keyframes dockUnfold {
+  from { clip-path: inset(100% 0 0 0 round 22px); }
+  to   { clip-path: inset(0 0 0 0 round 22px); }
+}
+@keyframes dockSettle {
+  from { opacity: 0; transform: translateY(12px) scale(.985); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; }
+}
+/* what is inside arrives just after the shell, head first, then the body, so the eye is led into it */
+.dock-sheet .dock-head { animation: dockIn .38s .10s cubic-bezier(.16,1,.3,1) both; }
+.dock-sheet .dock-pane > * { animation: dockIn .42s cubic-bezier(.16,1,.3,1) both; }
+.dock-sheet .dock-pane > *:nth-child(1) { animation-delay: .14s; }
+.dock-sheet .dock-pane > *:nth-child(2) { animation-delay: .19s; }
+.dock-sheet .dock-pane > *:nth-child(3) { animation-delay: .24s; }
+.dock-sheet .dock-pane > *:nth-child(4) { animation-delay: .28s; }
+.dock-sheet .dock-pane > *:nth-child(n+5) { animation-delay: .31s; }
+@keyframes dockIn { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+/* and the bar underneath acknowledges it, instead of sitting still while a sheet appears above it */
+.dock:has(.dock-sheet) .ed-askbar { animation: barNudge .5s cubic-bezier(.16,1,.3,1) both; }
+@keyframes barNudge { 0% { transform: translateY(0) } 35% { transform: translateY(2px) } 100% { transform: translateY(0) } }
 .dock-head { display: flex; align-items: center; gap: 8px; padding: 14px 18px 12px 22px; border-bottom: 1px solid var(--d-hair, rgba(14,13,11,.06)); flex: none; min-width: 0; }
 .dock-from { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--ink, #0E0D0B); }
 .dock-about { font-family: 'DM Mono', monospace; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-faint, #A09C97); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
@@ -2779,7 +2802,11 @@ body[data-modal="1"] .agent-card { display: none; }
 .ed-askbar.docked { box-shadow: 0 10px 30px -18px rgba(14,13,11,.3), 0 1px 3px rgba(14,13,11,.04); }
 .dock-reopen { font: inherit; font-size: 12.5px !important; font-weight: 600; padding: 7px 12px !important; background: rgba(232,90,37,.08) !important; color: #E85A25 !important; box-shadow: none !important; }
 @media (max-width: 720px) { .dock { width: 100%; } .dock-sheet { max-height: 58vh; } .dock-head-actions { gap: 10px; } }
-@media (prefers-reduced-motion: reduce) { .dock-sheet { animation: none; } .dock-caret { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .dock-sheet, .dock-sheet .dock-head, .dock-sheet .dock-pane > *, .dock:has(.dock-sheet) .ed-askbar { animation: none; }
+  .dock-sheet { clip-path: none; }
+  .dock-caret { animation: none; }
+}
 
 /* v11.95: the agent talks through the Ask bar */
 .dock-said { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--d-hair, rgba(14,13,11,.06)); transition: background .6s ease; }
@@ -4534,3 +4561,65 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 
 /* Ask is a single screen: the panes scroll, the page does not */
 .ask-open { height: 100%; min-height: 0; overflow: hidden; }
+
+/* ═════════ MOMENTS THAT CARRY MEANING ═════════ */
+/* a Concern that has just arrived announces itself once, then settles */
+@keyframes pkArrive {
+  0%   { opacity: 0; transform: translateY(-10px); box-shadow: inset 3px 0 0 var(--accent), 0 0 0 0 rgba(232,90,37,.30); }
+  22%  { opacity: 1; transform: none; box-shadow: inset 3px 0 0 var(--accent), 0 0 0 7px rgba(232,90,37,.14); }
+  100% { opacity: 1; transform: none; box-shadow: inset 3px 0 0 transparent, 0 0 0 0 rgba(232,90,37,0); }
+}
+.pk-arrive { animation: pkArrive 2.4s cubic-bezier(.16,1,.3,1) both; }
+
+/* a figure that has crossed a threshold moves THROUGH the colour rather than swapping to it */
+.pk-tone { transition: color .55s cubic-bezier(.4,0,.2,1); }
+@keyframes pkCross { 0%,100% { transform: none } 30% { transform: scale(1.09) } }
+.pk-crossed { animation: pkCross .6s cubic-bezier(.16,1,.3,1) both; }
+
+/* the pulse that travels the Concern engine, 01 to 04 */
+.pk-thread { position: relative; overflow: hidden; }
+.pk-thread::after {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transform: translateX(-100%); animation: pkFlow 3.6s linear infinite;
+}
+.pk-thread:nth-of-type(2)::after { animation-delay: .9s }
+.pk-thread:nth-of-type(3)::after { animation-delay: 1.8s }
+.pk-thread:nth-of-type(4)::after { animation-delay: 2.7s }
+@keyframes pkFlow { to { transform: translateX(100%) } }
+
+/* a chart that draws itself on arrival instead of being there already */
+@keyframes pkDrawLine { to { stroke-dashoffset: 0 } }
+.pk-draw { stroke-dasharray: var(--len, 1200); stroke-dashoffset: var(--len, 1200); animation: pkDrawLine 1.1s .1s cubic-bezier(.4,0,.2,1) both; }
+@keyframes pkGrow { from { transform: scaleY(0) } to { transform: scaleY(1) } }
+.pk-bar { transform-origin: bottom; animation: pkGrow .7s cubic-bezier(.16,1,.3,1) both; }
+
+/* page transitions keyed to the direction you moved in the nav */
+@keyframes pkPageUp   { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+@keyframes pkPageDown { from { opacity: 0; transform: translateY(-14px) } to { opacity: 1; transform: none } }
+.pk-page-up   { animation: pkPageUp .42s cubic-bezier(.16,1,.3,1) both }
+.pk-page-down { animation: pkPageDown .42s cubic-bezier(.16,1,.3,1) both }
+
+/* tabs: the underline travels between tabs, and the pane behind it changes over */
+.pk-tabs { position: relative }
+.pk-tabs .pk-ink {
+  position: absolute; bottom: -1px; height: 2px; background: var(--accent);
+  transition: transform .42s cubic-bezier(.16,1,.3,1), width .42s cubic-bezier(.16,1,.3,1);
+}
+@keyframes pkPane { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
+.pk-pane { animation: pkPane .34s cubic-bezier(.16,1,.3,1) both }
+
+/* every sheet and panel opens the way the Ask sheet does */
+.pk-unfold {
+  transform-origin: bottom center;
+  animation: dockUnfold .40s cubic-bezier(.45,.05,.25,1) both, dockSettle .52s cubic-bezier(.16,1,.3,1) both;
+}
+.pk-unfold-top { transform-origin: top center; animation: pkPaneDown .42s cubic-bezier(.16,1,.3,1) both }
+@keyframes pkPaneDown { from { opacity: 0; transform: translateY(-10px) scale(.99) } to { opacity: 1; transform: none } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pk-arrive, .pk-crossed, .pk-draw, .pk-bar, .pk-page-up, .pk-page-down, .pk-pane, .pk-unfold, .pk-unfold-top { animation: none }
+  .pk-thread::after { animation: none; opacity: 0 }
+  .pk-tone { transition: none }
+  .pk-draw { stroke-dashoffset: 0 }
+}

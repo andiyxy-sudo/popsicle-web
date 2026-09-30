@@ -275,9 +275,9 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
                     <line key={f} x1="0" x2={W} y1={H * f} y2={H * f} stroke="var(--hairline, #EFEAE1)" strokeWidth="1" strokeDasharray="4 6" vectorEffect="non-scaling-stroke" />
                   ))}
                   <path d={`${path('best')} L${W},${H} L0,${H} Z`} fill="url(#fcFill)" />
-                  <path d={path('best')} fill="none" stroke="var(--ink, #0E0D0B)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
-                  <path d={path('commit')} fill="none" stroke="var(--good, #2f8f5b)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
-                  <path d={path('risk')} fill="none" stroke="var(--critical, #c43d2b)" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path className="pk-draw" style={{ animationDelay: "0s" }} d={path('best')} fill="none" stroke="var(--ink, #0E0D0B)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path className="pk-draw" style={{ animationDelay: ".12s" }} d={path('commit')} fill="none" stroke="var(--good, #2f8f5b)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+                  <path className="pk-draw" style={{ animationDelay: ".24s" }} d={path('risk')} fill="none" stroke="var(--critical, #c43d2b)" strokeWidth="2" strokeDasharray="6 5" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
                   <circle cx={xs[xs.length - 1]} cy={yOf(trend[trend.length - 1].best)} r="4.5" fill="var(--critical, #c43d2b)" stroke="var(--paper, #FBF8F3)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                   {hoverI != null && (
                     <g>
@@ -379,10 +379,10 @@ export function ForecastReal({ accounts, signals, demoMovers, demoFigures }: { a
           <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 10, borderBottom: '1px solid var(--rule-strong, #0E0D0B)' }}>
             Scenario model
           </div>
-          <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(38px,4.2vw,52px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)', marginTop: 16 }}>
+          <div className="pk-tone" style={{ transition: 'color .4s cubic-bezier(.4,0,.2,1)', fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 'clamp(38px,4.2vw,52px)', letterSpacing: '-.05em', lineHeight: 1, color: 'var(--good, #2f8f5b)', marginTop: 16 }}>
             {formatCurrency(scenario)}
           </div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: scenario - commitF >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 10 }}>
+          <div className="pk-tone" style={{ fontSize: 14, fontWeight: 600, color: scenario - commitF >= 0 ? 'var(--good, #2f8f5b)' : 'var(--critical, #c43d2b)', marginTop: 10 }}>
             {scenario - commitF >= 0 ? '+' : '-'}{formatCurrency(Math.abs(scenario - commitF))} vs commit
           </div>
 

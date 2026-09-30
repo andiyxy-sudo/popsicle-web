@@ -28,6 +28,16 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const [ask, setAsk] = useState('')
   const router = useRouter()
   const pathname = usePathname()
+  // moving DOWN the nav slides the page up, moving back slides it down, so the app has a sense of place
+  const NAV_ORDER = ['/pulse', '/concerns', '/portfolio', '/forecast', '/intelligence', '/team', '/integrations', '/settings']
+  const rank = (p: string) => { const i = NAV_ORDER.findIndex(x => p.startsWith(x)); return i < 0 ? 99 : i }
+  const lastRank = useRef(rank(pathname))
+  const [dir, setDir] = useState<'up' | 'down'>('up')
+  useEffect(() => {
+    const now = rank(pathname)
+    setDir(now >= lastRank.current ? 'up' : 'down')
+    lastRank.current = now
+  }, [pathname])
   // the section-entrance animation plays only while this is set (navigation), never on re-renders
   // Starts false so server-rendered HTML never carries the animation class: a full
   // page load (first sign-in, refresh) paints the content immediately with no
@@ -106,7 +116,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
           {/* warm corner wash (design shell). Lives inside the scroll column so
               it is pinned to the top of the page and scrolls away with it. */}
           <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(circle 760px at 90% -8%, rgba(255,138,80,.22), rgba(255,138,80,.09) 40%, rgba(255,138,80,0) 70%)' }} />
-          {children}
+          <div key={pathname} className={dir === 'up' ? 'pk-page-up' : 'pk-page-down'}>{children}</div>
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>

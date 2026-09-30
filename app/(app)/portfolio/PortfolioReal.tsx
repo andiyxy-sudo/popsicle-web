@@ -15,6 +15,7 @@ import { orgIdsBrowser } from '@/lib/org'
 import { AskThis } from '@/components/agent/AskThis'
 import { healthOf } from '@/lib/health'
 import { CONCERN_ACTIONS } from '@/lib/concern-labels'
+import { useFlip } from '@/lib/pk/motion'
 
 interface Account {
   id: string; name: string; domain?: string; health_score: number; value?: number
@@ -71,6 +72,8 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
   const [mounted, setMounted] = useState(false)
   const [statHover, setStatHover] = useState<number | null>(null)   // strong underline follows the pointer
   const [view, setView] = useState<'all' | 'high' | 'closing' | 'stalled'>('all')
+  // switching view reorders the table with movement, so you can see which accounts moved
+  const tableRef = useFlip<HTMLDivElement>(view)
   useEffect(() => { setMounted(true) }, [])
   const [sigMap, setSigMap] = useState<Map<string, SigLite[]>>(new Map())
   const [soon48, setSoon48] = useState<Set<string>>(new Set())
@@ -264,15 +267,17 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
               <span style={{ textAlign: 'center' }}>Stage</span><span>Concern</span><span style={{ textAlign: 'center' }}>Owner</span><span style={{ textAlign: 'center' }}>Trend</span><span style={{ textAlign: 'center' }}>Touch</span><span style={{ textAlign: 'center' }}>Actions</span><span />
             </div>
             {ordered.length === 0 && <EmptyState line={view === 'all' ? 'No accounts yet.' : `Nothing ${view === 'high' ? 'high risk' : view} right now.`} hint={view === 'all' ? 'Let Popsicle scan your inbox and find the companies worth tracking.' : 'Switch the view, or wait for the next Concern.'} compact />}
+            <div ref={tableRef}>
             {ordered.map(a => {
               const sigs = sigMap.get(a.name) ?? []
               const h = healthOf(a, sigs)
               const risk = riskOf(a, sigs)
               const top = topSignalOf(sigs)
               return (
-                <div key={a.id} onClick={() => openA360(a)} className="tbl-row askable ask-offset ask-slot port10"
+                <div key={a.id} onClick={() => openA360(a)} data-flip={String(a.id)}
+                  className="tbl-row askable ask-offset ask-slot port10"
                   style={{ display: 'grid', gridTemplateColumns: COLS, columnGap: 6, alignItems: 'center', padding: '15px 0', borderTop: '1px solid var(--hairline, #EFEAE1)', fontSize: 13, lineHeight: 1.4, cursor: 'pointer' }}>
-                  <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
+                  <span className="pk-tone" style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, letterSpacing: '-.03em', fontSize: 22, color: healthTone(h), fontVariantNumeric: 'tabular-nums' }}><X m="account_health" account={a.name}>{h}</X></span>
                   <div style={{ minWidth: 0, paddingLeft: 26 }}>
                     <Link href={`/accounts/${encodeURIComponent(a.name)}`} prefetch onClick={e => e.stopPropagation()} style={{ ...cell, display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>{a.name}</Link>
                     <div style={{ ...cell, fontSize: 12, color: 'var(--ink-faint)', marginTop: 2 }}>{a.owner ? <>{a.owner}{meta[a.name]?.role ? ` · ${meta[a.name].role}` : ''}</> : (a.domain || '')}</div>
@@ -297,6 +302,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
                 </div>
               )
             })}
+            </div>
           </>
         )
       })()}
