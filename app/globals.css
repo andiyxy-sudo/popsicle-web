@@ -4445,7 +4445,11 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* Ask, the opening screen: the briefing, the suggested questions with their evidence and amounts,
    the bigger questions, the reading rail and the ledger, all 5% up. The field "What do you want to
    know?" and the Ask Popsicle eyebrow keep their size. */
-.ask-brief, .ask-open-cols, .ask-ledger { zoom: 1.05; }
+/* the +5% sits INSIDE the panes that already scroll, never on the grid itself: zooming the grid made the
+   page 5% taller than the viewport and the whole Ask screen started scrolling, which it must not do */
+.ask-brief, .ask-ledger { zoom: 1.05; }
+/* the two columns are NOT scaled: their panes are overflow:hidden by design, so 5% more would clip the
+   last question and the last thing Popsicle is reading rather than scroll to them */
 /* Settings, from the Account section down to the sign-out line: 2.5% up */
 .set25 { zoom: 1.025; }
 /* Integrations: the provider catalogue, 2.5% up. The headline and the summary above it stay */
@@ -4527,3 +4531,6 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* the source tile stays light in dark mode: these are full-colour brand marks and must not be knocked out */
 :root { --pk-source-tile: rgba(14,13,11,.045); }
 [data-theme="dark"] { --pk-source-tile: rgba(255,255,255,.92); }
+
+/* Ask is a single screen: the panes scroll, the page does not */
+.ask-open { height: 100%; min-height: 0; overflow: hidden; }

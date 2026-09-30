@@ -14,7 +14,11 @@ export function SourceIcon({ name, size = 32, dot }: { name: string; size?: numb
   const svg = key ? SOURCE_SVG[key] : ''
   // the integration pack first; for the few it does not carry (Zoho, Stripe, Snowflake, Drive) the
   // single-glyph mark; initials only when neither has one
-  const glyph = !svg ? MARKS[label] : undefined
+  const GLYPH_NAME: Record<string, string> = {
+    snowflake: 'Snowflake',   // Drive, Zoho and Stripe now come from the packs, in full colour
+  }
+  const raw = String(name ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const glyph = !svg ? (MARKS[GLYPH_NAME[raw] ?? label] ?? MARKS[label]) : undefined
   const initials = label.split(/[\s-]+/).slice(0, 2).map(w => w[0]).join('').toUpperCase() || '?'
   const tile: React.CSSProperties = {
     display: 'flex', width: size, height: size, borderRadius: size * 0.3, alignItems: 'center', justifyContent: 'center',
