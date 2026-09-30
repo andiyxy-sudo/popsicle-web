@@ -2079,7 +2079,10 @@ button, input, select, textarea { font-family: 'Outfit', sans-serif; }
    animation must not create scrollable overflow. */
 .content { overflow-anchor: none; scroll-padding-top: 0; }
 .dsk-screen, .content { overflow-x: hidden; }
-.dsk-screen.on { will-change: opacity; }
+/* NO will-change here: it makes .dsk-screen the containing block for anything position:fixed inside it,
+   which pinned every modal and sheet to the content column instead of the window. The screen fade is
+   cheap enough without the hint. */
+.dsk-screen.on { }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 html { scroll-behavior: auto; }
 
@@ -4629,3 +4632,28 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 .content:has(.ask-open) { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
 .content:has(.ask-open) > .ed-wash { display: none; }
 .content:has(.ask-open) .ask-open { flex: 1; min-height: 0; }
+
+/* ═════════ THE ASK SHEET, CLOSING AND SETTLING ═════════ */
+/* folding away: the reverse of the unfold, quicker, because leaving should never keep you waiting */
+@keyframes dockFold {
+  from { clip-path: inset(0 0 0 0 round 22px); opacity: 1; transform: none; }
+  to   { clip-path: inset(100% 0 0 0 round 22px); opacity: 0; transform: translateY(8px) scale(.99); }
+}
+.dock-sheet.dock-closing {
+  animation: dockFold .28s cubic-bezier(.45,.05,.55,.95) both;
+  pointer-events: none;
+}
+.dock-sheet.dock-closing .dock-head, .dock-sheet.dock-closing .dock-pane > * { animation: none; }
+
+/* the bar settles against the sheet while it is up: a touch lower, its shadow softened by the sheet
+   above it, and its top corners eased so the two read as one stack rather than two cards */
+.ed-askbar { transition: transform .38s cubic-bezier(.16,1,.3,1), box-shadow .38s cubic-bezier(.16,1,.3,1), border-radius .3s cubic-bezier(.16,1,.3,1); }
+.dock.dock-up .ed-askbar {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(14,13,11,.06), 0 6px 14px -8px rgba(14,13,11,.10), 0 18px 40px -26px rgba(14,13,11,.22) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dock-sheet.dock-closing { animation: none; opacity: 0 }
+  .ed-askbar { transition: none }
+}

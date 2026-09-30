@@ -37,6 +37,15 @@ export function AskDock() {
   // restore after mount (never during render, so server and client HTML agree)
   useEffect(() => { try { const r = sessionStorage.getItem('ask:dock'); if (r) setMsgs(JSON.parse(r) as Msg[]) } catch { /* ignore */ } loaded.current = true }, [])
   const [open, setOpen] = useState(false)
+  // the sheet FOLDS AWAY rather than disappearing: it stays mounted for the length of the exit
+  const [closing, setClosing] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => {
+    if (open) { setClosing(false); if (closeTimer.current) clearTimeout(closeTimer.current); return }
+    setClosing(true)
+    closeTimer.current = setTimeout(() => setClosing(false), 300)
+    return () => { if (closeTimer.current) clearTimeout(closeTimer.current) }
+  }, [open])
   useEffect(() => {   // the signal pop-ups stay quiet while this sheet is open
     if (typeof document === 'undefined') return
     document.documentElement.dataset.askOpen = open ? '1' : '0'
@@ -288,9 +297,9 @@ export function AskDock() {
   }, [pool.length, poolKey, focused, hover, reduced, steps, rot])
   const showLive = !!current && !focused && !ask && !busy && !streaming
   return (
-    <div className="dock" ref={dockRef}>
-      {open && (hasConvo || showSuggest) && (
-        <div className={`dock-sheet${moreBelow ? ' more-below' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
+    <div className={`dock${open ? ' dock-up' : ''}`} ref={dockRef}>
+      {(open || closing) && (hasConvo || showSuggest) && (
+        <div className={`dock-sheet${moreBelow ? ' more-below' : ''}${closing ? ' dock-closing' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
             <span className="dock-mark" aria-hidden>
               <svg viewBox="0 0 44 80" width="12" height="20" fill="none">

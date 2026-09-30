@@ -33,10 +33,17 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
   const rank = (p: string) => { const i = NAV_ORDER.findIndex(x => p.startsWith(x)); return i < 0 ? 99 : i }
   const lastRank = useRef(rank(pathname))
   const [dir, setDir] = useState<'up' | 'down'>('up')
+  const [animating, setAnimating] = useState(false)
   useEffect(() => {
     const now = rank(pathname)
     setDir(now >= lastRank.current ? 'up' : 'down')
     lastRank.current = now
+    // The class is REMOVED once the animation is done. A filling animation leaves transform as an
+    // identity matrix, and any transform on .content makes it the containing block for position:fixed,
+    // which pinned every modal to the content column instead of the window.
+    setAnimating(true)
+    const t = setTimeout(() => setAnimating(false), 460)
+    return () => clearTimeout(t)
   }, [pathname])
   // the section-entrance animation plays only while this is set (navigation), never on re-renders
   // Starts false so server-rendered HTML never carries the animation class: a full
@@ -112,7 +119,7 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Analytics userId={user.id} role={(user as { role?: string }).role} demo={isDemo} />
       {AGENT_ENABLED && <AgentPopup />}
       <div className="main" style={{ position: 'relative' }}>
-        <div key={pathname} className={`content${entering ? ' entering' : ''} ${dir === 'up' ? 'pk-page-up' : 'pk-page-down'}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
+        <div key={pathname} className={`content${entering ? ' entering' : ''} ${animating ? (dir === 'up' ? 'pk-page-up' : 'pk-page-down') : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {/* warm corner wash (design shell). Lives inside the scroll column so
               it is pinned to the top of the page and scrolls away with it. */}
           <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(circle 760px at 90% -8%, rgba(255,138,80,.22), rgba(255,138,80,.09) 40%, rgba(255,138,80,0) 70%)' }} />
