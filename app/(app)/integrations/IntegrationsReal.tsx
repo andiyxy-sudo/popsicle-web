@@ -10,6 +10,7 @@ import { PageHead } from '@/components/layout/PageHead'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useEscape } from '@/components/ui/useEscape'
 import { track } from '@/lib/analytics'
+import { SourceIcon } from '@/components/pk/SourceIcon'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -483,7 +484,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
               </div>
               <div style={{ position: 'absolute', right: -3, bottom: -3, width: 16, height: 16, borderRadius: '50%', background: 'var(--ok)', border: '2.5px solid var(--surface, #fff)' }} />
             </div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)' }}>{p.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}><SourceIcon name={p.key} size={34} /><div style={{ fontSize: 18, fontWeight: 800, color: 'var(--t1)' }}>{p.name}</div></div>
             <div style={{ fontSize: 12, color: 'var(--t3)' }}>Connected</div>
             {st?.identity && <div style={{ fontSize: 11.5, color: 'var(--t2)', fontWeight: 700, fontFamily: "'DM Mono',monospace", marginTop: 4 }}>{st.identity}</div>}
           </div>
@@ -608,7 +609,8 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                 const live = !!p.fn
                 return (
                   <div key={p.key} onClick={on ? () => { setSheet(p); setConfirmDc(false) } : undefined}
-                    style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
+                    style={{ display: 'grid', gridTemplateColumns: '40px minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>
+                    <SourceIcon name={p.key} size={40} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>

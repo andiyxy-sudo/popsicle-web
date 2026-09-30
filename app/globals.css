@@ -4524,3 +4524,6 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
   .pk-flash-up, .pk-flash-down { animation: none; opacity: 1; transform: none; }
   .pk-leaving, .pk-fly-away { animation-duration: .01s; animation-delay: 0s; }
 }
+/* the source tile stays light in dark mode: these are full-colour brand marks and must not be knocked out */
+:root { --pk-source-tile: rgba(14,13,11,.045); }
+[data-theme="dark"] { --pk-source-tile: rgba(255,255,255,.92); }

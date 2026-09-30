@@ -18,6 +18,7 @@ import { X } from '@/components/explain/Explain'
 import * as MX from '@/lib/metrics'
 import * as IX from '@/lib/intel'
 import { ReplayView } from '@/components/changes/Replay'
+import { SourceIcon } from '@/components/pk/SourceIcon'
 
 interface Sig { created_at?: string; account_name?: string | null; title?: string | null; severity?: string; signal_type?: string; source_integration?: string; risk_amount?: number; is_dismissed?: boolean; status?: string | null; handled_action?: string | null }
 interface Msg { received_at?: string; direction?: string; integration?: string }
@@ -593,7 +594,9 @@ export function IntelligenceReal({ signals, messages, baselines, accounts = [], 
           <div style={{ ...MONO, fontSize: 10, color: FAINT, marginBottom: 6 }}>Concern sources · {srcTotal} Concerns</div>
           {m.sources.map(s => (
             <Row key={s.k} pad="13px 0">
-              <span style={{ color: MUTED }}>{s.k}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: MUTED }}>
+                <SourceIcon name={s.k} size={22} />{s.k}
+              </span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                 <span style={{ ...MONO_NUM, fontSize: 12, color: INK }}>{s.n}</span>
                 <span style={{ color: FAINT, fontSize: 11 }}>·</span>
