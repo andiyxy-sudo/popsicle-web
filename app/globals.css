@@ -4637,10 +4637,11 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
 /* folding away: the reverse of the unfold, quicker, because leaving should never keep you waiting */
 @keyframes dockFold {
   from { clip-path: inset(0 0 0 0 round 22px); opacity: 1; transform: none; }
-  to   { clip-path: inset(100% 0 0 0 round 22px); opacity: 0; transform: translateY(8px) scale(.99); }
+  55%  { opacity: .55; }
+  to   { clip-path: inset(100% 0 0 0 round 22px); opacity: 0; transform: translateY(6px) scale(.992); }
 }
 .dock-sheet.dock-closing {
-  animation: dockFold .28s cubic-bezier(.45,.05,.55,.95) both;
+  animation: dockFold .32s cubic-bezier(.3,0,.25,1) both;
   pointer-events: none;
 }
 .dock-sheet.dock-closing .dock-head, .dock-sheet.dock-closing .dock-pane > * { animation: none; }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { AGENT_NAME } from '@/lib/agent/config'
 import { Answer } from '@/components/ask/AnswerText'
@@ -37,13 +37,18 @@ export function AskDock() {
   // restore after mount (never during render, so server and client HTML agree)
   useEffect(() => { try { const r = sessionStorage.getItem('ask:dock'); if (r) setMsgs(JSON.parse(r) as Msg[]) } catch { /* ignore */ } loaded.current = true }, [])
   const [open, setOpen] = useState(false)
-  // the sheet FOLDS AWAY rather than disappearing: it stays mounted for the length of the exit
+  // The sheet FOLDS AWAY rather than disappearing. It has to stay mounted past the render where `open`
+  // turns false, so `visible` is what decides whether it is on screen, and it is only cleared once the
+  // exit has played. useLayoutEffect so the closing class lands in the same paint, with no flash.
+  const [visible, setVisible] = useState(false)
   const [closing, setClosing] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  useEffect(() => {
-    if (open) { setClosing(false); if (closeTimer.current) clearTimeout(closeTimer.current); return }
+  useLayoutEffect(() => {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    if (open) { setVisible(true); setClosing(false); return }
+    if (!visible) return
     setClosing(true)
-    closeTimer.current = setTimeout(() => setClosing(false), 300)
+    closeTimer.current = setTimeout(() => { setVisible(false); setClosing(false) }, 340)
     return () => { if (closeTimer.current) clearTimeout(closeTimer.current) }
   }, [open])
   useEffect(() => {   // the signal pop-ups stay quiet while this sheet is open
@@ -298,7 +303,7 @@ export function AskDock() {
   const showLive = !!current && !focused && !ask && !busy && !streaming
   return (
     <div className={`dock${open ? ' dock-up' : ''}`} ref={dockRef}>
-      {(open || closing) && (hasConvo || showSuggest) && (
+      {visible && (closing || hasConvo || showSuggest) && (
         <div className={`dock-sheet${moreBelow ? ' more-below' : ''}${closing ? ' dock-closing' : ''}`} role="dialog" aria-label={`${AGENT_NAME} conversation`}>
           <div className="dock-head">
             <span className="dock-mark" aria-hidden>
