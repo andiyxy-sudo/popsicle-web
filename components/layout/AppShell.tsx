@@ -112,11 +112,11 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       <Analytics userId={user.id} role={(user as { role?: string }).role} demo={isDemo} />
       {AGENT_ENABLED && <AgentPopup />}
       <div className="main" style={{ position: 'relative' }}>
-        <div className={`content${entering ? ' entering' : ''}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
+        <div key={pathname} className={`content${entering ? ' entering' : ''} ${dir === 'up' ? 'pk-page-up' : 'pk-page-down'}`} ref={contentRef} style={{ position: 'relative', zIndex: 1 }}>
           {/* warm corner wash (design shell). Lives inside the scroll column so
               it is pinned to the top of the page and scrolls away with it. */}
           <div aria-hidden className="ed-wash" style={{ background: 'radial-gradient(circle 760px at 90% -8%, rgba(255,138,80,.22), rgba(255,138,80,.09) 40%, rgba(255,138,80,0) 70%)' }} />
-          <div key={pathname} className={dir === 'up' ? 'pk-page-up' : 'pk-page-down'}>{children}</div>
+          {children}
           <footer className="ed-footer">
             <span><span className="ed-dot" />All systems synced{badges.integrations ? ` · ${badges.integrations} sources live` : ''}</span>
             <span>Popsicle Labs · Revenue intelligence infrastructure</span>

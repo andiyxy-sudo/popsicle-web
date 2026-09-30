@@ -4623,3 +4623,9 @@ html[data-theme="dark"] .dock-sheet, html[data-theme="dark"] .ed-askbar {
   .pk-tone { transition: none }
   .pk-draw { stroke-dashoffset: 0 }
 }
+
+/* Ask is one screen. The content column it sits in must not grow with it, or the page scrolls:
+   these pin the chain from .content down to the panes, whatever the page animation adds. */
+.content:has(.ask-open) { height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+.content:has(.ask-open) > .ed-wash { display: none; }
+.content:has(.ask-open) .ask-open { flex: 1; min-height: 0; }
