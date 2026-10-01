@@ -576,7 +576,8 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                 background: flashId === s.id ? 'rgba(255,107,53,.07)' : 'transparent', transition: 'background .5s ease',
                 opacity: busyId === s.id ? .5 : isHandled ? .55 : 1 }}>
               <span style={{ position: 'absolute', left: 0, top: 20, bottom: 20, width: 3, background: accent }} />
-              <SourceIcon name={srcName(s.source_integration)} size={30} dot={accent} />
+              {/* no severity dot here: the rail on the left already says it, and a marker on a brand mark reads as that app's own badge */}
+              <SourceIcon name={srcName(s.source_integration)} size={30} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, flexWrap: 'wrap' }}>
                   {isHandled && <span style={{ color: 'var(--good)', fontWeight: 800, fontSize: 13 }}>✓</span>}
@@ -601,7 +602,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                     {typeof (s.ai_analysis as { confidence?: number } | null)?.confidence === 'number' &&
                       <ConfArc conf={(s.ai_analysis as { confidence: number }).confidence} size={26} />}
                     <div>
-                      <div data-amount style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: accent }}><X m="signal" signal={s.id}>{money}</X></div>
+                      <div data-amount style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: 'var(--ink)' }}><X m="signal" signal={s.id}>{money}</X></div>
                       <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, color: 'var(--ink-faint)' }}>at risk</div>
                     </div>
                     {(() => {
@@ -609,7 +610,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                       const explicit = (s as unknown as { health_delta?: number }).health_delta
                       const conf = Number((s.ai_analysis as { confidence?: number } | null)?.confidence ?? 70)
                       const hd = typeof explicit === 'number' ? explicit : s.severity === 'high' ? -Math.round(4 + conf / 12) : s.severity === 'watch' ? -Math.round(1 + conf / 30) : Math.round(2 + conf / 20)
-                      const c = hd < 0 ? (hd <= -6 ? 'var(--critical, #c43d2b)' : 'var(--warn, #d38b1d)') : 'var(--good, #2f8f5b)'
+                      const c = 'var(--ink)'   // in ink: the rail carries severity, so these two read as figures, not alarms
                       return (
                         <div style={{ minWidth: 44 }}>
                           <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', color: c }}>{hd > 0 ? '+' : ''}{hd}%</div>
