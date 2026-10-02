@@ -32,24 +32,24 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
   // The bell shows the newest open signals; the dot lights up when anything
   // arrived since the last time the panel was opened (tracked locally).
   useEffect(() => {
-    let cancelled = false
+    let canceled = false
     async function load() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
-      if (!user || cancelled) return
+      if (!user || canceled) return
       const { data } = await supa.from('signals')
         .select('id, title, account_name, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')
         .order('created_at', { ascending: false }).limit(8)
-      if (cancelled) return
+      if (canceled) return
       const rows = (data ?? []) as NotifSignal[]
       setNotifs(rows)
       const seenAt = localStorage.getItem('popsicle_notif_seen_at') ?? ''
       setHasUnseen(rows.some(r => r.created_at > seenAt))
     }
     load()
-    return () => { cancelled = true }
+    return () => { canceled = true }
   }, [pathname])
 
   // Close on outside click.

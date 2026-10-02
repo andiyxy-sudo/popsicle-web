@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// GET  → the caller's organisation: name, their role, the members with emails.
+// GET  → the caller's organization: name, their role, the members with emails.
 // POST → { action: 'rename', name } | { action: 'role', userId, role } | { action: 'remove', userId }
 //        Admins only for every write. A removed member gets an org of their own back.
 type Member = { user_id: string; role: string; email?: string; name?: string; created_at?: string }

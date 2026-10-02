@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
     if (!briefingDue && !dealsDue) continue
     const token = await tokenForUser(r.user_id)
     if (!token) { report.push({ user: r.user_id, skipped: 'no working Slack key' }); continue }
-    // the team's data: every member of the owner's organisation
+    // the team's data: every member of the owner's organization
     const { data: mem } = await db.from('org_members').select('org_id').eq('user_id', r.user_id).maybeSingle()
     let ids = [r.user_id]
     if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Array<{ user_id: string }>).map(x => x.user_id) }

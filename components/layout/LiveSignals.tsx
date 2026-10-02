@@ -79,7 +79,7 @@ export function LiveSignals({ userId, demo = false }: { userId: string; demo?: b
           style={{ pointerEvents: 'auto', position: 'relative', overflow: 'hidden', cursor: t.account ? 'pointer' : 'default',
             background: 'rgba(251,248,243,.86)', backdropFilter: 'blur(14px) saturate(1.2)', WebkitBackdropFilter: 'blur(14px) saturate(1.2)',
             border: '1px solid var(--d-hair, rgba(14,13,11,.08))', boxShadow: '0 30px 60px -28px rgba(14,13,11,.32), 0 1px 0 rgba(255,255,255,.6) inset', padding: '18px 20px 16px' }}>
-          {/* a soft tint of the severity colour in the top-right corner */}
+          {/* a soft tint of the severity color in the top-right corner */}
           <span aria-hidden style={{ position: 'absolute', right: -60, top: -60, width: 180, height: 180, borderRadius: '50%', background: color(t.severity), opacity: .10, filter: 'blur(28px)', pointerEvents: 'none' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 9, position: 'relative' }}>
             <span className="live-dot" style={{ background: color(t.severity) }} />

@@ -1,4 +1,4 @@
-// Organisation scope. Every read that used to be `.eq('user_id', me)` now uses
+// Organization scope. Every read that used to be `.eq('user_id', me)` now uses
 // `.in('user_id', await orgIds…(me))`: the ids of everyone in my org (always
 // includes me). Falls back to [me] if the orgs migration has not been applied.
 import type { SupabaseClient } from '@supabase/supabase-js'

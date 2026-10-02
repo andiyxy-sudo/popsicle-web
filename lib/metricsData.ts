@@ -6,7 +6,7 @@ import { fetchAll } from '@/lib/fetchAll'
 
 const CACHE_MS = 30_000
 const CACHE = new Map<string, { at: number; data: { accts: M.Acct[]; sigs: M.Sig[]; now: number; demo: boolean } }>()
-/** Clear an organisation's cached data after it changes (e.g. a signal is handled). */
+/** Clear an organization's cached data after it changes (e.g. a signal is handled). */
 export function invalidateMetricsCache() { CACHE.clear() }
 
 export async function loadMetricsData(supabase: SupabaseClient, claims: Record<string, unknown>): Promise<{ accts: M.Acct[]; sigs: M.Sig[]; now: number; demo: boolean }> {
@@ -15,7 +15,7 @@ export async function loadMetricsData(supabase: SupabaseClient, claims: Record<s
     return { accts: d.DEMO_ACCOUNTS as unknown as M.Acct[], sigs: d.DEMO_SIGNALS as unknown as M.Sig[], now: d.DEMO_NOW, demo: true }
   }
   const ids = await orgIdsServer(supabase, claims.sub as string)
-  // a short cache per organisation: number popups, the replay and the role views all read the same data
+  // a short cache per organization: number popups, the replay and the role views all read the same data
   // within seconds of each other; loading it once instead of on every click keeps big accounts fast
   const key = [...ids].sort().join(',')
   const hit = CACHE.get(key)

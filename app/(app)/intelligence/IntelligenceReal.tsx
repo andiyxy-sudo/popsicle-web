@@ -31,7 +31,7 @@ const TYPE_LABELS: Record<string, string> = {
   reengaged: 'Re-engaged', commitment_overdue: 'Commitment overdue',
   call_objection: 'Call objection', call_sentiment_drop: 'Call sentiment drop',
   call_buying_signal: 'Buying intent', call_commitment: 'Call commitment', call_summary: 'Call summary',
-  meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
+  meeting_cancelled: 'Meeting canceled', meeting_declined: 'Meeting declined',
 }
 const SOURCE_LABELS: Record<string, string> = { gmail: 'Gmail / Outlook', outlook: 'Gmail / Outlook', slack: 'Slack', whatsapp: 'WhatsApp', linkedin: 'LinkedIn', zoom: 'Calls & CRM', fireflies: 'Calls & CRM', meet: 'Calls & CRM', hubspot: 'Calls & CRM', gcal: 'Calendar' }
 

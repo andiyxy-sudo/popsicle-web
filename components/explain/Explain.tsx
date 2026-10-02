@@ -119,7 +119,7 @@ export function ExplainHost() {
   const maxLeft = (host === document.body ? window.innerWidth : host.clientWidth) - W - 12
   const left = Math.min(Math.max(12, anchor.left - hostRect.left + (host === document.body ? 0 : host.scrollLeft)), Math.max(12, maxLeft))
   const top = anchor.bottom - hostRect.top + (host === document.body ? 0 : host.scrollTop) + 10
-  // the popup's top rule (and figure) take the colour of the number that was clicked
+  // the popup's top rule (and figure) take the color of the number that was clicked
   const tone = (() => {
     let n: Element | null = req.el ?? null
     while (n && n.firstElementChild) n = n.firstElementChild

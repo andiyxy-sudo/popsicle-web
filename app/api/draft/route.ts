@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     'You draft a follow-up email for a salesperson responding to a revenue Concern.',
     'Reply with ONLY a JSON object: {"subject": string, "body": string}. No prose, no markdown fences.',
     'Rules:',
-    '- The goal depends on the Concern: recover a stalling deal, address an objection directly, re-book a cancelled meeting, or reinforce positive momentum. Match the move to the Concern.',
+    '- The goal depends on the Concern: recover a stalling deal, address an objection directly, re-book a canceled meeting, or reinforce positive momentum. Match the move to the Concern.',
     '- Warm, direct, human. 60 to 130 words. No corporate filler, no "I hope this email finds you well", no "just checking in", no "circling back".',
     '- Reference something concrete from their words or the thread so it reads personal, but NEVER quote their message back at them verbatim and never mention monitoring, signals, or analysis.',
     `- Greet the contact by first name if known${contact ? ` (${contact.split(' ')[0]})` : ''}, otherwise open without a name.`,

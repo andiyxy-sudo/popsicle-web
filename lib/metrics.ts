@@ -53,7 +53,7 @@ export function activeSignals(accts: Acct[], sigs: Sig[], nowMs = Date.now()): E
       id: `${sev}:${n}`, label: n, value: mine.filter(s => s.account_name === n).length, valueText: String(mine.filter(s => s.account_name === n).length), href: acctHref(n),
       children: mine.filter(s => s.account_name === n).sort((a, b) => String(b.created_at).localeCompare(String(a.created_at))).slice(0, 6).map(s => sigNode(s, accts)),
     })).sort((a, b) => Number(b.valueText) - Number(a.valueText))
-    // each severity keeps its own colour: critical red, watch amber, positive green
+    // each severity keeps its own color: critical red, watch amber, positive green
     const color = sev === 'high' ? 'var(--critical, #c43d2b)' : sev === 'watch' ? 'var(--warn, #d38b1d)' : 'var(--good, #2f8f5b)'
     return { id: `sev:${sev}`, label: sev === 'high' ? 'Critical' : sev === 'watch' ? 'Watch' : 'Positive', value: mine.length, valueText: String(mine.length), color, children: byAcct }
   })

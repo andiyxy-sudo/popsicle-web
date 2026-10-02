@@ -20,7 +20,7 @@ function CallbackInner() {
   // welcome flow, which owns the first sync + account discovery. Everyone else
   // gets the quick background sync and returns to integrations as before.
   useEffect(() => {
-    let cancelled = false
+    let canceled = false
     async function run() {
       if (!ok) {
         const t = setTimeout(() => router.replace('/integrations'), 3500)
@@ -46,10 +46,10 @@ function CallbackInner() {
           })
         }
       } catch { /* best effort */ }
-      if (!cancelled) router.replace('/integrations')
+      if (!canceled) router.replace('/integrations')
     }
     run()
-    return () => { cancelled = true }
+    return () => { canceled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ok, provider])
 

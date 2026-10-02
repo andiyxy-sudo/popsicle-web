@@ -99,7 +99,7 @@ export function pastMorningDigest(s: Settings, at = new Date()): boolean { retur
 /** How the AI should write: instructions from your language and drafting voice. */
 export function languageRule(s: Settings): string {
   if (/bahasa/i.test(s.language)) return 'Respond in Bahasa Indonesia (keep company names, product names and figures as they are).'
-  if (/UK/.test(s.language)) return 'Use British English spelling and conventions (e.g. "prioritise", "colour", dates as 22 September).'
+  if (/UK/.test(s.language)) return 'Use British English spelling and conventions (e.g. "prioritize", "color", dates as 22 September).'
   return 'Use American English spelling.'
 }
 export function voiceRule(s: Settings): string {

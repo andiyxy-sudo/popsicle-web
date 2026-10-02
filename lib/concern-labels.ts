@@ -3,7 +3,7 @@
 export const CONCERN_LABELS: Record<string, string> = {
   silent_stall: 'Silent stall', call_objection: 'Objection', price_flinch: 'Price flinch',
   competitor_mention: 'Competitor mention', legal_loopin: 'Legal loop-in', champion_change: 'Champion change',
-  timeline_slip: 'Timeline slip', meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
+  timeline_slip: 'Timeline slip', meeting_cancelled: 'Meeting canceled', meeting_declined: 'Meeting declined',
   deal_stage_backward: 'Stage backward', call_buying_signal: 'Buying intent', call_commitment: 'Commitment',
   call_summary: 'Call summary', call_sentiment_drop: 'Sentiment drop', commitment_overdue: 'Commitment overdue',
   reengaged: 'Re-engaged', team_mention: 'Team mention', invoice_delay: 'Invoice delay',

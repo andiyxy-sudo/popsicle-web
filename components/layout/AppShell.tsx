@@ -15,6 +15,7 @@ import { CurrencyLayer } from '@/components/currency/CurrencyLayer'
 import { ThemeSync } from './ThemeSync'
 import { EasyRead } from './EasyRead'
 import { Analytics } from '@/components/analytics/Analytics'
+import { SpellingLayer } from '@/components/spelling/SpellingLayer'
 
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
@@ -108,12 +109,13 @@ export function AppShell({ user, isDemo, badges = {}, children }: AppShellProps)
       {/* The sidebar is position: sticky (design shell), so it must sit beside .main in a
           flex row. Without this wrapper it stacked above .main in block flow and pushed the
           whole content column one viewport down: sidebar visible, page blank, until a client
-          navigation scrolled the window to the new page (the "click twice" behaviour). */}
+          navigation scrolled the window to the new page (the "click twice" behavior). */}
       <Sidebar user={user} isDemo={isDemo} badges={badges} />
       <LiveSignals userId={user.id} demo={isDemo} />
       <CommandPalette demo={isDemo} />
       <ExplainHost />
       <CurrencyLayer />
+      <SpellingLayer />
       <ThemeSync />
       <EasyRead />
       <Analytics userId={user.id} role={(user as { role?: string }).role} demo={isDemo} />

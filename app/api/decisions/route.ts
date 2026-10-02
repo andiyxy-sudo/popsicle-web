@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ decision: data })
 }
 
-// PATCH { id, status } → mark a decision open, done or reversed (organisation members can update)
+// PATCH { id, status } → mark a decision open, done or reversed (organization members can update)
 export async function PATCH(req: NextRequest) {
   const { id, status } = await req.json().catch(() => ({})) as { id?: string; status?: string }
   if (!id || !['open', 'done', 'reversed'].includes(status ?? '')) return NextResponse.json({ error: 'Need an id and a status of open, done or reversed.' }, { status: 400 })

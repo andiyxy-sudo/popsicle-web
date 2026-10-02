@@ -12,7 +12,7 @@ export const PROVIDER_LABEL: Record<ProviderId, string> = {
 
 export interface Subscription {
   plan: string                  // a PlanId, or 'design_partner', or 'beta'
-  status: 'active' | 'trialing' | 'design_partner' | 'past_due' | 'cancelled' | 'none'
+  status: 'active' | 'trialing' | 'design_partner' | 'past_due' | 'canceled' | 'none'
   seatsUsed: number
   seatsIncluded: number | null
   renewsAt: string | null       // ISO

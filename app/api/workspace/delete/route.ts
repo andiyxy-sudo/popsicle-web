@@ -4,7 +4,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 
 // POST { confirm: 'DELETE' } → permanently removes everything this user has put into Popsicle:
 // their accounts, signals, commitments, decisions, connected sources, Slack channel choices and briefing
-// settings, and their place in the organisation. Teammates' own data is untouched. The sign-in itself
+// settings, and their place in the organization. Teammates' own data is untouched. The sign-in itself
 // remains, so they can start again. The demo account can't be deleted.
 const TABLES = ['signals', 'commitments', 'decisions', 'slack_tracked_channels', 'slack_digests', 'integrations', 'accounts', 'org_members']
 

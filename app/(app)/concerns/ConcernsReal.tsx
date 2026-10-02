@@ -26,8 +26,10 @@ import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 import { CountUp } from '@/components/ui/CountUp'
 import { SourceIcon, ConfArc } from '@/components/pk/SourceIcon'
 import { useFlip, flyTo, useArrivals, useTypewriter } from '@/lib/pk/motion'
+import { dueLabel, deriveDueAt, type Severity } from '@/packages/popsicle-shared/severity'
 
 interface DBSignal {
+  due_at?: string | null
   id: string
   source_message_id?: string | null
   account_name?: string
@@ -54,7 +56,7 @@ const TYPE_LABELS: Record<string, string> = {
   reengaged: 'Re-engaged',
   call_objection: 'Call Objection', call_sentiment_drop: 'Call Sentiment Drop',
   call_buying_signal: 'Buying intent', call_commitment: 'Call Commitment', call_summary: 'Call Summary',
-  meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
+  meeting_cancelled: 'Meeting Canceled', meeting_declined: 'Meeting Declined',
 }
 
 // our sources are stored lowercase ("gmail"); the shared icon set is keyed by brand name
@@ -590,6 +592,19 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
                   ) : null}
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--ink-muted)', lineHeight: 1.5, marginTop: 5 }}>{quote ? `"${quote}"` : (s.title || body)}</div>
+                {(() => {
+                  // the response window: critical answers inside 4 working hours, watch inside 3 working days
+                  if (isHandled || s.severity === 'positive') return null
+                  const due = s.due_at ?? deriveDueAt((s.severity ?? 'watch') as Severity, new Date(s.created_at ?? Date.now()))
+                  const d = mounted ? dueLabel(due) : null
+                  if (!d) return null
+                  const tone = d.tone === 'overdue' ? 'var(--critical, #c43d2b)' : d.tone === 'soon' ? 'var(--accent, #E85A25)' : 'var(--ink-faint)'
+                  return (
+                    <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone, marginTop: 8 }}>
+                      {d.text}
+                    </div>
+                  )
+                })()}
                 <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)', marginTop: 7 }}>
                   via {s.source_integration || 'unknown'}{mounted && s.created_at ? ` · ${timeAgo(s.created_at)}` : ''}{money ? ` · ${money}` : ''}
                 </div>
@@ -648,7 +663,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, fontSize: 13 }}>
         <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, color: 'var(--ink-faint)' }}>{shown.length} of {signals.length} alerts</span>
-        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open Concerns should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritise →</span>
+        <span onClick={() => router.push('/ask?q=' + encodeURIComponent('Which of my open Concerns should I act on first, and why?'))} style={{ color: 'var(--accent)', fontWeight: 600, cursor: 'pointer' }}>Ask Popsicle to prioritize →</span>
       </div>
 
       {justProtected > 0 && (

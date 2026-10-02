@@ -4,9 +4,9 @@ import { V, confColor } from '@/lib/pk/tokens'
 import { SOURCE_SVG, sourceKey, sourceLabel } from '@/lib/pk/sources'
 import { MARKS } from '@/lib/pk/marks'
 
-// The channel a Concern came from, as that brand's own full-colour mark, used unmodified.
+// The channel a Concern came from, as that brand's own full-color mark, used unmodified.
 // The marks are inlined, so a row costs no extra request. On dark backgrounds the tile stays light,
-// because these are colour logos and must not be recoloured or knocked out.
+// because these are color logos and must not be recoloured or knocked out.
 // `dot` adds the severity dot; `size` is the tile, 30px in a Concern row and 40 to 48 in Settings.
 export function SourceIcon({ name, size = 32, dot }: { name: string; size?: number; dot?: string }) {
   const key = sourceKey(name)
@@ -15,7 +15,7 @@ export function SourceIcon({ name, size = 32, dot }: { name: string; size?: numb
   // the integration pack first; for the few it does not carry (Zoho, Stripe, Snowflake, Drive) the
   // single-glyph mark; initials only when neither has one
   const GLYPH_NAME: Record<string, string> = {
-    snowflake: 'Snowflake',   // Drive, Zoho and Stripe now come from the packs, in full colour
+    snowflake: 'Snowflake',   // Drive, Zoho and Stripe now come from the packs, in full color
   }
   const raw = String(name ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_')
   const glyph = !svg ? (MARKS[GLYPH_NAME[raw] ?? label] ?? MARKS[label]) : undefined

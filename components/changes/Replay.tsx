@@ -37,7 +37,7 @@ function narrate(p: Point, prev: Point | undefined): { lead: string; rest: strin
   return { lead: 'A quiet day.', rest: 'Nothing new came in, and nothing moved.' }
 }
 
-// quotation marks in the accent colour, for a little flair
+// quotation marks in the accent color, for a little flair
 function Q({ text }: { text: string }) {
   return <>{text.split(/([\u201c\u201d"])/).map((part, i) => /^[\u201c\u201d"]$/.test(part) ? <span key={i} className="rp3-q">{part}</span> : part)}</>
 }

@@ -11,6 +11,8 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { useEscape } from '@/components/ui/useEscape'
 import { track } from '@/lib/analytics'
 import { SourceIcon } from '@/components/pk/SourceIcon'
+import { trustFor, WHO_SEES, YOUR_CONTROL } from '@/lib/pk/integration-trust'
+import { useRouter } from 'next/navigation'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -23,7 +25,7 @@ const PROVIDERS: Provider[] = [
   { key: 'slack', name: 'Slack', desc: 'Shared channels · Flags quiet conversations', cat: 'Messaging', fn: 'oauth-slack' },
   { key: 'whatsapp', name: 'WhatsApp Business', short: 'WhatsApp', desc: 'Buyer message patterns & sentiment', cat: 'Messaging' },
   { key: 'teams', name: 'Microsoft Teams', short: 'Teams', desc: 'Shared channels & chats · Same stall detection', cat: 'Messaging' },
-  { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence & stall detection · Cancelled and declined meetings', cat: 'Calendar', fn: 'oauth-gcal' },
+  { key: 'gcal', name: 'Google Calendar', desc: 'Meeting cadence & stall detection · Canceled and declined meetings', cat: 'Calendar', fn: 'oauth-gcal' },
   { key: 'hubspot', name: 'HubSpot', desc: 'Deal values, stages & owners · CRM risk Concerns', cat: 'CRM', fn: 'oauth-hubspot' },
   { key: 'salesforce', name: 'Salesforce', desc: 'Bi-directional sync · Opportunity health', cat: 'CRM' },
   { key: 'gong', name: 'Gong', desc: 'Revenue intelligence · Call insights', cat: 'Voice & Meetings' },
@@ -42,6 +44,9 @@ const PROVIDERS: Provider[] = [
   { key: 'snowflake', name: 'Snowflake', desc: 'Product usage from your warehouse · Adoption drops and spikes', cat: 'Data & Billing' },
 ]
 
+// Outlook, Teams and Calendly have server functions, but they run on the OLD shared helper: no web
+// return URL, and their sync action is a stub. Until those are rebuilt they are "coming soon" for the
+// desktop as well as the phone, which is why none of them carries an `fn` above.
 const CAT_ORDER = ['Email', 'Messaging', 'Calendar', 'CRM', 'Voice & Meetings', 'Social', 'Productivity', 'Support', 'Data & Billing']
 
 export type ProviderStat = {
@@ -197,7 +202,28 @@ function ResSwitch({ on }: { on: boolean }) {
   )
 }
 
+function TrustBlock({ heading, items, tone }: { heading: string; items: string[]; tone: 'ink' | 'never' }) {
+  return (
+    <div>
+      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: tone === 'never' ? 'var(--critical, #c43d2b)' : 'var(--ink-faint)', marginBottom: 8 }}>{heading}</div>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {items.map(line => (
+          <li key={line} style={{ display: 'flex', gap: 10, fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.55 }}>
+            <span aria-hidden style={{ marginTop: 7, width: 4, height: 4, borderRadius: '50%', flex: 'none', background: tone === 'never' ? 'var(--critical, #c43d2b)' : 'var(--ink-faint)' }} />
+            <span>{line}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+type RecentConcern = { id: string; title: string | null; severity: string | null; account_name: string | null; created_at: string | null }
+
 export function IntegrationsReal({ active: activeIn, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
+  // the last five Concerns this source raised, loaded only when its sheet is open
+  const [recent, setRecent] = useState<RecentConcern[]>([])
+  const router = useRouter()
   const active = activeIn.includes('gcal') ? [...activeIn, 'gmeet'] : activeIn   // Meet rides on the Google Calendar connection
   const [briefingOpen, setBriefingOpen] = useState(false)   // the daily Slack briefing, in its own window
   // Opt-in resolution broadcasts (shared columns with mobile).
@@ -252,8 +278,52 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   // Kick off real OAuth: ask the edge function for the consent URL (with our JWT
   // + platform=web), then send the browser there. The function will 302 back to
   // /integrations/callback when done.
-  async function connect(p: Provider) {
+  // Connecting is a two-step: first what this source reads and what Popsicle will never do with it,
+  // then the provider's own authorize screen. Nobody should be asked to grant access to their mail
+  // before they have been told what happens to it.
+  function connect(p: Provider) {
     track('source_connect_started', { source: p.key, available: !!p.fn })
+    if (!p.fn && p.key !== 'fireflies') return beginConnect(p)      // "coming soon" needs no trust card
+    const t = trustFor(p.key)
+    setModal({
+      title: `Before you connect ${p.name}`,
+      body: (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <TrustBlock heading="What it reads" items={t.reads} tone="ink" />
+          <TrustBlock heading="What Popsicle never does" items={t.never} tone="never" />
+          <TrustBlock heading="What it catches" items={t.catches} tone="ink" />
+          <div style={{ fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.6, borderTop: '1px solid var(--hairline, #EFEAE1)', paddingTop: 14 }}>
+            <div style={{ marginBottom: 8 }}><b style={{ color: 'var(--ink)' }}>Who can see it. </b>{WHO_SEES}</div>
+            <div><b style={{ color: 'var(--ink)' }}>Your control. </b>{YOUR_CONTROL}</div>
+          </div>
+        </div>
+      ),
+      footer: (
+        <>
+          <ModalBtn onClick={() => setModal(null)}>Cancel</ModalBtn>
+          <ModalBtn primary onClick={() => { setModal(null); beginConnect(p) }}>Continue to {p.name}</ModalBtn>
+        </>
+      ),
+    })
+  }
+
+  useEffect(() => {
+    if (!sheet) { setRecent([]); return }
+    let dead = false
+    ;(async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+      const { data } = await supabase.from('signals')
+        .select('id, title, severity, account_name, created_at')
+        .eq('user_id', user.id).eq('source_integration', sheet.key)
+        .order('created_at', { ascending: false }).limit(5)
+      if (!dead) setRecent((data ?? []) as RecentConcern[])
+    })()
+    return () => { dead = true }
+  }, [sheet])
+
+  async function beginConnect(p: Provider) {
     if (p.key === 'fireflies') {
       setModal({
         title: 'Connect Fireflies',
@@ -681,6 +751,33 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                   <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{v}</span>
                 </div>
               ))}
+
+              {/* what this source reads and what it catches: the same words as the trust card, so a
+                  person can check afterwards what they agreed to */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16, padding: '18px 0 4px' }}>
+                <TrustBlock heading="What it reads" items={trustFor(p.key).reads} tone="ink" />
+                <TrustBlock heading="What it catches" items={trustFor(p.key).catches} tone="ink" />
+              </div>
+
+              {/* the last few Concerns this source actually raised */}
+              {on && recent.length > 0 && (
+                <div style={{ paddingTop: 8 }}>
+                  <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+                    Recent Concerns from {p.name}
+                  </div>
+                  {recent.map(r => (
+                    <div key={r.id} onClick={() => router.push(`/concerns?signal=${r.id}`)}
+                      style={{ display: 'flex', gap: 12, alignItems: 'baseline', padding: '11px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
+                      <span aria-hidden style={{ width: 5, height: 5, borderRadius: '50%', flex: 'none',
+                        background: r.severity === 'high' ? 'var(--critical, #c43d2b)' : r.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {r.account_name ? `${r.account_name}: ` : ''}{r.title}
+                      </span>
+                      <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, color: 'var(--ink-faint)', flex: 'none' }}>{fmtDate(r.created_at)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {on && isToggleable && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, padding: '16px 2px 16px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>

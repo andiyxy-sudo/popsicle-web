@@ -22,6 +22,7 @@ export type DemoSlices = { transcripts?: Record<string, Transcript>; threads?: R
 import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/RiskFlagSheet'
 import { MergedTimeline } from '@/components/account/MergedTimeline'
 import { LOGOS } from '@/app/(app)/integrations/IntegrationsShowcase'
+import { dueLabel, deriveDueAt, type Severity } from '@/packages/popsicle-shared/severity'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -31,7 +32,7 @@ const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in', price_flinch: 'Price flinch',
   champion_change: 'Champion change', timeline_slip: 'Timeline slip', reengaged: 'Re-engaged', call_objection: 'Objection',
   call_sentiment_drop: 'Sentiment drop', call_buying_Concern: 'Buying intent', call_commitment: 'Commitment',
-  call_summary: 'Call summary', meeting_cancelled: 'Meeting cancelled', meeting_declined: 'Meeting declined',
+  call_summary: 'Call summary', meeting_cancelled: 'Meeting canceled', meeting_declined: 'Meeting declined',
   deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 const money = (v?: number | null) => !v ? '--' : v >= 1e6 ? `$${(v / 1e6).toFixed(2).replace(/\.?0+$/, '')}M` : v >= 1e3 ? `$${Math.round(v / 1e3)}K` : `$${v}`
@@ -135,8 +136,8 @@ function CommsThread({ items, account, onAsk, onDraft }: { items: ThreadItem[]; 
               </div>
             )
           })}
-          <button className="cm-summary" onClick={() => onAsk(`Summarise the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)}>
-            Ask Popsicle to summarise this thread →
+          <button className="cm-summary" onClick={() => onAsk(`Summarize the recent communications with ${account}: who said what, the tone, and the one thing I should do next.`)}>
+            Ask Popsicle to summarize this thread →
           </button>
         </div>
 
@@ -366,7 +367,24 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
               <div key={s.id} onClick={() => router.push(`/concerns?signal=${s.id}`)}
                 style={{ display: 'flex', gap: 14, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: 'pointer' }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 8, flex: 'none', background: s.severity === 'high' ? 'var(--critical, #c43d2b)' : s.severity === 'positive' ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)' }} />
-                <div className="read-prose read-prose-ink">{s.description || s.title}</div>
+                <div style={{ minWidth: 0 }}>
+                  <div className="read-prose read-prose-ink">{s.description || s.title}</div>
+                  {(() => {
+                    // the same response window as the Concerns page: critical inside 4 working hours,
+                    // watch inside 3 working days, nothing on a positive
+                    if (s.severity === 'positive') return null
+                    const due = (s as unknown as { due_at?: string | null }).due_at
+                      ?? deriveDueAt((s.severity ?? 'watch') as Severity, new Date((s as unknown as { created_at?: string }).created_at ?? Date.now()))
+                    const d = mounted ? dueLabel(due) : null
+                    if (!d) return null
+                    const tone = d.tone === 'overdue' ? 'var(--critical, #c43d2b)' : d.tone === 'soon' ? 'var(--accent, #E85A25)' : 'var(--ink-faint)'
+                    return (
+                      <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10.5, letterSpacing: '1.2px', textTransform: 'uppercase', color: tone, marginTop: 7 }}>
+                        {d.text}
+                      </div>
+                    )
+                  })()}
+                </div>
               </div>
             ))}
           </div>

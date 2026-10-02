@@ -288,7 +288,7 @@ function ConfidenceRing({ signals, forceOpen, onClose }: { signals: Signal[]; fo
               <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 22, letterSpacing: '-.03em', margin: '10px 0 0', color: 'var(--ink)' }}>AI Confidence</h2>
               <div style={{ height: 0, borderTop: '1px solid var(--rule-strong, #0E0D0B)', margin: '18px 0 18px' }} />
 
-              {mlbl('average across ' + confs.length + ' analysed Concern' + (confs.length === 1 ? '' : 's'))}
+              {mlbl('average across ' + confs.length + ' analyzed Concern' + (confs.length === 1 ? '' : 's'))}
               <div style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
                 <span style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 34, letterSpacing: '-.04em', lineHeight: 1, color: clrOf(pct) }}>{pct}%</span>
                 <span style={{ flex: 1, height: 3, background: 'var(--hairline, #EFEAE1)', position: 'relative' }}>
@@ -443,7 +443,7 @@ function TodayBlock({ accounts, signals }: { accounts: Account[]; signals: Signa
       const soon = new Date(Date.now() + 48 * 3600_000)
       const [m, c, s48] = await Promise.all([
         supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').in('user_id', await orgIdsBrowser(supa, user.id))
-          .gte('start_ts', start.toISOString()).lt('start_ts', end.toISOString()).neq('status', 'cancelled').order('start_ts').limit(12),
+          .gte('start_ts', start.toISOString()).lt('start_ts', end.toISOString()).neq('status', 'canceled').order('start_ts').limit(12),
         supa.from('commitments').select('id, text, owner, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
           .lte('due_at', end.toISOString()).order('due_at').limit(10),
         supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
@@ -553,7 +553,7 @@ function WeekDigest() {
       if (dis || dead) return
       const [m, c, bl] = await Promise.all([
         supa.from('gcal_event_state').select('event_id, start_ts, summary, account_name').in('user_id', await orgIdsBrowser(supa, user.id))
-          .gte('start_ts', monday.toISOString()).lt('start_ts', weekEnd.toISOString()).neq('status', 'cancelled').order('start_ts').limit(20),
+          .gte('start_ts', monday.toISOString()).lt('start_ts', weekEnd.toISOString()).neq('status', 'canceled').order('start_ts').limit(20),
         supa.from('commitments').select('id, text, owner, due_at, account_name').in('user_id', await orgIdsBrowser(supa, user.id)).eq('status', 'open')
           .gte('due_at', monday.toISOString()).lt('due_at', weekEnd.toISOString()).order('due_at').limit(12),
         supa.from('account_baselines').select('account_name, last_message_at, avg_interval_hours, total_reply_pairs')
@@ -640,7 +640,7 @@ const TYPE_LABEL_SHORT: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal loop-in',
   price_flinch: 'Price flinch', champion_change: 'Champion change', timeline_slip: 'Timeline slip',
   reengaged: 'Re-engaged', call_objection: 'Objection', call_sentiment_drop: 'Sentiment drop',
-  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', meeting_cancelled: 'Meeting cancelled',
+  call_buying_signal: 'Buying intent', call_commitment: 'Commitment', meeting_cancelled: 'Meeting canceled',
   meeting_declined: 'Meeting declined', deal_stage_backward: 'Stage backward', commitment_overdue: 'Commitment overdue',
 }
 
@@ -753,8 +753,8 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
 
   const narrative = (() => {
     // the words that say something is going wrong, in red
-    const redWords = (t: string) => t.split(/(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|cancelled|declined|slipped|pushed|at risk)/i)
-      .map((part, k) => (/^(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|cancelled|declined|slipped|pushed|at risk)$/i.test(part)
+    const redWords = (t: string) => t.split(/(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|canceled|declined|slipped|pushed|at risk)/i)
+      .map((part, k) => (/^(silent|silence|gone dark|dark|no reply|unanswered|stalled|postponed|canceled|declined|slipped|pushed|at risk)$/i.test(part)
         ? <span key={k} style={{ color: 'var(--critical, #c43d2b)' }}>{part}</span> : part))
     const deltaTxt = healthDelta ? `, ${healthDelta.pts > 0 ? 'up' : 'down'} ${Math.abs(healthDelta.pts)} ${healthDelta.label.replace('vs ', 'since ')}` : ''
     const riskAccts = atRiskX.parts.length

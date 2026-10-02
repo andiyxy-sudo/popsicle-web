@@ -189,7 +189,7 @@ export function WelcomeFlow({ name }: { name: string }) {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user) { router.replace('/login'); return }
-      // invited users join the inviter's organisation (no-op for everyone else)
+      // invited users join the inviter's organization (no-op for everyone else)
       try { await supa.rpc('join_inviter_org') } catch { /* migration not applied yet */ }
       // ?force=1 lets users with existing accounts run discovery again (it
       // already excludes tracked accounts, so re-runs only surface new ones).

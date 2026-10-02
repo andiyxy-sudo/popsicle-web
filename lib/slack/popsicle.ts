@@ -1,6 +1,6 @@
 // @popsicle in Slack: answer a mention in a deal channel, in the thread, for everyone.
 // Server-only. Uses the service role (there is no user session on a Slack event), scoped
-// by hand to the organisation that owns the Slack workspace. Reads what the existing
+// by hand to the organization that owns the Slack workspace. Reads what the existing
 // pipeline already produced; detects nothing.
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { wantsVerdict, VERDICT_RULES } from '@/lib/ask/verdict'

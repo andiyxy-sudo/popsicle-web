@@ -1,4 +1,4 @@
-// Colour rules shared with the mobile app. Values are CSS variables from tokens.css, so light and dark just work.
+// Color rules shared with the mobile app. Values are CSS variables from tokens.css, so light and dark just work.
 export const V = {
   paper: 'var(--pk-paper)', sheet: 'var(--pk-sheet)', card: 'var(--pk-card)',
   ink: 'var(--pk-ink)', ink2: 'var(--pk-ink2)', muted: 'var(--pk-muted)', faint: 'var(--pk-faint)',

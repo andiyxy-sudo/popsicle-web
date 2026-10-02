@@ -51,7 +51,7 @@ const TYPE_LABELS: Record<string, string> = {
   silent_stall: 'Silent stall', competitor_mention: 'Competitor', legal_loopin: 'Legal', price_flinch: 'Price flinch',
   champion_change: 'Champion change', timeline_slip: 'Timeline slip', reengaged: 'Re-engaged', call_objection: 'Objection',
   call_sentiment_drop: 'Sentiment drop', call_buying_Concern: 'Buying intent', call_commitment: 'Commitment',
-  call_summary: 'Call Summary', meeting_cancelled: 'Meeting Cancelled', meeting_declined: 'Meeting Declined',
+  call_summary: 'Call Summary', meeting_cancelled: 'Meeting Canceled', meeting_declined: 'Meeting Declined',
   deal_stage_backward: 'Stage Backward', commitment_overdue: 'Commitment Overdue',
 }
 const SRC_LABEL: Record<string, string> = { gmail: 'Email', slack: 'Slack message', zoom: 'Call · Zoom', meet: 'Call · Meet', fireflies: 'Call · Fireflies' }
