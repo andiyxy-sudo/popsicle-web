@@ -223,6 +223,7 @@ type RecentConcern = { id: string; title: string | null; severity: string | null
 export function IntegrationsReal({ active: activeIn, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
   // the last five Concerns this source raised, loaded only when its sheet is open
   const [recent, setRecent] = useState<RecentConcern[]>([])
+  const [sheetAtEnd, setSheetAtEnd] = useState(false)
   const router = useRouter()
   const active = activeIn.includes('gcal') ? [...activeIn, 'gmeet'] : activeIn   // Meet rides on the Google Calendar connection
   const [briefingOpen, setBriefingOpen] = useState(false)   // the daily Slack briefing, in its own window
@@ -308,7 +309,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   }
 
   useEffect(() => {
-    if (!sheet) { setRecent([]); return }
+    if (!sheet) { setRecent([]); setSheetAtEnd(false); return }
     let dead = false
     ;(async () => {
       const supabase = createClient()
@@ -317,7 +318,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
       const { data } = await supabase.from('signals')
         .select('id, title, severity, account_name, created_at')
         .eq('user_id', user.id).eq('source_integration', sheet.key)
-        .order('created_at', { ascending: false }).limit(5)
+        .order('created_at', { ascending: false }).limit(3)
       if (!dead) setRecent((data ?? []) as RecentConcern[])
     })()
     return () => { dead = true }
@@ -724,8 +725,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
         const rows: Array<[string, string]> = [
           ['Status', on ? 'Connected and syncing' : 'Not connected'],
           ['Account', st?.identity || (on ? 'linked' : '--')],
-          ['Concerns raised', st ? String(st.total) : '--'],
-          ['This month', st ? String(st.thisMonth) : '--'],
+          ['Concerns raised', st ? `${st.total} · ${st.thisMonth} this month` : '--'],
           ['Severity split', st ? `${st.high} high · ${st.watch} watch · ${st.positive} positive` : '--'],
           ['Last Concern', fmtDate(st?.lastSignal)],
           ['Last synced', fmtDate(st?.lastSynced)],
@@ -733,7 +733,8 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
         ]
         return (
           <div onClick={() => setSheet(null)} style={{ position: 'fixed', inset: 0, zIndex: 800, background: 'var(--d-tintbg, rgba(14,13,11,.42))', backdropFilter: 'blur(3px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 24px', overflowY: 'auto' }}>
-            <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 540, background: 'var(--paper, #FBF8F3)', padding: '36px 40px 40px', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
+            <div onClick={e => e.stopPropagation()} className="pk-unfold-top" style={{ width: '100%', maxWidth: 540, background: 'var(--paper, #FBF8F3)',
+              maxHeight: 'min(84vh, 760px)', display: 'flex', flexDirection: 'column', padding: '28px 36px 0', boxShadow: '0 40px 90px -30px rgba(14,13,11,.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
                 <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--accent)', display: 'inline-flex', alignItems: 'center', gap: 9 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: on ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }} />integration
@@ -741,12 +742,16 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                 <button onClick={() => setSheet(null)} style={{ font: 'inherit', fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '2.2px', textTransform: 'uppercase', color: 'var(--ink-faint)', background: 'none', border: 0, cursor: 'pointer' }}>close</button>
               </div>
 
-              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: '-.035em', margin: '12px 0 4px', color: 'var(--ink)' }}>{p.name}</h2>
+              <h2 style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 700, fontSize: 26, letterSpacing: '-.035em', margin: '10px 0 3px', color: 'var(--ink)' }}>{p.name}</h2>
               <div style={{ fontSize: 14, color: 'var(--ink-muted)' }}>{p.desc}</div>
-              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '22px 0 6px' }} />
+              <div style={{ height: 1, background: 'var(--rule-strong, #0E0D0B)', margin: '20px 0 0' }} />
 
+              {/* the header above stays; everything below scrolls, so the sheet can never outgrow the window */}
+              <div className={`int-sheet-body${sheetAtEnd ? ' at-end' : ''}`}
+                onScroll={e => { const el = e.currentTarget; setSheetAtEnd(el.scrollTop + el.clientHeight >= el.scrollHeight - 8) }}
+                style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: '6px 0 28px', marginRight: -10, paddingRight: 10 }}>
               {rows.map(([k, v]) => (
-                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '13px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
+                <div key={k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '10px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>
                   <span style={{ fontSize: 14.5, color: 'var(--ink)' }}>{k}</span>
                   <span style={{ fontSize: 14, color: 'var(--ink-muted)', textAlign: 'right' }}>{v}</span>
                 </div>
@@ -833,6 +838,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
                     {p.fn ? `Connect ${p.name}` : 'Not available yet'}
                   </button>
                 )}
+              </div>
               </div>
             </div>
           </div>

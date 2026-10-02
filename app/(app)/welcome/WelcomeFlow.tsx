@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
 
-type Phase = 'checking' | 'connect' | 'scanning' | 'discovering' | 'pick' | 'creating' | 'done' | 'none' | 'error'
+type Phase = 'checking' | 'connect' | 'scanning' | 'discovering' | 'pick' | 'creating' | 'reading' | 'found' | 'done' | 'none' | 'error'
+type Finding = { account: string; kind: string; text: string }
 
 interface Discovered {
   name: string
@@ -81,6 +82,9 @@ export function WelcomeFlow({ name }: { name: string }) {
   const [createIdx, setCreateIdx] = useState(0)
   const [createName, setCreateName] = useState('')
   const [createdCount, setCreatedCount] = useState(0)
+  const [readCount, setReadCount] = useState(0)
+  const [foundConcerns, setFoundConcerns] = useState(0)
+  const [findings, setFindings] = useState<Finding[]>([])
   const [errMsg, setErrMsg] = useState('')
   const [errRetry, setErrRetry] = useState<Phase>('scanning')
   const [manualName, setManualName] = useState('')
@@ -177,6 +181,24 @@ export function WelcomeFlow({ name }: { name: string }) {
       } catch { /* skip this one, keep going */ }
     }
     setCreatedCount(done)
+    // the deep first read: Popsicle starts from what it already knows instead of waiting for new mail
+    const names = picks.map(c => c.name)
+    setPhase('reading'); setReadCount(0)
+    try {
+      const r = await fetch(FN('history-read'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${t}` },
+        body: JSON.stringify({ accounts: names }),
+      })
+      const j = await r.json().catch(() => ({}))
+      if (r.ok) {
+        setReadCount(Number(j.read) || 0)
+        setFoundConcerns(Number(j.concerns) || 0)
+        setFindings(Array.isArray(j.findings) ? j.findings : [])
+        setPhase('found')
+        return
+      }
+    } catch { /* the accounts exist either way, so never strand the person here */ }
     setPhase('done')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [discovered, checked])
@@ -343,6 +365,54 @@ export function WelcomeFlow({ name }: { name: string }) {
       </Card>
     )
   }
+
+  // Popsicle is reading: what is happening, in plain words, while the first read runs
+  if (phase === 'reading') return (
+    <Card>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 7, marginBottom: 20 }}>
+        {[0, 1, 2].map(i => (
+          <span key={i} style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent, #E85A25)',
+            animation: `readPulse 1.1s ${i * 0.16}s cubic-bezier(.4,0,.2,1) infinite` }} />
+        ))}
+      </div>
+      <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--t1)', marginBottom: 8 }}>Popsicle is reading</div>
+      <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 400, margin: '0 auto 10px' }}>
+        Going through the last 90 days with {createdCount} account{createdCount === 1 ? '' : 's'}: who replied, who went quiet,
+        and what was said. This takes a moment and only happens once.
+      </div>
+      <style>{`@keyframes readPulse { 0%,100% { opacity: .25; transform: scale(.8) } 45% { opacity: 1; transform: scale(1) } }`}</style>
+    </Card>
+  )
+
+  // Here is what I found: the first thing Popsicle ever says, from real history rather than a welcome message
+  if (phase === 'found') return (
+    <Card>
+      <div style={{ fontSize: 19, fontWeight: 800, color: 'var(--t1)', marginBottom: 8 }}>Here is what I found</div>
+      <div style={{ fontSize: 13, color: 'var(--t3)', lineHeight: 1.65, maxWidth: 420, margin: '0 auto 20px' }}>
+        {readCount > 0
+          ? `I read ${readCount} message${readCount === 1 ? '' : 's'} across ${createdCount} account${createdCount === 1 ? '' : 's'}`
+          : `I set up ${createdCount} account${createdCount === 1 ? '' : 's'}`}
+        {foundConcerns > 0 ? ` and raised ${foundConcerns} Concern${foundConcerns === 1 ? '' : 's'}.` : '. Nothing needs you yet.'}
+      </div>
+      {findings.length > 0 && (
+        <div style={{ textAlign: 'left', maxWidth: 440, margin: '0 auto 22px', display: 'flex', flexDirection: 'column' }}>
+          {findings.map((f, i) => (
+            <div key={i} style={{ display: 'flex', gap: 11, alignItems: 'flex-start', padding: '12px 0', borderTop: i ? '1px solid var(--hairline, #EFEAE1)' : 'none' }}>
+              <span aria-hidden style={{ marginTop: 7, width: 5, height: 5, borderRadius: '50%', flex: 'none',
+                background: f.kind === 'waiting' || f.kind === 'concern' ? 'var(--critical, #c43d2b)'
+                  : f.kind === 'cold' ? 'var(--warn, #d38b1d)'
+                  : f.kind === 'good' ? 'var(--good, #2f8f5b)' : 'var(--ink-faint)' }} />
+              <span style={{ fontSize: 13.5, color: 'var(--t2, #3A352F)', lineHeight: 1.55 }}>{f.text}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ fontSize: 12.5, color: 'var(--t3)', maxWidth: 420, margin: '0 auto 20px', lineHeight: 1.6 }}>
+        The first few days are a warm-up: some reads need a little history before they mean anything.
+      </div>
+      <Cta label="Open my dashboard" onClick={() => { window.location.href = '/pulse' }} />
+    </Card>
+  )
 
   if (phase === 'done') return (
     <Card>

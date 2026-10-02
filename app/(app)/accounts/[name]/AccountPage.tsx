@@ -23,6 +23,8 @@ import { RiskFlagSheet, buildFlag, type RiskFlag } from '@/components/account/Ri
 import { MergedTimeline } from '@/components/account/MergedTimeline'
 import { LOGOS } from '@/app/(app)/integrations/IntegrationsShowcase'
 import { dueLabel, deriveDueAt, type Severity } from '@/packages/popsicle-shared/severity'
+import { HealthTrend } from '@/components/account/HealthTrend'
+import { PowerMap } from '@/components/account/PowerMap'
 
 type Sig = { id: string; account_name?: string | null; signal_type?: string | null; severity?: string | null; title?: string | null; description?: string | null; risk_amount?: number | null; source_integration?: string | null; source_message_id?: string | null; created_at?: string | null; status?: string | null; handled_at?: string | null; handled_action?: string | null; is_dismissed?: boolean | null; ai_analysis?: Record<string, unknown> | null }
 type Msg = { id: string; account_name?: string | null; integration?: string | null; sender?: string | null; subject?: string | null; content?: string | null; received_at?: string | null; direction?: string | null }
@@ -421,6 +423,14 @@ export function AccountPage({ accountName, account, signals, messages, demo = {}
       )}
 
       {/* COMMS */}
+
+      {tab === 'overview' && (
+        <>
+          <HealthTrend accountId={(account as { id?: string } | null)?.id ?? null} current={health} />
+          <PowerMap accountName={accountName} />
+        </>
+      )}
+
       {tab === 'comms' && demo.comms && (
         <CommsThread account={accountName} onAsk={q => router.push(`/ask?q=${encodeURIComponent(q)}&account=${encodeURIComponent(accountName)}`)} onDraft={open[0] ? () => router.push(`/concerns?signal=${open[0].id}&action=reply`) : undefined}
           items={demo.comms.map(c => ({ who: c.who, role: c.role, via: c.via, when: c.when, text: c.quote, tone: (c.who.startsWith('#') ? 'internal' : c.tone === 'positive' ? 'positive' : c.tone === 'negative' ? 'negative' : 'neutral') as ThreadItem['tone'], mine: /^(Andy G|Mike Ross|Jamie Torres)$/.test(c.who), source: demo.threads?.[c.who] }))} />

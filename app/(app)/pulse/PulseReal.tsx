@@ -21,6 +21,7 @@ import { useSettings } from '@/lib/useSettings'
 import { FirstRun } from '@/components/onboarding/FirstRun'
 import { healthOf } from '@/lib/health'
 import { CONCERN_ACTIONS } from '@/lib/concern-labels'
+import { SetupChecklist } from '@/components/setup/SetupChecklist'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -922,6 +923,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {!accounts.some(a => String(a.id).startsWith('demo-')) && <FirstRun />}
 
       {narrative}
+      <SetupChecklist />
       <div className="late25"><LateCommitments accounts={accounts} demoItems={demoLate} /></div>
 
       {mySettings.notifs.brief && <PreMeetingBrief />}
