@@ -20,6 +20,9 @@ export function SetupChecklist() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      // the demo account is fully furnished with synthetic data, so the real tables read empty and this
+      // would tell a demo user to connect an inbox they have no way of connecting
+      if (user.email === 'demo@popsicle-labs.app') { if (!dead) setHidden(true); return }
       if ((user.user_metadata as Record<string, unknown>)?.setup_dismissed) { if (!dead) setHidden(true); return }
 
       const [{ data: integ }, { count: accounts }] = await Promise.all([
@@ -82,12 +85,13 @@ export function SetupChecklist() {
       </div>
 
       <div style={{ borderTop: '1px solid var(--rule-strong, #0E0D0B)', marginTop: 14 }}>
-        {steps.map((s, i) => (
+        {/* what is left first, finished steps underneath, so the numbering runs 01, 02, 03 without gaps */}
+        {[...left, ...steps.filter(s => s.done)].map(s => (
           <div key={s.key} className={s.done ? '' : 'tbl-row askable'} onClick={() => !s.done && router.push(s.go)}
             style={{ display: 'grid', gridTemplateColumns: '34px minmax(0,1fr) auto', gap: 16, alignItems: 'center',
               padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: s.done ? 'default' : 'pointer' }}>
             <span style={{ fontFamily: "'DM Mono',monospace", fontSize: 11, letterSpacing: '1.2px', color: s.done ? 'var(--accent)' : 'var(--ink-faint)' }}>
-              {s.done ? 'done' : String(i + 1).padStart(2, '0')}
+              {s.done ? 'done' : String(left.indexOf(s) + 1).padStart(2, '0')}
             </span>
             <span style={{ minWidth: 0 }}>
               <span style={{ display: 'block', fontSize: 15.5, fontWeight: s.done ? 400 : 600, letterSpacing: '-.01em', color: s.done ? 'var(--ink-faint)' : 'var(--ink)' }}>{s.label}</span>
