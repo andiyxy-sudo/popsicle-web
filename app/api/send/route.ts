@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { readAutonomy, mayAct, type ActionKey } from '@/lib/autonomy'
 
 // POST { to, subject, body, cc?, signal_id?, account_name?, mode? }
 // Sends through the person's own Gmail (the send-email function), applies the Sending policy, and records
@@ -21,6 +22,13 @@ export async function POST(req: NextRequest) {
 
   if (mode === 'auto') {
     const meta = (user.user_metadata ?? {}) as { send_mode?: string; send_rules?: Record<string, unknown> }
+    // the action switch as well as the sending mode: both must allow it
+    const policy = readAutonomy(meta as Record<string, unknown>)
+    const which: ActionKey = String(b.kind ?? '') === 'invoice' ? 'chase_invoice' : 'send_followup'
+    const verdict = mayAct(which, policy, { sendMode: meta.send_mode })
+    if (!verdict.ok && verdict.reason === 'switched_off') {
+      return NextResponse.json({ error: 'action_off', reason: 'Popsicle is not allowed to send this kind on its own. Turn it on under Acting on its own.' }, { status: 403 })
+    }
     if (meta.send_mode !== 'without') return NextResponse.json({ error: 'auto_send_off', reason: 'Automatic sending is off. Every draft waits for you.' }, { status: 403 })
     const r = (meta.send_rules ?? {}) as { kinds?: string[]; neverExecs?: boolean; neverCritical?: boolean; maxDeal?: string }
     const kind = String(b.kind ?? '')

@@ -13,6 +13,7 @@ import { track } from '@/lib/analytics'
 import { SourceIcon } from '@/components/pk/SourceIcon'
 import { trustFor, WHO_SEES, YOUR_CONTROL } from '@/lib/pk/integration-trust'
 import { useRouter } from 'next/navigation'
+import { useEntitlements } from '@/lib/plan'
 
 const SUPA_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 
@@ -223,9 +224,15 @@ type RecentConcern = { id: string; title: string | null; severity: string | null
 export function IntegrationsReal({ active: activeIn, stats = {} }: { active: string[]; stats?: Record<string, ProviderStat> }) {
   // the last five Concerns this source raised, loaded only when its sheet is open
   const [recent, setRecent] = useState<RecentConcern[]>([])
+  // In the demo workspace EVERY source is offered, because the demo is there to show the finished
+  // product. Nothing is actually authorized: picking one marks it connected for the session only.
+  const [isDemo, setIsDemo] = useState(false)
+  const { ent } = useEntitlements()
+  const [demoConnected, setDemoConnected] = useState<Set<string>>(new Set())
   const [sheetAtEnd, setSheetAtEnd] = useState(false)
   const router = useRouter()
-  const active = activeIn.includes('gcal') ? [...activeIn, 'gmeet'] : activeIn   // Meet rides on the Google Calendar connection
+  const activeBase = activeIn.includes('gcal') ? [...activeIn, 'gmeet'] : activeIn   // Meet rides on the Google Calendar connection
+  const active = demoConnected.size ? [...new Set([...activeBase, ...demoConnected])] : activeBase
   const [briefingOpen, setBriefingOpen] = useState(false)   // the daily Slack briefing, in its own window
   // Opt-in resolution broadcasts (shared columns with mobile).
   const [resToggles, setResToggles] = useState<{ slack?: boolean; hubspot?: boolean }>({})
@@ -284,6 +291,18 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   // before they have been told what happens to it.
   function connect(p: Provider) {
     track('source_connect_started', { source: p.key, available: !!p.fn })
+    // a free workspace gets two sources plus its calendar, which never counts and is never blocked
+    const CALENDARS = new Set(['gcal', 'calendly', 'gmeet'])
+    if (ent && !ent.paid && !CALENDARS.has(p.key) && !active.includes(p.key)
+        && (ent.sources_used ?? 0) >= (ent.max_sources ?? 2)) {
+      setModal({
+        title: 'Source limit reached',
+        body: <ActionConfirmBody kind="connect" title={`Free covers ${ent.max_sources ?? 2} sources`}
+          desc={`You are reading ${ent.sources_used} already, and your calendar on top, which never counts. Disconnect one to swap, or upgrade to add more.`} />,
+        footer: <><ModalBtn onClick={() => setModal(null)}>Close</ModalBtn><ModalBtn primary onClick={() => { setModal(null); router.push('/settings?sheet=plan') }}>See plans</ModalBtn></>,
+      })
+      return
+    }
     if (!p.fn && p.key !== 'fireflies') return beginConnect(p)      // "coming soon" needs no trust card
     const t = trustFor(p.key)
     setModal({
@@ -309,13 +328,17 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   }
 
   useEffect(() => {
+    createClient().auth.getUser().then(({ data }) => setIsDemo(data.user?.email === 'demo@popsicle-labs.app')).catch(() => {})
+  }, [])
+
+  useEffect(() => {
     if (!sheet) { setRecent([]); setSheetAtEnd(false); return }
     let dead = false
     ;(async () => {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
-      const { data } = await supabase.from('signals')
+      const { data } = await supabase.from('concern_feed')
         .select('id, title, severity, account_name, created_at')
         .eq('user_id', user.id).eq('source_integration', sheet.key)
         .order('created_at', { ascending: false }).limit(3)
@@ -325,6 +348,17 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
   }, [sheet])
 
   async function beginConnect(p: Provider) {
+    if (isDemo) {
+      // the demo never leaves the app: it shows what connecting looks like and moves on
+      setDemoConnected(prev => new Set(prev).add(p.key))
+      setModal({
+        title: `${p.name} connected`,
+        body: <ActionConfirmBody kind="connect" title={`${p.name} is connected`}
+          desc={`Popsicle is reading ${p.name} for this demo workspace. In your own workspace this step hands you to ${p.name} to authorize, and nothing is read until you do.`} />,
+        footer: <ModalBtn primary onClick={() => setModal(null)}>Done</ModalBtn>,
+      })
+      return
+    }
     if (p.key === 'fireflies') {
       setModal({
         title: 'Connect Fireflies',
@@ -677,7 +711,7 @@ export function IntegrationsReal({ active: activeIn, stats = {} }: { active: str
             <div>
               {inCat.map(p => {
                 const on = active.includes(p.key)
-                const live = !!p.fn
+                const live = !!p.fn || isDemo
                 return (
                   <div key={p.key} onClick={on ? () => { setSheet(p); setConfirmDc(false) } : undefined}
                     style={{ display: 'grid', gridTemplateColumns: '40px minmax(0,1fr) 120px', alignItems: 'center', gap: 20, padding: '18px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', cursor: on ? 'pointer' : 'default' }}>

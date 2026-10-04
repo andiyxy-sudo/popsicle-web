@@ -27,6 +27,8 @@ import { CountUp } from '@/components/ui/CountUp'
 import { SourceIcon, ConfArc } from '@/components/pk/SourceIcon'
 import { useFlip, flyTo, useArrivals, useTypewriter } from '@/lib/pk/motion'
 import { dueLabel, deriveDueAt, type Severity } from '@/packages/popsicle-shared/severity'
+import { useEntitlements } from '@/lib/plan'
+import { LockedConcern } from '@/components/concerns/LockedConcern'
 
 interface DBSignal {
   due_at?: string | null
@@ -91,6 +93,8 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
   const [justProtected, setJustProtected] = useState(0)
   const protectedRef = useRef<HTMLSpanElement | null>(null)
   const [typing, setTyping] = useState(false)
+  const { ent, refresh: refreshPlan } = useEntitlements()
+  const [justUnlocked, setJustUnlocked] = useState<Set<string>>(new Set())
   const fresh = useArrivals(signals.map(x => String(x.id)))
   // Draft modal state
   const [draftFor, setDraftFor] = useState<DBSignal | null>(null)
@@ -186,7 +190,7 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
       setDeepNotFound(true)
       return
     }
-    createClient().from('signals').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
+    createClient().from('concern_feed').select('*').eq('id', id).maybeSingle().then(({ data, error }) => {
       if (error || !data) { setDeepNotFound(true); return }
       const sig = data as DBSignal
       // Soft-deleted signals are gone as far as users are concerned.
@@ -562,6 +566,16 @@ export function ConcernsReal({ signals: initial, demoHead, heldByEngine = 0 }: {
         )}
         {shown.length === 0 && <EmptyState line={filter === 'all' ? 'Nothing open right now.' : `Nothing ${filter === 'critical' ? 'critical' : filter === 'watch' ? 'on watch' : 'positive'} right now.`} hint="Popsicle keeps listening across every connected source. New Concerns land here the moment they are detected, and you get a toast." action="See recently handled" onAction={() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })} />}
         {shown.slice(0, listLimit).map((s, rowIndex) => {
+          // locked by the plan: the detail is not in the response, so there is nothing to hide here
+          if ((s as { locked?: boolean }).locked && !justUnlocked.has(String(s.id))) {
+            return (
+              <LockedConcern key={s.id} id={String(s.id)} account={s.account_name ?? null} type={s.signal_type ?? null}
+                severity={s.severity ?? null} when={mounted && s.created_at ? timeAgo(s.created_at) : ''}
+                unlocksLeft={ent?.unlocks_left ?? null} resetsOn={ent?.resets_on ?? ''}
+                onUnlocked={id => { setJustUnlocked(prev => new Set(prev).add(id)); void refreshPlan(); router.refresh() }}
+                onOutOfUnlocks={() => void refreshPlan()} />
+            )
+          }
           const isHigh = s.severity === 'high', isPos = s.severity === 'positive'
           const accent = isHigh ? 'var(--critical, #c43d2b)' : isPos ? 'var(--good, #2f8f5b)' : 'var(--warn, #d38b1d)'
           const label = TYPE_LABELS[s.signal_type || ''] || 'Concern'

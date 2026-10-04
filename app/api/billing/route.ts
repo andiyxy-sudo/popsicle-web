@@ -27,7 +27,7 @@ export async function GET() {
   const { count } = await supabase.from('org_members').select('id', { count: 'exact', head: true })
   const seatsUsed = count ?? 1
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-  const { count: concernsUsed } = await supabase.from('signals').select('id', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString())
+  const { count: concernsUsed } = await supabase.from('concern_feed').select('id', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString())
   const { count: sourcesUsed } = await supabase.from('integrations').select('id', { count: 'exact', head: true }).eq('is_active', true)
 
   const sub: Subscription = {

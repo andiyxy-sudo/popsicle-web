@@ -109,7 +109,7 @@ export async function loadRealAccount360(name: string): Promise<Partial<A360Data
 
   // 2) this account's signals (newest first)
   const { data: sigRows } = await supa
-    .from('signals')
+    .from('concern_feed')
     .select('signal_type, severity, title, description, risk_amount, ai_analysis, created_at, source_integration')
     .ilike('account_name', name)
     .eq('is_dismissed', false)

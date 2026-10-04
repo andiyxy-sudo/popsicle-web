@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Array<{ user_id: string }>).map(x => x.user_id) }
     const [accts, sigs] = await Promise.all([
       fetchAll<M.Acct>(async (from, to) => db.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date').in('user_id', ids).range(from, to) as never, { max: 5000 }),
-      fetchAll<M.Sig>(async (from, to) => db.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(from, to) as never, { max: 20000 }),
+      fetchAll<M.Sig>(async (from, to) => db.from('concern_feed').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(from, to) as never, { max: 20000 }),
     ])
     if (briefingDue) {
       const res = await postToSlack(token, r.channel_id!, buildDigest(accts, sigs, now.getTime(), r.timezone))

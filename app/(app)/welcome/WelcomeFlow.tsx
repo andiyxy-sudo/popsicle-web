@@ -13,6 +13,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { orgIdsBrowser } from '@/lib/org'
+import { useEntitlements } from '@/lib/plan'
 
 type Phase = 'checking' | 'connect' | 'scanning' | 'discovering' | 'pick' | 'creating' | 'reading' | 'found' | 'done' | 'none' | 'error'
 type Finding = { account: string; kind: string; text: string }
@@ -74,6 +75,7 @@ const Cta = ({ label, onClick, disabled }: { label: string; onClick: () => void;
 
 export function WelcomeFlow({ name }: { name: string }) {
   const router = useRouter()
+  const { ent } = useEntitlements()
   const [phase, setPhase] = useState<Phase>('checking')
   const [statusLine, setStatusLine] = useState('')
   const [discovered, setDiscovered] = useState<Discovered[]>([])
@@ -275,6 +277,9 @@ export function WelcomeFlow({ name }: { name: string }) {
 
   if (phase === 'pick') {
     const nSel = checked.size
+    // free covers five accounts; the database enforces it, so say it here rather than let the call fail
+    const capAcc = ent && !ent.paid ? (ent.max_accounts ?? 5) : null
+    const overCap = capAcc != null && nSel > capAcc
     return (
       <Card wide>
         <div style={{ marginBottom: 4, fontSize: 12, color: 'var(--t3)', fontFamily: "'DM Mono',monospace" }}>
@@ -339,10 +344,12 @@ export function WelcomeFlow({ name }: { name: string }) {
           <button onClick={addManual} disabled={!manualName.trim()} style={{ padding: '9px 16px', borderRadius: 9, background: manualName.trim() ? 'var(--o)' : 'var(--t4)', border: 'none', color: '#fff', fontSize: 12.5, fontWeight: 700, cursor: manualName.trim() ? 'pointer' : 'default', fontFamily: "'Outfit',sans-serif", flexShrink: 0 }}>Add</button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 12, color: 'var(--t3)' }}>{nSel} selected</span>
+          <span style={{ fontSize: 12, color: overCap ? 'var(--danger, #c43d2b)' : 'var(--t3)' }}>
+            {capAcc != null ? `${nSel} of ${capAcc} selected${overCap ? ' · Free covers five' : ''}` : `${nSel} selected`}
+          </span>
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => router.replace('/pulse')} style={{ padding: '12px 18px', background: 'transparent', color: 'var(--t3)', border: '1px solid var(--line)', borderRadius: 'var(--r-sm)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: "'Outfit',sans-serif" }}>Skip for now</button>
-            <Cta label={nSel ? `Track ${nSel} account${nSel === 1 ? '' : 's'}` : 'Select accounts'} onClick={runCreate} disabled={!nSel} />
+            <Cta label={overCap ? `Deselect ${nSel - (capAcc ?? 0)} to continue` : nSel ? `Track ${nSel} account${nSel === 1 ? '' : 's'}` : 'Select accounts'} onClick={runCreate} disabled={!nSel || overCap} />
           </div>
         </div>
       </Card>

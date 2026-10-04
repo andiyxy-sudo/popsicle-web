@@ -99,7 +99,7 @@ export function PortfolioReal({ accounts, demoSignals, demoHead, meta = {} }: { 
       supa.from('gcal_event_state').select('account_name').in('user_id', await orgIdsBrowser(supa, user.id)).not('account_name', 'is', null)
         .gte('start_ts', new Date().toISOString()).lte('start_ts', new Date(Date.now() + 48 * 3600_000).toISOString()).limit(50)
         .then(({ data }) => { if (!dead) setSoon48(new Set(((data ?? []) as Array<{ account_name: string }>).map(x => x.account_name))) })
-      supa.from('signals')
+      supa.from('concern_feed')
         .select('id, account_name, title, severity, status, is_dismissed, created_at, corroboration')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')

@@ -19,6 +19,8 @@ import { applyTheme } from '@/lib/theme'
 import { track } from '@/lib/analytics'
 import { PLANS, planOf } from '@/lib/billing/plans'
 import type { Subscription } from '@/lib/billing/provider'
+import { useEntitlements } from '@/lib/plan'
+import { ACTIONS, readAutonomy, autonomySummary, type AutonomyPolicy } from '@/lib/autonomy'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -156,7 +158,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     try {
       const [{ data: accts }, { data: sigs }] = await Promise.all([
         supabase.from('accounts').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)),
-        supabase.from('signals').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
+        supabase.from('concern_feed').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
       ])
       let blob: Blob
       let name: string
@@ -222,6 +224,8 @@ export function SettingsClient({ user }: SettingsClientProps) {
   const [mfaEnroll, setMfaEnroll] = useState<{ id: string; qr: string; secret: string } | null>(null)
   const [mfaCode, setMfaCode] = useState(''); const [mfaMsg, setMfaMsg] = useState(''); const [mfaBusy, setMfaBusy] = useState(false)
   const isDemoUser = user.email === 'demo@popsicle-labs.app'
+  const { ent } = useEntitlements()
+  const [autoActions, setAutoActions] = useState<AutonomyPolicy>(() => readAutonomy(null))
 
   async function loadInvites() {
     try { const r = await fetch('/api/invite'); const j = await r.json(); setInvites(j.invites ?? []) } catch { /* ignore */ }
@@ -323,6 +327,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
       if (typeof m.industry === 'string') setIndustry(m.industry)
       if (typeof m.easy_read === 'boolean') setEasyRead(m.easy_read)
       if (m.send_rules && typeof m.send_rules === 'object') setSendRules(r => ({ ...r, ...(m.send_rules as object) }))
+      setAutoActions(readAutonomy(m as Record<string, unknown>))
       if (m.notif_prefs) setNotifs(m.notif_prefs as Record<string, boolean>)
       if (m.prefs) setPrefs(m.prefs as Record<string, string>)
     })
@@ -330,7 +335,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     ;(async () => {
       const [{ data: integ }, { count: sigCount }, { count: acctCount }] = await Promise.all([
         supabase.from('integrations').select('provider').in('user_id', await orgIdsBrowser(supabase, user.id)).eq('is_active', true),
-        supabase.from('signals').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
+        supabase.from('concern_feed').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
         supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsBrowser(supabase, user.id)),
       ])
       if (dead) return
@@ -542,21 +547,27 @@ export function SettingsClient({ user }: SettingsClientProps) {
           <div className="bil-now">
             <div>
               <div className="bil-k">Current plan</div>
-              <div className="bil-plan">{partner ? 'Design partner' : (planOf(current)?.name ?? current)}</div>
-              <div className="bil-sub">{partner
-                ? (sub?.renewsAt ? `Free until ${fmtDate(sub.renewsAt)}` : 'Free while we build this with you')
-                : sub?.amount ? `$${sub.amount.toLocaleString()} a month` : ''}</div>
+              <div className="bil-plan">{isDemoUser ? 'Team' : ent && !ent.paid ? 'Free' : partner ? 'Design partner' : (planOf(current)?.name ?? current)}</div>
+              <div className="bil-sub">{isDemoUser
+                ? '$1,200 a month'
+                : ent && !ent.paid ? '$0 · free forever'
+                : partner
+                  ? (sub?.renewsAt ? `Free until ${fmtDate(sub.renewsAt)}` : 'Free while we build this with you')
+                  : sub?.amount ? `$${sub.amount.toLocaleString()} a month` : ''}</div>
             </div>
             <div className="bil-use">
               <div className="bil-k">Concerns this month</div>
-              <div className="bil-use-n">{used.toLocaleString()}{cap ? <span className="bil-use-cap"> of {cap.toLocaleString()}</span> : null}</div>
-              <div className="bil-bar"><span style={{ width: cap ? `${Math.min(100, (used / cap) * 100)}%` : '12%' }} /></div>
-              <div className="bil-use-note">{cap ? 'Going over never cuts you off. We talk first.' : 'No cap while you are a design partner.'}</div>
+              <div className="bil-use-n">{used.toLocaleString()}{cap ? <span className="bil-use-cap"> of {cap.toLocaleString()}</span> : isDemoUser ? <span className="bil-use-cap"> of 2,000</span> : null}</div>
+              <div className="bil-bar"><span style={{ width: cap ? `${Math.min(100, (used / cap) * 100)}%` : isDemoUser ? `${Math.min(100, (used / 2000) * 100)}%` : '12%' }} /></div>
+              <div className="bil-use-note">{isDemoUser || cap ? 'Going over never cuts you off. We talk first.' : 'No cap while you are a design partner.'}</div>
             </div>
             <div className="bil-facts">
               <div><span className="bil-k">People</span><b>{sub ? <><span className="bil-num">{sub.seatsUsed}</span> · never capped</> : '—'}</b></div>
-              <div><span className="bil-k">Sources</span><b><span className="bil-num">{sub?.sourcesUsed ?? '—'}</span> connected</b></div>
-              <div><span className="bil-k">Renews</span><b>{sub?.renewsAt ? fmtDate(sub.renewsAt) : 'No renewal date'}</b></div>
+              <div><span className="bil-k">Sources</span><b>{ent && !ent.paid
+                ? <><span className="bil-num">{ent.sources_used ?? 0}</span> of {ent.max_sources ?? 2} · calendar free</>
+                : <><span className="bil-num">{sub?.sourcesUsed ?? '—'}</span> connected</>}</b></div>
+              {ent && !ent.paid && <div><span className="bil-k">Accounts</span><b><span className="bil-num">{ent.accounts_used ?? 0}</span> of {ent.max_accounts ?? 5}</b></div>}
+              <div><span className="bil-k">{ent && !ent.paid ? 'Unlocks reset' : 'Renews'}</span><b>{ent && !ent.paid ? (ent.resets_on ? fmtDate(ent.resets_on) : '—') : isDemoUser ? '1 Nov 2026' : sub?.renewsAt ? fmtDate(sub.renewsAt) : 'No renewal date'}</b></div>
             </div>
           </div>
 
@@ -740,6 +751,43 @@ export function SettingsClient({ user }: SettingsClientProps) {
       )
     })() },
     Currency: { title: 'Currency', sub: 'Figures are held in US dollars and converted for display, at rates refreshed twice a day', options: CURRENCIES.map(c => [c.code, `${c.name} · ${c.symbol.trim()}`] as [string, string]) },
+    'Acting on its own': { title: 'Acting on its own', sub: 'What Popsicle may do without asking you first', wide: true, custom: (() => {
+      const setAuto = (key: string, on: boolean) => { const next = { ...autoActions, [key]: on }; setAutoActions(next); saveJson('auto_actions', next) }
+      const group = (consequence: 'leaves_company' | 'internal_only', title: string, note: string) => (
+        <div style={{ marginBottom: 26 }}>
+          <div style={{ fontFamily: "'DM Mono',monospace", fontSize: 10, letterSpacing: '1.6px', textTransform: 'uppercase', color: consequence === 'leaves_company' ? 'var(--critical, #c43d2b)' : 'var(--ink-faint)', marginBottom: 4 }}>{title}</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginBottom: 10, lineHeight: 1.55 }}>{note}</div>
+          {(Object.keys(ACTIONS) as Array<keyof typeof ACTIONS>).filter(k => ACTIONS[k].consequence === consequence).map(k => {
+            const a = ACTIONS[k]
+            const blocked = a.consequence === 'leaves_company' && sendMode !== 'without'
+            return (
+              <div key={k} style={{ display: 'flex', alignItems: 'flex-start', gap: 16, padding: '14px 0', borderBottom: '1px solid var(--hairline, #EFEAE1)', opacity: a.ready ? 1 : .5 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 15, color: 'var(--ink)' }}>{a.label}</div>
+                  <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 2, lineHeight: 1.55 }}>
+                    {a.what}{!a.ready ? ' · not built yet' : blocked ? ' · sending still waits for you, so this stays off' : ''}
+                  </div>
+                </div>
+                <button disabled={!a.ready} onClick={() => setAuto(k, !autoActions[k])} aria-label={a.label}
+                  style={{ width: 38, minWidth: 38, height: 22, borderRadius: 0, border: 0, padding: 0, cursor: a.ready ? 'pointer' : 'default', position: 'relative', flex: '0 0 38px',
+                    background: autoActions[k] && a.ready && !blocked ? 'linear-gradient(135deg,#FF8A50,#FF6B35)' : 'var(--border, #E5DFD4)' }}>
+                  <span style={{ position: 'absolute', top: 3, left: autoActions[k] && a.ready && !blocked ? 19 : 3, width: 16, height: 16, borderRadius: '50%', background: 'var(--d-raised, #fff)', transition: 'left .18s ease' }} />
+                </button>
+              </div>
+            )
+          })}
+        </div>
+      )
+      return (
+        <div>
+          {group('internal_only', 'Inside Popsicle', 'Tidying its own state. Nothing reaches a customer, and everything it does is listed on Actions.')}
+          {group('leaves_company', 'Reaches the customer', 'These also need Sending set to "without you". Your send rules still apply: never an executive, never a critical account, never above your deal cap.')}
+          <div style={{ fontSize: 12.5, color: 'var(--ink-faint)', lineHeight: 1.6, paddingTop: 4 }}>
+            Everything Popsicle does on its own appears on the Actions page, with what it did and when. You can switch any of this off at any time, and it stops immediately.
+          </div>
+        </div>
+      )
+    })() },
     'Sending': { title: 'Sending', sub: 'What happens after Popsicle drafts a message', wide: true, custom: (() => {
       const setRules = (patch: Partial<typeof sendRules>) => { const next = { ...sendRules, ...patch }; setSendRules(next); saveJson('send_rules', next) }
       const choose = (m: 'with' | 'without') => { setSendMode(m); saveJson('send_mode', m) }
@@ -852,7 +900,11 @@ export function SettingsClient({ user }: SettingsClientProps) {
       <div className="set25">
       <Section title="Account" sub="Profile, workspace and data.">
         <Row label="Workspace" sub={[org?.name ?? 'Your workspace', industry].filter(Boolean).join(' · ')} value={`${members.length || 1} ${(members.length || 1) === 1 ? 'seat' : 'seats'}`} onClick={() => setSheet('Workspace')} />
-        <Row label="Plan & billing" sub="Beta access, no charge while in beta" value="Beta" onClick={() => setSheet('Plan & billing')} />
+        <Row label="Plan & billing"
+          sub={isDemoUser ? 'Team plan · renews 1 Nov'
+            : ent && !ent.paid ? `${ent.unlocks_left ?? 0} of ${ent.unlocks_per_month ?? 50} unlocks left · resets ${ent.resets_on ? fmtDate(ent.resets_on) : ''}`
+            : 'Beta access, no charge while in beta'}
+          value={isDemoUser ? 'Team' : ent && !ent.paid ? 'Free' : 'Beta'} onClick={() => setSheet('Plan & billing')} />
         <Row label="Your data" value={counts ? `${counts.accounts} accounts · ${counts.signals} Concerns stored` : '--'} onClick={() => setSheet('Your data')} />
         <Row label="Weekly digest" sub="The week-in-review card on Pulse · email coming soon" value={notifs.digest ? 'On Pulse' : 'Off'} onClick={() => setSheet('Weekly digest')} />
       </Section>
@@ -947,6 +999,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
         <Row label="Tone" sub="Applies to every draft it prepares" value={voice.Tone} onClick={() => setSheet('Tone')} />
         <Row label="Length" sub="How long a first draft should run" value={voice.Length} onClick={() => setSheet('Length')} />
         <Row label="Sign-off" sub="The closing line on your emails" value={voice['Sign-off']} onClick={() => setSheet('Sign-off')} />
+        <Row label="Acting on its own" sub="What Popsicle may do without asking" value={autonomySummary(autoActions, sendMode)} onClick={() => setSheet('Acting on its own')} />
         <Row label="Sending" sub="Whether Popsicle sends after drafting, or waits for you" value={sendMode === 'without' ? 'Without you' : 'With you'} onClick={() => setSheet('Sending')} />
       </Section>
 

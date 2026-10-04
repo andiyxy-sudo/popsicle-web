@@ -18,7 +18,7 @@ export default async function IntelligencePage() {
 
   const since = new Date(Date.now() - 56 * 86400000).toISOString()
   const [signalsRes, msgsRes, baselinesRes, accountsRes] = await Promise.all([
-    fetchAllData(async (a, b) => supabase.from('signals')
+    fetchAllData(async (a, b) => supabase.from('concern_feed')
       .select('created_at, account_name, title, severity, signal_type, source_integration, risk_amount, is_dismissed, status, handled_action, handled_at, id, ai_analysis')
       .in('user_id', await orgIdsServer(supabase, userId))
       .gte('created_at', new Date(Date.now() - 190 * 864e5).toISOString())   // the 90-day window and the one before it

@@ -28,7 +28,7 @@ export async function GET() {
   const end = new Date(); end.setHours(23, 59, 59, 999)
   const [{ data: accounts }, { data: signals }, { data: cms }] = await Promise.all([
     supabase.from('accounts').select('id, name, value, risk_level, health_score, last_contact_date, close_date, owner').in('user_id', ids).limit(300),
-    supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(300),
+    supabase.from('concern_feed').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(300),
     supabase.from('commitments').select('id, text, due_at, account_name').in('user_id', ids).eq('status', 'open').lte('due_at', end.toISOString()).limit(20),
   ])
   const commitments = ((cms ?? []) as Array<{ id: string; text: string; due_at: string | null; account_name: string | null }>).map(c => ({

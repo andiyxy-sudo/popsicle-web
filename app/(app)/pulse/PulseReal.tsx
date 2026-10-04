@@ -22,6 +22,7 @@ import { FirstRun } from '@/components/onboarding/FirstRun'
 import { healthOf } from '@/lib/health'
 import { CONCERN_ACTIONS } from '@/lib/concern-labels'
 import { SetupChecklist } from '@/components/setup/SetupChecklist'
+import { UnlockCounter } from '@/components/plan/UnlockCounter'
 
 export type PulseStrip = {
   atRisk: number; atRiskDelta: number; high: number; med: number; low: number
@@ -76,7 +77,7 @@ function PreMeetingBrief() {
       if (!ev || dead) return
       const account = String(ev.account_name)
       const [sigRes, blRes, acctRes] = await Promise.all([
-        supa.from('signals').select('id, title, severity')
+        supa.from('concern_feed').select('id, title, severity')
           .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', account)
           .eq('is_dismissed', false)
           .or('status.is.null,status.eq.open')
@@ -923,6 +924,7 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
       {!accounts.some(a => String(a.id).startsWith('demo-')) && <FirstRun />}
 
       {narrative}
+      <div style={{ paddingBottom: 18 }}><UnlockCounter isDemo={isDemoData} /></div>
       <SetupChecklist />
       <div className="late25"><LateCommitments accounts={accounts} demoItems={demoLate} /></div>
 
@@ -991,7 +993,9 @@ export function PulseReal({ name, accounts, signals, integrationCount, demoStrip
           </div>
         </section>
         <section style={{ minWidth: 0 }}>
-          {secHead('Concern engine', mono('live'))}
+          {/* the engine works and keeps getting sharper: "learning" says that, where "beta" would invite
+              someone to wait for a finished version that already exists */}
+          {secHead('Concern engine', isDemoData ? mono('learning') : mono('live'))}
           <div className="pulse10">
           {loopRows.map((l, i) => (
             <div key={i} className="pk-thread" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, padding: '20px 0 14px', borderBottom: '1px solid var(--hairline, #EFEAE1)' }}>

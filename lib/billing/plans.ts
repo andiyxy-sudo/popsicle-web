@@ -1,7 +1,7 @@
 // The plan catalogue: one place, used by the billing panel, the limits and (later) the checkout.
 // Popsicle charges a flat fee per company. Users are never capped: the band is set by how much
 // Popsicle reads and raises (Concerns per month) and which sources it reads.
-export type PlanId = 'trial' | 'starter' | 'growth' | 'pro' | 'enterprise'
+export type PlanId = 'free' | 'trial' | 'starter' | 'growth' | 'pro' | 'enterprise'
 
 export interface Plan {
   id: PlanId
@@ -24,6 +24,11 @@ export const PLANS: Plan[] = [
     concerns: 300, concernsText: '300 Concerns', sourcesText: '2 sources · for 14 days', teamGuide: 'Any team size*',
     selfServe: true,
     features: ['Everything in Growth', 'No card, no sales call', 'Finds risk in your last 30 days'] },
+  { id: 'free', name: 'Free', price: 0, priceText: '$0', tagline: 'Watch five accounts, free forever',
+    concerns: 50, concernsText: '50 unlocks a month', sourcesText: '2 sources · your calendar is free',
+    teamGuide: 'For one person starting out', selfServe: true,
+    features: ['Calendar and timing Concerns in full, always', '50 unlocks a month for everything else',
+               'Two sources plus your calendar, which never counts', 'Five accounts watched'] },
   { id: 'starter', name: 'Starter', price: 499, priceText: '$499', tagline: 'For a small team',
     concerns: 1000, concernsText: '1,000 Concerns', sourcesText: '2 sources · per month', teamGuide: '5 to 10 users*',
     selfServe: true,

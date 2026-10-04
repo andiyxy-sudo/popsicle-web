@@ -22,7 +22,7 @@ export async function loadMetricsData(supabase: SupabaseClient, claims: Record<s
   if (hit && Date.now() - hit.at < CACHE_MS) return { ...hit.data, now: Date.now() }
   const [accts, sigs] = await Promise.all([
     fetchAll<M.Acct>(async (a, b) => supabase.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date, user_id').in('user_id', ids).range(a, b) as never, { max: 5000 }),
-    fetchAll<M.Sig>(async (a, b) => supabase.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(a, b) as never, { max: 20000 }),
+    fetchAll<M.Sig>(async (a, b) => supabase.from('concern_feed').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(a, b) as never, { max: 20000 }),
   ])
   const data = { accts, sigs, now: Date.now(), demo: false }
   CACHE.set(key, { at: Date.now(), data }); if (CACHE.size > 200) CACHE.delete(CACHE.keys().next().value as string)

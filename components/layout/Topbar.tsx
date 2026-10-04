@@ -37,7 +37,7 @@ export function Topbar({ signalCount = 0, onAskClick, initials = 'U' }: TopbarPr
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || canceled) return
-      const { data } = await supa.from('signals')
+      const { data } = await supa.from('concern_feed')
         .select('id, title, account_name, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false)
         .or('status.is.null,status.eq.open')

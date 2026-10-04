@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
   } else {
     const { data } = await supabase
-      .from('signals')
+      .from('concern_feed')
       .select('account_name, signal_type, severity, title, description, ai_analysis, source_integration, raw_content, created_at')
       .eq('id', signal_id)
       .maybeSingle()

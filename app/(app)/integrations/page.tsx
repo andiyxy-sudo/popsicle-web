@@ -18,7 +18,7 @@ export default async function IntegrationsPage() {
 
   const [{ data: integrations }, { data: signals }] = await Promise.all([
     supabase.from('integrations').select('provider, is_active, connected_at, last_synced_at, team_name, metadata').in('user_id', await orgIdsServer(supabase, userId)),
-    supabase.from('signals').select('source_integration, severity, created_at').in('user_id', await orgIdsServer(supabase, userId)).eq('is_dismissed', false),
+    supabase.from('concern_feed').select('source_integration, severity, created_at').in('user_id', await orgIdsServer(supabase, userId)).eq('is_dismissed', false),
   ])
 
   const activeRows = (integrations ?? []).filter(i => i.is_active)

@@ -62,7 +62,7 @@ When asked what to turn off or turn down, answer with these settings by name, sa
   // Fetch context: recent signals + at-risk accounts
   const [signalsRes, accountsRes] = await Promise.all([
     supabase
-      .from('signals')
+      .from('concern_feed')
       .select('title, severity, account_name, source_integration, ai_analysis, created_at')
       .in('user_id', await orgIdsServer(supabase, user.id))
       .eq('is_dismissed', false)

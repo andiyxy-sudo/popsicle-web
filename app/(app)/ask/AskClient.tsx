@@ -412,7 +412,7 @@ export function AskClient() {
     const supa = createClient()
     const { data: { user } } = await supa.auth.getUser()
     if (!user) { router.push('/concerns'); return }
-    const { data } = await supa.from('signals').select('id, severity')
+    const { data } = await supa.from('concern_feed').select('id, severity')
       .in('user_id', await orgIdsBrowser(supa, user.id)).eq('account_name', acct).eq('is_dismissed', false)
       .or('status.is.null,status.eq.open').order('created_at', { ascending: false }).limit(10)
     const rows = (data ?? []) as Array<{ id: string; severity: string | null }>
@@ -434,7 +434,7 @@ export function AskClient() {
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('integration', inspect)
         .order('received_at', { ascending: false }).limit(6)
       if (acct) msgQ.eq('account_name', acct)
-      const sigQ = supa.from('signals').select('id, title, description, created_at')
+      const sigQ = supa.from('concern_feed').select('id, title, description, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('source_integration', inspect)
         .order('created_at', { ascending: false }).limit(6)
       if (acct) sigQ.eq('account_name', acct)
@@ -485,7 +485,7 @@ export function AskClient() {
       const supa = createClient()
       const { data: { user } } = await supa.auth.getUser()
       if (!user || dead) return
-      const { data } = await supa.from('signals')
+      const { data } = await supa.from('concern_feed')
         .select('account_name, title, severity, created_at')
         .in('user_id', await orgIdsBrowser(supa, user.id)).eq('is_dismissed', false).eq('severity', 'high')
         .or('status.is.null,status.eq.open')
