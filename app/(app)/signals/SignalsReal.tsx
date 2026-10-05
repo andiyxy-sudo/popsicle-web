@@ -384,7 +384,8 @@ export function SignalsReal({ signals: initial, demoHead }: { signals: DBSignal[
       if (!r.ok || !j.body) {
         setDraftErr(j?.error === 'draft_ungrounded'
           ? 'The AI could not write a draft that stays strictly within what the thread and Concern actually say, so nothing was shown. Try again, or write it yourself from the Concern.'
-          : j?.error === 'draft_timeout' ? 'Drafting took too long. Try again in a moment.' : 'Give it another try in a moment.')
+          : j?.error === 'draft_timeout' ? 'Drafting took too long. Try again in a moment.'
+          : j?.error === 'locked' ? 'Unlock this Concern to draft a reply to it.' : 'Give it another try in a moment.')
         setDraftState('error'); return
       }
       setDraft({ subject: j.subject || '', body: j.body, to: j.to || '', provenance: j.provenance })

@@ -32,9 +32,12 @@ export async function POST(req: NextRequest) {
   } else {
     const { data } = await supabase
       .from('concern_feed')
-      .select('account_name, signal_type, severity, title, description, ai_analysis, source_integration, raw_content, created_at')
+      .select('account_name, signal_type, severity, title, description, ai_analysis, source_integration, raw_content, created_at, locked')
       .eq('id', signal_id)
       .maybeSingle()
+    // A locked Concern (free tier, not yet unlocked) comes back with its content nulled by the
+    // view. Drafting from it would spend a model call on an empty prompt, so refuse plainly.
+    if ((data as { locked?: boolean } | null)?.locked) return NextResponse.json({ error: 'locked' }, { status: 403 })
     sig = (data as SigRow | null)
   }
   if (!sig) return NextResponse.json({ error: 'signal_not_found' }, { status: 404 })
