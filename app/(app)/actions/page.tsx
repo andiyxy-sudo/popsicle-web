@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { orgIdsServer } from '@/lib/org'
 import { ActionsReal } from './ActionsReal'
+import { DEMO_EMAIL } from '@/lib/data'
+import { DEMO_SIGNALS } from '@/lib/demo-dataset'
+import { DEMO_DRAFTS, DEMO_AUTO } from '@/lib/demo-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +14,13 @@ export default async function ActionsPage() {
   const claims = data?.claims
   if (!claims) redirect('/login')
   const userId = claims.sub as string
+
+  // the demo shows a working product: drafted buyer-facing actions waiting for approval, and the internal
+  // ones Popsicle already took, all tied to Concerns in the demo dataset
+  if (claims.email === DEMO_EMAIL) {
+    const handled = (DEMO_SIGNALS as unknown as Array<Record<string, unknown>>).filter(x => x.status === 'handled')
+    return <ActionsReal open={[]} handled={handled as never} sends={[]} drafts={DEMO_DRAFTS} autoDone={DEMO_AUTO} />
+  }
   const ids = await orgIdsServer(supabase, userId)
 
   // Everything a person could do next, and everything already done. Concerns come from concern_feed,

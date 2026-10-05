@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { DEMO_EMAIL } from '@/lib/data'
 import { AppShell } from '@/components/layout/AppShell'
 import { orgIdsServer } from '@/lib/org'
+import { DEMO_DRAFTS } from '@/lib/demo-actions'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -17,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   let badges = {}
   if (isDemo) {
-    badges = { portfolio: 9, signals: 47, integrations: 4 }
+    badges = { portfolio: 9, signals: 47, integrations: 4, actions: DEMO_DRAFTS.length }
   } else {
     const [accts, sigs, ints] = await Promise.all([
       supabase.from('accounts').select('id', { count: 'exact', head: true }).in('user_id', await orgIdsServer(supabase, user.id)),

@@ -20,7 +20,7 @@ import { SpellingLayer } from '@/components/spelling/SpellingLayer'
 interface AppShellProps {
   user: { email: string; id: string; name?: string }
   isDemo: boolean
-  badges?: { portfolio?: number; signals?: number; integrations?: number }
+  badges?: { portfolio?: number; signals?: number; integrations?: number; actions?: number }
   children: React.ReactNode
 }
 
