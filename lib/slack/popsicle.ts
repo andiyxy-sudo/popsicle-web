@@ -2,6 +2,7 @@
 // Server-only. Uses the service role (there is no user session on a Slack event), scoped
 // by hand to the organization that owns the Slack workspace. Reads what the existing
 // pipeline already produced; detects nothing.
+import { maskConcerns } from '@/lib/concern-visibility'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { wantsVerdict, VERDICT_RULES } from '@/lib/ask/verdict'
 
@@ -94,7 +95,7 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
 
   const [{ data: accounts }, { data: signals }, { data: commitments }] = await Promise.all([
     db.from('accounts').select('id, name, value, stage, risk_level, health_score, close_date, last_contact_date, owner').in('user_id', ids).limit(400),
-    db.from('signals').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).limit(400),
+    db.from('signals').select('id, user_id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, ai_analysis').in('user_id', ids).is('deleted_at', null).order('created_at', { ascending: false }).limit(400),
     db.from('commitments').select('id, text, due_at, account_name, status').in('user_id', ids).eq('status', 'open').limit(100),
   ])
   const accts = (accounts ?? []) as Row[]
@@ -123,14 +124,16 @@ export async function answerMention(ev: { team: string; channel: string; ts: str
     return rq.ok ? `asked which deal (channel not linked, no account named) · ${keyNote}` : `Slack refused the reply: ${rq.error} · ${keyNote}`
   }
 
-  const openSigs = ((signals ?? []) as Row[]).filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
+  // a free workspace only gets the text of Concerns it can read in the app (see lib/concern-visibility.ts)
+  const visibleSigs = await maskConcerns(db, (signals ?? []) as Row[])
+  const openSigs = (visibleSigs as Row[]).filter(s => !s.is_dismissed && (!s.status || s.status === 'open'))
   const sigs = acct ? openSigs.filter(s => s.account_name === acct.name) : openSigs.slice(0, 20)
   const cms = ((commitments ?? []) as Row[]).filter(c => !acct || c.account_name === acct.name)
 
   const context = [
     acct ? `ACCOUNT: ${acct.name} · ${money(acct.value)} · stage ${acct.stage ?? '--'} · risk ${acct.risk_level ?? '--'} · health ${acct.health_score ?? '--'} · closes ${acct.close_date ?? '--'} · last contact ${acct.last_contact_date ?? '--'} · contact ${acct.owner ?? '--'}` : `PORTFOLIO: ${accts.length} accounts. No single account matched this channel or question.`,
     'OPEN SIGNALS:',
-    ...sigs.slice(0, 12).map(s => { const ai = (s.ai_analysis ?? {}) as Row; return `- [${s.severity}] ${s.account_name}: ${s.title}${s.risk_amount ? ` (${money(s.risk_amount)})` : ''} via ${s.source_integration ?? '?'}${ai.quote ? ` · quote: "${ai.quote}"` : ''}${ai.recommendation ? ` · rec: ${ai.recommendation}` : ''}` }),
+    ...sigs.slice(0, 12).map(s => { const ai = (s.ai_analysis ?? {}) as Row; return `- [${s.severity}] ${s.account_name}: ${s.title}${s.risk_amount ? ` (${money(s.risk_amount)})` : ''}${s.locked ? '' : ` via ${s.source_integration ?? '?'}`}${ai.quote ? ` · quote: "${ai.quote}"` : ''}${ai.recommendation ? ` · rec: ${ai.recommendation}` : ''}` }),
     cms.length ? 'OPEN COMMITMENTS:' : '',
     ...cms.slice(0, 8).map(c => `- ${c.account_name ?? ''}: ${c.text} (due ${c.due_at ?? '--'})`),
   ].filter(Boolean).join('\n')

@@ -1,3 +1,4 @@
+import { maskConcerns } from '@/lib/concern-visibility'
 import { NextRequest, NextResponse } from 'next/server'
 import { buildDigest, buildDealUpdate } from '@/lib/slack/digest'
 import { tokenForUser, postToSlack, slackAdmin } from '@/lib/slack/popsicle'
@@ -36,10 +37,12 @@ export async function GET(req: NextRequest) {
     const { data: mem } = await db.from('org_members').select('org_id').eq('user_id', r.user_id).maybeSingle()
     let ids = [r.user_id]
     if (mem?.org_id) { const { data: all } = await db.from('org_members').select('user_id').eq('org_id', mem.org_id); ids = ((all ?? []) as Array<{ user_id: string }>).map(x => x.user_id) }
-    const [accts, sigs] = await Promise.all([
+    const [accts, rawSigs] = await Promise.all([
       fetchAll<M.Acct>(async (from, to) => db.from('accounts').select('name, value, stage, risk_level, health_score, owner, close_date').in('user_id', ids).range(from, to) as never, { max: 5000 }),
-      fetchAll<M.Sig>(async (from, to) => db.from('concern_feed').select('id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).order('created_at', { ascending: false }).range(from, to) as never, { max: 20000 }),
+      fetchAll<M.Sig>(async (from, to) => db.from('signals').select('id, user_id, account_name, signal_type, severity, title, description, risk_amount, created_at, status, is_dismissed, source_integration, handled_at, handled_action, ai_analysis').in('user_id', ids).is('deleted_at', null).order('created_at', { ascending: false }).range(from, to) as never, { max: 20000 }),
     ])
+    // concern_feed is empty without a signed-in user, so read signals and apply the same rule here
+    const sigs = await maskConcerns(db, rawSigs as unknown as Array<Record<string, unknown>>) as unknown as M.Sig[]
     if (briefingDue) {
       const res = await postToSlack(token, r.channel_id!, buildDigest(accts, sigs, now.getTime(), r.timezone))
       report.push({ user: r.user_id, briefing: res.ok ? 'sent' : res.error })

@@ -21,6 +21,7 @@ import { PLANS, planOf } from '@/lib/billing/plans'
 import type { Subscription } from '@/lib/billing/provider'
 import { useEntitlements } from '@/lib/plan'
 import { ACTIONS, readAutonomy, autonomySummary, type AutonomyPolicy } from '@/lib/autonomy'
+import { ACCOUNT_COLUMNS } from '@/lib/account-columns'
 
 interface SettingsClientProps { user: { email: string; id: string } }
 
@@ -157,7 +158,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
     setExportBusy(true)
     try {
       const [{ data: accts }, { data: sigs }] = await Promise.all([
-        supabase.from('accounts').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)),
+        supabase.from('accounts').select(ACCOUNT_COLUMNS).in('user_id', await orgIdsBrowser(supabase, user.id)),
         supabase.from('concern_feed').select('*').in('user_id', await orgIdsBrowser(supabase, user.id)).limit(2000),
       ])
       let blob: Blob
@@ -547,7 +548,7 @@ export function SettingsClient({ user }: SettingsClientProps) {
           <div className="bil-now">
             <div>
               <div className="bil-k">Current plan</div>
-              <div className="bil-plan">{isDemoUser ? 'Team' : ent && !ent.paid ? 'Free' : partner ? 'Design partner' : (planOf(current)?.name ?? current)}</div>
+              <div className="bil-plan">{isDemoUser ? 'Team' : ent && !ent.paid ? 'Free' : partner ? 'Design partner' : current === 'internal' ? 'Internal' : (planOf(current)?.name ?? current)}</div>
               <div className="bil-sub">{isDemoUser
                 ? '$1,200 a month'
                 : ent && !ent.paid ? '$0 · free forever'

@@ -24,23 +24,25 @@ export async function GET() {
     })
   }
 
+  // The plan is the ORG's (orgs.plan, read through entitlements), the one source of truth shared with the
+  // phone. user_metadata.billing only still supplies payment details, until a payment provider is connected.
+  const { data: entRaw } = await supabase.rpc('entitlements')
+  const ent = (entRaw ?? {}) as { plan?: string; paid?: boolean; concerns_this_period?: number; sources_used?: number; resets_on?: string }
   const { count } = await supabase.from('org_members').select('id', { count: 'exact', head: true })
   const seatsUsed = count ?? 1
-  const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0, 0, 0, 0)
-  const { count: concernsUsed } = await supabase.from('concern_feed').select('id', { count: 'exact', head: true }).gte('created_at', monthStart.toISOString())
-  const { count: sourcesUsed } = await supabase.from('integrations').select('id', { count: 'exact', head: true }).eq('is_active', true)
+  const plan = String(ent.plan ?? billing.plan ?? 'free')
 
   const sub: Subscription = {
-    plan: String(billing.plan ?? 'design_partner'),
-    status: (billing.status as Subscription['status']) ?? 'design_partner',
+    plan,
+    status: plan === 'design_partner' ? 'design_partner' : ent.paid ? ((billing.status as Subscription['status']) ?? 'active') : 'none',
     seatsUsed,
     seatsIncluded: billing.seatsIncluded ?? null,
-    renewsAt: billing.renewsAt ?? billing.endsAt ?? null,
+    renewsAt: ent.paid ? (billing.renewsAt ?? billing.endsAt ?? null) : (ent.resets_on ?? null),
     amount: billing.amount ?? null,
     invoiceEmail: (billing.invoiceEmail as string) ?? (claims.claims.email as string) ?? null,
     paymentMethod: (billing.paymentMethod as string) ?? null,
-    concernsUsed: concernsUsed ?? 0,
-    sourcesUsed: sourcesUsed ?? 0,
+    concernsUsed: ent.concerns_this_period ?? 0,   // this billing period, excluding Concerns the engine never raised
+    sourcesUsed: ent.sources_used ?? 0,            // calendars excluded, as the limit counts them
     provider: PROVIDER,
   }
   return NextResponse.json(sub)

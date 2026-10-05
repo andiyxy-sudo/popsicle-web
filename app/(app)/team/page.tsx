@@ -5,6 +5,7 @@ import { TeamReal } from './TeamReal'
 import { orgIdsServer } from '@/lib/org'
 import { teammateNames } from '@/lib/team'
 import { fetchAllData } from '@/lib/fetchAll'
+import { ACCOUNT_COLUMNS } from '@/lib/account-columns'
 
 export default async function TeamPage() {
   const supabase = await createClient()
@@ -18,7 +19,7 @@ export default async function TeamPage() {
   }
 
   const [acc, sig, integ] = await Promise.all([
-    supabase.from('accounts').select('*').in('user_id', await orgIdsServer(supabase, user.id)),
+    supabase.from('accounts').select(ACCOUNT_COLUMNS).in('user_id', await orgIdsServer(supabase, user.id)),
     fetchAllData(async (a, b) => supabase.from('concern_feed').select('*').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_dismissed', false).order('created_at', { ascending: false }).range(a, b)),
     supabase.from('integrations').select('provider').in('user_id', await orgIdsServer(supabase, user.id)).eq('is_active', true),
   ])

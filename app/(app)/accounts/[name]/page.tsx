@@ -4,6 +4,7 @@ import { AccountPage } from './AccountPage'
 import { DEMO_EMAIL } from '@/lib/data'
 import { DEMO_ACCOUNTS, DEMO_SIGNALS, DEMO_MESSAGES, DEMO_PEOPLE, DEMO_CONTRACTS, DEMO_EXTRA, DEMO_COMMS, DEMO_TIMELINE, DEMO_RISK_LINES, DEMO_TRANSCRIPTS, DEMO_THREADS } from '@/lib/demo-dataset'
 import { orgIdsServer } from '@/lib/org'
+import { ACCOUNT_COLUMNS } from '@/lib/account-columns'
 
 // Data is fetched here, on the server, so the page arrives populated instead
 // of blank-then-fetching in the browser.
@@ -31,7 +32,7 @@ export default async function Page({ params }: { params: Promise<{ name: string 
     )
   }
 
-  const { data: acct } = await supabase.from('accounts').select('*')
+  const { data: acct } = await supabase.from('accounts').select(ACCOUNT_COLUMNS)
     .in('user_id', await orgIdsServer(supabase, user.id)).eq('name', accountName).maybeSingle()
   if (!acct) return <AccountPage accountName={accountName} account={null} signals={[]} messages={[]} />
 
